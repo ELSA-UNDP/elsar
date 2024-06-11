@@ -1,5 +1,5 @@
-Package: elsaTier1
-Title: Tools For Creating ELSA Tier 1 Data Stacks
+Package: elsaFunctions
+Title: Functions and Tools For Creating ELSA Tier 1 Data Stacks
 Version: 0.0.0.9000
 Authors@R: 
     person("Scott", "Atkinson", , "scott.atkinson@undp.org", role = c("aut", "cre"),
