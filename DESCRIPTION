@@ -28,3 +28,4 @@ Imports:
     sf,
     terra,
     utils
+Config/testthat/edition: 3
