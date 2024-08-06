@@ -96,7 +96,7 @@ make_planning_units <- function(nb_proj,
   terra::writeRaster(rasterOut,
     glue::glue("{outputPath}/TEST6planning_units_{iso3}.tif"),
     gdal = c("COMPRESS=DEFLATE", "OVERVIEWS=NONE"),
-    NAflag = 255,
+    NAflag = -9999,
     overwrite = TRUE,
     filetype = "COG" # ,
     # datatype = "INT1U"
