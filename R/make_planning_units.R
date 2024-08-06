@@ -2,81 +2,41 @@
 #'
 #' This function creates planning units for a spatial prioritisation problem in a raster format. It also creates a custom projection (`wkt` file) centred on the planning region based on the Mollweide projection.
 #'
-#' @param boundary_src A string of the data name and file type
-#' @param boundary_lyr The layer used within the data (character or numeric).
-#' @param dataPath A string of the path where the data is saved. This is also where the custom projection is saved.
-#' @param input_type A string that is either "sf", "postgres" or "raster" (default is "sf").
+#' @param nb_proj A `sf`object representing the boundary of the planning region. Preferably generated with [make_boundary()]
 #' @param pu_size A way to define a custom planning unit size. Can be NULL to use default settings that generate planning units as small as possible whilst still being computationally efficient.
 #' @param pu_threshold An integer value that gives a maximum number of PUs. The default (`8.5e5`) is set based on `prioritizr` processing time, network transfer time and solver time.
 #' @param limit_to_mainland A logical that determines whether planning units should only be created for mainland area (`FALSE`; default) or not (`TRUE`)
 #' @param iso3_column Only relevant when `ìnput_type` "postgres" is selected. A string of the name of where iso3 information can be found in a dataset.
 #' @param iso3 The iso3 country code (character) of the country of interest.
-#' @param outputPath An optional output path for the created file. If none is provided, `dataPath` will be used.
+#' @param outputPath An optional output path for the created file.
 #'
 #' @return A raster (`.tif`) file with the planning unit information for the chosen planning region.
 #' @export
 #'
 #' @examples
 #' \dontrun{
+#' oundary <- make_boundary(boundary_src = "pu_nepal_450m.tif",
+#' data_path = path_to_data,
+#' input_type = "raster", col_name = "pu_nepal_450m")
+#' wkt <- make_custom_projection(boundary = boundary, output_path = outputPath, iso3 = "NPL")
+#' boundary_proj <- sf::st_transform(boundary, crs = sf::st_crs(wkt))
 #' pus_nepal <- make_planning_units(
-#'   boundary_src = "pu_nepal_450m.tif",
-#'   boundary_lyr = NULL,
-#'   dataPath = "localDataPath/nepal_reference",
-#'   input_type = "raster",
-#'   iso3 = "NPL"
+#' nb_proj = boundary_proj,
+#' pu_size = NULL,
+#' pu_threshold = 8.5e5,
+#' limit_to_mainland = FALSE,
+#' iso3_column = "iso_sov1",
+#' iso3 = "NPL",
+#' outputPath = "outputPath"
 #' )
 #' }
-make_planning_units <- function(boundary_src, # string of data name and file type
-                                boundary_lyr = NULL, # layer within file
-                                dataPath,
-                                input_type = "sf", # sf, postgres, raster
+make_planning_units <- function(nb_proj,
                                 pu_size = NULL,
                                 pu_threshold = 8.5e5,
                                 limit_to_mainland = FALSE,
                                 iso3_column = "iso_sov1",
                                 iso3,
                                 outputPath = NULL) {
-  # create path to data (same pathe will be needed later to save projection)
-  boundary_src <- file.path(dataPath, boundary_src)
-
-  if (input_type == "postgres") { # can't check this
-    # PostgreSQL Connection only, if needed
-    dn <- dbConnect("PostgreSQL", dbname = boundary_src)
-    nb <- st_read(dsn = dn, query = glue::glue("SELECT * FROM {boudnary_lyr} WHERE type = 'Land' AND {iso3_column} = '{iso3}'"))
-  } else if (input_type == "sf") {
-    nb <- sf::read_sf(boundary_src, boundary_lyr)
-  } else if (input_type == "raster") {
-    nb <- terra::rast(boundary_src, lyrs = boundary_lyr) %>%
-      terra::as.polygons() %>%
-      sf::st_as_sf()
-  }
-
-  if (limit_to_mainland == TRUE) { # exclude any islands etc.
-    nb <- nb %>%
-      sf::st_cast("POLYGON") %>%
-      dplyr::slice(which.max(as.numeric(sf::st_area(.)))) # get largest polygon that represents mainland
-  }
-
-  nb <- sf::st_transform(nb, crs = st_crs(4326))
-
-  xmid <- mean(c(sf::st_bbox(nb)$xmin, sf::st_bbox(nb)$xmax))
-  ymid <- mean(c(sf::st_bbox(nb)$ymin, sf::st_bbox(nb)$ymax))
-
-  # Create WKT projection string
-  wkt <- glue::glue('PROJCS["Mollweide_Custom_{iso3}",GEOGCS["GCS_unknown",
-                  DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,
-                  AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],
-                  PRIMEM["Greenwich",0],UNIT["Degree",0.0174532925199433]],
-                  PROJECTION["Mollweide"],PARAMETER["central_meridian",{xmid}],
-                  PARAMETER["false_easting",0],PARAMETER["false_northing",
-                  {ymid}],UNIT["metre",1,AUTHORITY["EPSG","9001"]],
-                  AXIS["Easting",EAST],AXIS["Northing",NORTH]]')
-  # note: for marine it's not this straight forward if EEZ goes across date line
-  writeLines(wkt, glue::glue("{dataPath}/{tolower(iso3)}_proj.wkt")) # save wkt
-
-  # reproject to new projection
-  nb_proj <- sf::st_transform(nb, crs = sf::st_crs(wkt))
-
   if (is.null(pu_size)) { # NO provided PU size
     pu_sum <- pu_threshold # if more than this: issues solving problems in real-ish time (related to: prioritizr processing time, network transfer time, gurobi solve time)
 
@@ -130,19 +90,18 @@ make_planning_units <- function(boundary_src, # string of data name and file typ
     }
   }
 
-  # save PU layer
-  if (is.null(outputPath)) {
-    outputPath <- dataPath
-  }
-
-  terra::writeRaster(r1,
-    glue::glue("{outputPath}/planning_units_{iso3}.tif"),
+  rasterOut <- r1
+  # return(rasterOut)
+  #
+  terra::writeRaster(rasterOut,
+    glue::glue("{outputPath}/TEST6planning_units_{iso3}.tif"),
     gdal = c("COMPRESS=DEFLATE", "OVERVIEWS=NONE"),
     NAflag = 255,
     overwrite = TRUE,
-    filetype = "COG",
-    datatype = "INT1U"
+    filetype = "COG" # ,
+    # datatype = "INT1U"
   )
 
-  base_v <<- nb_proj
+  return(rasterOut)
 }
+

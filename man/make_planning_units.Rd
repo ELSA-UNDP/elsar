@@ -5,10 +5,7 @@
 \title{Function to create planning units and custom projection}
 \usage{
 make_planning_units(
-  boundary_src,
-  boundary_lyr = NULL,
-  dataPath,
-  input_type = "sf",
+  nb_proj,
   pu_size = NULL,
   pu_threshold = 850000,
   limit_to_mainland = FALSE,
@@ -18,13 +15,7 @@ make_planning_units(
 )
 }
 \arguments{
-\item{boundary_src}{A string of the data name and file type}
-
-\item{boundary_lyr}{The layer used within the data (character or numeric).}
-
-\item{dataPath}{A string of the path where the data is saved. This is also where the custom projection is saved.}
-
-\item{input_type}{A string that is either "sf", "postgres" or "raster" (default is "sf").}
+\item{nb_proj}{A \code{sf}object representing the boundary of the planning region. Preferably generated with \code{\link[=make_boundary]{make_boundary()}}}
 
 \item{pu_size}{A way to define a custom planning unit size. Can be NULL to use default settings that generate planning units as small as possible whilst still being computationally efficient.}
 
@@ -36,7 +27,7 @@ make_planning_units(
 
 \item{iso3}{The iso3 country code (character) of the country of interest.}
 
-\item{outputPath}{An optional output path for the created file. If none is provided, \code{dataPath} will be used.}
+\item{outputPath}{An optional output path for the created file.}
 }
 \value{
 A raster (\code{.tif}) file with the planning unit information for the chosen planning region.
@@ -46,12 +37,19 @@ This function creates planning units for a spatial prioritisation problem in a r
 }
 \examples{
 \dontrun{
+oundary <- make_boundary(boundary_src = "pu_nepal_450m.tif",
+data_path = path_to_data,
+input_type = "raster", col_name = "pu_nepal_450m")
+wkt <- make_custom_projection(boundary = boundary, output_path = outputPath, iso3 = "NPL")
+boundary_proj <- sf::st_transform(boundary, crs = sf::st_crs(wkt))
 pus_nepal <- make_planning_units(
-  boundary_src = "pu_nepal_450m.tif",
-  boundary_lyr = NULL,
-  dataPath = "localDataPath/nepal_reference",
-  input_type = "raster",
-  iso3 = "NPL"
+nb_proj = boundary_proj,
+pu_size = NULL,
+pu_threshold = 8.5e5,
+limit_to_mainland = FALSE,
+iso3_column = "iso_sov1",
+iso3 = "NPL",
+outputPath = "outputPath"
 )
 }
 }
