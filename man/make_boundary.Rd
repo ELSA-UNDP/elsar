@@ -27,6 +27,8 @@ make_boundary(
 
 \item{input_type}{A string that is either "sf", "postgres" or "raster" (default is "sf").}
 
+\item{limit_to_mainland}{Logical. Limits the extent of the data to mainland.}
+
 \item{col_name}{A string of the column containing the actual extent of the planning region (not outside area). Can be \code{NULL}.}
 
 \item{filter_out}{A value representing the outside area in the data (e.g. \code{0})}

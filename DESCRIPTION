@@ -11,10 +11,11 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.1
 Suggests:
     assertthat,
+    DBI,
     klippy,
     knitr,
     rmarkdown,
-    RPostgreSQL,
+    RPostgres,
     testthat (>= 3.0.0),
     wdpar
 VignetteBuilder: knitr
@@ -22,11 +23,11 @@ Depends:
     R (>= 3.5.0)
 Imports: 
     dplyr,
-    exactextractr,
+    glue,
     magrittr,
-    remotes,
+    plyr,
     rlang,
     sf,
     terra,
-    utils
+    units
 Config/testthat/edition: 3

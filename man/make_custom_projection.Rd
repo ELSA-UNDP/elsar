@@ -7,13 +7,13 @@
 make_custom_projection(boundary, output_path, iso3_column = "iso_sov1", iso3)
 }
 \arguments{
+\item{boundary}{\code{sf} object of the boundary of the planning region. Should match iso3 country code.}
+
 \item{output_path}{An optional output path for the created file.}
 
 \item{iso3_column}{Only relevant when \code{ìnput_type} "postgres" is selected. A string of the name of where iso3 information can be found in a dataset.}
 
 \item{iso3}{The iso3 country code (character) of the country of interest.}
-
-\item{boundary`sf`}{object of the boundary of the planning region. Should match iso3 country code.}
 }
 \value{
 A \code{wkt} file centred on the planning region

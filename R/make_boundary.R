@@ -4,6 +4,7 @@
 #' @param boundary_lyr The layer used within the data (character or numeric).
 #' @param data_path A string of the path where the data is saved. This is also where the custom projection is saved.
 #' @param input_type A string that is either "sf", "postgres" or "raster" (default is "sf").
+#' @param limit_to_mainland Logical. Limits the extent of the data to mainland.
 #' @param col_name A string of the column containing the actual extent of the planning region (not outside area). Can be `NULL`.
 #' @param filter_out A value representing the outside area in the data (e.g. `0`)
 #' @param do_project Logical. `TRUE`if custom projection for planning region is wanted.
@@ -36,9 +37,9 @@ make_boundary <- function(boundary_src, # string of data name and file type
   boundary_src <- file.path(data_path, boundary_src)
 
   if (input_type == "postgres") { # can't check this
-    # PostgreSQL Connection only, if needed
-    dn <- dbConnect("PostgreSQL", dbname = boundary_src)
-    nb <- st_read(dsn = dn, query = glue::glue("SELECT * FROM {boudnary_lyr} WHERE type = 'Land' AND {iso3_column} = '{iso3}'"))
+    # # PostgreSQL Connection only, if needed
+    # dn <- dbConnect("PostgreSQL", dbname = boundary_src)
+    # nb <- st_read(dsn = dn, query = glue::glue("SELECT * FROM {boudnary_lyr} WHERE type = 'Land' AND {iso3_column} = '{iso3}'"))
   } else if (input_type == "sf") {
     nb <- sf::read_sf(boundary_src, boundary_lyr)
   } else if (input_type == "raster") {
@@ -51,14 +52,14 @@ make_boundary <- function(boundary_src, # string of data name and file type
     nb <- nb %>%
       sf::st_cast("POLYGON") %>%
       dplyr::slice(which.max(as.numeric(sf::st_area(.)))) %>% # get largest polygon that represents mainland
-      sf::st_transform(nb, crs = st_crs(4326))
+      sf::st_transform(nb, crs = sf::st_crs(4326))
   } else {
     if(!is.null(col_name)) {
       nb <- nb %>%
         dplyr::filter(!!rlang::sym(col_name) != filter_out)# filter out anything that's not data (e.g. 0s, NAs)
     }
     nb <- nb %>%
-      sf::st_transform(nb, crs = st_crs(4326))
+      sf::st_transform(nb, crs = sf::st_crs(4326))
   }
 
   if (do_project) {
