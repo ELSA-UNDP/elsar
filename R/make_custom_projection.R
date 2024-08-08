@@ -2,7 +2,7 @@
 #'
 #' @param boundary `sf` object of the boundary of the planning region. Should match iso3 country code.
 #' @param output_path An optional output path for the created file.
-#' @param iso3_column Only relevant when `ìnput_type` "postgres" is selected. A string of the name of where iso3 information can be found in a dataset.
+#' @param iso3_column A string of the name of where iso3 information can be found in a dataset.
 #' @param iso3 The iso3 country code (character) of the country of interest.
 #'
 #' @return A `wkt` file centred on the planning region

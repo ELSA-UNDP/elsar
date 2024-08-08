@@ -37,9 +37,7 @@ load_data <- function(file_name,
                       iso3_column = "iso3cd", # "iso_sov1",
                       iso3) {
   # create path to data
-  if (!is.null(file_path) & file_type != "postgres") {
-    to_load <- file.path(file_path, file_name)
-  } else if (is.null(file_path) & file_type == "postgres") {
+ if (is.null(file_path) & file_type == "postgres") {
     con <- RPostgres::dbConnect(RPostgres::Postgres(),
       host = db_info["host"][[1]],
       dbname = db_info["dbname"][[1]],
@@ -51,28 +49,31 @@ load_data <- function(file_name,
       dsn = con,
       query = glue::glue("SELECT * FROM {file_name} WHERE {iso3_column} = '{iso3}'")
     )
-  } else {
+ } else if (!is.null(file_path) & file_type != "postgres") {
+   to_load <- file.path(file_path, file_name)
+
+   if (file_type %in% c("shp", "gpkg", "geojson")) {
+     if (!is.null(file_lyr)) {
+       loaded_data <- sf::read_sf(to_load, layer = file_lyr)
+     } else {
+       loaded_data <- sf::read_sf(to_load)
+     }
+   } else if (file_type %in% c("tif", "tiff", "grd", "gri", "nc", "hdf")) { #havent tested nc and hdf yet
+     if (!is.null(file_lyr)) {
+       loaded_data <- terra::rast(to_load, lyrs = file_lyr)
+     } else {
+       loaded_data <- terra::rast(to_load)
+     }
+   } else {
+     message("Selected file_type might not be provided yet. Please add an
+            issue on , so we can add it to this function. In the meantime,
+            please load your data outside this function.")
+   }
+
+ } else {
     message("Please provide a file path for your local data.
             Remote accessing is currently only supported through postgres.
             If you wish to use postgres, set file_type = 'postgress'.")
-  }
-
-  if (file_type %in% c("shp", "gpkg", "geojson")) {
-    if (!is.null(file_lyr)) {
-      loaded_data <- sf::read_sf(to_load, layer = file_lyr)
-    } else {
-      loaded_data <- sf::read_sf(to_load)
-    }
-  } else if (file_type %in% c("tif", "tiff", "grd", "gri", "nc", "hdf")) { #havent tested nc and hdf yet
-    if (!is.null(file_lyr)) {
-      loaded_data <- terra::rast(to_load, lyrs = file_lyr)
-    } else {
-      loaded_data <- terra::rast(to_load)
-    }
-  } else {
-    message("Selected file_type might not be provided yet. Please add an
-            issue on , so we can add it to this function. In the meantime,
-            please load your data outside this function.")
   }
 
   return(loaded_data)

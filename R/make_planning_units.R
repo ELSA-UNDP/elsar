@@ -2,13 +2,12 @@
 #'
 #' This function creates planning units for a spatial prioritisation problem in a raster format. It also creates a custom projection (`wkt` file) centred on the planning region based on the Mollweide projection.
 #'
-#' @param nb_proj A `sf`object representing the boundary of the planning region. Preferably generated with [make_boundary()]
+#' @param boundary_proj A `sf`object representing the boundary of the planning region in the preferred projection. Preferably generated with [make_boundary()]
 #' @param pu_size A way to define a custom planning unit size. Can be NULL to use default settings that generate planning units as small as possible whilst still being computationally efficient.
 #' @param pu_threshold An integer value that gives a maximum number of PUs. The default (`8.5e5`) is set based on `prioritizr` processing time, network transfer time and solver time.
 #' @param limit_to_mainland A logical that determines whether planning units should only be created for mainland area (`FALSE`; default) or not (`TRUE`)
-#' @param iso3_column Only relevant when `ìnput_type` "postgres" is selected. A string of the name of where iso3 information can be found in a dataset.
 #' @param iso3 The iso3 country code (character) of the country of interest.
-#' @param outputPath An optional output path for the created file.
+#' @param output_path An optional output path for the created file.
 #'
 #' @return A raster (`.tif`) file with the planning unit information for the chosen planning region.
 #' @export
@@ -21,7 +20,7 @@
 #' wkt <- make_custom_projection(boundary = boundary, output_path = outputPath, iso3 = "NPL")
 #' boundary_proj <- sf::st_transform(boundary, crs = sf::st_crs(wkt))
 #' pus_nepal <- make_planning_units(
-#' nb_proj = boundary_proj,
+#' boundary_proj = boundary_proj,
 #' pu_size = NULL,
 #' pu_threshold = 8.5e5,
 #' limit_to_mainland = FALSE,
@@ -30,17 +29,16 @@
 #' outputPath = "outputPath"
 #' )
 #' }
-make_planning_units <- function(nb_proj,
+make_planning_units <- function(boundary_proj,
                                 pu_size = NULL,
                                 pu_threshold = 8.5e5,
                                 limit_to_mainland = FALSE,
-                                iso3_column = "iso_sov1",
                                 iso3,
-                                outputPath = NULL) {
+                                output_path = NULL) {
   if (is.null(pu_size)) { # NO provided PU size
     pu_sum <- pu_threshold # if more than this: issues solving problems in real-ish time (related to: prioritizr processing time, network transfer time, gurobi solve time)
 
-    pu_size <- units::drop_units(sf::st_area(nb_proj)) / 1e6 / 8e5 * 1e3 # convert to edge length of PU
+    pu_size <- units::drop_units(sf::st_area(boundary_proj)) / 1e6 / 8e5 * 1e3 # convert to edge length of PU
 
     pu_size <- dplyr::case_when( # round PU numbers based on size
       pu_size < 100 ~ 100,
@@ -56,11 +54,11 @@ make_planning_units <- function(nb_proj,
 
       rasterMask <- terra::rast( # create a raster with the current PU size, the new crs and the spatial extent of the data
         resolution = pu_size,
-        crs = wkt,
-        extent = terra::ext(nb_proj)
+        crs = terra::crs(boundary_proj),
+        extent = terra::ext(boundary_proj)
       )
 
-      r1 <- terra::rasterize(terra::vect(nb_proj), # rasterize the data (sf object) based on the created raster
+      r1 <- terra::rasterize(terra::vect(boundary_proj), # rasterize the data (sf object) based on the created raster
         rasterMask,
         touches = TRUE,
         update = TRUE,
@@ -73,11 +71,11 @@ make_planning_units <- function(nb_proj,
   } else {
     rasterMask <- terra::rast( # create a raster with the current PU size, the new crs and the spatial extent of the data
       resolution = pu_size,
-      crs = wkt,
-      extent = terra::ext(nb_proj)
+      crs = terra::crs(boundary_proj),
+      extent = terra::ext(boundary_proj)
     )
 
-    r1 <- terra::rasterize(terra::vect(nb_proj), # rasterize the data (sf object) based on the created raster
+    r1 <- terra::rasterize(terra::vect(boundary_proj), # rasterize the data (sf object) based on the created raster
       rasterMask,
       touches = TRUE,
       update = TRUE,
@@ -91,10 +89,9 @@ make_planning_units <- function(nb_proj,
   }
 
   rasterOut <- r1
-  # return(rasterOut)
-  #
+
   terra::writeRaster(rasterOut,
-    glue::glue("{outputPath}/TEST6planning_units_{iso3}.tif"),
+    glue::glue("{output_path}/planning_units_{iso3}.tif"),
     gdal = c("COMPRESS=DEFLATE", "OVERVIEWS=NONE"),
     NAflag = -9999,
     overwrite = TRUE,

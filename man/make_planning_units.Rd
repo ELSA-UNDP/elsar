@@ -5,17 +5,16 @@
 \title{Function to create planning units and custom projection}
 \usage{
 make_planning_units(
-  nb_proj,
+  boundary_proj,
   pu_size = NULL,
   pu_threshold = 850000,
   limit_to_mainland = FALSE,
-  iso3_column = "iso_sov1",
   iso3,
-  outputPath = NULL
+  output_path = NULL
 )
 }
 \arguments{
-\item{nb_proj}{A \code{sf}object representing the boundary of the planning region. Preferably generated with \code{\link[=make_boundary]{make_boundary()}}}
+\item{boundary_proj}{A \code{sf}object representing the boundary of the planning region in the preferred projection. Preferably generated with \code{\link[=make_boundary]{make_boundary()}}}
 
 \item{pu_size}{A way to define a custom planning unit size. Can be NULL to use default settings that generate planning units as small as possible whilst still being computationally efficient.}
 
@@ -23,11 +22,9 @@ make_planning_units(
 
 \item{limit_to_mainland}{A logical that determines whether planning units should only be created for mainland area (\code{FALSE}; default) or not (\code{TRUE})}
 
-\item{iso3_column}{Only relevant when \code{ìnput_type} "postgres" is selected. A string of the name of where iso3 information can be found in a dataset.}
-
 \item{iso3}{The iso3 country code (character) of the country of interest.}
 
-\item{outputPath}{An optional output path for the created file.}
+\item{output_path}{An optional output path for the created file.}
 }
 \value{
 A raster (\code{.tif}) file with the planning unit information for the chosen planning region.
@@ -43,7 +40,7 @@ input_type = "raster", col_name = "pu_nepal_450m")
 wkt <- make_custom_projection(boundary = boundary, output_path = outputPath, iso3 = "NPL")
 boundary_proj <- sf::st_transform(boundary, crs = sf::st_crs(wkt))
 pus_nepal <- make_planning_units(
-nb_proj = boundary_proj,
+boundary_proj = boundary_proj,
 pu_size = NULL,
 pu_threshold = 8.5e5,
 limit_to_mainland = FALSE,

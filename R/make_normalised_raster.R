@@ -1,10 +1,12 @@
 #' Function to extract general raster data
 #'
-#' `make_normalised_raster()`allows you to align, normalise and save a raster file. This is applicable for certified forests, etc. (ADD LATER)
+#' `make_normalised_raster()`allows you to align, normalise and save a raster file. This is applicable for the following data
+#' This is applicable for the following data sets: certified forests, drought risk, flood risk, intact wilderness area, soc difference, threatened species richness, voc, wad convergence evidence
 #'
 #' @param raster_in A raster file that contains the data to be put into right format
 #' @param pus A raster file that contains the reference spatial extent, crs etc.in form of the planning units
 #' @param iso3 A string of the iso3 name of the data (country name)
+#' @param invert Logical. If TRUE, highest values in the original dataset should be valued the lowest in the prioritisation.
 #' @param name_out A string with the data name that will be used for the output `tif`file
 #' @param write_file A logical command on whether the file will be saved rather than given as an output variable (Default: TRUE)
 #' @param output_path An output path for the created file.
@@ -15,6 +17,7 @@
 make_normalised_raster <- function(raster_in,
                                    pus,
                                    iso3,
+                                   invert = FALSE,
                                    name_out,
                                    write_file = TRUE,
                                    output_path) {
@@ -27,6 +30,10 @@ make_normalised_raster <- function(raster_in,
     terra::project(., terra::crs(pus)) %>% # reproject the data to the crs we actually want (the original pu crs)
     terra::resample(., pus) %>%
     terra::mask(pus, maskvalues = 0) # maskvalues denotes the background value in the raster that's not data (since this should always be planning region/units is 1 and outside is 0, this is hard-coded to 0)
+
+  if (invert) {
+    dat_aligned = -dat_aligned
+  }
 
   raster_rescaled <- rescale_raster(dat_aligned)
 

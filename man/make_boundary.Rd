@@ -5,9 +5,7 @@
 \title{Create a boundary of the planning region}
 \usage{
 make_boundary(
-  boundary_src,
-  boundary_lyr = NULL,
-  data_path,
+  boundary_in,
   input_type = "sf",
   limit_to_mainland = FALSE,
   col_name = NULL,
@@ -19,13 +17,9 @@ make_boundary(
 )
 }
 \arguments{
-\item{boundary_src}{A string of the data name and file type}
+\item{boundary_in}{A file containing the boundary information. Can be \code{sf} or \code{SpatRaster}}
 
-\item{boundary_lyr}{The layer used within the data (character or numeric).}
-
-\item{data_path}{A string of the path where the data is saved. This is also where the custom projection is saved.}
-
-\item{input_type}{A string that is either "sf", "postgres" or "raster" (default is "sf").}
+\item{input_type}{A string that is either "sf" or "SpatRaster" (default is "sf").}
 
 \item{limit_to_mainland}{Logical. Limits the extent of the data to mainland.}
 
@@ -35,11 +29,11 @@ make_boundary(
 
 \item{do_project}{Logical. \code{TRUE}if custom projection for planning region is wanted.}
 
-\item{iso3_column}{Only relevant when \code{ìnput_type} "postgres" is selected. A string of the name of where iso3 information can be found in a dataset.}
+\item{iso3_column}{A string of the name of where iso3 information can be found in a dataset. Only needed when do_project = TRUE.}
 
-\item{iso3}{The iso3 country code (character) of the country of interest.}
+\item{iso3}{The iso3 country code (character) of the country of interest. Only needed when do_project = TRUE.}
 
-\item{output_path}{An optional output path for the created file.}
+\item{output_path}{An optional output path for the created file. Only needed when do_project = TRUE.}
 }
 \value{
 \code{sf} object of the boundary of the planning region
@@ -49,8 +43,10 @@ Create a boundary of the planning region
 }
 \examples{
 \dontrun{
-boundary <- make_boundary(boundary_src = "pu_nepal_450m.tif",
-data_path = path_to_data,
-input_type = "raster", col_name = "pu_nepal_450m")
+boundary <- make_boundary(
+  boundary_src = "pu_nepal_450m.tif",
+  data_path = path_to_data,
+  input_type = "raster", col_name = "pu_nepal_450m"
+)
 }
 }

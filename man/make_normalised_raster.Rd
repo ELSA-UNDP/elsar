@@ -8,6 +8,7 @@ make_normalised_raster(
   raster_in,
   pus,
   iso3,
+  invert = FALSE,
   name_out,
   write_file = TRUE,
   output_path
@@ -20,6 +21,8 @@ make_normalised_raster(
 
 \item{iso3}{A string of the iso3 name of the data (country name)}
 
+\item{invert}{Logical. If TRUE, highest values in the original dataset should be valued the lowest in the prioritisation.}
+
 \item{name_out}{A string with the data name that will be used for the output \code{tif}file}
 
 \item{write_file}{A logical command on whether the file will be saved rather than given as an output variable (Default: TRUE)}
@@ -30,5 +33,6 @@ make_normalised_raster(
 A \code{raster}file that has been aligned and normalised
 }
 \description{
-\code{make_normalised_raster()}allows you to align, normalise and save a raster file. This is applicable for certified forests, etc. (ADD LATER)
+\code{make_normalised_raster()}allows you to align, normalise and save a raster file. This is applicable for the following data
+This is applicable for the following data sets: certified forests, drought risk, flood risk, intact wilderness area, soc difference, threatened species richness, voc, wad convergence evidence
 }
