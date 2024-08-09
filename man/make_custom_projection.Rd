@@ -4,7 +4,12 @@
 \alias{make_custom_projection}
 \title{Create a custom projection based on the planning region}
 \usage{
-make_custom_projection(boundary, output_path, iso3_column = "iso_sov1", iso3)
+make_custom_projection(
+  boundary,
+  output_path = NULL,
+  iso3_column = "iso_sov1",
+  iso3
+)
 }
 \arguments{
 \item{boundary}{\code{sf} object of the boundary of the planning region. Should match iso3 country code.}
@@ -22,11 +27,11 @@ A \code{wkt} file centred on the planning region
 Create a custom projection based on the planning region
 }
 \examples{
-\dontrun{
-boundary <- make_boundary(boundary_src = "pu_nepal_450m.tif",
-data_path = path_to_data,
-input_type = "raster", col_name = "pu_nepal_450m")
-wkt <- make_custom_projection(boundary = boundary, output_path = outputPath, iso3 = "NPL")
-boundary_proj <- sf::st_transform(boundary, crs = sf::st_crs(wkt))
-}
+boundary <- make_boundary(
+  boundary_in = boundary_dat,
+  iso3 = "NPL",
+  iso3_column = "iso3cd"
+)
+
+wkt <- make_custom_projection(boundary = boundary, iso3 = "NPL")
 }

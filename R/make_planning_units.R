@@ -13,22 +13,17 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' oundary <- make_boundary(boundary_src = "pu_nepal_450m.tif",
-#' data_path = path_to_data,
-#' input_type = "raster", col_name = "pu_nepal_450m")
-#' wkt <- make_custom_projection(boundary = boundary, output_path = outputPath, iso3 = "NPL")
-#' boundary_proj <- sf::st_transform(boundary, crs = sf::st_crs(wkt))
-#' pus_nepal <- make_planning_units(
-#' boundary_proj = boundary_proj,
-#' pu_size = NULL,
-#' pu_threshold = 8.5e5,
-#' limit_to_mainland = FALSE,
-#' iso3_column = "iso_sov1",
-#' iso3 = "NPL",
-#' outputPath = "outputPath"
+#' boundary_proj <- make_boundary(
+#'   boundary_in = boundary_dat,
+#'   iso3 = "NPL",
+#'   iso3_column = "iso3cd",
+#'   do_project = TRUE
 #' )
-#' }
+#'
+#' pus <- make_planning_units(boundary_proj = boundary_proj,
+#'                            pu_size = NULL,
+#'                            pu_threshold = 8.5e5,
+#'                            limit_to_mainland = FALSE)
 make_planning_units <- function(boundary_proj,
                                 pu_size = NULL,
                                 pu_threshold = 8.5e5,
@@ -42,13 +37,13 @@ make_planning_units <- function(boundary_proj,
 
     pu_size <- dplyr::case_when( # round PU numbers based on size
       pu_size < 100 ~ 100,
-      between(pu_size, 100, 300) ~ plyr::round_any(pu_size, accuracy = 50, floor),
+      dplyr::between(pu_size, 100, 300) ~ plyr::round_any(pu_size, accuracy = 50, floor),
       pu_size > 300 ~ plyr::round_any(pu_size, accuracy = 100, floor)
     )
 
     while (pu_sum >= pu_threshold) { # ensure that the final # of PUs is < 850,000
       pu_size <- pu_size + dplyr::case_when( # for this, make the PUs larger (so decrease the number) within the planning region
-        between(pu_size, 100, 300) ~ 50,
+        dplyr::between(pu_size, 100, 300) ~ 50,
         pu_size > 300 ~ 100
       )
 
@@ -88,9 +83,8 @@ make_planning_units <- function(boundary_proj,
     }
   }
 
-  rasterOut <- r1
-
-  terra::writeRaster(rasterOut,
+  if (!is.null(output_path)) {
+     terra::writeRaster(r1,
     glue::glue("{output_path}/planning_units_{iso3}.tif"),
     gdal = c("COMPRESS=DEFLATE", "OVERVIEWS=NONE"),
     NAflag = -9999,
@@ -98,7 +92,8 @@ make_planning_units <- function(boundary_proj,
     filetype = "COG" # ,
     # datatype = "INT1U"
   )
+  }
 
-  return(rasterOut)
+  return(r1)
 }
 

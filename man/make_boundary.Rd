@@ -11,9 +11,9 @@ make_boundary(
   col_name = NULL,
   filter_out = 0,
   do_project = FALSE,
-  iso3_column = "iso_sov1",
-  iso3,
-  output_path
+  iso3 = NULL,
+  iso3_column,
+  output_path = NULL
 )
 }
 \arguments{
@@ -29,9 +29,9 @@ make_boundary(
 
 \item{do_project}{Logical. \code{TRUE}if custom projection for planning region is wanted.}
 
-\item{iso3_column}{A string of the name of where iso3 information can be found in a dataset. Only needed when do_project = TRUE.}
+\item{iso3}{The iso3 country code (character) of the country of interest.}
 
-\item{iso3}{The iso3 country code (character) of the country of interest. Only needed when do_project = TRUE.}
+\item{iso3_column}{Only relevant when \code{iso3} != NULL. A string of the name of where iso3 information can be found in a dataset.}
 
 \item{output_path}{An optional output path for the created file. Only needed when do_project = TRUE.}
 }
@@ -42,11 +42,9 @@ make_boundary(
 Create a boundary of the planning region
 }
 \examples{
-\dontrun{
 boundary <- make_boundary(
-  boundary_src = "pu_nepal_450m.tif",
-  data_path = path_to_data,
-  input_type = "raster", col_name = "pu_nepal_450m"
+  boundary_in = boundary_dat,
+  iso3 = "NPL",
+  iso3_column = "iso3cd"
 )
-}
 }

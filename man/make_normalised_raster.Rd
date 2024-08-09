@@ -10,8 +10,7 @@ make_normalised_raster(
   iso3,
   invert = FALSE,
   name_out,
-  write_file = TRUE,
-  output_path
+  output_path = NULL
 )
 }
 \arguments{
@@ -25,9 +24,7 @@ make_normalised_raster(
 
 \item{name_out}{A string with the data name that will be used for the output \code{tif}file}
 
-\item{write_file}{A logical command on whether the file will be saved rather than given as an output variable (Default: TRUE)}
-
-\item{output_path}{An output path for the created file.}
+\item{output_path}{An optional output path for the created file.}
 }
 \value{
 A \code{raster}file that has been aligned and normalised

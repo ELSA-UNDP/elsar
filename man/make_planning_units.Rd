@@ -33,20 +33,15 @@ A raster (\code{.tif}) file with the planning unit information for the chosen pl
 This function creates planning units for a spatial prioritisation problem in a raster format. It also creates a custom projection (\code{wkt} file) centred on the planning region based on the Mollweide projection.
 }
 \examples{
-\dontrun{
-oundary <- make_boundary(boundary_src = "pu_nepal_450m.tif",
-data_path = path_to_data,
-input_type = "raster", col_name = "pu_nepal_450m")
-wkt <- make_custom_projection(boundary = boundary, output_path = outputPath, iso3 = "NPL")
-boundary_proj <- sf::st_transform(boundary, crs = sf::st_crs(wkt))
-pus_nepal <- make_planning_units(
-boundary_proj = boundary_proj,
-pu_size = NULL,
-pu_threshold = 8.5e5,
-limit_to_mainland = FALSE,
-iso3_column = "iso_sov1",
-iso3 = "NPL",
-outputPath = "outputPath"
+boundary_proj <- make_boundary(
+  boundary_in = boundary_dat,
+  iso3 = "NPL",
+  iso3_column = "iso3cd",
+  do_project = TRUE
 )
-}
+
+pus <- make_planning_units(boundary_proj = boundary_proj,
+                           pu_size = NULL,
+                           pu_threshold = 8.5e5,
+                           limit_to_mainland = FALSE)
 }

@@ -9,15 +9,15 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' boundary <- make_boundary(boundary_src = "pu_nepal_450m.tif",
-#' data_path = path_to_data,
-#' input_type = "raster", col_name = "pu_nepal_450m")
-#' wkt <- make_custom_projection(boundary = boundary, output_path = outputPath, iso3 = "NPL")
-#' boundary_proj <- sf::st_transform(boundary, crs = sf::st_crs(wkt))
-#' }
+#' boundary <- make_boundary(
+#'   boundary_in = boundary_dat,
+#'   iso3 = "NPL",
+#'   iso3_column = "iso3cd"
+#' )
+#'
+#' wkt <- make_custom_projection(boundary = boundary, iso3 = "NPL")
 make_custom_projection <- function(boundary,
-                                   output_path,
+                                   output_path = NULL,
                                    iso3_column = "iso_sov1",
                                    iso3) {
   xmid <- mean(c(sf::st_bbox(boundary)$xmin, sf::st_bbox(boundary)$xmax))
@@ -33,7 +33,10 @@ make_custom_projection <- function(boundary,
                   {ymid}],UNIT["metre",1,AUTHORITY["EPSG","9001"]],
                   AXIS["Easting",EAST],AXIS["Northing",NORTH]]')
   # note: for marine it's not this straight forward if EEZ goes across date line
-  writeLines(wkt, glue::glue("{output_path}/{tolower(iso3)}_proj.wkt")) # save wkt
 
-  cCRS <- wkt
+  if (!is.null(output_path)) {
+    writeLines(wkt, glue::glue("{output_path}/{tolower(iso3)}_proj.wkt")) # save wkt
+  }
+
+  return(wkt)
 }

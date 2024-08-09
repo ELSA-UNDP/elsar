@@ -1,0 +1,110 @@
+---
+title: "An Example ELSA Workflow"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{An Example ELSA Workflow}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+h <- 3.5
+w <- 3.5
+
+knitr::opts_chunk$set(
+collapse = TRUE,
+comment = "#>",
+warning = FALSE,
+cache = FALSE,
+eval = TRUE,
+fig.align = "center"
+)
+```
+
+```{r setup}
+library(elsaFunctions)
+```
+
+# Overview
+
+## Introduction
+
+
+## Get started
+
+```{r, message = FALSE}
+# load packages
+library(elsaFunctions)
+library(prioritizr)
+library(dplyr)
+library(ggplot2)
+library(sf)
+library(terra)
+
+# set seed for reproducibility
+set.seed(500)
+
+```
+
+
+```{r, fig.width = w, fig.height = h}
+# create boundary for Nepal
+boundary <- make_boundary(
+  boundary_in = boundary_dat,
+  iso3 = "NPL",
+  iso3_column = "iso3cd"
+  )
+
+ggplot() + geom_sf(data = boundary) 
+```
+
+```{r, message = FALSE}
+# create custom projection and apply it to boundary
+wkt <- make_custom_projection(boundary = boundary, iso3 = "NPL")
+boundary_proj <- sf::st_transform(boundary, crs = sf::st_crs(wkt))
+
+```
+
+
+```{r, message = FALSE}
+# alternative
+boundary_proj2 <- make_boundary(
+  boundary_in = boundary_dat,
+  iso3 = "NPL",
+  iso3_column = "iso3cd",
+  do_project = TRUE
+)
+```
+
+```{r}
+# test crs
+print(sf::st_crs(boundary_proj) == sf::st_crs(boundary_proj2))
+```
+
+
+```{r, fig.width = w, fig.height = h}
+# make planning units
+pus <- make_planning_units(boundary_proj = boundary_proj,
+                           pu_size = NULL,
+                           pu_threshold = 8.5e5,
+                           limit_to_mainland = FALSE)
+
+terra::plot(pus)
+```
+
+```{r, fig.width = w, fig.height = h}
+# get feature data
+wad_dat <- get_wad_data()
+
+terra::plot(wad_dat)
+```
+
+
+```{r, fig.width = w, fig.height = h}
+# crop and normalise data
+wadOut <- make_normalised_raster(raster_in = wad_dat,
+                                 pus = pus,
+                                 iso3 = "NPL")
+
+terra::plot(wadOut)
+```
