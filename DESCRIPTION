@@ -9,3 +9,28 @@ License: CC BY 4.0
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.1
+Suggests:
+    assertthat,
+    DBI,
+    ggplot2,
+    klippy,
+    knitr,
+    prioritizr,
+    rmarkdown,
+    RPostgres,
+    testthat (>= 3.0.0),
+    wdpar
+VignetteBuilder: knitr
+Depends:
+    R (>= 3.5.0)
+Imports: 
+    dplyr,
+    glue,
+    magrittr,
+    plyr,
+    rlang,
+    sf,
+    terra,
+    units
+Config/testthat/edition: 3
+LazyData: true
