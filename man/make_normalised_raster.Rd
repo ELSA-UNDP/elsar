@@ -33,3 +33,21 @@ A \code{raster}file that has been aligned and normalised
 \code{make_normalised_raster()}allows you to align, normalise and save a raster file. This is applicable for the following data
 This is applicable for the following data sets: certified forests, drought risk, flood risk, intact wilderness area, soc difference, threatened species richness, voc, wad convergence evidence
 }
+\examples{
+boundary_proj <- make_boundary(
+  boundary_in = boundary_dat,
+  iso3 = "NPL",
+  iso3_column = "iso3cd",
+  do_project = TRUE
+)
+
+pus <- make_planning_units(boundary_proj = boundary_proj,
+                           pu_size = NULL,
+                           pu_threshold = 8.5e5,
+                           limit_to_mainland = FALSE)
+wad_dat <- get_wad_data()
+
+wadOut <- make_normalised_raster(raster_in = wad_dat,
+                                 pus = pus,
+                                 iso3 = "NPL")
+}
