@@ -13,6 +13,7 @@ Suggests:
     assertthat,
     DBI,
     ggplot2,
+    here,
     klippy,
     knitr,
     prioritizr,
@@ -25,11 +26,13 @@ Depends:
     R (>= 3.5.0)
 Imports: 
     dplyr,
+    exactextractr,
     glue,
     magrittr,
     plyr,
     rlang,
     sf,
+    stringr,
     terra,
     units
 Config/testthat/edition: 3

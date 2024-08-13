@@ -9,6 +9,7 @@
 #' @param designation_mab logical. If `FALSE`, excludes UNESCO MAB areas.
 #' @param buffer_points logical. Only relevant when `"POINT"` or `"MULTIPOINT"` geometries exist in the data. If `TRUE`, creates a circular buffer around `"POINT"` data based on area information data that is then used as polygon data needed for \pkg{exactextractr} calculations.
 #' @param area_column A string of the column name with the area information needed for buffer calculations.
+#' @param nQuadSegs An integer specifying the number of segments to use for buffering. Default is 50.
 #' @param pus A raster file that contains the reference spatial extent, crs etc.in form of the planning units.
 #' @param output_path An optional output path for the created file.
 #'
@@ -34,7 +35,7 @@
 #' current_pas <- make_protected_areas(
 #'   iso3 = "NPL",
 #'   download_path = here::here(),
-#'   buffer_points = FALSE,
+#'   buffer_points = TRUE,
 #'   pus = pus
 #' )
 #' }
@@ -47,6 +48,7 @@ make_protected_areas <- function(from_wdpa = TRUE,
                                  designation_mab = FALSE,
                                  buffer_points = TRUE,
                                  area_column = "REP_AREA",
+                                 nQuadSegs = 50,
                                  pus,
                                  output_path = NULL) {
   # load data (either with wdpar package or locally saved: load outside and then put sf_in here)
@@ -54,31 +56,40 @@ make_protected_areas <- function(from_wdpa = TRUE,
     pa <- wdpar::wdpa_fetch(iso3,
       wait = TRUE,
       download_dir = download_path
-    )
+    ) %>%
+      sf::st_transform(sf::st_crs(pus))
   } else {
-    pa <- sf_in
+    pa <- sf_in %>%
+      sf::st_transform(sf::st_crs(pus))
   }
   # filter for MPAs to be included
   assertthat::assert_that(
     all(status %in% c("Designated", "Established", "Inscribed", "Proposed", "Adopted")),
-    all(status %in% c(0, 1))
+    all(pa_def %in% c(0, 1))
   )
 
   pa <- pa %>%
     dplyr::filter(
-      STATUS %in% status,
-      PA_DEF %in% pa_def
+      .data$STATUS %in% status,
+      .data$PA_DEF %in% pa_def
     )
 
   if (designation_mab == FALSE) {
     pa <- pa %>%
-      dplyr::filter(!stringr::str_detect(DESIG, "MAB")) # Exclude UNESCO MAB areas
+      dplyr::filter(!stringr::str_detect(.data$DESIG, "MAB")) # Exclude UNESCO MAB areas
   }
 
   # exactextractr only works with polygon information; need to deal with points
   if (("MULTIPOINT" %in% sf::st_geometry_type(pa)) || ("POINT" %in% sf::st_geometry_type(pa))) {
     if (buffer_points) { # buffer around "POINTS" and make them into polygons
-      # ADD LATER
+      pa <- convert_points_polygon(wdpa_layer = pa,
+                                area_crs = sf::st_crs(pa),
+                                area_attr = area_column,
+                                nQuadSegs = nQuadSegs) %>%
+        sf::st_transform(sf::st_crs(pus)) %>%
+        dplyr::summarise() %>%
+        sf::st_make_valid()
+
     } else { # only keep polygon and multipolygon information
       pa <- pa %>%
         sf::st_transform(sf::st_crs(pus)) %>%

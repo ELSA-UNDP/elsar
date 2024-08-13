@@ -14,6 +14,7 @@ make_protected_areas(
   designation_mab = FALSE,
   buffer_points = TRUE,
   area_column = "REP_AREA",
+  nQuadSegs = 50,
   pus,
   output_path = NULL
 )
@@ -36,6 +37,8 @@ make_protected_areas(
 \item{buffer_points}{logical. Only relevant when \code{"POINT"} or \code{"MULTIPOINT"} geometries exist in the data. If \code{TRUE}, creates a circular buffer around \code{"POINT"} data based on area information data that is then used as polygon data needed for \pkg{exactextractr} calculations.}
 
 \item{area_column}{A string of the column name with the area information needed for buffer calculations.}
+
+\item{nQuadSegs}{An integer specifying the number of segments to use for buffering. Default is 50.}
 
 \item{pus}{A raster file that contains the reference spatial extent, crs etc.in form of the planning units.}
 
@@ -66,7 +69,7 @@ pus <- make_planning_units(
 current_pas <- make_protected_areas(
   iso3 = "NPL",
   download_path = here::here(),
-  buffer_points = FALSE,
+  buffer_points = TRUE,
   pus = pus
 )
 }
