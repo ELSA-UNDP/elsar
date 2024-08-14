@@ -22,7 +22,6 @@ Suggests:
     ggplot2,
     here,
     kableExtra,
-    klippy,
     knitr,
     prioritizr,
     readr,
