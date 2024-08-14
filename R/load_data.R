@@ -28,7 +28,7 @@
 #'                            db_info = postgres_dict,
 #'                            iso3_column = "iso3cd",
 #'                            iso3 = "NPL")
-#' #' }
+#' }
 load_data <- function(file_name,
                       file_path = NULL,
                       file_lyr = NULL,

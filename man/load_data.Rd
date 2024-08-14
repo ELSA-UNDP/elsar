@@ -52,5 +52,5 @@ load_postgres <- load_data(file_name = "bnda_simplified",file_type = "postgres",
                            db_info = postgres_dict,
                            iso3_column = "iso3cd",
                            iso3 = "NPL")
-#' }
+}
 }
