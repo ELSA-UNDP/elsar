@@ -1,0 +1,37 @@
+---
+title: "Processing global data in R"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{data-info2}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, message=FALSE}
+library(elsaFunctions)
+library(readr)
+library(dplyr)
+library(kableExtra)
+
+```
+
+
+
+```{r, echo = FALSE, message=FALSE, warning=FALSE}
+data_summary <- read_delim("data_summary.csv", delim = ";") %>%
+  kable() %>%
+  kable_styling("hover", full_width = F, font_size = 10) %>%
+ # kable_paper("hover", full_width = F) %>%
+  kable_styling(font_size = 10) %>%
+  column_spec(1, width = "6cm", bold = T) %>%
+  column_spec(2:6, width = "4cm")
+data_summary
+```
+
