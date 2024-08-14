@@ -18,5 +18,10 @@ Useful links:
 \author{
 \strong{Maintainer}: Scott Atkinson \email{scott.atkinson@undp.org} (\href{https://orcid.org/YOUR-ORCID-ID}{ORCID})
 
+Authors:
+\itemize{
+  \item Sandra Neubert \email{s.neubert@uq.edu.au} (\href{https://orcid.org/0000-0002-3112-4116}{ORCID})
+}
+
 }
 \keyword{internal}
