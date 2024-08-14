@@ -2,8 +2,15 @@ Package: elsaFunctions
 Title: Functions and Tools For Creating ELSA Tier 1 Data Stacks
 Version: 0.0.0.9000
 Authors@R: 
-    person("Scott", "Atkinson", , "scott.atkinson@undp.org", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
+    c(person("Scott", "Atkinson", , "scott.atkinson@undp.org", role = c("aut", "cre"),
+           comment = c(ORCID = "YOUR-ORCID-ID")),
+    person(
+    given = "Sandra",
+      family = "Neubert",
+      role = c("aut"),
+      email = "s.neubert@uq.edu.au",
+      comment = c(ORCID = "0000-0002-3112-4116")
+      ))
 Description: What the package does (one paragraph).
 License: CC BY 4.0
 Encoding: UTF-8

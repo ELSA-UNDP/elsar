@@ -1,4 +1,9 @@
 url: https://elsa-undp.github.io/elsaFunctions/
 template:
   bootstrap: 5
-
+articles:
+development:
+  destination:
+  version_label: info
+  version_tooltip: "The package is in the early stages of development. Use with caution."
+reference:
