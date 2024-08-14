@@ -8,6 +8,13 @@
 \description{
 What the package does (one paragraph).
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://elsa-undp.github.io/elsaFunctions/}
+}
+
+}
 \author{
 \strong{Maintainer}: Scott Atkinson \email{scott.atkinson@undp.org} (\href{https://orcid.org/YOUR-ORCID-ID}{ORCID})
 

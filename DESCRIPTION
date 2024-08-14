@@ -13,9 +13,12 @@ Suggests:
     assertthat,
     DBI,
     ggplot2,
+    here,
+    kableExtra,
     klippy,
     knitr,
     prioritizr,
+    readr,
     rmarkdown,
     RPostgres,
     testthat (>= 3.0.0),
@@ -25,12 +28,15 @@ Depends:
     R (>= 3.5.0)
 Imports: 
     dplyr,
+    exactextractr,
     glue,
     magrittr,
     plyr,
     rlang,
     sf,
+    stringr,
     terra,
     units
 Config/testthat/edition: 3
 LazyData: true
+URL: https://elsa-undp.github.io/elsaFunctions/
