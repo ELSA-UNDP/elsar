@@ -12,7 +12,7 @@ This is applicable for the following data sets: certified forests, drought risk,
     
     <a class="navbar-brand me-2" href="../index.html">elsaFunctions</a>
 
-    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.0.9000</small>
+    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,6 +59,7 @@ This is applicable for the following data sets: certified forests, drought risk,
 <span>  <span class="va">pus</span>,</span>
 <span>  <span class="va">iso3</span>,</span>
 <span>  invert <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  rescaled <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  <span class="va">name_out</span>,</span>
 <span>  output_path <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -71,7 +72,7 @@ This is applicable for the following data sets: certified forests, drought risk,
 
 
 <dt>pus</dt>
-<dd><p>A raster file that contains the reference spatial extent, crs etc.in form of the planning units</p></dd>
+<dd><p>A <code>SpatRaster</code> file that contains the reference spatial extent, crs etc.in form of the planning units</p></dd>
 
 
 <dt>iso3</dt>
@@ -79,7 +80,11 @@ This is applicable for the following data sets: certified forests, drought risk,
 
 
 <dt>invert</dt>
-<dd><p>Logical. If TRUE, highest values in the original dataset should be valued the lowest in the prioritisation.</p></dd>
+<dd><p>Logical. Default is FALSE. If TRUE, highest values in the original dataset should be valued the lowest in the prioritisation.</p></dd>
+
+
+<dt>rescaled</dt>
+<dd><p>Logical. Default is TRUE. Should remain TRUE unless there is a very specific reason not to rescale.</p></dd>
 
 
 <dt>name_out</dt>
@@ -94,7 +99,7 @@ This is applicable for the following data sets: certified forests, drought risk,
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     
 
-<p>A <code>raster</code>file that has been aligned and normalised</p>
+<p>A <code>SpatRaster</code> file that has been aligned and normalised</p>
     </div>
 
     <div class="section level2">

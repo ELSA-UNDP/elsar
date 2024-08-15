@@ -31,6 +31,12 @@
     <loc>https://elsa-undp.github.io/elsaFunctions/reference/elsaFunctions-package.html</loc>
   </url>
   <url>
+    <loc>https://elsa-undp.github.io/elsaFunctions/reference/extract_filename_filetype.html</loc>
+  </url>
+  <url>
+    <loc>https://elsa-undp.github.io/elsaFunctions/reference/get_all_features.html</loc>
+  </url>
+  <url>
     <loc>https://elsa-undp.github.io/elsaFunctions/reference/index.html</loc>
   </url>
   <url>
@@ -41,6 +47,9 @@
   </url>
   <url>
     <loc>https://elsa-undp.github.io/elsaFunctions/reference/make_custom_projection.html</loc>
+  </url>
+  <url>
+    <loc>https://elsa-undp.github.io/elsaFunctions/reference/make_forest_integrity.html</loc>
   </url>
   <url>
     <loc>https://elsa-undp.github.io/elsaFunctions/reference/make_normalised_raster.html</loc>
