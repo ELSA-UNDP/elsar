@@ -4,13 +4,14 @@
 #' This is applicable for the following data sets: certified forests, drought risk, flood risk, intact wilderness area, soc difference, threatened species richness, voc, wad convergence evidence
 #'
 #' @param raster_in A raster file that contains the data to be put into right format
-#' @param pus A raster file that contains the reference spatial extent, crs etc.in form of the planning units
+#' @param pus A `SpatRaster` file that contains the reference spatial extent, crs etc.in form of the planning units
 #' @param iso3 A string of the iso3 name of the data (country name)
-#' @param invert Logical. If TRUE, highest values in the original dataset should be valued the lowest in the prioritisation.
+#' @param invert Logical. Default is FALSE. If TRUE, highest values in the original dataset should be valued the lowest in the prioritisation.
+#' @param rescaled Logical. Default is TRUE. Should remain TRUE unless there is a very specific reason not to rescale.
 #' @param name_out A string with the data name that will be used for the output `tif`file
 #' @param output_path An optional output path for the created file.
 #'
-#' @return A `raster`file that has been aligned and normalised
+#' @return A `SpatRaster` file that has been aligned and normalised
 #' @export
 #'
 #' @examples
@@ -34,6 +35,7 @@ make_normalised_raster <- function(raster_in,
                                    pus,
                                    iso3,
                                    invert = FALSE,
+                                   rescaled = TRUE,
                                    name_out,
                                    output_path = NULL) {
   # reprojecting the global data would take too long
@@ -50,16 +52,21 @@ make_normalised_raster <- function(raster_in,
     dat_aligned = -dat_aligned
   }
 
-  raster_rescaled <- rescale_raster(dat_aligned)
+  if (rescaled) {
+    dat_aligned <- rescale_raster(dat_aligned)
+  } else {
+    warning("NOTE: Raster is NOT rescaled.")
+  }
 
   if (!is.null(output_path)) {
-    terra::writeRaster(raster_rescaled,
+    terra::writeRaster(dat_aligned,
                        glue::glue("{output_path}/{name_out}_{iso3}.tif"),
                        gdal = c("COMPRESS=DEFLATE"),
                        NAflag = -9999,
-                       overwrite = TRUE
+                       overwrite = TRUE,
+                       filetype = "COG"
     )
   }
 
-  return(raster_rescaled)
+  return(dat_aligned)
 }

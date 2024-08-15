@@ -9,6 +9,7 @@ make_normalised_raster(
   pus,
   iso3,
   invert = FALSE,
+  rescaled = TRUE,
   name_out,
   output_path = NULL
 )
@@ -16,18 +17,20 @@ make_normalised_raster(
 \arguments{
 \item{raster_in}{A raster file that contains the data to be put into right format}
 
-\item{pus}{A raster file that contains the reference spatial extent, crs etc.in form of the planning units}
+\item{pus}{A \code{SpatRaster} file that contains the reference spatial extent, crs etc.in form of the planning units}
 
 \item{iso3}{A string of the iso3 name of the data (country name)}
 
-\item{invert}{Logical. If TRUE, highest values in the original dataset should be valued the lowest in the prioritisation.}
+\item{invert}{Logical. Default is FALSE. If TRUE, highest values in the original dataset should be valued the lowest in the prioritisation.}
+
+\item{rescaled}{Logical. Default is TRUE. Should remain TRUE unless there is a very specific reason not to rescale.}
 
 \item{name_out}{A string with the data name that will be used for the output \code{tif}file}
 
 \item{output_path}{An optional output path for the created file.}
 }
 \value{
-A \code{raster}file that has been aligned and normalised
+A \code{SpatRaster} file that has been aligned and normalised
 }
 \description{
 \code{make_normalised_raster()}allows you to align, normalise and save a raster file. This is applicable for the following data
