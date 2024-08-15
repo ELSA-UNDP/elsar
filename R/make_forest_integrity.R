@@ -11,7 +11,11 @@
 #'
 #' @examples
 #' \dontrun{
-#' forest_integrity <- make_forest_integrity(raster_flii = raster_flii, raster_fsii = raster_fsii, pus = pus)
+#' forest_integrity <- make_forest_integrity(
+#'   raster_flii = raster_flii,
+#'   raster_fsii = raster_fsii,
+#'   pus = pus
+#' )
 #' }
 make_forest_integrity <- function(raster_flii,
                                   raster_fsii,

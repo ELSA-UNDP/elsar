@@ -3,6 +3,7 @@
 export("%>%")
 export(convert_points_polygon)
 export(extract_filename_filetype)
+export(get_all_features)
 export(get_wad_data)
 export(load_data)
 export(make_boundary)
