@@ -7,3 +7,33 @@ development:
   version_label: info
   version_tooltip: "The package is in the early stages of development. Use with caution."
 reference:
+
+- title: Prepare Planning Region
+  desc: Functions to prepare the planning region for the ELSA workflow
+- contents:
+  - make_boundary
+  - make_planning_units
+
+- title: Prepare Feature Data
+  desc: Functions to prepare the global datasets for the ELSA workflow
+- contents:
+  - get_all_features
+  - make_forest_integrity
+  - make_normalised_raster
+  - make_protected_areas
+
+- title: Helper Functions
+- contents:
+  - load_data
+  - make_custom_projection
+
+- title: Utilities
+- contents:
+  - convert_points_polygon
+  - extract_filename_filetype
+  - rescale_raster
+
+- title: Datasets
+- contents:
+  - boundary_dat
+  - get_wad_data

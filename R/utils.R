@@ -102,3 +102,32 @@ convert_points_polygon <- function(wdpa_layer,
     return(points_buffered)
   }
 }
+
+#' Extract the file name and file type of data in the local path
+#'
+#' This is a helper function used in the wrapper function to load local data (can be extended later to work with postgres).
+#'
+#' @param data_name The name of the data of interest (needs to be in the way provided here in the file name)
+#' @param file_path The local path where the data is saved.
+#'
+#' @return A `list` in the form of a dictionary that contains "filename" and "filetype". Can be used as inputs for [load_data()].
+#' @export
+#'
+extract_filename_filetype <- function(data_name, file_path) {
+  my_files <- list.files(path = file_path)
+  input_string <- my_files[grep(data_name, my_files)]
+
+  # Use gregexpr to find all occurrences of "." in the string (works also if there's another "." in the name)
+  last_dot_position <- tail(gregexpr("\\.", input_string)[[1]], 1)
+
+  # Extract substring starting just after the last "."
+  filetype <- substring(input_string, last_dot_position + 1)
+
+  # Extract substring from the start of the string
+  filename <- substring(input_string, 1, last_dot_position)
+
+  return(list(filetype = filetype, filename = filename))
+}
+
+
+

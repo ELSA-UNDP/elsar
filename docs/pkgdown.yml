@@ -4,7 +4,7 @@ pkgdown_sha: ~
 articles:
   data-info: data-info.html
   elsaFunctions: elsaFunctions.html
-last_built: 2024-08-14T03:18Z
+last_built: 2024-08-15T05:44Z
 urls:
   reference: https://elsa-undp.github.io/elsaFunctions/reference
   article: https://elsa-undp.github.io/elsaFunctions/articles
