@@ -9,6 +9,8 @@ load_data(
   file_path = NULL,
   file_lyr = NULL,
   file_type,
+  wkt_filter = FALSE,
+  bb_extend = NULL,
   db_info,
   iso3_column = "iso3cd",
   iso3
@@ -22,6 +24,10 @@ load_data(
 \item{file_lyr}{optional. Layer information of data.}
 
 \item{file_type}{character of file type. Current options are: "postgres", "shp", "gpkg", "geojson", "tif", "tiff", "grd", "gri", "nc", "hdf"}
+
+\item{wkt_filter}{character; WKT representation of a spatial filter that is used to bound loaded data}
+
+\item{bb_extend}{\code{SpatRaster} used as bounding box when wkt_filter = TRUE, e.g. planning units}
 
 \item{db_info}{list in the style of a dictionary. Only needed when file_type = "postgres". Needs to have the following structure and information: postgres_dict <- c(host = "\if{html}{\out{<yourhost>}}", dbname ="\if{html}{\out{<yourdbname>}}", port = \if{html}{\out{<portNumber>}}, user = "\if{html}{\out{<yourusername>}}", password = "\if{html}{\out{<yourpassword>}}")}
 
@@ -48,7 +54,8 @@ postgres_dict <- c(host = "<yourhost>",
                    port = <portNumber>,
                    user = "<yourusername>",
                    password = "<yourpassword>")
-load_postgres <- load_data(file_name = "bnda_simplified",file_type = "postgres",
+load_postgres <- load_data(file_name = "bnda_simplified",
+                            file_type = "postgres",
                            db_info = postgres_dict,
                            iso3_column = "iso3cd",
                            iso3 = "NPL")

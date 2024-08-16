@@ -126,6 +126,12 @@ extract_filename_filetype <- function(data_name, file_path) {
   # Extract substring from the start of the string
   filename <- substring(input_string, 1, last_dot_position)
 
+  if ("shp" %in% filetype) {
+    index <- which(filetype == "shp")
+    filetype <- "shp"
+    filename <- filename[index]
+  }
+
   return(list(filetype = filetype, filename = filename))
 }
 

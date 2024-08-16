@@ -25,6 +25,10 @@ Create the forest integrity index using flii and fsii data
 }
 \examples{
 \dontrun{
-forest_integrity <- make_forest_integrity(raster_flii = raster_flii, raster_fsii = raster_fsii, pus = pus)
+forest_integrity <- make_forest_integrity(
+  raster_flii = raster_flii,
+  raster_fsii = raster_fsii,
+  pus = pus
+)
 }
 }
