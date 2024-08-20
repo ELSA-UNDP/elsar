@@ -2,13 +2,13 @@
 <url><loc>https://elsa-undp.github.io/elsaFunctions/404.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsaFunctions/LICENSE.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsaFunctions/articles/data-info.html</loc></url>
-<url><loc>https://elsa-undp.github.io/elsaFunctions/articles/elsaFunctions.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsaFunctions/articles/elsaR.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsaFunctions/articles/index.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsaFunctions/authors.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsaFunctions/index.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsaFunctions/reference/boundary_dat.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsaFunctions/reference/convert_points_polygon.html</loc></url>
-<url><loc>https://elsa-undp.github.io/elsaFunctions/reference/elsaFunctions-package.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsaFunctions/reference/elsar-package.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsaFunctions/reference/extract_filename_filetype.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsaFunctions/reference/get_all_features.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsaFunctions/reference/index.html</loc></url>
@@ -16,6 +16,7 @@
 <url><loc>https://elsa-undp.github.io/elsaFunctions/reference/make_boundary.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsaFunctions/reference/make_custom_projection.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsaFunctions/reference/make_forest_integrity.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsaFunctions/reference/make_mangroves.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsaFunctions/reference/make_normalised_raster.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsaFunctions/reference/make_planning_units.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsaFunctions/reference/make_protected_areas.html</loc></url>
