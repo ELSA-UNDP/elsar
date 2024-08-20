@@ -63,7 +63,7 @@ make_mangroves <- function(sf_in, # rename function name later
       terra::mask(pus, maskvalues = 0) %>%
       rescale_raster()
   } else {
-    raster_out <- rast(pus)
+    raster_out <- terra::rast(pus)
   }
 
   #save if wanted

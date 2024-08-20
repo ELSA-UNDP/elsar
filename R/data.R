@@ -4,7 +4,7 @@
 #' @export
 get_wad_data <- function() {
   x <- terra::rast(
-    system.file("extdata", "wad_dat.tif", package = "elsaFunctions")
+    system.file("extdata", "wad_dat.tif", package = "elsar")
   )
   x
 }

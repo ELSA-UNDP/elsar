@@ -1,1 +1,1 @@
-# ELSA Functions R package
+# elsaR R package

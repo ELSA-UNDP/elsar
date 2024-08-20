@@ -22,7 +22,7 @@ fig.align = "center"
 ```
 
 ```{r setup}
-library(elsaFunctions)
+library(elsar)
 ```
 
 # Overview
@@ -34,7 +34,7 @@ library(elsaFunctions)
 
 ```{r, message = FALSE}
 # load packages
-library(elsaFunctions)
+library(elsar)
 library(prioritizr)
 library(dplyr)
 library(ggplot2)
