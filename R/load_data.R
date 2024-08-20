@@ -4,6 +4,8 @@
 #' @param file_path path where local file is stored. Needs to be `NULL` when using postgres.
 #' @param file_lyr optional. Layer information of data.
 #' @param file_type character of file type. Current options are: "postgres", "shp", "gpkg", "geojson", "tif", "tiff", "grd", "gri", "nc", "hdf"
+#' @param wkt_filter character; WKT representation of a spatial filter that is used to bound loaded data
+#' @param bb_extend `SpatRaster` used as bounding box when wkt_filter = TRUE, e.g. planning units
 #' @param db_info list in the style of a dictionary. Only needed when file_type = "postgres". Needs to have the following structure and information: postgres_dict <- c(host = "<yourhost>", dbname ="<yourdbname>", port = <portNumber>, user = "<yourusername>", password = "<yourpassword>")
 #' @param iso3_column Only relevant when `file_type` "postgres" is selected. A string of the name of where iso3 information can be found in a dataset.
 #' @param iso3 The iso3 country code (character) of the country of interest.
@@ -24,7 +26,8 @@
 #'                    port = <portNumber>,
 #'                    user = "<yourusername>",
 #'                    password = "<yourpassword>")
-#' load_postgres <- load_data(file_name = "bnda_simplified",file_type = "postgres",
+#' load_postgres <- load_data(file_name = "bnda_simplified",
+#'                             file_type = "postgres",
 #'                            db_info = postgres_dict,
 #'                            iso3_column = "iso3cd",
 #'                            iso3 = "NPL")
@@ -33,6 +36,8 @@ load_data <- function(file_name,
                       file_path = NULL,
                       file_lyr = NULL,
                       file_type,
+                      wkt_filter = FALSE,
+                      bb_extend = NULL,
                       db_info,
                       iso3_column = "iso3cd", # "iso_sov1",
                       iso3) {
@@ -53,10 +58,31 @@ load_data <- function(file_name,
     to_load <- file.path(file_path, file_name)
 
     if (file_type %in% c("shp", "gpkg", "geojson")) {
+      if (wkt_filter) {
+        use_to_crop <- terra::ext(bb_extend) %>%
+          terra::as.polygons() %>%
+          sf::st_as_sf() %>%
+          sf::st_set_crs(value = terra::crs(bb_extend)) %>%
+          sf::st_transform(crs = 4326) %>%
+          sf::st_geometry() %>%
+          sf::st_as_text()
+      }
+
       if (!is.null(file_lyr)) {
+        if (wkt_filter) {
+          loaded_data <- sf::read_sf(to_load,
+                                     layer = file_lyr,
+                                     wkt_filter = use_to_crop)
+        } else {
         loaded_data <- sf::read_sf(to_load, layer = file_lyr)
+        }
       } else {
-        loaded_data <- sf::read_sf(to_load)
+        if (wkt_filter) {
+          loaded_data <- sf::read_sf(to_load,
+                                     wkt_filter = use_to_crop)
+        } else {
+          loaded_data <- sf::read_sf(to_load)
+        }
       }
     } else if (file_type %in% c("tif", "tiff", "grd", "gri", "nc", "hdf")) { #havent tested nc and hdf yet
       if (!is.null(file_lyr)) {

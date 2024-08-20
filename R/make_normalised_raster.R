@@ -3,7 +3,7 @@
 #' `make_normalised_raster()`allows you to align, normalise and save a raster file. This is applicable for the following data
 #' This is applicable for the following data sets: certified forests, drought risk, flood risk, intact wilderness area, soc difference, threatened species richness, voc, wad convergence evidence
 #'
-#' @param raster_in A raster file that contains the data to be put into right format
+#' @param raster_in A `SpatRaster` file that contains the data to be put into right format
 #' @param pus A `SpatRaster` file that contains the reference spatial extent, crs etc.in form of the planning units
 #' @param iso3 A string of the iso3 name of the data (country name)
 #' @param invert Logical. Default is FALSE. If TRUE, highest values in the original dataset should be valued the lowest in the prioritisation.

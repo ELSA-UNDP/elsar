@@ -15,7 +15,7 @@ make_normalised_raster(
 )
 }
 \arguments{
-\item{raster_in}{A raster file that contains the data to be put into right format}
+\item{raster_in}{A \code{SpatRaster} file that contains the data to be put into right format}
 
 \item{pus}{A \code{SpatRaster} file that contains the reference spatial extent, crs etc.in form of the planning units}
 

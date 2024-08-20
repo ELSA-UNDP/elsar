@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(elsaFunctions)
+library(elsar)
 
-test_check("elsaFunctions")
+test_check("elsar")

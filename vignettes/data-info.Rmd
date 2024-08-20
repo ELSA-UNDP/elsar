@@ -15,7 +15,7 @@ knitr::opts_chunk$set(
 ```
 
 ```{r setup, message=FALSE}
-library(elsaFunctions)
+library(elsar)
 library(readr)
 library(dplyr)
 library(kableExtra)
