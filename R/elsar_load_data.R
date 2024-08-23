@@ -7,6 +7,7 @@
 #' @param wkt_filter character; WKT representation of a spatial filter that is used to bound loaded data
 #' @param bb_extend `SpatRaster` used as bounding box when wkt_filter = TRUE, e.g. planning units
 #' @param db_info list in the style of a dictionary. Only needed when file_type = "postgres". Needs to have the following structure and information: postgres_dict <- c(host = "<yourhost>", dbname ="<yourdbname>", port = <portNumber>, user = "<yourusername>", password = "<yourpassword>")
+#' @param pg_connection Either a list in the style of a dictionary or a connection string. Only needed when `file_type = "postgres"`.
 #' @param iso3_column Only relevant when `file_type` "postgres" is selected. A string of the name of where iso3 information can be found in a dataset.
 #' @param iso3 The iso3 country code (character) of the country of interest.
 #'
@@ -27,10 +28,24 @@
 #'                    user = "<yourusername>",
 #'                    password = "<yourpassword>")
 #' load_postgres <- load_data(file_name = "bnda_simplified",
-#'                             file_type = "postgres",
+#'                            file_type = "postgres",
 #'                            db_info = postgres_dict,
 #'                            iso3_column = "iso3cd",
 #'                            iso3 = "NPL")
+#'
+#' # Using make_postgres_connection.R to create your PG string (on a PG database running locally)
+#' pg_conn <- make_postgres_connection(
+#'   dbname = "yourdatabase",
+#'   user = "yourusername",
+#'   password = "yourpassword")
+#'
+#' load_postgres <- load_data(
+#'   file_name = "bnda_simplified",
+#'   file_type = "postgres",
+#'   pg_connection = pg_conn,
+#'   iso3_column = "iso3cd",
+#'   iso3 = "NPL")
+#'
 #' }
 elsar_load_data <- function(file_name,
                       file_path = NULL,
@@ -39,17 +54,37 @@ elsar_load_data <- function(file_name,
                       wkt_filter = FALSE,
                       bb_extend = NULL,
                       db_info,
+                      pg_connection,
                       iso3_column = "iso3cd", # "iso_sov1",
                       iso3) {
   # create path to data
-  if (is.null(file_path) & file_type == "postgres") {
-    con <- RPostgres::dbConnect(RPostgres::Postgres(),
-                                host = db_info["host"][[1]],
-                                dbname = db_info["dbname"][[1]],
-                                port = db_info["port"][[1]],
-                                user = db_info["user"][[1]],
-                                password = db_info["password"][[1]]
-    )
+  if (is.null(file_path) & file_type == "postgres" ) {
+
+    # Check that at least one of db_info or pg_connection is provided
+    if (is.null(pg_connection) && is.null(db_info)) {
+      stop("Error: Both 'db_info' and 'pg_connection' are NULL. Please provide at least one.")
+    }
+
+    # Proceed with connection logic
+    if (is.null(pg_connection) && !is.null(db_info)) {
+      con <- RPostgres::dbConnect(
+        RPostgres::Postgres(),
+        host = db_info["host"][[1]],
+        dbname = db_info["dbname"][[1]],
+        port = db_info["port"][[1]],
+        user = db_info["user"][[1]],
+        password = db_info["password"][[1]]
+      )
+    } else {
+      con <- RPostgres::dbConnect(
+        RPostgres::Postgres(),
+        host = pg_connection[["host"]],
+        dbname = pg_connection[["dbname"]],
+        port = pg_connection[["port"]],
+        user = pg_connection[["user"]],
+        password = pg_connection[["password"]]
+      )
+    }
     loaded_data <- sf::st_read(
       dsn = con,
       query = glue::glue("SELECT * FROM {file_name} WHERE {iso3_column} = '{iso3}'")
