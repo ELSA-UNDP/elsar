@@ -116,7 +116,7 @@ terra::plot(wadOut)
 
 Instead of only having a quick look at the data by using the `terra` package, we can also create a plot using the plotting options integrated in the `elsar` package, such as `elsar_plot_static_raster_c()`, which allows to plot continuous raster data with `ggplot` or `tmap`.
 
-```{r, fig.width = 7, fig.height = 7}
+```{r, fig.width = 7, fig.height = 4}
 (plot_wad <- elsar_plot_static_raster_c(raster_in = wadOut, type = "ggplot_raster",
                                         legend_title = "WAD"))
 ```
@@ -130,7 +130,8 @@ custom_p <- ggplot2::scale_fill_distiller(
   aesthetics = c("fill"),
   oob = scales::squish)
 
-(plot_wad <- elsar_plot_static_raster_c(raster_in = wadOut, type = "ggplot_raster", custom_palette = custom_p,
+(plot_wad <- elsar_plot_static_raster_c(raster_in = wadOut, type = "ggplot_raster",
+                                        custom_palette = custom_p,
                                        background = wad_dat) + 
     elsar_plot_optics())
 ```

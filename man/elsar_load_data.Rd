@@ -11,7 +11,8 @@ elsar_load_data(
   file_type,
   wkt_filter = FALSE,
   bb_extend = NULL,
-  db_info,
+  db_info = NULL,
+  pg_connection = NULL,
   iso3_column = "iso3cd",
   iso3
 )
@@ -31,6 +32,8 @@ elsar_load_data(
 
 \item{db_info}{list in the style of a dictionary. Only needed when file_type = "postgres". Needs to have the following structure and information: postgres_dict <- c(host = "\if{html}{\out{<yourhost>}}", dbname ="\if{html}{\out{<yourdbname>}}", port = \if{html}{\out{<portNumber>}}, user = "\if{html}{\out{<yourusername>}}", password = "\if{html}{\out{<yourpassword>}}")}
 
+\item{pg_connection}{Either a list in the style of a dictionary or a connection string. Only needed when \code{file_type = "postgres"}.}
+
 \item{iso3_column}{Only relevant when \code{file_type} "postgres" is selected. A string of the name of where iso3 information can be found in a dataset.}
 
 \item{iso3}{The iso3 country code (character) of the country of interest.}
@@ -43,21 +46,34 @@ Load different types of data
 }
 \examples{
 \dontrun{
-load_tif <- load_data(file_name = "pu_nepal_450m.tif", file_path = localPath
+load_tif <- elsar_load_data(file_name = "pu_nepal_450m.tif", file_path = localPath
                           file_type = "tif")
 
-load_geojson <- load_data(file_name = "nepal.geojson", file_path = localPath,
+load_geojson <- elsar_load_data(file_name = "nepal.geojson", file_path = localPath,
                           file_type = "geojson")
 
-postgres_dict <- c(host = "<yourhost>",
-                   dbname ="<yourdbname>",
-                   port = <portNumber>,
-                   user = "<yourusername>",
-                   password = "<yourpassword>")
-load_postgres <- load_data(file_name = "bnda_simplified",
-                            file_type = "postgres",
+postgres_dict <- c(host = "yourhost",
+                   dbname ="yourdbname",
+                   port = portNumber,
+                   user = "yourusername",
+                   password = "yourpassword")
+
+load_postgres <- elsar_load_data(file_name = "bnda_simplified",
+                           file_type = "postgres",
                            db_info = postgres_dict,
                            iso3_column = "iso3cd",
                            iso3 = "NPL")
+
+pg_conn <- make_postgres_connection(
+  dbname = "yourdatabase",
+  user = "yourusername",
+  password = "yourpassword")
+
+load_postgres <- elsar_load_data(
+  file_name = "bnda_simplified",
+  file_type = "postgres",
+  pg_connection = pg_conn,
+  iso3_column = "iso3cd",
+  iso3 = "NPL")
 }
 }

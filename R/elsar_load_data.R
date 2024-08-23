@@ -16,36 +16,35 @@
 #'
 #' @examples
 #' \dontrun{
-#' load_tif <- load_data(file_name = "pu_nepal_450m.tif", file_path = localPath
+#' load_tif <- elsar_load_data(file_name = "pu_nepal_450m.tif", file_path = localPath
 #'                           file_type = "tif")
 #'
-#' load_geojson <- load_data(file_name = "nepal.geojson", file_path = localPath,
+#' load_geojson <- elsar_load_data(file_name = "nepal.geojson", file_path = localPath,
 #'                           file_type = "geojson")
 #'
-#' postgres_dict <- c(host = "<yourhost>",
-#'                    dbname ="<yourdbname>",
-#'                    port = <portNumber>,
-#'                    user = "<yourusername>",
-#'                    password = "<yourpassword>")
-#' load_postgres <- load_data(file_name = "bnda_simplified",
+#' postgres_dict <- c(host = "yourhost",
+#'                    dbname ="yourdbname",
+#'                    port = portNumber,
+#'                    user = "yourusername",
+#'                    password = "yourpassword")
+#'
+#' load_postgres <- elsar_load_data(file_name = "bnda_simplified",
 #'                            file_type = "postgres",
 #'                            db_info = postgres_dict,
 #'                            iso3_column = "iso3cd",
 #'                            iso3 = "NPL")
 #'
-#' # Using make_postgres_connection.R to create your PG string (on a PG database running locally)
 #' pg_conn <- make_postgres_connection(
 #'   dbname = "yourdatabase",
 #'   user = "yourusername",
 #'   password = "yourpassword")
 #'
-#' load_postgres <- load_data(
+#' load_postgres <- elsar_load_data(
 #'   file_name = "bnda_simplified",
 #'   file_type = "postgres",
 #'   pg_connection = pg_conn,
 #'   iso3_column = "iso3cd",
 #'   iso3 = "NPL")
-#'
 #' }
 elsar_load_data <- function(file_name,
                       file_path = NULL,
@@ -53,8 +52,8 @@ elsar_load_data <- function(file_name,
                       file_type,
                       wkt_filter = FALSE,
                       bb_extend = NULL,
-                      db_info,
-                      pg_connection,
+                      db_info = NULL,
+                      pg_connection = NULL,
                       iso3_column = "iso3cd", # "iso_sov1",
                       iso3) {
   # create path to data

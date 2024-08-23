@@ -27,6 +27,7 @@ reference:
 - contents:
   - elsar_load_data
   - make_custom_projection
+  - make_postgres_connection
 
 - title: Utilities
 - contents:

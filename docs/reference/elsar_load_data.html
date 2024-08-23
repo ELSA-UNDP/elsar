@@ -56,7 +56,8 @@
 <span>  <span class="va">file_type</span>,</span>
 <span>  wkt_filter <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  bb_extend <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  <span class="va">db_info</span>,</span>
+<span>  db_info <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  pg_connection <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  iso3_column <span class="op">=</span> <span class="st">"iso3cd"</span>,</span>
 <span>  <span class="va">iso3</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -90,6 +91,10 @@
 
 <dt>db_info</dt>
 <dd><p>list in the style of a dictionary. Only needed when file_type = "postgres". Needs to have the following structure and information: postgres_dict &lt;- c(host = "<yourhost>", dbname ="<yourdbname>", port = <portnumber>, user = "<yourusername>", password = "<yourpassword>")</yourpassword></yourusername></portnumber></yourdbname></yourhost></p></dd>
+
+
+<dt>pg_connection</dt>
+<dd><p>Either a list in the style of a dictionary or a connection string. Only needed when <code>file_type = "postgres"</code>.</p></dd>
 
 
 <dt>iso3_column</dt>

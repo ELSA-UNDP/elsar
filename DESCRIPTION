@@ -24,6 +24,7 @@ Suggests:
     prioritizr,
     readr,
     rmarkdown,
+    scales,
     RPostgres,
     testthat (>= 3.0.0),
     wdpar
@@ -41,7 +42,6 @@ Imports:
     magrittr,
     plyr,
     rlang,
-    scales,
     sf,
     stats,
     stringr,
