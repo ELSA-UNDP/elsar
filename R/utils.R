@@ -110,7 +110,7 @@ convert_points_polygon <- function(wdpa_layer,
 #' @param data_name The name of the data of interest (needs to be in the way provided here in the file name)
 #' @param file_path The local path where the data is saved.
 #'
-#' @return A `list` in the form of a dictionary that contains "filename" and "filetype". Can be used as inputs for [load_data()].
+#' @return A `list` in the form of a dictionary that contains "filename" and "filetype". Can be used as inputs for [elsar_load_data()].
 #' @export
 #'
 extract_filename_filetype <- function(data_name, file_path) {

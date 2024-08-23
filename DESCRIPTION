@@ -41,6 +41,7 @@ Imports:
     magrittr,
     plyr,
     rlang,
+    scales,
     sf,
     stats,
     stringr,

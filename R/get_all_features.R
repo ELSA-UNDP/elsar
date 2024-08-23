@@ -35,7 +35,7 @@ get_all_features <- function (feature_list, # needs lyr info added in somewhere
     list_dat <- extract_filename_filetype(data_name = "FML", #currently hard-coded; maybe change later; or make dictionary input that gives all the data options and takes e.g. certified_forests = "FML" or NULL when data not wanted.
                                           file_path = path_in)
 
-    raster_fml <- load_data(file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
+    raster_fml <- elsar_load_data(file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
                              file_type = list_dat["filetype"][[1]], file_path = path_in)
 
     fml <- make_normalised_raster(raster_in = raster_fml,
@@ -52,7 +52,7 @@ get_all_features <- function (feature_list, # needs lyr info added in somewhere
     list_dat <- extract_filename_filetype(data_name = "cropsuit", #currently hard-coded; maybe change later; or make dictionary input that gives all the data options and takes e.g. certified_forests = "FML" or NULL when data not wanted.
                                           file_path = path_in)
 
-    raster_cropsuit <- load_data(file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
+    raster_cropsuit <- elsar_load_data(file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
                             file_type = list_dat["filetype"][[1]], file_path = path_in)
 
     cropsuit <- make_normalised_raster(raster_in = raster_cropsuit,
@@ -70,7 +70,7 @@ get_all_features <- function (feature_list, # needs lyr info added in somewhere
     list_dat <- extract_filename_filetype(data_name = " ", #currently hard-coded; maybe change later; or make dictionary input that gives all the data options and takes e.g. certified_forests = "FML" or NULL when data not wanted.
                                           file_path = path_in)
 
-    raster_dr <- load_data(file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
+    raster_dr <- elsar_load_data(file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
                             file_type = list_dat["filetype"][[1]], file_path = path_in)
 
     dr <- make_normalised_raster(raster_in = raster_dr,
@@ -87,13 +87,13 @@ get_all_features <- function (feature_list, # needs lyr info added in somewhere
     list_dat <- extract_filename_filetype(data_name = "flii",
                                           file_path = path_in)
 
-    raster_flii <- load_data(file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
+    raster_flii <- elsar_load_data(file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
                              file_type = list_dat["filetype"][[1]], file_path = path_in)
 
     list_dat <- extract_filename_filetype(data_name = "fsii",
                                           file_path = path_in)
 
-    raster_fsii <- load_data(file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
+    raster_fsii <- elsar_load_data(file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
                              file_type = list_dat["filetype"][[1]], file_path = path_in)
 
 
@@ -110,7 +110,7 @@ get_all_features <- function (feature_list, # needs lyr info added in somewhere
     list_dat <- extract_filename_filetype(data_name = "soc", #currently hard-coded; maybe change later; or make dictionary input that gives all the data options and takes e.g. certified_forests = "FML" or NULL when data not wanted.
                                           file_path = path_in)
 
-    raster_soc <- load_data(file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
+    raster_soc <- elsar_load_data(file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
                            file_type = list_dat["filetype"][[1]], file_path = path_in)
 
     soc <- make_normalised_raster(raster_in = raster_soc,
@@ -127,7 +127,7 @@ get_all_features <- function (feature_list, # needs lyr info added in somewhere
     list_dat <- extract_filename_filetype(data_name = "wad", #currently hard-coded; maybe change later; or make dictionary input that gives all the data options and takes e.g. certified_forests = "FML" or NULL when data not wanted.
                                           file_path = path_in)
 
-    raster_wad <- load_data(file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
+    raster_wad <- elsar_load_data(file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
                             file_type = list_dat["filetype"][[1]], file_path = path_in)
 
     wad <- make_normalised_raster(raster_in = raster_wad,

@@ -25,7 +25,7 @@ reference:
 
 - title: Helper Functions
 - contents:
-  - load_data
+  - elsar_load_data
   - make_custom_projection
 
 - title: Utilities
@@ -50,4 +50,5 @@ reference:
 - title: Datasets
 - contents:
   - boundary_dat
+  - current_pas_sf
   - get_wad_data

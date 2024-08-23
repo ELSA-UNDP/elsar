@@ -32,7 +32,7 @@
 #'                            iso3_column = "iso3cd",
 #'                            iso3 = "NPL")
 #' }
-load_data <- function(file_name,
+elsar_load_data <- function(file_name,
                       file_path = NULL,
                       file_lyr = NULL,
                       file_type,

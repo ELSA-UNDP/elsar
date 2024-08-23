@@ -12,7 +12,7 @@ extract_filename_filetype(data_name, file_path)
 \item{file_path}{The local path where the data is saved.}
 }
 \value{
-A \code{list} in the form of a dictionary that contains "filename" and "filetype". Can be used as inputs for \code{\link[=load_data]{load_data()}}.
+A \code{list} in the form of a dictionary that contains "filename" and "filetype". Can be used as inputs for \code{\link[=elsar_load_data]{elsar_load_data()}}.
 }
 \description{
 This is a helper function used in the wrapper function to load local data (can be extended later to work with postgres).
