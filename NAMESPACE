@@ -2,6 +2,11 @@
 
 export("%>%")
 export(convert_points_polygon)
+export(elsar_extend)
+export(elsar_plot_background)
+export(elsar_plot_extra_data)
+export(elsar_plot_optics)
+export(elsar_plot_static_raster_c)
 export(extract_filename_filetype)
 export(get_all_features)
 export(get_wad_data)

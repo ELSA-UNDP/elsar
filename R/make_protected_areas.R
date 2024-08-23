@@ -10,6 +10,7 @@
 #' @param buffer_points logical. Only relevant when `"POINT"` or `"MULTIPOINT"` geometries exist in the data. If `TRUE`, creates a circular buffer around `"POINT"` data based on area information data that is then used as polygon data needed for \pkg{exactextractr} calculations.
 #' @param area_column A string of the column name with the area information needed for buffer calculations.
 #' @param nQuadSegs An integer specifying the number of segments to use for buffering. Default is 50.
+#' @param return_sf logical. Allows to return `sf`object if needed. Default is FALSE.
 #' @param pus A raster file that contains the reference spatial extent, crs etc.in form of the planning units.
 #' @param output_path An optional output path for the created file.
 #'
@@ -49,6 +50,7 @@ make_protected_areas <- function(from_wdpa = TRUE,
                                  buffer_points = TRUE,
                                  area_column = "REP_AREA",
                                  nQuadSegs = 50,
+                                 return_sf = FALSE,
                                  pus,
                                  output_path = NULL) {
   # load data (either with wdpar package or locally saved: load outside and then put sf_in here)
@@ -99,6 +101,9 @@ make_protected_areas <- function(from_wdpa = TRUE,
     }
   }
 
+  if (return_sf) {
+    return(pa)
+  } else {
   # get pa values in pus
   pa_raster <- exactextractr::coverage_fraction(pus, pa)[[1]] %>%
     terra::mask(pus, maskvalues = 0)
@@ -111,8 +116,9 @@ make_protected_areas <- function(from_wdpa = TRUE,
       NAflag = -9999,
       overwrite = TRUE,
       filetype = "COG"
-    )
-  }
+    )}
 
   return(pa_raster)
+  }
+
 }

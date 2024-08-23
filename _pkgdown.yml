@@ -1,4 +1,4 @@
-url: https://elsa-undp.github.io/elsaFunctions/
+url: https://elsa-undp.github.io/elsar/
 template:
   bootstrap: 5
 articles:
@@ -33,6 +33,19 @@ reference:
   - convert_points_polygon
   - extract_filename_filetype
   - rescale_raster
+
+- title: Plotting function
+  desc: Functions to plot input and output data of an ELSA workflow
+- contents:
+  - elsar_plot_static_raster_c
+
+- title: Utilities plotting
+  desc:
+- contents:
+  - elsar_plot_background
+  - elsar_extend
+  - elsar_plot_extra_data
+  - elsar_plot_optics
 
 - title: Datasets
 - contents:
