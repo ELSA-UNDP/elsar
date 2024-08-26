@@ -126,7 +126,7 @@ elsar_load_data <- function(file_name,
       }
     } else {
       message("Selected file_type might not be provided yet. Please add an
-            issue on , so we can add it to this function. In the meantime,
+            issue on https://github.com/ELSA-UNDP/elsar/issues, so we can add it to this function. In the meantime,
             please load your data outside this function.")
     }
 
