@@ -181,22 +181,7 @@ plot_dist <- elsar_plot_distribution(
     top = 0.4, # needs to be changed depending on plot dimensions
     align_to = "plot"
   )))
-#
-# (plot_wad_inset <- cowplot::ggdraw() +
-#   cowplot::draw_plot(plot_wad +
-#     elsar_plot_optics()) +
-#   cowplot::draw_plot(
-#     plot_dist +
-#       elsar_plot_optics() +
-#       ggplot2::theme(
-#         axis.title = ggplot2::element_blank(),
-#         axis.text.x = ggplot2::element_blank(),
-#         axis.ticks.x = ggplot2::element_blank()
-#       ),
-#     scale = 0.22, # size of inset plot compared to main plot
-#     y = -0.3, # needs to be changed depending on plot dimensions
-#     x = -0.28 # needs to be changed depending on plot dimensions
-#   ))
+
 ```
 We can also transform the data into categories and plot the main plot and the inset that way.
 

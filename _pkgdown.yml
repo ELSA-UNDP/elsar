@@ -39,12 +39,15 @@ reference:
   desc: Functions to plot input and output data of an ELSA workflow
 - contents:
   - elsar_plot_static_raster_c
+  - elsar_plot_static_raster_d
 
 - title: Utilities plotting
   desc:
 - contents:
-  - elsar_plot_background
+  - elsar_continuous_to_categorical
   - elsar_extend
+  - elsar_plot_background_c
+  - elsar_plot_background_d
   - elsar_plot_extra_data
   - elsar_plot_optics
 
