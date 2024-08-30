@@ -38,6 +38,7 @@ reference:
 - title: Plotting function
   desc: Functions to plot input and output data of an ELSA workflow
 - contents:
+  - elsar_plot_distribution
   - elsar_plot_static_raster_c
   - elsar_plot_static_raster_d
 
