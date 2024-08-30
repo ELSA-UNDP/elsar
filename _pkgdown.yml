@@ -1,4 +1,4 @@
-url: https://elsa-undp.github.io/elsaFunctions/
+url: https://elsa-undp.github.io/elsar/
 template:
   bootstrap: 5
 articles:
@@ -25,8 +25,9 @@ reference:
 
 - title: Helper Functions
 - contents:
-  - load_data
+  - elsar_load_data
   - make_custom_projection
+  - make_postgres_connection
 
 - title: Utilities
 - contents:
@@ -34,7 +35,25 @@ reference:
   - extract_filename_filetype
   - rescale_raster
 
+- title: Plotting function
+  desc: Functions to plot input and output data of an ELSA workflow
+- contents:
+  - elsar_plot_distribution
+  - elsar_plot_static_raster_c
+  - elsar_plot_static_raster_d
+
+- title: Utilities plotting
+  desc:
+- contents:
+  - elsar_continuous_to_categorical
+  - elsar_extend
+  - elsar_plot_background_c
+  - elsar_plot_background_d
+  - elsar_plot_extra_data
+  - elsar_plot_optics
+
 - title: Datasets
 - contents:
   - boundary_dat
+  - current_pas_sf
   - get_wad_data

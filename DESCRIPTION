@@ -1,6 +1,6 @@
 Package: elsar
 Title: Functions and Tools For Creating ELSA Tier 1 Data Stacks
-Version: 0.0.1
+Version: 0.0.2
 Authors@R: 
     c(person("Scott", "Atkinson", , "scott.atkinson@undp.org", role = c("aut", "cre"),
            comment = c(ORCID = "YOUR-ORCID-ID")),
@@ -15,17 +15,17 @@ Description: What the package does (one paragraph).
 License: CC BY 4.0
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 Suggests:
-    assertthat,
     DBI,
-    ggplot2,
     here,
     kableExtra,
     knitr,
+    patchwork,
     prioritizr,
     readr,
     rmarkdown,
+    scales,
     RPostgres,
     testthat (>= 3.0.0),
     wdpar
@@ -33,16 +33,22 @@ VignetteBuilder: knitr
 Depends:
     R (>= 3.5.0)
 Imports: 
+    assertthat,
     dplyr,
     exactextractr,
+    ggnewscale,
+    ggplot2,
+    ggridges,
+    ggspatial,
     glue,
     magrittr,
     plyr,
     rlang,
     sf,
+    stats,
     stringr,
     terra,
     units
 Config/testthat/edition: 3
 LazyData: true
-URL: https://elsa-undp.github.io/elsaFunctions/
+URL: https://elsa-undp.github.io/elsar/

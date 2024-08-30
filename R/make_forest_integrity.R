@@ -11,17 +11,45 @@
 #'
 #' @examples
 #' \dontrun{
-#' forest_integrity <- make_forest_integrity(
+#' forest_integrity1 <- make_forest_integrity(
+#'   raster_flii = raster_flii,
+#'   pus = pus
+#' )
+#'
+#' forest_integrity2 <- make_forest_integrity(
+#'   raster_fsii = raster_fsii,
+#'   pus = pus
+#' )
+#'
+#' forest_integrity3 <- make_forest_integrity(
 #'   raster_flii = raster_flii,
 #'   raster_fsii = raster_fsii,
 #'   pus = pus
 #' )
+#'
+#' zero_fsii <- raster_fsii
+#' zero_fsii[zero_fsii < 14] = 0
+#'
+#' forest_integrity4 <- make_forest_integrity(
+#'   raster_flii = raster_flii,
+#'   raster_fsii = raster_fsii,
+#'   pus = pus
+#' )
+#'
 #' }
-make_forest_integrity <- function(raster_flii,
-                                  raster_fsii,
+make_forest_integrity <- function(raster_flii = NULL,
+                                  raster_fsii = NULL,
                                   pus,
                                   iso3,
                                   output_path = NULL) {
+
+  if (!is.null(raster_flii) & !is.null(raster_fsii)) {
+
+    assertthat::assert_that(
+      inherits(raster_flii, "SpatRaster"),
+      inherits(raster_fsii, "SpatRaster")
+    )
+
   # crop and align to pus
   suppressWarnings(flii <- make_normalised_raster(
     raster_in = raster_flii,
@@ -35,9 +63,48 @@ make_forest_integrity <- function(raster_flii,
     rescaled = FALSE
   ))
 
-  # get mean of fsii and flii and rescale
-  fi <- terra::mean(fsii + flii)
-  raster_rescaled <- rescale_raster(fi)
+  if ((terra::global(fsii, sum, na.rm=TRUE)[[1]]) == 0) {
+    message("Fsii only contains 0s for the study area.
+            Forest integrity will be caluclated using flii only.")
+
+    raster_rescaled <- rescale_raster(flii)
+
+  } else if ((terra::global(flii, sum, na.rm=TRUE)[[1]]) == 0) {
+
+    message("Flii only contains 0s for the study area.
+            Forest integrity will be caluclated using fsii only.")
+
+    raster_rescaled <- rescale_raster(fsii)
+
+  } else if (((terra::global(fsii, sum, na.rm=TRUE)[[1]]) > 0) & ((terra::global(fsii, sum, na.rm=TRUE)[[1]]) > 0)) {
+    message("Forest integrity will be caluclated using flii and fsii.")
+
+    # get mean of fsii and flii and rescale
+    fi <- terra::mean(fsii + flii)
+    raster_rescaled <- rescale_raster(fi)
+
+  } else {
+    message("Both of your input data files only contain 0 values. Please check your input data.")
+  }
+
+  } else if (is.null(raster_flii) & !is.null(raster_fsii)) {
+
+    message("Only fsii data provided. Forest integrity will be caluclated using fsii only.")
+
+    raster_rescaled <- make_normalised_raster(
+      raster_in = raster_fsii,
+      pus = pus
+    )
+
+  } else if (!is.null(raster_flii) & is.null(raster_fsii)) {
+    message("Only flii data provided. Forest integrity will be caluclated using flii only.")
+
+    raster_rescaled <- make_normalised_raster(
+      raster_in = raster_flii,
+      pus = pus
+    )
+
+  }
 
   if (!is.null(output_path)) {
     terra::writeRaster(raster_rescaled,

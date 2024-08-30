@@ -15,6 +15,7 @@ make_protected_areas(
   buffer_points = TRUE,
   area_column = "REP_AREA",
   nQuadSegs = 50,
+  return_sf = FALSE,
   pus,
   output_path = NULL
 )
@@ -39,6 +40,8 @@ make_protected_areas(
 \item{area_column}{A string of the column name with the area information needed for buffer calculations.}
 
 \item{nQuadSegs}{An integer specifying the number of segments to use for buffering. Default is 50.}
+
+\item{return_sf}{logical. Allows to return \code{sf}object if needed. Default is FALSE.}
 
 \item{pus}{A raster file that contains the reference spatial extent, crs etc.in form of the planning units.}
 

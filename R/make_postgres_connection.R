@@ -12,6 +12,7 @@
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' # Example with explicit parameters
 #' connection_dict <- make_postgres_connection(
 #'   host = 'localhost',
@@ -23,6 +24,7 @@
 #'
 #' # Use the connection dictionary in other functions
 #' load_data(file_name = 'mytable', file_type = 'postgres', db_info = connection_dict)
+#' }
 make_postgres_connection <- function(host = "localhost",
                                      dbname,
                                      port = 5432,

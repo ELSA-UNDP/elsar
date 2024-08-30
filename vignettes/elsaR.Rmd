@@ -12,17 +12,13 @@ h <- 3.5
 w <- 3.5
 
 knitr::opts_chunk$set(
-collapse = TRUE,
-comment = "#>",
-warning = FALSE,
-cache = FALSE,
-eval = TRUE,
-fig.align = "center"
+  collapse = TRUE,
+  comment = "#>",
+  warning = FALSE,
+  cache = FALSE,
+  eval = TRUE,
+  fig.align = "center"
 )
-```
-
-```{r setup}
-library(elsar)
 ```
 
 # Overview
@@ -43,68 +39,216 @@ library(terra)
 
 # set seed for reproducibility
 set.seed(500)
-
 ```
 
+## Planning Region
+
+At the start of the analysis, the planning region needs to be defined and planning units need to be created for the planning region. In this example, we use Nepal as our case study to demonstrate the functions within this package.
+ 
+For this, we first obtain the country boundary of Nepal by using its iso3 string (“NPL”). Normally, you would need to provide your own data set with country boundaries to filter from. Data can be loaded from local machines in vector or raster format, or using a remote connection via postgres using the `elsar_load_data()` function. Here, we use a pre-saved dataset.
 
 ```{r, fig.width = w, fig.height = h}
 # create boundary for Nepal
 boundary <- make_boundary(
   boundary_in = boundary_dat,
   iso3 = "NPL",
-  iso3_column = "iso3cd"
-  )
+  iso3_column = "iso3cd",
+  do_project = FALSE
+)
 
-ggplot() + geom_sf(data = boundary) 
+ggplot() +
+  geom_sf(data = boundary)
 ```
 
-```{r, message = FALSE}
-# create custom projection and apply it to boundary
-wkt <- make_custom_projection(boundary = boundary, iso3 = "NPL")
-boundary_proj <- sf::st_transform(boundary, crs = sf::st_crs(wkt))
+The `make_boundary()` function also provides the option to create a custom projection centred on the planning region. This can also be done in separate steps using the `make_custom_projection()` function, which is integrated in the `make_boundary()` function.
 
-```
-
-
-```{r, message = FALSE}
-# alternative
-boundary_proj2 <- make_boundary(
+```{r, fig.width = w, fig.height = h}
+boundary_proj <- make_boundary(
   boundary_in = boundary_dat,
   iso3 = "NPL",
   iso3_column = "iso3cd",
   do_project = TRUE
 )
+
+# create custom projection and apply it to boundary
+wkt <- make_custom_projection(boundary = boundary, iso3 = "NPL")
+boundary_proj2 <- sf::st_transform(boundary, crs = sf::st_crs(wkt))
 ```
+
+We can test whether the two crs of the boundaries match.
 
 ```{r}
 # test crs
 print(sf::st_crs(boundary_proj) == sf::st_crs(boundary_proj2))
 ```
 
+## Planning Units
 
-```{r, fig.width = w, fig.height = h}
+For defining a conservation planning problem, we need to subdivide the planning region into smaller planning units which can either be selected or not in the downstream prioritization and which the feature information can be attributed to. The function has an option to add a desired planning unit size. If none is provided, the function aims to make planning units as small as possible whilst still being computationally efficient. The default for this is set to 850,000 planning units, which is based on previous experience with run time.
+
+```{r}
 # make planning units
-pus <- make_planning_units(boundary_proj = boundary_proj,
-                           pu_size = NULL,
-                           pu_threshold = 8.5e5,
-                           limit_to_mainland = FALSE)
-
-terra::plot(pus)
+pus <- make_planning_units(
+  boundary_proj = boundary_proj,
+  pu_size = NULL,
+  pu_threshold = 8.5e5,
+  limit_to_mainland = FALSE
+)
 ```
 
-```{r, fig.width = w, fig.height = h}
+## Features
+
+Biodiversity features are an integral part of conservation planning. Features can range from species distributions, to more general over-arching datasets such as Key Biodiversity Areas (ref). In our example, we will use only one dataset, the World Atlas of Desertification (WAD). Again, input data can first be loaded using the  `elsar_load_data()` function (here we have the dataset already saved in the package; change later).
+
+```{r}
 # get feature data
 wad_dat <- get_wad_data()
-
-terra::plot(wad_dat)
 ```
 
+The data then needs to be re-projected and re-sampled to the previously created planning units. We also normalise the data to only have values between 0-1.
 
 ```{r, fig.width = w, fig.height = h}
 # crop and normalise data
-wadOut <- make_normalised_raster(raster_in = wad_dat,
-                                 pus = pus,
-                                 iso3 = "NPL")
+wadOut <- make_normalised_raster(
+  raster_in = wad_dat,
+  pus = pus,
+  iso3 = "NPL"
+)
 
 terra::plot(wadOut)
+```
+
+Instead of only having a quick look at the data by using the `terra` package, we can also create a plot using the plotting options integrated in the `elsar` package, such as `elsar_plot_static_raster_c()`, which allows to plot continuous raster data with `ggplot` or `tmap`.
+
+```{r, fig.width = 7, fig.height = 4}
+(plot_wad <- elsar_plot_static_raster_c(
+  raster_in = wadOut, type = "ggplot_raster",
+  legend_title = "WAD"
+))
+```
+
+We can also add background data to the plot and add additional properties to change the appearance of the plot by using the `elsar_plot_optics()` function that allows to specify a specifc `ggplot` them. We can also change the colour palette to be something other than the default "viridis". 
+
+```{r, fig.width = 8, fig.height = 6}
+custom_p <- ggplot2::scale_fill_distiller(
+  name = "WAD",
+  palette = "YlGnBu",
+  aesthetics = c("fill"),
+  oob = scales::squish
+)
+
+(plot_wad <- elsar_plot_static_raster_c(
+  raster_in = wadOut, type = "ggplot_raster",
+  custom_palette = custom_p,
+  background = wad_dat
+) +
+  elsar_plot_optics())
+```
+
+If we are interested in the distribution, we can also plot the distribution on the plots. For this, we need to create two separate plots that we then put together: 
+
+```{r, fig.width = 8, fig.height = 6}
+plot_out <- elsar_plot_static_raster_c(
+  raster_in = wadOut, type = "ggplot_raster",
+  background = wad_dat,
+  raster_df_out = TRUE,
+  legend_title = "WAD"
+)
+
+plot_wad <- plot_out[[1]]
+raster_df <- plot_out[[2]]
+
+plot_dist <- elsar_plot_distribution(
+  raster_df = raster_df,
+  categorical = FALSE,
+  col_interest = "wad_final_cog"
+)
+
+(plot_wad_inset  <- patchwork::wrap_plots((plot_wad +
+  elsar_plot_optics()) +
+  patchwork::inset_element(
+    (plot_dist +
+      elsar_plot_optics() +
+      ggplot2::theme(
+        axis.title = ggplot2::element_blank(),
+        axis.text.x = ggplot2::element_blank(),
+        axis.ticks.x = ggplot2::element_blank()
+      )
+    ),
+    left = 0.1, # needs to be changed depending on plot dimensions
+    bottom = 0.08, # needs to be changed depending on plot dimensions
+    right = 0.35, # needs to be changed depending on plot dimensions
+    top = 0.4, # needs to be changed depending on plot dimensions
+    align_to = "plot"
+  )))
+
+```
+We can also transform the data into categories and plot the main plot and the inset that way.
+
+```{r, fig.width = 8, fig.height = 6}
+plot_cat <- elsar_plot_static_raster_d(
+  raster_in = wadOut, type = "ggplot_raster",
+  categorical = FALSE,
+  background = wad_dat,
+  number_categories = 10,
+  data_layer = "wad_final_cog",
+  raster_df_out = TRUE,
+  legend_title = "WAD"
+)
+
+plot_wad_cat <- plot_cat[[1]]
+raster_df_cat <- plot_cat[[2]]
+
+
+plot_dist_cat <- elsar_plot_distribution(
+  raster_df = raster_df_cat,
+  categorical = TRUE
+)
+
+(plot_wad_cat_inset <- patchwork::wrap_plots((plot_wad_cat +
+  elsar_plot_optics()) +
+  patchwork::inset_element(
+    (plot_dist_cat +
+      elsar_plot_optics() +
+      ggplot2::theme(
+        axis.title = ggplot2::element_blank(),
+        axis.text.x = ggplot2::element_blank(),
+        axis.ticks.x = ggplot2::element_blank()
+      )
+    ),
+    left = 0.1, # needs to be changed depending on plot dimensions
+    bottom = 0.08, # needs to be changed depending on plot dimensions
+    right = 0.35, # needs to be changed depending on plot dimensions
+    top = 0.4, # needs to be changed depending on plot dimensions
+    align_to = "plot"
+  )))
+```
+
+
+
+## Existing Protected Area
+
+ADD TEXT LATER
+
+```{r, fig.width = 7, fig.height = 5}
+current_pas <- current_pas_sf
+
+(plot_wad_pas <- elsar_plot_static_raster_c(
+  raster_in = wadOut, type = "ggplot_raster",
+  background = wad_dat,
+  legend_title = "WAD"
+) +
+  elsar_plot_extra_data(include_pas = current_pas, color_pa = "red") +
+  elsar_plot_optics())
+```
+
+
+```{r, fig.width = 7, fig.height = 5}
+(plot_wad_pas2 <- elsar_plot_static_raster_c(
+  raster_in = wadOut, type = "ggplot_raster",
+  background = wad_dat,
+  legend_title = "WAD"
+) +
+  elsar_plot_extra_data(include_pas = current_pas, pas_look = "area", color_pa = "grey") +
+  elsar_plot_optics(include_north_scale = TRUE))
 ```

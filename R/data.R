@@ -15,3 +15,15 @@ get_wad_data <- function() {
 #'
 #' @source https:// add link here
 "boundary_dat"
+
+
+#' Data used for current protected areas
+#'
+#' `current_pas_sf` file from wdpa database
+#'
+#' @source https:// add link here
+"current_pas_sf"
+
+
+
+

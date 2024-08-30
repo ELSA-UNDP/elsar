@@ -4,7 +4,13 @@
 \alias{make_forest_integrity}
 \title{Create the forest integrity index using flii and fsii data}
 \usage{
-make_forest_integrity(raster_flii, raster_fsii, pus, iso3, output_path = NULL)
+make_forest_integrity(
+  raster_flii = NULL,
+  raster_fsii = NULL,
+  pus,
+  iso3,
+  output_path = NULL
+)
 }
 \arguments{
 \item{raster_flii}{A \code{SpatRaster} file with the flii information.}
@@ -25,10 +31,30 @@ Create the forest integrity index using flii and fsii data
 }
 \examples{
 \dontrun{
-forest_integrity <- make_forest_integrity(
+forest_integrity1 <- make_forest_integrity(
+  raster_flii = raster_flii,
+  pus = pus
+)
+
+forest_integrity2 <- make_forest_integrity(
+  raster_fsii = raster_fsii,
+  pus = pus
+)
+
+forest_integrity3 <- make_forest_integrity(
   raster_flii = raster_flii,
   raster_fsii = raster_fsii,
   pus = pus
 )
+
+zero_fsii <- raster_fsii
+zero_fsii[zero_fsii < 14] = 0
+
+forest_integrity4 <- make_forest_integrity(
+  raster_flii = raster_flii,
+  raster_fsii = raster_fsii,
+  pus = pus
+)
+
 }
 }

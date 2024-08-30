@@ -11,7 +11,7 @@ What the package does (one paragraph).
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://elsa-undp.github.io/elsaFunctions/}
+  \item \url{https://elsa-undp.github.io/elsar/}
 }
 
 }
