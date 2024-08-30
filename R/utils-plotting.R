@@ -225,7 +225,7 @@ elsar_plot_extra_data <- function(plot_type = "ggplot",
   }
 }
 
-#' Function to create a plot with background data for another plot
+#' Function to create a plot with continuous background data for another plot
 #'
 #' @param plot_type  A character denoting whether "ggplot" or "tmap" is being used. Needs to match the main plot
 #' @param background_dat A `SpatRaster` file that contains the data to be used as a background.
@@ -260,11 +260,12 @@ elsar_plot_extra_data <- function(plot_type = "ggplot",
 #'   pus = pus,
 #'   iso3 = "NPL"
 #' )
-#' background_plot <- elsar_plot_background(
+#'
+#' (background_plot <- elsar_plot_background_c(
 #'   background_dat = wad_dat,
 #'   main_data = wadOut
-#' )
-elsar_plot_background <- function(plot_type = "ggplot",
+#' ))
+elsar_plot_background_c <- function(plot_type = "ggplot",
                                   background_dat = NULL, # SpatRaster file
                                   rescale_background = TRUE,
                                   increase_extend = 0.05,
@@ -314,6 +315,156 @@ elsar_plot_background <- function(plot_type = "ggplot",
         ggplot2::scale_fill_viridis_c(
           option = color_map, alpha = background_alpha,
           guide = "none"
+        )
+    } else {
+      plot_background <- plot_background + custom_palette
+    }
+    # prep for adding more data later
+    plot_background <- plot_background +
+      ggnewscale::new_scale_fill() +
+      ggnewscale::new_scale_colour()
+  } else if (plot_type == "tmap") {
+    message("Will be added later.")
+  }
+
+  return(list(plot_background, bckgrnd_dat))
+}
+
+#' Function to create a plot with discrete background data for another plot
+#'
+#' @param plot_type  A character denoting whether "ggplot" or "tmap" is being used. Needs to match the main plot
+#' @param background_dat A `SpatRaster` file that contains the data to be used as a background.
+#' @param rescale_background Logical. If TRUE, rescales the `SpatRaster` to values between 0-1.
+#' @param increase_extend A numerical value that allows to extend the background beyond the extent of `raster_in`. If extend_background <= 1, the lat and lon extend will be extended by the ratio provided (e.g. 0.05 will extend it by 5%). If extend_background > 1 all sides will be extended by the absolute value provided.
+#' @param main_data A `SpatRaster` file that contains the data that will be the main part of the main plot.
+#' @param background_alpha A value (0-1) for the opacity of the locked in areas when plotted on top of other plots.
+#' @param color_map The name of the `viridis` palette to be used. Default is "viridis".
+#' @param categorical logical. if data is categorical (TRUE), convert to factor (if not yet) and use the number of categories given.
+#' @param custom_palette An optional custom palette for plotting. Default uses the `viridis` package.
+#' @param number_categories If data does not have pre-defined categories, how many categories to split the continuous data into
+#' @param data_layer The data layer with continuous data to be converted into categories.
+#'
+#' @return  A `list` of a `ggplot` or `tmap` object and a `SpatRaster` with the new background data.
+#' @export
+#'
+#' @examples
+#' boundary_proj <- make_boundary(
+#'   boundary_in = boundary_dat,
+#'   iso3 = "NPL",
+#'   iso3_column = "iso3cd",
+#'   do_project = TRUE
+#' )
+#'
+#' pus <- make_planning_units(
+#'   boundary_proj = boundary_proj,
+#'   pu_size = NULL,
+#'   pu_threshold = 8.5e5,
+#'   limit_to_mainland = FALSE
+#' )
+#' wad_dat <- get_wad_data()
+#'
+#' wadOut <- make_normalised_raster(
+#'   raster_in = wad_dat,
+#'   pus = pus,
+#'   iso3 = "NPL"
+#' )
+#' (background_plot <- elsar_plot_background_d(
+#'   background_dat = wad_dat,
+#'   main_data = wadOut,
+#'   increase_extend = 0.05,
+#'   number_categories = 10,
+#'   data_layer = "wad_final_cog",
+#' ))
+elsar_plot_background_d <- function(plot_type = "ggplot",
+                                    background_dat = NULL, # SpatRaster file
+                                    rescale_background = TRUE,
+                                    increase_extend = 0.05,
+                                    main_data = NULL, # SpatRaster
+                                    background_alpha = 0.2,
+                                    color_map = "viridis",
+                                    custom_palette = NULL,
+                                    categorical = FALSE,
+                                    number_categories = 10,
+                                    data_layer = NULL) {
+  assertthat::assert_that(inherits(background_dat, "SpatRaster"))
+  message("Adding background layer.")
+
+  # reproject
+  bckgrnd_dat <- terra::project(background_dat, terra::crs(main_data))
+
+  # rescale if wanted
+  if (rescale_background) {
+    bckgrnd_dat <- rescale_raster(bckgrnd_dat)
+  }
+
+  # crop data to a specifc extend around main data
+  if (!is.null(increase_extend)) {
+    bckgrnd_dat <- elsar_extend(
+      raster_main = main_data,
+      raster_to_crop = bckgrnd_dat,
+      extend_by = increase_extend
+    )
+  }
+
+  # categorize
+
+  if (categorical) {
+    #message("Plotting input data that is already categorical.")
+
+    assertthat::assert_that(
+      terra::is.factor(bckgrnd_dat),
+      msg = "Input is not a factor."
+    )
+
+    # get number of categories
+    number_categories <- length(terra::levels(bckgrnd_dat)[[1]][[1]])
+
+    bckgrnd_dat <- as.data.frame(bckgrnd_dat, xy = TRUE) %>%
+      stats::na.omit() %>%
+      dplyr::rename(interval = .data[[data_layer]]) %>%
+      dplyr::mutate(interval = as.factor(.data$interval))
+
+  } else {
+    #message("Plotting input data that is continuous and will be split into categories.")
+
+    assertthat::assert_that(
+      !is.null(number_categories),
+      msg = "Provide a valid number of categories to split your data into."
+    )
+
+    raster_cat <- elsar_continuous_to_categorical(raster_in = bckgrnd_dat,
+                                                  data_layer = data_layer,
+                                                  number_categories = number_categories,
+                                                  hist_breaks_out = FALSE)
+
+    bckgrnd_dat <- raster_cat %>%
+      dplyr::mutate(category = as.factor(.data$category),
+                    interval = as.factor(.data$interval)) }
+
+  # plot
+  if (plot_type == "ggplot") {
+    # col_interest <- terra::names(bckgrnd_dat)
+    #
+    # bckgrnd_dat <- as.data.frame(bckgrnd_dat, xy = TRUE) %>%
+    #   stats::na.omit()
+
+    plot_background <- ggplot2::ggplot() +
+      ggplot2::geom_tile(data = bckgrnd_dat, ggplot2::aes(
+        y = .data$y, x = .data$x,
+        fill = .data$interval
+      ), show.legend = FALSE)
+
+    if (is.null(custom_palette)) {
+      plot_background <- plot_background +
+        ggplot2::scale_colour_viridis_d(
+          option = color_map, alpha = background_alpha,
+          guide = "none",
+          expand = c(0,0)
+        ) +
+        ggplot2::scale_fill_viridis_d(
+          option = color_map, alpha = background_alpha,
+          guide = "none",
+          expand = c(0,0)
         )
     } else {
       plot_background <- plot_background + custom_palette
@@ -416,3 +567,81 @@ elsar_extend <- function(raster_main = NULL,
 
   return(raster_out)
 }
+
+#' Function to create categories for plotting out of continuous data
+#'
+#' @param raster_in The `SpatRaster` file to be plotted.
+#' @param data_layer The data layer with continuous data to be converted into categories.
+#' @param number_categories Number of categories to create from continuous data
+#' @param manual_breaks A vector with breaks to be used as categories.
+#' @param hist_breaks_out logical. If TRUE (default), returns the breaks used to categorise data.
+#'
+#' @return A list with a `df` that has categories and their interval labels, as well as the interval breaks for background data.
+#' @export
+#'
+#' @examples
+#' boundary_proj <- make_boundary(
+#'   boundary_in = boundary_dat,
+#'   iso3 = "NPL",
+#'   iso3_column = "iso3cd",
+#'   do_project = TRUE
+#' )
+#'
+#' pus <- make_planning_units(
+#'   boundary_proj = boundary_proj,
+#'   pu_size = NULL,
+#'   pu_threshold = 8.5e5,
+#'   limit_to_mainland = FALSE
+#' )
+#' wad_dat <- get_wad_data()
+#'
+#' wadOut <- make_normalised_raster(
+#'   raster_in = wad_dat,
+#'   pus = pus,
+#'   iso3 = "NPL"
+#' )
+#'
+#' wad_cat <- elsar_continuous_to_categorical(wadOut,
+#' data_layer = "wad_final_cog", number_categories = 10)
+elsar_continuous_to_categorical <- function(raster_in,
+                                            data_layer,
+                                            number_categories,
+                                            manual_breaks = NULL,
+                                            hist_breaks_out = TRUE) {
+
+  raster_df <- as.data.frame(raster_in, xy = TRUE) %>% #ADD this with terra::hist later on to export a SpatRaster
+    stats::na.omit()
+
+  # get the categories
+  if (is.null(manual_breaks)) {
+
+  hist_breaks <- graphics::hist(raster_df[[data_layer]],
+                      breaks = seq(min(raster_df[[data_layer]]),
+                                   max(raster_df[[data_layer]]),
+                                   length.out = number_categories + 1), plot=FALSE)$breaks
+  } else {
+    hist_breaks <- manual_breaks
+  }
+
+  # apply categories to data
+  raster_df <- raster_df %>%
+    dplyr::mutate(category = cut(raster_df[[data_layer]],
+                                 breaks = hist_breaks,
+                                 include.lowest = TRUE,
+                                 labels = FALSE))
+
+  # create extra column with labels
+  interval_labels <- paste0(round(utils::head(hist_breaks, -1), 2), "-",
+                            round(utils::tail(hist_breaks, -1), 2))
+
+  raster_df <- raster_df %>%
+    dplyr::mutate(interval = interval_labels[raster_df$category])
+
+  if (hist_breaks_out) {
+    return(list(raster_df, hist_breaks))
+  } else {
+    return(raster_df)
+  }
+
+}
+
