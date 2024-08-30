@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">elsar</a>
 
-    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1</small>
+    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -64,8 +64,6 @@
 
     
     
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://elsa-undp.github.io/elsaFunctions/">elsar</a></span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
@@ -76,9 +74,9 @@
 <div class="section level3">
 <h3 id="get-started">Get started<a class="anchor" aria-label="anchor" href="#get-started"></a>
 </h3>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># load packages</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://elsa-undp.github.io/elsaFunctions/">elsar</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://elsa-undp.github.io/elsar/">elsar</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://prioritizr.net" class="external-link">prioritizr</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
@@ -87,60 +85,258 @@
 <span></span>
 <span><span class="co"># set seed for reproducibility</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">500</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+</div>
+<div class="section level3">
+<h3 id="planning-region">Planning Region<a class="anchor" aria-label="anchor" href="#planning-region"></a>
+</h3>
+<p>At the start of the analysis, the planning region needs to be defined
+and planning units need to be created for the planning region. In this
+example, we use Nepal as our case study to demonstrate the functions
+within this package.</p>
+<p>For this, we first obtain the country boundary of Nepal by using its
+iso3 string (“NPL”). Normally, you would need to provide your own data
+set with country boundaries to filter from. Data can be loaded from
+local machines in vector or raster format, or using a remote connection
+via postgres using the <code><a href="../reference/elsar_load_data.html">elsar_load_data()</a></code> function. Here, we
+use a pre-saved dataset.</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># create boundary for Nepal</span></span>
 <span><span class="va">boundary</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/make_boundary.html">make_boundary</a></span><span class="op">(</span></span>
 <span>  boundary_in <span class="op">=</span> <span class="va">boundary_dat</span>,</span>
 <span>  iso3 <span class="op">=</span> <span class="st">"NPL"</span>,</span>
-<span>  iso3_column <span class="op">=</span> <span class="st">"iso3cd"</span></span>
-<span>  <span class="op">)</span></span>
+<span>  iso3_column <span class="op">=</span> <span class="st">"iso3cd"</span>,</span>
+<span>  do_project <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">boundary</span><span class="op">)</span> </span></code></pre></div>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">boundary</span><span class="op">)</span></span></code></pre></div>
 <p><img src="elsaR_files/figure-html/unnamed-chunk-3-1.png" width="336" style="display: block; margin: auto;"></p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># create custom projection and apply it to boundary</span></span>
-<span><span class="va">wkt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/make_custom_projection.html">make_custom_projection</a></span><span class="op">(</span>boundary <span class="op">=</span> <span class="va">boundary</span>, iso3 <span class="op">=</span> <span class="st">"NPL"</span><span class="op">)</span></span>
-<span><span class="va">boundary_proj</span> <span class="op">&lt;-</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_transform.html" class="external-link">st_transform</a></span><span class="op">(</span><span class="va">boundary</span>, crs <span class="op">=</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_crs.html" class="external-link">st_crs</a></span><span class="op">(</span><span class="va">wkt</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># alternative</span></span>
-<span><span class="va">boundary_proj2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/make_boundary.html">make_boundary</a></span><span class="op">(</span></span>
+<p>The <code><a href="../reference/make_boundary.html">make_boundary()</a></code> function also provides the option to
+create a custom projection centred on the planning region. This can also
+be done in separate steps using the
+<code><a href="../reference/make_custom_projection.html">make_custom_projection()</a></code> function, which is integrated in
+the <code><a href="../reference/make_boundary.html">make_boundary()</a></code> function.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">boundary_proj</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/make_boundary.html">make_boundary</a></span><span class="op">(</span></span>
 <span>  boundary_in <span class="op">=</span> <span class="va">boundary_dat</span>,</span>
 <span>  iso3 <span class="op">=</span> <span class="st">"NPL"</span>,</span>
 <span>  iso3_column <span class="op">=</span> <span class="st">"iso3cd"</span>,</span>
 <span>  do_project <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># create custom projection and apply it to boundary</span></span>
+<span><span class="va">wkt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/make_custom_projection.html">make_custom_projection</a></span><span class="op">(</span>boundary <span class="op">=</span> <span class="va">boundary</span>, iso3 <span class="op">=</span> <span class="st">"NPL"</span><span class="op">)</span></span>
+<span><span class="va">boundary_proj2</span> <span class="op">&lt;-</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_transform.html" class="external-link">st_transform</a></span><span class="op">(</span><span class="va">boundary</span>, crs <span class="op">=</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_crs.html" class="external-link">st_crs</a></span><span class="op">(</span><span class="va">wkt</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>We can test whether the two crs of the boundaries match.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># test crs</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_crs.html" class="external-link">st_crs</a></span><span class="op">(</span><span class="va">boundary_proj</span><span class="op">)</span> <span class="op">==</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_crs.html" class="external-link">st_crs</a></span><span class="op">(</span><span class="va">boundary_proj2</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+</div>
+<div class="section level3">
+<h3 id="planning-units">Planning Units<a class="anchor" aria-label="anchor" href="#planning-units"></a>
+</h3>
+<p>For defining a conservation planning problem, we need to subdivide
+the planning region into smaller planning units which can either be
+selected or not in the downstream prioritization and which the feature
+information can be attributed to. The function has an option to add a
+desired planning unit size. If none is provided, the function aims to
+make planning units as small as possible whilst still being
+computationally efficient. The default for this is set to 850,000
+planning units, which is based on previous experience with run time.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># make planning units</span></span>
-<span><span class="va">pus</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/make_planning_units.html">make_planning_units</a></span><span class="op">(</span>boundary_proj <span class="op">=</span> <span class="va">boundary_proj</span>,</span>
-<span>                           pu_size <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>                           pu_threshold <span class="op">=</span> <span class="fl">8.5e5</span>,</span>
-<span>                           limit_to_mainland <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="va">pus</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/make_planning_units.html">make_planning_units</a></span><span class="op">(</span></span>
+<span>  boundary_proj <span class="op">=</span> <span class="va">boundary_proj</span>,</span>
+<span>  pu_size <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  pu_threshold <span class="op">=</span> <span class="fl">8.5e5</span>,</span>
+<span>  limit_to_mainland <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "The current number of planning units is: 3743382"</span></span>
 <span><span class="co">#&gt; [1] "The current number of planning units is: 2396805"</span></span>
 <span><span class="co">#&gt; [1] "The current number of planning units is: 1665187"</span></span>
 <span><span class="co">#&gt; [1] "The current number of planning units is: 1223941"</span></span>
-<span><span class="co">#&gt; [1] "The current number of planning units is: 741036"</span></span>
-<span></span>
-<span><span class="fu">terra</span><span class="fu">::</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/plot.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">pus</span><span class="op">)</span></span></code></pre></div>
-<p><img src="elsaR_files/figure-html/unnamed-chunk-7-1.png" width="336" style="display: block; margin: auto;"></p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<span><span class="co">#&gt; [1] "The current number of planning units is: 741036"</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="features">Features<a class="anchor" aria-label="anchor" href="#features"></a>
+</h3>
+<p>Biodiversity features are an integral part of conservation planning.
+Features can range from species distributions, to more general
+over-arching datasets such as Key Biodiversity Areas (ref). In our
+example, we will use only one dataset, the World Atlas of
+Desertification (WAD). Again, input data can first be loaded using the
+<code><a href="../reference/elsar_load_data.html">elsar_load_data()</a></code> function (here we have the dataset
+already saved in the package; change later).</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># get feature data</span></span>
-<span><span class="va">wad_dat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/wad_data.html">get_wad_data</a></span><span class="op">(</span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu">terra</span><span class="fu">::</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/plot.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">wad_dat</span><span class="op">)</span></span></code></pre></div>
-<p><img src="elsaR_files/figure-html/unnamed-chunk-8-1.png" width="336" style="display: block; margin: auto;"></p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<span><span class="va">wad_dat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/wad_data.html">get_wad_data</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p>The data then needs to be re-projected and re-sampled to the
+previously created planning units. We also normalise the data to only
+have values between 0-1.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># crop and normalise data</span></span>
-<span><span class="va">wadOut</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/make_normalised_raster.html">make_normalised_raster</a></span><span class="op">(</span>raster_in <span class="op">=</span> <span class="va">wad_dat</span>,</span>
-<span>                                 pus <span class="op">=</span> <span class="va">pus</span>,</span>
-<span>                                 iso3 <span class="op">=</span> <span class="st">"NPL"</span><span class="op">)</span></span>
+<span><span class="va">wadOut</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/make_normalised_raster.html">make_normalised_raster</a></span><span class="op">(</span></span>
+<span>  raster_in <span class="op">=</span> <span class="va">wad_dat</span>,</span>
+<span>  pus <span class="op">=</span> <span class="va">pus</span>,</span>
+<span>  iso3 <span class="op">=</span> <span class="st">"NPL"</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">terra</span><span class="fu">::</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/plot.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">wadOut</span><span class="op">)</span></span></code></pre></div>
-<p><img src="elsaR_files/figure-html/unnamed-chunk-9-1.png" width="336" style="display: block; margin: auto;"></p>
+<p><img src="elsaR_files/figure-html/unnamed-chunk-8-1.png" width="336" style="display: block; margin: auto;"></p>
+<p>Instead of only having a quick look at the data by using the
+<code>terra</code> package, we can also create a plot using the plotting
+options integrated in the <code>elsar</code> package, such as
+<code><a href="../reference/elsar_plot_static_raster_c.html">elsar_plot_static_raster_c()</a></code>, which allows to plot
+continuous raster data with <code>ggplot</code> or
+<code>tmap</code>.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="op">(</span><span class="va">plot_wad</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/elsar_plot_static_raster_c.html">elsar_plot_static_raster_c</a></span><span class="op">(</span></span>
+<span>  raster_in <span class="op">=</span> <span class="va">wadOut</span>, type <span class="op">=</span> <span class="st">"ggplot_raster"</span>,</span>
+<span>  legend_title <span class="op">=</span> <span class="st">"WAD"</span></span>
+<span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p><img src="elsaR_files/figure-html/unnamed-chunk-9-1.png" width="672" style="display: block; margin: auto;"></p>
+<p>We can also add background data to the plot and add additional
+properties to change the appearance of the plot by using the
+<code><a href="../reference/elsar_plot_optics.html">elsar_plot_optics()</a></code> function that allows to specify a
+specifc <code>ggplot</code> them. We can also change the colour palette
+to be something other than the default “viridis”.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">custom_p</span> <span class="op">&lt;-</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_brewer.html" class="external-link">scale_fill_distiller</a></span><span class="op">(</span></span>
+<span>  name <span class="op">=</span> <span class="st">"WAD"</span>,</span>
+<span>  palette <span class="op">=</span> <span class="st">"YlGnBu"</span>,</span>
+<span>  aesthetics <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"fill"</span><span class="op">)</span>,</span>
+<span>  oob <span class="op">=</span> <span class="fu">scales</span><span class="fu">::</span><span class="va"><a href="https://scales.r-lib.org/reference/oob.html" class="external-link">squish</a></span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="op">(</span><span class="va">plot_wad</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/elsar_plot_static_raster_c.html">elsar_plot_static_raster_c</a></span><span class="op">(</span></span>
+<span>  raster_in <span class="op">=</span> <span class="va">wadOut</span>, type <span class="op">=</span> <span class="st">"ggplot_raster"</span>,</span>
+<span>  custom_palette <span class="op">=</span> <span class="va">custom_p</span>,</span>
+<span>  background <span class="op">=</span> <span class="va">wad_dat</span></span>
+<span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="../reference/elsar_plot_optics.html">elsar_plot_optics</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Adding background layer.</span></span>
+<span><span class="co">#&gt; Extend based on ratio.</span></span></code></pre></div>
+<p><img src="elsaR_files/figure-html/unnamed-chunk-10-1.png" width="768" style="display: block; margin: auto;"></p>
+<p>If we are interested in the distribution, we can also plot the
+distribution on the plots. For this, we need to create two separate
+plots that we then put together:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">plot_out</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/elsar_plot_static_raster_c.html">elsar_plot_static_raster_c</a></span><span class="op">(</span></span>
+<span>  raster_in <span class="op">=</span> <span class="va">wadOut</span>, type <span class="op">=</span> <span class="st">"ggplot_raster"</span>,</span>
+<span>  background <span class="op">=</span> <span class="va">wad_dat</span>,</span>
+<span>  raster_df_out <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  legend_title <span class="op">=</span> <span class="st">"WAD"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt; Adding background layer.</span></span>
+<span><span class="co">#&gt; Extend based on ratio.</span></span>
+<span></span>
+<span><span class="va">plot_wad</span> <span class="op">&lt;-</span> <span class="va">plot_out</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span>
+<span><span class="va">raster_df</span> <span class="op">&lt;-</span> <span class="va">plot_out</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span></span>
+<span></span>
+<span><span class="va">plot_dist</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/elsar_plot_distribution.html">elsar_plot_distribution</a></span><span class="op">(</span></span>
+<span>  raster_df <span class="op">=</span> <span class="va">raster_df</span>,</span>
+<span>  categorical <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  col_interest <span class="op">=</span> <span class="st">"wad_final_cog"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="op">(</span><span class="va">plot_wad_inset</span>  <span class="op">&lt;-</span> <span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_plots.html" class="external-link">wrap_plots</a></span><span class="op">(</span><span class="op">(</span><span class="va">plot_wad</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="../reference/elsar_plot_optics.html">elsar_plot_optics</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/inset_element.html" class="external-link">inset_element</a></span><span class="op">(</span></span>
+<span>    <span class="op">(</span><span class="va">plot_dist</span> <span class="op">+</span></span>
+<span>      <span class="fu"><a href="../reference/elsar_plot_optics.html">elsar_plot_optics</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>      <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span></span>
+<span>        axis.title <span class="op">=</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>        axis.text.x <span class="op">=</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>        axis.ticks.x <span class="op">=</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>      <span class="op">)</span></span>
+<span>    <span class="op">)</span>,</span>
+<span>    left <span class="op">=</span> <span class="fl">0.1</span>, <span class="co"># needs to be changed depending on plot dimensions</span></span>
+<span>    bottom <span class="op">=</span> <span class="fl">0.08</span>, <span class="co"># needs to be changed depending on plot dimensions</span></span>
+<span>    right <span class="op">=</span> <span class="fl">0.35</span>, <span class="co"># needs to be changed depending on plot dimensions</span></span>
+<span>    top <span class="op">=</span> <span class="fl">0.4</span>, <span class="co"># needs to be changed depending on plot dimensions</span></span>
+<span>    align_to <span class="op">=</span> <span class="st">"plot"</span></span>
+<span>  <span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Picking joint bandwidth of 0.00858</span></span></code></pre></div>
+<p><img src="elsaR_files/figure-html/unnamed-chunk-11-1.png" width="768" style="display: block; margin: auto;">
+We can also transform the data into categories and plot the main plot
+and the inset that way.</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">plot_cat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/elsar_plot_static_raster_d.html">elsar_plot_static_raster_d</a></span><span class="op">(</span></span>
+<span>  raster_in <span class="op">=</span> <span class="va">wadOut</span>, type <span class="op">=</span> <span class="st">"ggplot_raster"</span>,</span>
+<span>  categorical <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  background <span class="op">=</span> <span class="va">wad_dat</span>,</span>
+<span>  number_categories <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>  data_layer <span class="op">=</span> <span class="st">"wad_final_cog"</span>,</span>
+<span>  raster_df_out <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  legend_title <span class="op">=</span> <span class="st">"WAD"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt; Plotting input data that is continuous and will be split into categories.</span></span>
+<span><span class="co">#&gt; Adding background layer.</span></span>
+<span><span class="co">#&gt; Extend based on ratio.</span></span>
+<span></span>
+<span><span class="va">plot_wad_cat</span> <span class="op">&lt;-</span> <span class="va">plot_cat</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span>
+<span><span class="va">raster_df_cat</span> <span class="op">&lt;-</span> <span class="va">plot_cat</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span></span>
+<span></span>
+<span></span>
+<span><span class="va">plot_dist_cat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/elsar_plot_distribution.html">elsar_plot_distribution</a></span><span class="op">(</span></span>
+<span>  raster_df <span class="op">=</span> <span class="va">raster_df_cat</span>,</span>
+<span>  categorical <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="op">(</span><span class="va">plot_wad_cat_inset</span> <span class="op">&lt;-</span> <span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_plots.html" class="external-link">wrap_plots</a></span><span class="op">(</span><span class="op">(</span><span class="va">plot_wad_cat</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="../reference/elsar_plot_optics.html">elsar_plot_optics</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/inset_element.html" class="external-link">inset_element</a></span><span class="op">(</span></span>
+<span>    <span class="op">(</span><span class="va">plot_dist_cat</span> <span class="op">+</span></span>
+<span>      <span class="fu"><a href="../reference/elsar_plot_optics.html">elsar_plot_optics</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>      <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span></span>
+<span>        axis.title <span class="op">=</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>        axis.text.x <span class="op">=</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>        axis.ticks.x <span class="op">=</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>      <span class="op">)</span></span>
+<span>    <span class="op">)</span>,</span>
+<span>    left <span class="op">=</span> <span class="fl">0.1</span>, <span class="co"># needs to be changed depending on plot dimensions</span></span>
+<span>    bottom <span class="op">=</span> <span class="fl">0.08</span>, <span class="co"># needs to be changed depending on plot dimensions</span></span>
+<span>    right <span class="op">=</span> <span class="fl">0.35</span>, <span class="co"># needs to be changed depending on plot dimensions</span></span>
+<span>    top <span class="op">=</span> <span class="fl">0.4</span>, <span class="co"># needs to be changed depending on plot dimensions</span></span>
+<span>    align_to <span class="op">=</span> <span class="st">"plot"</span></span>
+<span>  <span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p><img src="elsaR_files/figure-html/unnamed-chunk-12-1.png" width="768" style="display: block; margin: auto;"></p>
+</div>
+<div class="section level3">
+<h3 id="existing-protected-area">Existing Protected Area<a class="anchor" aria-label="anchor" href="#existing-protected-area"></a>
+</h3>
+<p>ADD TEXT LATER</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">current_pas</span> <span class="op">&lt;-</span> <span class="va">current_pas_sf</span></span>
+<span></span>
+<span><span class="op">(</span><span class="va">plot_wad_pas</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/elsar_plot_static_raster_c.html">elsar_plot_static_raster_c</a></span><span class="op">(</span></span>
+<span>  raster_in <span class="op">=</span> <span class="va">wadOut</span>, type <span class="op">=</span> <span class="st">"ggplot_raster"</span>,</span>
+<span>  background <span class="op">=</span> <span class="va">wad_dat</span>,</span>
+<span>  legend_title <span class="op">=</span> <span class="st">"WAD"</span></span>
+<span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="../reference/elsar_plot_extra_data.html">elsar_plot_extra_data</a></span><span class="op">(</span>include_pas <span class="op">=</span> <span class="va">current_pas</span>, color_pa <span class="op">=</span> <span class="st">"red"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="../reference/elsar_plot_optics.html">elsar_plot_optics</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Adding background layer.</span></span>
+<span><span class="co">#&gt; Extend based on ratio.</span></span>
+<span><span class="co">#&gt; Adding PA layer.</span></span>
+<span><span class="co">#&gt; Coordinate system already present. Adding new coordinate system, which will</span></span>
+<span><span class="co">#&gt; replace the existing one.</span></span></code></pre></div>
+<p><img src="elsaR_files/figure-html/unnamed-chunk-13-1.png" width="672" style="display: block; margin: auto;"></p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="op">(</span><span class="va">plot_wad_pas2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/elsar_plot_static_raster_c.html">elsar_plot_static_raster_c</a></span><span class="op">(</span></span>
+<span>  raster_in <span class="op">=</span> <span class="va">wadOut</span>, type <span class="op">=</span> <span class="st">"ggplot_raster"</span>,</span>
+<span>  background <span class="op">=</span> <span class="va">wad_dat</span>,</span>
+<span>  legend_title <span class="op">=</span> <span class="st">"WAD"</span></span>
+<span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="../reference/elsar_plot_extra_data.html">elsar_plot_extra_data</a></span><span class="op">(</span>include_pas <span class="op">=</span> <span class="va">current_pas</span>, pas_look <span class="op">=</span> <span class="st">"area"</span>, color_pa <span class="op">=</span> <span class="st">"grey"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="../reference/elsar_plot_optics.html">elsar_plot_optics</a></span><span class="op">(</span>include_north_scale <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Adding background layer.</span></span>
+<span><span class="co">#&gt; Extend based on ratio.</span></span>
+<span><span class="co">#&gt; Adding PA layer.</span></span>
+<span><span class="co">#&gt; Coordinate system already present. Adding new coordinate system, which will</span></span>
+<span><span class="co">#&gt; replace the existing one.</span></span></code></pre></div>
+<p><img src="elsaR_files/figure-html/unnamed-chunk-14-1.png" width="672" style="display: block; margin: auto;"></p>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
