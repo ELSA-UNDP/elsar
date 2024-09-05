@@ -40,6 +40,9 @@
     <loc>https://elsa-undp.github.io/elsar/reference/elsar-package.html</loc>
   </url>
   <url>
+    <loc>https://elsa-undp.github.io/elsar/reference/elsar_continuous_to_categorical.html</loc>
+  </url>
+  <url>
     <loc>https://elsa-undp.github.io/elsar/reference/elsar_extend.html</loc>
   </url>
   <url>
@@ -49,6 +52,15 @@
     <loc>https://elsa-undp.github.io/elsar/reference/elsar_plot_background.html</loc>
   </url>
   <url>
+    <loc>https://elsa-undp.github.io/elsar/reference/elsar_plot_background_c.html</loc>
+  </url>
+  <url>
+    <loc>https://elsa-undp.github.io/elsar/reference/elsar_plot_background_d.html</loc>
+  </url>
+  <url>
+    <loc>https://elsa-undp.github.io/elsar/reference/elsar_plot_distribution.html</loc>
+  </url>
+  <url>
     <loc>https://elsa-undp.github.io/elsar/reference/elsar_plot_extra_data.html</loc>
   </url>
   <url>
@@ -56,6 +68,9 @@
   </url>
   <url>
     <loc>https://elsa-undp.github.io/elsar/reference/elsar_plot_static_raster_c.html</loc>
+  </url>
+  <url>
+    <loc>https://elsa-undp.github.io/elsar/reference/elsar_plot_static_raster_d.html</loc>
   </url>
   <url>
     <loc>https://elsa-undp.github.io/elsar/reference/extract_filename_filetype.html</loc>
@@ -77,6 +92,9 @@
   </url>
   <url>
     <loc>https://elsa-undp.github.io/elsar/reference/make_forest_integrity.html</loc>
+  </url>
+  <url>
+    <loc>https://elsa-undp.github.io/elsar/reference/make_managed_forests.html</loc>
   </url>
   <url>
     <loc>https://elsa-undp.github.io/elsar/reference/make_mangroves.html</loc>

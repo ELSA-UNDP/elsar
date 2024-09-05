@@ -5,6 +5,15 @@
 #' @param type A character denoting whether "ggplot" or "tmap" is being used. Needs to match the main plot
 #' @param theme For `ggplot` this allows to use a pre-defined "deafult" plot theme or provide a custom one as a `list`.
 #' @param include_north_scale Logical. Determines whether a north arrow and scale should be added.
+#' @param include_logo Logical. Whether to include a logo (.png image) in the plot
+#' @param logo_path A path to where the `png` file of the logo is saved (e.g. "man/figures/elsaR_hex_sticker.png")
+#' @param vlogo_dim A vector with desired width and height of the image. Default is c(60, 60).
+#' @param logo_pos A vector of the desired position of the image (xmin, xmax, ymin, ymax).
+#' @param include_text Logical. Whether to include text in the plot (e.g. website).
+#' @param text_to_display The text to display. Dafult is "UNBL | www.unbiodiversitylab.org",
+#' @param text_location The location of the text. Options are "bottom_right" (default), "top_right", "top_left" and "bottom_left".
+#' @param move_horizontal After setting a text location, this attribute allows to move the text block horizontally if needed.
+#' @param move_vertical After setting a text location, this attribute allows to move the text block vertically if needed.
 #'
 #' @return For `ggplot` returns a list that can simply be added to a `ggplot`, e.g. [elsar_plot_static_raster_c()].
 #' @export
