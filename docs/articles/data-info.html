@@ -103,19 +103,19 @@ Tested
 Certified Forests
 </td>
 <td style="text-align:left;width: 4cm; ">
-FML_v3.2_near_cog
+NA (deprecated)
 </td>
 <td style="text-align:left;width: 4cm; ">
-make_normalised_raster()
+NA
 </td>
 <td style="text-align:left;width: 4cm; ">
-default
+NA
 </td>
 <td style="text-align:left;width: 4cm; ">
-none
+NA
 </td>
 <td style="text-align:left;width: 4cm; ">
-Y
+NA
 </td>
 </tr>
 <tr>
@@ -123,7 +123,7 @@ Y
 Crop Suitability Difference
 </td>
 <td style="text-align:left;width: 4cm; ">
-overall_cropsuit_i_diff_
+overall_cropsuit_i_diff_19812010_20712100
 </td>
 <td style="text-align:left;width: 4cm; ">
 make_normalised_raster()
@@ -143,7 +143,7 @@ Y
 Drought Risk
 </td>
 <td style="text-align:left;width: 4cm; ">
-NA
+gDH19_oct2015
 </td>
 <td style="text-align:left;width: 4cm; ">
 make_normalised_raster()
@@ -153,26 +153,6 @@ default
 </td>
 <td style="text-align:left;width: 4cm; ">
 none
-</td>
-<td style="text-align:left;width: 4cm; ">
-N
-</td>
-</tr>
-<tr>
-<td style="text-align:left;width: 6cm; font-weight: bold;">
-Forest Integrity Index (1?)
-</td>
-<td style="text-align:left;width: 4cm; ">
-flii_earth-001_cog
-</td>
-<td style="text-align:left;width: 4cm; ">
-make_normalised_raster()
-</td>
-<td style="text-align:left;width: 4cm; ">
-default
-</td>
-<td style="text-align:left;width: 4cm; ">
-OG code: all vals &lt; 0 = 0
 </td>
 <td style="text-align:left;width: 4cm; ">
 Y
@@ -183,7 +163,7 @@ Y
 Flood Risk
 </td>
 <td style="text-align:left;width: 4cm; ">
-NA
+flood_risk_opportunities_global
 </td>
 <td style="text-align:left;width: 4cm; ">
 make_normalised_raster()
@@ -195,12 +175,12 @@ default
 none
 </td>
 <td style="text-align:left;width: 4cm; ">
-N
+Y
 </td>
 </tr>
 <tr>
 <td style="text-align:left;width: 6cm; font-weight: bold;">
-Forest Integrity Index (2?)
+Forest Integrity Index
 </td>
 <td style="text-align:left;width: 4cm; ">
 flii_earth-001_cog, global_fsii_2023
@@ -212,10 +192,10 @@ make_forest_integrity()
 NA
 </td>
 <td style="text-align:left;width: 4cm; ">
-NA
+OG code: all vals &lt; 0 = 0
 </td>
 <td style="text-align:left;width: 4cm; ">
-N
+Y
 </td>
 </tr>
 <tr>
@@ -375,7 +355,7 @@ default
 none
 </td>
 <td style="text-align:left;width: 4cm; ">
-N
+Y
 </td>
 </tr>
 <tr>
@@ -463,19 +443,21 @@ N
 Managed Forests
 </td>
 <td style="text-align:left;width: 4cm; ">
-NA
+FML_v3.2_near_cog
 </td>
 <td style="text-align:left;width: 4cm; ">
 make_managed_forests()
 </td>
 <td style="text-align:left;width: 4cm; ">
-NA
+default
 </td>
 <td style="text-align:left;width: 4cm; ">
-NA
+predefined categories: 11: undisturbed forest (NOT managed), 20:
+disturbed forest (can be considered managed), rest (31, 32, 40, 53):
+managed (palm oil, etc.)
 </td>
 <td style="text-align:left;width: 4cm; ">
-N
+Y
 </td>
 </tr>
 <tr>
@@ -483,19 +465,19 @@ N
 Mangroves
 </td>
 <td style="text-align:left;width: 4cm; ">
-NA
+gmw_v3_2020_vec
 </td>
 <td style="text-align:left;width: 4cm; ">
 make_mangroves()
 </td>
 <td style="text-align:left;width: 4cm; ">
-NA
+default
 </td>
 <td style="text-align:left;width: 4cm; ">
 NA
 </td>
 <td style="text-align:left;width: 4cm; ">
-N
+Y
 </td>
 </tr>
 <tr>
@@ -563,7 +545,7 @@ N
 Threatened Ecosystems
 </td>
 <td style="text-align:left;width: 4cm; ">
-NA
+NA (TBA at a later date)
 </td>
 <td style="text-align:left;width: 4cm; ">
 make_threatened_ecosystems()

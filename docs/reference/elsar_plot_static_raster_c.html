@@ -57,7 +57,9 @@
 <span>  custom_palette <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  plot_title <span class="op">=</span> <span class="st">""</span>,</span>
 <span>  legend_title <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  color_map <span class="op">=</span> <span class="st">"viridis"</span></span>
+<span>  color_map <span class="op">=</span> <span class="st">"viridis"</span>,</span>
+<span>  expand_plot <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  raster_df_out <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -94,6 +96,14 @@
 <dt>color_map</dt>
 <dd><p>The name of the <code>viridis</code> palette to be used. Default is "viridis".</p></dd>
 
+
+<dt>expand_plot</dt>
+<dd><p>logical. Whether to expand the plot, so there is not space betwen border and plot.</p></dd>
+
+
+<dt>raster_df_out</dt>
+<dd><p>logical. Whether to return only the plot (FALSE) or also the data frame behind the plot (TRUE). Needed for <code><a href="elsar_plot_distribution.html">elsar_plot_distribution()</a></code></p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -129,14 +139,15 @@
 <span class="r-in"><span>  pus <span class="op">=</span> <span class="va">pus</span>,</span></span>
 <span class="r-in"><span>  iso3 <span class="op">=</span> <span class="st">"NPL"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">wad_plot</span> <span class="op">&lt;-</span> <span class="va">testPlot</span> <span class="op">&lt;-</span> <span class="fu">elsar_plot_static_raster_c</span><span class="op">(</span></span></span>
+<span class="r-in"><span><span class="op">(</span><span class="va">wad_plot</span> <span class="op">&lt;-</span> <span class="fu">elsar_plot_static_raster_c</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  raster_in <span class="op">=</span> <span class="va">wadOut</span>,</span></span>
 <span class="r-in"><span>  type <span class="op">=</span> <span class="st">"ggplot_raster"</span>,</span></span>
 <span class="r-in"><span>  background <span class="op">=</span> <span class="va">wad_dat</span>,</span></span>
 <span class="r-in"><span>  legend_title <span class="op">=</span> <span class="st">"wad"</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Adding background layer.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Extend based on ratio.</span>
+<span class="r-plt img"><img src="elsar_plot_static_raster_c-1.png" alt="" width="700" height="433"></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

@@ -140,9 +140,39 @@ custom_p <- ggplot2::scale_fill_distiller(
 (plot_wad <- elsar_plot_static_raster_c(
   raster_in = wadOut, type = "ggplot_raster",
   custom_palette = custom_p,
-  background = wad_dat
+  background = wad_dat, 
+  expand_plot = TRUE
 ) +
   elsar_plot_optics())
+```
+
+If needed, logos can be included on the map. The location is dependent on the plot dimensions and therefore needs to be adjusted based on the figure, for example by using `terra::ext()`.
+
+```{r, fig.width = 8, fig.height = 6}
+#topRight
+x_min <- terra::ext(wadOut)[1][[1]]
+x_max <- terra::ext(wadOut)[2][[1]]
+y_min <- terra::ext(wadOut)[3][[1]]
+y_max <- terra::ext(wadOut)[4][[1]]
+
+img_xmax <- x_max + x_max * 0.09
+img_xmin <- img_xmax * 0.8
+img_ymax <- y_max + y_max * 0.102
+img_ymin <- img_ymax * 0.8
+
+img_pos <- c(img_xmin, img_xmax, img_ymin, img_ymax)
+
+(plot_out <- elsar_plot_static_raster_c(
+  raster_in = wadOut, type = "ggplot_raster",
+  background = wad_dat,
+  legend_title = "WAD", 
+  expand_plot = TRUE
+) +
+  elsar_plot_optics(include_logo = TRUE, 
+                      logo_path = "figures/elsaR_hex_sticker.png", #change to logo later
+                      logo_pos = img_pos, 
+                      logo_dim = c(50, 60)))
+
 ```
 
 If we are interested in the distribution, we can also plot the distribution on the plots. For this, we need to create two separate plots that we then put together: 
@@ -152,7 +182,8 @@ plot_out <- elsar_plot_static_raster_c(
   raster_in = wadOut, type = "ggplot_raster",
   background = wad_dat,
   raster_df_out = TRUE,
-  legend_title = "WAD"
+  legend_title = "WAD", 
+  expand_plot = TRUE
 )
 
 plot_wad <- plot_out[[1]]
@@ -168,7 +199,7 @@ plot_dist <- elsar_plot_distribution(
   elsar_plot_optics()) +
   patchwork::inset_element(
     (plot_dist +
-      elsar_plot_optics() +
+      elsar_plot_optics(include_text = FALSE) +
       ggplot2::theme(
         axis.title = ggplot2::element_blank(),
         axis.text.x = ggplot2::element_blank(),
@@ -193,7 +224,8 @@ plot_cat <- elsar_plot_static_raster_d(
   number_categories = 10,
   data_layer = "wad_final_cog",
   raster_df_out = TRUE,
-  legend_title = "WAD"
+  legend_title = "WAD", 
+  expand_plot = TRUE
 )
 
 plot_wad_cat <- plot_cat[[1]]
@@ -205,11 +237,13 @@ plot_dist_cat <- elsar_plot_distribution(
   categorical = TRUE
 )
 
+browser()
+
 (plot_wad_cat_inset <- patchwork::wrap_plots((plot_wad_cat +
   elsar_plot_optics()) +
   patchwork::inset_element(
     (plot_dist_cat +
-      elsar_plot_optics() +
+      elsar_plot_optics(include_text = FALSE) +
       ggplot2::theme(
         axis.title = ggplot2::element_blank(),
         axis.text.x = ggplot2::element_blank(),
@@ -236,7 +270,8 @@ current_pas <- current_pas_sf
 (plot_wad_pas <- elsar_plot_static_raster_c(
   raster_in = wadOut, type = "ggplot_raster",
   background = wad_dat,
-  legend_title = "WAD"
+  legend_title = "WAD", 
+  expand_plot = TRUE
 ) +
   elsar_plot_extra_data(include_pas = current_pas, color_pa = "red") +
   elsar_plot_optics())
@@ -247,7 +282,8 @@ current_pas <- current_pas_sf
 (plot_wad_pas2 <- elsar_plot_static_raster_c(
   raster_in = wadOut, type = "ggplot_raster",
   background = wad_dat,
-  legend_title = "WAD"
+  legend_title = "WAD", 
+  expand_plot = TRUE
 ) +
   elsar_plot_extra_data(include_pas = current_pas, pas_look = "area", color_pa = "grey") +
   elsar_plot_optics(include_north_scale = TRUE))

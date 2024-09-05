@@ -7,7 +7,16 @@
 elsar_plot_optics(
   type = "ggplot",
   theme = "default",
-  include_north_scale = FALSE
+  include_north_scale = FALSE,
+  include_logo = FALSE,
+  logo_path = "man/figures/elsaR_hex_sticker.png",
+  logo_dim = c(60, 60),
+  logo_pos,
+  include_text = TRUE,
+  text_to_display = "UNBL | www.unbiodiversitylab.org",
+  text_location = "bottom_right",
+  move_horizontal = NULL,
+  move_vertical = NULL
 )
 }
 \arguments{

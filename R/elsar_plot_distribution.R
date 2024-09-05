@@ -12,6 +12,60 @@
 #' @return A `list` of a `ggplot` or `tmap` object and a `SpatRaster` with the new background data.
 #' @export
 #'
+#' @examples
+#' boundary_proj <- make_boundary(
+#'   boundary_in = boundary_dat,
+#'   iso3 = "NPL",
+#'   iso3_column = "iso3cd",
+#'   do_project = TRUE
+#' )
+#'
+#' pus <- make_planning_units(boundary_proj = boundary_proj,
+#'                            pu_size = NULL,
+#'                            pu_threshold = 8.5e5,
+#'                            limit_to_mainland = FALSE)
+#' wad_dat <- get_wad_data()
+#'
+#' wadOut <- make_normalised_raster(raster_in = wad_dat,
+#'                                  pus = pus,
+#'                                  iso3 = "NPL")
+#'
+#' plot_cat <- elsar_plot_static_raster_d(
+#' raster_in = wadOut, type = "ggplot_raster",
+#' categorical = FALSE,
+#' background = wad_dat,
+#' number_categories = 10,
+#' data_layer = "wad_final_cog",
+#' raster_df_out = TRUE,
+#' legend_title = "WAD"
+#' )
+#'
+#' plot_wad_cat <- plot_cat[[1]]
+#' raster_df_cat <- plot_cat[[2]]
+#'
+#'
+#' plot_dist_cat <- elsar_plot_distribution(
+#'   raster_df = raster_df_cat,
+#'   categorical = TRUE
+#' )
+#'
+#' (plot_wad_cat_inset <- patchwork::wrap_plots((plot_wad_cat +
+#'   elsar_plot_optics()) +
+#'   patchwork::inset_element(
+#'     (plot_dist_cat +
+#'       elsar_plot_optics(include_text = FALSE) +
+#'       ggplot2::theme(
+#'         axis.title = ggplot2::element_blank(),
+#'         axis.text.x = ggplot2::element_blank(),
+#'         axis.ticks.x = ggplot2::element_blank()
+#'       )
+#'     ),
+#'     left = 0.1, # needs to be changed depending on plot dimensions
+#'     bottom = 0.08, # needs to be changed depending on plot dimensions
+#'     right = 0.35, # needs to be changed depending on plot dimensions
+#'     top = 0.4, # needs to be changed depending on plot dimensions
+#'     align_to = "plot"
+#'   )))
 elsar_plot_distribution <- function(type = "ggplot",
                                     categorical = TRUE,
                                     raster_df = NULL,

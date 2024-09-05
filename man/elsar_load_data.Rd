@@ -46,34 +46,44 @@ Load different types of data
 }
 \examples{
 \dontrun{
-load_tif <- elsar_load_data(file_name = "pu_nepal_450m.tif", file_path = localPath
-                          file_type = "tif")
+load_tif <- elsar_load_data(
+  file_name = "pu_nepal_450m.tif", file_path = localPath,
+  file_type = "tif"
+)
 
-load_geojson <- elsar_load_data(file_name = "nepal.geojson", file_path = localPath,
-                          file_type = "geojson")
+load_geojson <- elsar_load_data(
+  file_name = "nepal.geojson", file_path = localPath,
+  file_type = "geojson"
+)
 
-postgres_dict <- c(host = "yourhost",
-                   dbname ="yourdbname",
-                   port = portNumber,
-                   user = "yourusername",
-                   password = "yourpassword")
+postgres_dict <- c(
+  host = "yourhost",
+  dbname = "yourdbname",
+  port = portNumber,
+  user = "yourusername",
+  password = "yourpassword"
+)
 
-load_postgres <- elsar_load_data(file_name = "bnda_simplified",
-                           file_type = "postgres",
-                           db_info = postgres_dict,
-                           iso3_column = "iso3cd",
-                           iso3 = "NPL")
+load_postgres <- elsar_load_data(
+  file_name = "bnda_simplified",
+  file_type = "postgres",
+  db_info = postgres_dict,
+  iso3_column = "iso3cd",
+  iso3 = "NPL"
+)
 
 pg_conn <- make_postgres_connection(
   dbname = "yourdatabase",
   user = "yourusername",
-  password = "yourpassword")
+  password = "yourpassword"
+)
 
 load_postgres <- elsar_load_data(
   file_name = "bnda_simplified",
   file_type = "postgres",
   pg_connection = pg_conn,
   iso3_column = "iso3cd",
-  iso3 = "NPL")
+  iso3 = "NPL"
+)
 }
 }
