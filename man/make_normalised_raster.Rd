@@ -19,7 +19,7 @@ make_normalised_raster(
 
 \item{pus}{A \code{SpatRaster} file that contains the reference spatial extent, crs etc.in form of the planning units}
 
-\item{iso3}{A string of the iso3 name of the data (country name)}
+\item{iso3}{A string of the iso3 name of the data (country name).}
 
 \item{invert}{Logical. Default is FALSE. If TRUE, highest values in the original dataset should be valued the lowest in the prioritisation.}
 

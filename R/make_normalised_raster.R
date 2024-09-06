@@ -5,7 +5,7 @@
 #'
 #' @param raster_in A `SpatRaster` file that contains the data to be put into right format
 #' @param pus A `SpatRaster` file that contains the reference spatial extent, crs etc.in form of the planning units
-#' @param iso3 A string of the iso3 name of the data (country name)
+#' @param iso3 A string of the iso3 name of the data (country name).
 #' @param invert Logical. Default is FALSE. If TRUE, highest values in the original dataset should be valued the lowest in the prioritisation.
 #' @param rescaled Logical. Default is TRUE. Should remain TRUE unless there is a very specific reason not to rescale.
 #' @param name_out A string with the data name that will be used for the output `tif`file

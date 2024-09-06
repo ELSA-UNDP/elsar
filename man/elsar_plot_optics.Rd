@@ -25,6 +25,24 @@ elsar_plot_optics(
 \item{theme}{For \code{ggplot} this allows to use a pre-defined "deafult" plot theme or provide a custom one as a \code{list}.}
 
 \item{include_north_scale}{Logical. Determines whether a north arrow and scale should be added.}
+
+\item{include_logo}{Logical. Whether to include a logo (.png image) in the plot}
+
+\item{logo_path}{A path to where the \code{png} file of the logo is saved (e.g. "man/figures/elsaR_hex_sticker.png")}
+
+\item{logo_pos}{A vector of the desired position of the image (xmin, xmax, ymin, ymax).}
+
+\item{include_text}{Logical. Whether to include text in the plot (e.g. website).}
+
+\item{text_to_display}{The text to display. Dafult is "UNBL | www.unbiodiversitylab.org",}
+
+\item{text_location}{The location of the text. Options are "bottom_right" (default), "top_right", "top_left" and "bottom_left".}
+
+\item{move_horizontal}{After setting a text location, this attribute allows to move the text block horizontally if needed.}
+
+\item{move_vertical}{After setting a text location, this attribute allows to move the text block vertically if needed.}
+
+\item{vlogo_dim}{A vector with desired width and height of the image. Default is c(60, 60).}
 }
 \value{
 For \code{ggplot} returns a list that can simply be added to a \code{ggplot}, e.g. \code{\link[=elsar_plot_static_raster_c]{elsar_plot_static_raster_c()}}.
