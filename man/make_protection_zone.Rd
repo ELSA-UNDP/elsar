@@ -7,10 +7,11 @@
 make_protection_zone(
   current_pas = NULL,
   hfp_in,
-  crop_in,
-  built_in,
+  crop_in = NULL,
+  built_in = NULL,
   pus,
   iso3,
+  hfp_threshold = 0.95,
   filter_patch_size = TRUE,
   min_patch_size = 20,
   make_locked_out = FALSE,
@@ -29,6 +30,8 @@ make_protection_zone(
 \item{pus}{A \code{SpatRaster} file that contains the reference spatial extent, crs etc.in form of the planning units.}
 
 \item{iso3}{A string of the iso3 name of the data (country name).}
+
+\item{hfp_threshold}{If <1, HFP threshold is calculated based on a quantile approach (HFP inside PAs excluding x\% highest; default is 0.95). If >1, that value will be used as the threshold.}
 
 \item{filter_patch_size}{Logical. Whether to filter out clumps smaller than a given threshold.}
 
@@ -49,6 +52,20 @@ as a locked-out constraint for the same zone.
 }
 \examples{
 \dontrun{
+boundary_proj <- make_boundary(
+  boundary_in = boundary_dat,
+  iso3 = "NPL",
+  iso3_column = "iso3cd",
+  do_project = TRUE
+)
+
+pus <- make_planning_units(
+  boundary_proj = boundary_proj,
+  pu_size = NULL,
+  pu_threshold = 8.5e5,
+  limit_to_mainland = FALSE
+)
+
 path_in <- "YourDataPath"
 
 list_dat <- extract_filename_filetype(
@@ -81,13 +98,32 @@ load_built <- elsar_load_data(
   file_type = list_dat["filetype"][[1]], file_path = path_in
 )
 
-protection_zone <- make_protection_zone(
+protection_zone1 <- make_protection_zone(
   hfp_in = load_hfp,
   crop_in = load_crop,
   built_in = load_built,
   pus = pus,
   iso3 = "NPL",
   make_locked_out = FALSE
+)
+
+protection_zone2 <- make_protection_zone(
+  hfp_in = load_hfp,
+  crop_in = load_crop,
+  built_in = load_built,
+  filter_patch_size = FALSE,
+  pus = pus,
+  iso3 = "NPL",
+  make_locked_out = FALSE
+)
+
+protection_zone3 <- make_protection_zone(
+  hfp_in = load_hfp,
+  built_in = load_built,
+  hfp_threshold = 13,
+  pus = pus,
+  iso3 = "NPL",
+  make_locked_out = TRUE
 )
 }
 }

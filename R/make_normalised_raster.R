@@ -43,9 +43,8 @@ make_normalised_raster <- function(raster_in,
   pus_reproject <- terra::project(pus, terra::crs(raster_in))
 
   # then crop (make data a lot smaller)
-  dat_aligned <- terra::crop(raster_in, pus_reproject)
-
-  dat_aligned[is.na(dat_aligned)] <- 0
+  dat_aligned <- terra::crop(raster_in, pus_reproject) %>%
+    terra::subst(., NA, 0)
 
   dat_aligned <- dat_aligned %>%
     terra::project(., terra::crs(pus)) %>% # reproject the data to the crs we actually want (the original pu crs)
