@@ -1,3 +1,47 @@
+#' Create a Normalized Raster Aligned with and masked by Planning Units
+#'
+#' This function takes an input raster, aligns it with specified planning units (PUs),
+#' optionally inverts, rescales, applies conditional expressions, and saves the processed
+#' raster to a specified output path.
+#'
+#' @param raster_in [SpatRaster] The input raster to be processed.
+#' @param pus [SpatVector] The planning units (PUs) to align the raster to.
+#' @param iso3 [character] ISO3 country code used for naming the output file.
+#' @param invert [logical] If `TRUE`, inverts the raster values (default: `FALSE`).
+#' @param rescaled [logical] If `TRUE`, rescales the raster using `rescale_raster()` (default: `TRUE`).
+#' @param method_override [character] Optional method for `terra::project()`, overriding the default (default: `NULL`).
+#' @param conditional_expression [function] Optional method to apply a function to the raster before resampling to the PU layer (default: `NULL`).
+#' @param fill_na [logical] If `TRUE`, fills `NA` values with 0 before masking (default: `TRUE`).
+#' @param name_out [character] The name of the output raster file (without the extension).
+#' @param output_path [character] The directory path to save the output raster (default: `NULL`, i.e., not saved).
+#'
+#' @details This function reprojects the input raster (`raster_in`) to match the CRS and resolution
+#' of the planning units (`pus`). The method for reprojection can be overridden using `method_override`.
+#' If `conditional_expression` is provided, it is applied before any reprojection. The function can
+#' optionally rescale (0-1) and invert the raster values.
+#'
+#' @return Returns a [SpatRaster] object that has been reprojected and processed.
+#' If `output_path` is specified, saves the raster as a COG (Cloud Optimized GeoTIFF).
+#'
+#' @examples
+#' # Example usage:
+#' raster_out <- make_normalised_raster(
+#'   raster_in = my_raster,
+#'   pus = my_pus,
+#'   iso3 = "USA",
+#'   invert = TRUE,
+#'   rescaled = FALSE,
+#'   name_out = "aligned_raster",
+#'   output_path = "/path/to/output"
+#' )
+#'
+#' raster_out <- make_normalised_raster(
+#'   raster_in = my_raster,
+#'   pus = my_pus,
+#'   iso3 = "USA",
+#'   conditional_expression = function(r) ifel(r %in% c(1:4, 7, 9), 1, 0)
+#' )
+#' @export
 make_normalised_raster <- function(raster_in,
                                    pus,
                                    iso3,
@@ -48,12 +92,8 @@ make_normalised_raster <- function(raster_in,
 
   # Fill in NA background values before masking
   if (fill_na) {
-
-  dat_aligned[is.na(dat_aligned)] <- 0
-
-  dat_aligned <- dat_aligned |>
-    terra::mask(pus) # Mask areas outside of planning units
-
+    dat_aligned[is.na(dat_aligned)] <- 0
+    dat_aligned <- dat_aligned |> terra::mask(pus) # Mask areas outside of planning units
   }
 
   # Invert values if required
