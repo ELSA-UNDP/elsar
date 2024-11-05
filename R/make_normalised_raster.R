@@ -4,16 +4,16 @@
 #' optionally inverts, rescales, applies conditional expressions, and saves the processed
 #' raster to a specified output path.
 #'
-#' @param raster_in [SpatRaster] The input raster to be processed.
-#' @param pus [SpatVector] The planning units (PUs) to align the raster to.
-#' @param iso3 [character] ISO3 country code used for naming the output file.
-#' @param invert [logical] If `TRUE`, inverts the raster values (default: `FALSE`).
-#' @param rescaled [logical] If `TRUE`, rescales the raster using `rescale_raster()` (default: `TRUE`).
-#' @param method_override [character] Optional method for `terra::project()`, overriding the default (default: `NULL`).
-#' @param conditional_expression [function] Optional method to apply a function to the raster before resampling to the PU layer (default: `NULL`).
-#' @param fill_na [logical] If `TRUE`, fills `NA` values with 0 before masking (default: `TRUE`).
-#' @param name_out [character] The name of the output raster file (without the extension).
-#' @param output_path [character] The directory path to save the output raster (default: `NULL`, i.e., not saved).
+#' @param raster_in `SpatRaster` The input raster to be processed.
+#' @param pus `SpatVector` The planning units (PUs) to align the raster to.
+#' @param iso3 `character` ISO3 country code used for naming the output file.
+#' @param invert `logical` If `TRUE`, inverts the raster values (default: `FALSE`).
+#' @param rescaled `logical` If `TRUE`, rescales the raster using `rescale_raster()` (default: `TRUE`).
+#' @param method_override `character` Optional method for `terra::project()`, overriding the default (default: `NULL`).
+#' @param conditional_expression `function` Optional method to apply a function to the raster before resampling to the PU layer (default: `NULL`).
+#' @param fill_na `logical` If `TRUE`, fills `NA` values with 0 before masking (default: `TRUE`).
+#' @param name_out `character` The name of the output raster file (without the extension).
+#' @param output_path `character` The directory path to save the output raster (default: `NULL`, i.e., not saved).
 #'
 #' @details This function reprojects the input raster (`raster_in`) to match the CRS and resolution
 #' of the planning units (`pus`). The method for reprojection can be overridden using `method_override`.
@@ -93,7 +93,7 @@ make_normalised_raster <- function(raster_in,
   # Fill in NA background values before masking
   if (fill_na) {
     dat_aligned[is.na(dat_aligned)] <- 0
-    dat_aligned <- dat_aligned |> terra::mask(pus) # Mask areas outside of planning units
+    dat_aligned <- dat_aligned %>% terra::mask(pus) # Mask areas outside of planning units
   }
 
   # Invert values if required
