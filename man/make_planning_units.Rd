@@ -20,9 +20,9 @@ make_planning_units(
 
 \item{pu_threshold}{An integer value that gives a maximum number of PUs. The default (\code{8.5e5}) is set based on \code{prioritizr} processing time, network transfer time and solver time.}
 
-\item{limit_to_mainland}{A logical that determines whether planning units should only be created for mainland area (\code{FALSE}; default) or not (\code{TRUE})}
+\item{limit_to_mainland}{A logical that determines whether planning units should only be created for mainland area (\code{FALSE}; default) or not (\code{TRUE}).}
 
-\item{iso3}{The iso3 country code (character) of the country of interest.}
+\item{iso3}{The \code{ISO3} country code (character) of the country of interest.}
 
 \item{output_path}{An optional output path for the created file.}
 }
@@ -30,7 +30,7 @@ make_planning_units(
 A raster (\code{.tif}) file with the planning unit information for the chosen planning region.
 }
 \description{
-This function creates planning units for a spatial prioritisation problem in a raster format. It also creates a custom projection (\code{wkt} file) centred on the planning region based on the Mollweide projection.
+This function creates planning units for a spatial prioritisation problem in a raster format.
 }
 \examples{
 boundary_proj <- make_boundary(
