@@ -7,6 +7,7 @@
 #' @param include_disturbed_forest logical. Whether or not to include disturbed forests as managed forests (default is FALSE).
 #' @param name_out A string with the data name that will be used for the output `tif`file
 #' @param output_path An optional output path for the created file.
+#' @importFrom terra %in%
 #'
 #' @return A `SpatRaster` file of managed forests that has been aligned and normalised
 #' @export
@@ -60,7 +61,7 @@ make_managed_forests <- function(raster_in, # ADD: option to generate productive
         no = 0
       )
     } else {
-      dat_aligned <- terra::ifel(
+      dat_aligned2 <- terra::ifel(
         test = dat_aligned %in% c(31, 32, 40, 53),
         yes = 1,
         no = 0
