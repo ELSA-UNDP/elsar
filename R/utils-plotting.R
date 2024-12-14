@@ -7,7 +7,7 @@
 #' @param include_north_scale Logical. Determines whether a north arrow and scale should be added.
 #' @param include_logo Logical. Whether to include a logo (.png image) in the plot
 #' @param logo_path A path to where the `png` file of the logo is saved (e.g. "man/figures/elsaR_hex_sticker.png")
-#' @param vlogo_dim A vector with desired width and height of the image. Default is c(60, 60).
+#' @param logo_dim A vector with desired width and height of the image. Default is c(60, 60).
 #' @param logo_pos A vector of the desired position of the image (xmin, xmax, ymin, ymax).
 #' @param include_text Logical. Whether to include text in the plot (e.g. website).
 #' @param text_to_display The text to display. Dafult is "UNBL | www.unbiodiversitylab.org",
@@ -23,7 +23,7 @@
 #'   boundary_in = boundary_dat,
 #'   iso3 = "NPL",
 #'   iso3_column = "iso3cd",
-#'   do_project = TRUE
+#'   custom_projection = TRUE
 #' )
 #'
 #' pus <- make_planning_units(
@@ -146,9 +146,9 @@ elsar_plot_optics <- function(type = "ggplot",
           ggplot2::geom_label(
             data = annotations,
             ggplot2::aes(
-              x = xpos, y = ypos,
+              x = .data$xpos, y = .data$ypos,
               hjust = hjustvar, vjust = vjustvar,
-              label = annotateText
+              label = .data$annotateText
             ),
             label.r = ggplot2::unit(0.01, "lines"),
             size = 3
@@ -202,7 +202,7 @@ elsar_plot_optics <- function(type = "ggplot",
 #'   boundary_in = boundary_dat,
 #'   iso3 = "NPL",
 #'   iso3_column = "iso3cd",
-#'   do_project = TRUE
+#'   custom_projection = TRUE
 #' )
 #'
 #' pus <- make_planning_units(
@@ -341,7 +341,7 @@ elsar_plot_extra_data <- function(plot_type = "ggplot",
 #'   boundary_in = boundary_dat,
 #'   iso3 = "NPL",
 #'   iso3_column = "iso3cd",
-#'   do_project = TRUE
+#'   custom_projection = TRUE
 #' )
 #'
 #' pus <- make_planning_units(
@@ -449,7 +449,7 @@ elsar_plot_background_c <- function(plot_type = "ggplot",
 #'   boundary_in = boundary_dat,
 #'   iso3 = "NPL",
 #'   iso3_column = "iso3cd",
-#'   do_project = TRUE
+#'   custom_projection = TRUE
 #' )
 #'
 #' pus <- make_planning_units(
@@ -598,7 +598,7 @@ elsar_plot_background_d <- function(plot_type = "ggplot",
 #'   boundary_in = boundary_dat,
 #'   iso3 = "NPL",
 #'   iso3_column = "iso3cd",
-#'   do_project = TRUE
+#'   custom_projection = TRUE
 #' )
 #'
 #' pus <- make_planning_units(
@@ -685,7 +685,7 @@ elsar_extend <- function(raster_main = NULL,
 #'   boundary_in = boundary_dat,
 #'   iso3 = "NPL",
 #'   iso3_column = "iso3cd",
-#'   do_project = TRUE
+#'   custom_projection = TRUE
 #' )
 #'
 #' pus <- make_planning_units(

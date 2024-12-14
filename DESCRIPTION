@@ -22,6 +22,7 @@ Suggests:
     kableExtra,
     knitr,
     patchwork,
+    png,
     prioritizr,
     readr,
     rmarkdown,
@@ -48,6 +49,9 @@ Imports:
     stats,
     stringr,
     terra,
+    tibble,
+    tidyr,
+    tidyterra,
     units
 Config/testthat/edition: 3
 LazyData: true

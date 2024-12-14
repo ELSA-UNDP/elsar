@@ -24,6 +24,29 @@ reference:
   - make_normalised_raster
   - make_protected_areas
 
+- title: Set up ELSA analysis
+  desc: Functions to help formulate a conservation problem for an ELSA analysis
+- contents:
+  - make_protection_zone
+
+- title: Post-hoc analysis for ELSA framework
+  desc: Functions to help formulate a conservation problem for an ELSA analysis
+- contents:
+  - calc_feat_rep
+
+- title: ELSA-specific plotting functions
+  desc: Functions to help visualise ELSA output
+- contents:
+  - elsa_plot_output_map
+  - elsa_plot_representation
+
+- title: ELSA-specific utilities functions
+  desc: Functions to help ELSA analysis
+- contents:
+  - get_elsa_coverage
+  - get_elsa_min_lockin_target
+  - get_elsa_target
+
 - title: Helper Functions
 - contents:
   - elsar_load_data

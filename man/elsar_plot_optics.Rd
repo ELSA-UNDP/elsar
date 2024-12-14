@@ -30,6 +30,8 @@ elsar_plot_optics(
 
 \item{logo_path}{A path to where the \code{png} file of the logo is saved (e.g. "man/figures/elsaR_hex_sticker.png")}
 
+\item{logo_dim}{A vector with desired width and height of the image. Default is c(60, 60).}
+
 \item{logo_pos}{A vector of the desired position of the image (xmin, xmax, ymin, ymax).}
 
 \item{include_text}{Logical. Whether to include text in the plot (e.g. website).}
@@ -41,8 +43,6 @@ elsar_plot_optics(
 \item{move_horizontal}{After setting a text location, this attribute allows to move the text block horizontally if needed.}
 
 \item{move_vertical}{After setting a text location, this attribute allows to move the text block vertically if needed.}
-
-\item{vlogo_dim}{A vector with desired width and height of the image. Default is c(60, 60).}
 }
 \value{
 For \code{ggplot} returns a list that can simply be added to a \code{ggplot}, e.g. \code{\link[=elsar_plot_static_raster_c]{elsar_plot_static_raster_c()}}.
@@ -55,7 +55,7 @@ boundary_proj <- make_boundary(
   boundary_in = boundary_dat,
   iso3 = "NPL",
   iso3_column = "iso3cd",
-  do_project = TRUE
+  custom_projection = TRUE
 )
 
 pus <- make_planning_units(

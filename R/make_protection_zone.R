@@ -130,7 +130,7 @@ make_protection_zone <- function(current_pas = NULL,
     raster_in = hfp_in,
     pus = pus,
     iso3 = iso3,
-    rescale = FALSE
+    rescaled = FALSE
   ))
 
   if (!is.null(crop_in)) {
@@ -162,7 +162,7 @@ make_protection_zone <- function(current_pas = NULL,
   # HFP inside PAs excluding x% highest
   if (hfp_threshold <= 1) {
     breaks <- terra::extract(hfp, terra::vect(current_pas),
-      fun = quantile, probs = hfp_threshold,
+      fun = terra::quantile, probs = hfp_threshold,
       na.rm = TRUE
     )[, 2]
 

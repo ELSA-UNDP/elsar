@@ -27,13 +27,13 @@ make_boundary(
 
 \item{filter_out}{A value representing the outside area in the data (e.g. \code{0})}
 
+\item{custom_projection}{Logical. \code{TRUE}if custom projection for planning region is wanted.}
+
 \item{iso3}{The iso3 country code (character) of the country of interest.}
 
 \item{iso3_column}{Only relevant when \code{iso3} != NULL. A string of the name of where iso3 information can be found in a dataset.}
 
 \item{output_path}{An optional output path for the created file. Only needed when do_project = TRUE.}
-
-\item{do_project}{Logical. \code{TRUE}if custom projection for planning region is wanted.}
 }
 \value{
 \code{sf} object of the boundary of the planning region

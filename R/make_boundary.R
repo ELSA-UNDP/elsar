@@ -5,7 +5,7 @@
 #' @param limit_to_mainland Logical. Limits the extent of the data to mainland.
 #' @param col_name A string of the column containing the actual extent of the planning region (not outside area). Can be `NULL`.
 #' @param filter_out A value representing the outside area in the data (e.g. `0`)
-#' @param do_project Logical. `TRUE`if custom projection for planning region is wanted.
+#' @param custom_projection Logical. `TRUE`if custom projection for planning region is wanted.
 #' @param iso3 The iso3 country code (character) of the country of interest.
 #' @param iso3_column Only relevant when `iso3` != NULL. A string of the name of where iso3 information can be found in a dataset.
 #' @param output_path An optional output path for the created file. Only needed when do_project = TRUE.

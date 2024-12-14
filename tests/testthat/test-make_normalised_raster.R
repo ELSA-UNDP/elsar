@@ -3,7 +3,7 @@ test_that("make_normalised_raster (not inverted)", {
     boundary_in = boundary_dat,
     iso3 = "NPL",
     iso3_column = "iso3cd",
-    do_project = TRUE
+    custom_projection = TRUE
   )
 
   pus <- make_planning_units(boundary_proj = boundary_proj,
@@ -26,7 +26,7 @@ test_that("make_normalised_raster (inverted)", {
     boundary_in = boundary_dat,
     iso3 = "NPL",
     iso3_column = "iso3cd",
-    do_project = TRUE
+    custom_projection = TRUE
   )
 
   pus <- make_planning_units(boundary_proj = boundary_proj,

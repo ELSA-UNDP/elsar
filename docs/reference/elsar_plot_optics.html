@@ -78,6 +78,42 @@
 <dt>include_north_scale</dt>
 <dd><p>Logical. Determines whether a north arrow and scale should be added.</p></dd>
 
+
+<dt>include_logo</dt>
+<dd><p>Logical. Whether to include a logo (.png image) in the plot</p></dd>
+
+
+<dt>logo_path</dt>
+<dd><p>A path to where the <code>png</code> file of the logo is saved (e.g. "man/figures/elsaR_hex_sticker.png")</p></dd>
+
+
+<dt>logo_pos</dt>
+<dd><p>A vector of the desired position of the image (xmin, xmax, ymin, ymax).</p></dd>
+
+
+<dt>include_text</dt>
+<dd><p>Logical. Whether to include text in the plot (e.g. website).</p></dd>
+
+
+<dt>text_to_display</dt>
+<dd><p>The text to display. Dafult is "UNBL | www.unbiodiversitylab.org",</p></dd>
+
+
+<dt>text_location</dt>
+<dd><p>The location of the text. Options are "bottom_right" (default), "top_right", "top_left" and "bottom_left".</p></dd>
+
+
+<dt>move_horizontal</dt>
+<dd><p>After setting a text location, this attribute allows to move the text block horizontally if needed.</p></dd>
+
+
+<dt>move_vertical</dt>
+<dd><p>After setting a text location, this attribute allows to move the text block vertically if needed.</p></dd>
+
+
+<dt>vlogo_dim</dt>
+<dd><p>A vector with desired width and height of the image. Default is c(60, 60).</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -102,7 +138,7 @@
 <span class="r-in"><span>  pu_threshold <span class="op">=</span> <span class="fl">8.5e5</span>,</span></span>
 <span class="r-in"><span>  limit_to_mainland <span class="op">=</span> <span class="cn">FALSE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'boundary_proj' not found</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in sf::st_area(boundary_proj):</span> object 'boundary_proj' not found</span>
 <span class="r-in"><span><span class="va">wad_dat</span> <span class="op">&lt;-</span> <span class="fu"><a href="wad_data.html">get_wad_data</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">wadOut</span> <span class="op">&lt;-</span> <span class="fu"><a href="make_normalised_raster.html">make_normalised_raster</a></span><span class="op">(</span></span></span>
@@ -117,7 +153,7 @@
 <span class="r-in"><span>  background <span class="op">=</span> <span class="va">wad_dat</span>,</span></span>
 <span class="r-in"><span>  legend_title <span class="op">=</span> <span class="st">"wad"</span></span></span>
 <span class="r-in"><span><span class="op">)</span> <span class="op">+</span> <span class="fu">elsar_plot_optics</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'wadOut' not found</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in inherits(raster_in, "SpatRaster"):</span> object 'wadOut' not found</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
