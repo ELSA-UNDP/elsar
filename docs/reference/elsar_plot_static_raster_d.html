@@ -135,6 +135,7 @@
 <span class="r-in"><span>  iso3_column <span class="op">=</span> <span class="st">"iso3cd"</span>,</span></span>
 <span class="r-in"><span>  do_project <span class="op">=</span> <span class="cn">TRUE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in make_boundary(boundary_in = boundary_dat, iso3 = "NPL", iso3_column = "iso3cd",     do_project = TRUE):</span> unused argument (do_project = TRUE)</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">pus</span> <span class="op">&lt;-</span> <span class="fu"><a href="make_planning_units.html">make_planning_units</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  boundary_proj <span class="op">=</span> <span class="va">boundary_proj</span>,</span></span>
@@ -142,11 +143,7 @@
 <span class="r-in"><span>  pu_threshold <span class="op">=</span> <span class="fl">8.5e5</span>,</span></span>
 <span class="r-in"><span>  limit_to_mainland <span class="op">=</span> <span class="cn">FALSE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "The current number of planning units is: 3743382"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "The current number of planning units is: 2396805"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "The current number of planning units is: 1665187"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "The current number of planning units is: 1223941"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "The current number of planning units is: 741036"</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in sf::st_area(boundary_proj):</span> object 'boundary_proj' not found</span>
 <span class="r-in"><span><span class="va">wad_dat</span> <span class="op">&lt;-</span> <span class="fu"><a href="wad_data.html">get_wad_data</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">wadOut</span> <span class="op">&lt;-</span> <span class="fu"><a href="make_normalised_raster.html">make_normalised_raster</a></span><span class="op">(</span></span></span>
@@ -154,6 +151,7 @@
 <span class="r-in"><span>  pus <span class="op">=</span> <span class="va">pus</span>,</span></span>
 <span class="r-in"><span>  iso3 <span class="op">=</span> <span class="st">"NPL"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in h(simpleError(msg, call)):</span> error in evaluating the argument 'x' in selecting a method for function 'project': object 'pus' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="op">(</span><span class="va">plot_cat</span> <span class="op">&lt;-</span> <span class="fu">elsar_plot_static_raster_d</span><span class="op">(</span>raster_in <span class="op">=</span> <span class="va">wadOut</span>,</span></span>
 <span class="r-in"><span>type <span class="op">=</span> <span class="st">"ggplot_raster"</span>,</span></span>
@@ -163,216 +161,7 @@
 <span class="r-in"><span>data_layer <span class="op">=</span> <span class="st">"wad_final_cog"</span>,</span></span>
 <span class="r-in"><span>raster_df_out <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Plotting input data that is continuous and will be split into categories.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Adding background layer.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Extend based on ratio.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [[1]]</span>
-<span class="r-plt img"><img src="elsar_plot_static_raster_d-1.png" alt="" width="700" height="433"></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [[2]]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>              x       y wad_final_cog category interval</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1982 -238377.9 3692609     0.2743106        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1983 -237927.9 3692609     0.2741300        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1984 -237477.9 3692609     0.2746520        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1985 -237027.9 3692609     0.2760400        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1986 -236577.9 3692609     0.2798479        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1987 -236127.9 3692609     0.3021223        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1988 -235677.9 3692609     0.3471255        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1989 -235227.9 3692609     0.3642718        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1990 -234777.9 3692609     0.3652682        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1991 -234327.9 3692609     0.3654498        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1992 -233877.9 3692609     0.3654498        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1993 -233427.9 3692609     0.3654498        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1994 -232977.9 3692609     0.3654498        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1995 -232527.9 3692609     0.3654498        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1996 -232077.9 3692609     0.3653517        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1997 -231627.9 3692609     0.3650877        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1998 -231177.9 3692609     0.3648226        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1999 -230727.9 3692609     0.3645566        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2000 -230277.9 3692609     0.3644838        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2001 -229827.9 3692609     0.3644784        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2002 -229377.9 3692609     0.3321297        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2003 -228927.9 3692609     0.2994577        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2004 -228477.9 3692609     0.2848351        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2005 -228027.9 3692609     0.2744634        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2006 -227577.9 3692609     0.2742159        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2007 -227127.9 3692609     0.2740874        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2008 -226677.9 3692609     0.2740874        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3654 -240627.9 3692159     0.3669740        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3655 -240177.9 3692159     0.3571062        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3656 -239727.9 3692159     0.3294999        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3657 -239277.9 3692159     0.3049538        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3658 -238827.9 3692159     0.2816619        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3659 -238377.9 3692159     0.2766991        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3660 -237927.9 3692159     0.2755964        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3661 -237477.9 3692159     0.2942293        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3662 -237027.9 3692159     0.3087669        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3663 -236577.9 3692159     0.3118591        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3664 -236127.9 3692159     0.3261880        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3665 -235677.9 3692159     0.3543471        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3666 -235227.9 3692159     0.3650467        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3667 -234777.9 3692159     0.3656243        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3668 -234327.9 3692159     0.3655576        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3669 -233877.9 3692159     0.3653474        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3670 -233427.9 3692159     0.3652068        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3671 -232977.9 3692159     0.3650920        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3672 -232527.9 3692159     0.3650891        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3673 -232077.9 3692159     0.3615313        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3674 -231627.9 3692159     0.3519723        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3675 -231177.9 3692159     0.3427054        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3676 -230727.9 3692159     0.3336711        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3677 -230277.9 3692159     0.3312616        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3678 -229827.9 3692159     0.3311619        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3679 -229377.9 3692159     0.3107899        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3680 -228927.9 3692159     0.2902163        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3681 -228477.9 3692159     0.2809619        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3682 -228027.9 3692159     0.2743862        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3683 -227577.9 3692159     0.2741903        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3684 -227127.9 3692159     0.2740882        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3685 -226677.9 3692159     0.2740876        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3686 -226227.9 3692159     0.2740874        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3687 -225777.9 3692159     0.2740874        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3688 -225327.9 3692159     0.2740874        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3689 -224877.9 3692159     0.2740874        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3690 -224427.9 3692159     0.2740874        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5326 -242877.9 3691709     0.2873936        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5327 -242427.9 3691709     0.2601392        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5328 -241977.9 3691709     0.2410925        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5329 -241527.9 3691709     0.2659602        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5330 -241077.9 3691709     0.2950844        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5331 -240627.9 3691709     0.3324788        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5332 -240177.9 3691709     0.3497859        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5333 -239727.9 3691709     0.3488856        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5334 -239277.9 3691709     0.3234059        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5335 -238827.9 3691709     0.2878521        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5336 -238377.9 3691709     0.2792012        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5337 -237927.9 3691709     0.2771517        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5338 -237477.9 3691709     0.3150102        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5339 -237027.9 3691709     0.3438226        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5340 -236577.9 3691709     0.3473537        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5341 -236127.9 3691709     0.3539440        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5342 -235677.9 3691709     0.3642995        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5343 -235227.9 3691709     0.3679870        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5344 -234777.9 3691709     0.3678087        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5345 -234327.9 3691709     0.3663174        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5346 -233877.9 3691709     0.3645351        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5347 -233427.9 3691709     0.3633788        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5348 -232977.9 3691709     0.3624361        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5349 -232527.9 3691709     0.3624202        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5350 -232077.9 3691709     0.3554261        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5351 -231627.9 3691709     0.3366509        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5352 -231177.9 3691709     0.3188896        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5353 -230727.9 3691709     0.3019356        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5354 -230277.9 3691709     0.2977916        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5355 -229827.9 3691709     0.2981137        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5356 -229377.9 3691709     0.2904909        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5357 -228927.9 3691709     0.2826418        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5358 -228477.9 3691709     0.2780505        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5359 -228027.9 3691709     0.2746994        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5360 -227577.9 3691709     0.2743022        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5361 -227127.9 3691709     0.2740935        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5362 -226677.9 3691709     0.2740889        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5363 -226227.9 3691709     0.2740874        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5364 -225777.9 3691709     0.2740874        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5365 -225327.9 3691709     0.2740874        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5366 -224877.9 3691709     0.2740874        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5367 -224427.9 3691709     0.2740874        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5368 -223977.9 3691709     0.2740874        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5369 -223527.9 3691709     0.2740874        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5370 -223077.9 3691709     0.2740874        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5371 -222627.9 3691709     0.2740874        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5372 -222177.9 3691709     0.2740874        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7001 -243777.9 3691259     0.3325951        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7002 -243327.9 3691259     0.3100144        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7003 -242877.9 3691259     0.2899381        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7004 -242427.9 3691259     0.2563375        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7005 -241977.9 3691259     0.2286321        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7006 -241527.9 3691259     0.2353061        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7007 -241077.9 3691259     0.2577829        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7008 -240627.9 3691259     0.3109630        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7009 -240177.9 3691259     0.3424255        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7010 -239727.9 3691259     0.3542031        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7011 -239277.9 3691259     0.3292653        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7012 -238827.9 3691259     0.2892794        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7013 -238377.9 3691259     0.2796860        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7014 -237927.9 3691259     0.2776933        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7015 -237477.9 3691259     0.3224568        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7016 -237027.9 3691259     0.3603223        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7017 -236577.9 3691259     0.3789097        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7018 -236127.9 3691259     0.3913707        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7019 -235677.9 3691259     0.3962913        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7020 -235227.9 3691259     0.3953635        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7021 -234777.9 3691259     0.3910452        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7022 -234327.9 3691259     0.3746132        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7023 -233877.9 3691259     0.3554987        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7024 -233427.9 3691259     0.3432078        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7025 -232977.9 3691259     0.3331917        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7026 -232527.9 3691259     0.3330496        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7027 -232077.9 3691259     0.3277555        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7028 -231627.9 3691259     0.3137636        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7029 -231177.9 3691259     0.3061445        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7030 -230727.9 3691259     0.3035994        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7031 -230277.9 3691259     0.3081046        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7032 -229827.9 3691259     0.3150679        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7033 -229377.9 3691259     0.3124594        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7034 -228927.9 3691259     0.3077106        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7035 -228477.9 3691259     0.2919220        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7036 -228027.9 3691259     0.2797228        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7037 -227577.9 3691259     0.2760718        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7038 -227127.9 3691259     0.2741518        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7039 -226677.9 3691259     0.2741035        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7040 -226227.9 3691259     0.2740874        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7041 -225777.9 3691259     0.2740874        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7042 -225327.9 3691259     0.2740874        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7043 -224877.9 3691259     0.2740874        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7044 -224427.9 3691259     0.2740874        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7045 -223977.9 3691259     0.2740874        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7046 -223527.9 3691259     0.2740874        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7047 -223077.9 3691259     0.2740874        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7048 -222627.9 3691259     0.2740874        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7049 -222177.9 3691259     0.2740874        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7050 -221727.9 3691259     0.2740874        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7051 -221277.9 3691259     0.2740874        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7052 -220827.9 3691259     0.2740874        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7053 -220377.9 3691259     0.2961859        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7054 -219927.9 3691259     0.3190539        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7055 -219477.9 3691259     0.3407900        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8678 -243777.9 3690809     0.3124990        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8679 -243327.9 3690809     0.2989194        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8680 -242877.9 3690809     0.2893075        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8681 -242427.9 3690809     0.2541421        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8682 -241977.9 3690809     0.2226295        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8683 -241527.9 3690809     0.2152824        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8684 -241077.9 3690809     0.2313300        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8685 -240627.9 3690809     0.2928310        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8686 -240177.9 3690809     0.3326171        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8687 -239727.9 3690809     0.3527206        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8688 -239277.9 3690809     0.3297856        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8689 -238827.9 3690809     0.2892109        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8690 -238377.9 3690809     0.2796151        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8691 -237927.9 3690809     0.2778580        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8692 -237477.9 3690809     0.3248278        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8693 -237027.9 3690809     0.3680131        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8694 -236577.9 3690809     0.4006222        5  0.4-0.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8695 -236127.9 3690809     0.4202592        5  0.4-0.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8696 -235677.9 3690809     0.4239301        5  0.4-0.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8697 -235227.9 3690809     0.4196468        5  0.4-0.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8698 -234777.9 3690809     0.4107522        5  0.4-0.5</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8699 -234327.9 3690809     0.3795308        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8700 -233877.9 3690809     0.3433766        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8701 -233427.9 3690809     0.3242289        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8702 -232977.9 3690809     0.3089703        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8703 -232527.9 3690809     0.3105928        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8704 -232077.9 3690809     0.3082969        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8705 -231627.9 3690809     0.2993858        3  0.2-0.3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8706 -231177.9 3690809     0.3006503        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8707 -230727.9 3690809     0.3100165        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8708 -230277.9 3690809     0.3211413        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8709 -229827.9 3690809     0.3328794        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8710 -229377.9 3690809     0.3339319        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8711 -228927.9 3690809     0.3311764        4  0.3-0.4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [ reached 'max' / getOption("max.print") -- omitted 740820 rows ]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in inherits(raster_in, "SpatRaster"):</span> object 'wadOut' not found</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

@@ -2,7 +2,7 @@
 % Please edit documentation in R/make_normalised_raster.R
 \name{make_normalised_raster}
 \alias{make_normalised_raster}
-\title{Function to extract general raster data}
+\title{Create a Normalized Raster Aligned with and masked by Planning Units}
 \usage{
 make_normalised_raster(
   raster_in,
@@ -10,47 +10,65 @@ make_normalised_raster(
   iso3,
   invert = FALSE,
   rescaled = TRUE,
+  method_override = NULL,
+  conditional_expression = NULL,
+  fill_na = TRUE,
   name_out,
   output_path = NULL
 )
 }
 \arguments{
-\item{raster_in}{A \code{SpatRaster} file that contains the data to be put into right format}
+\item{raster_in}{\code{SpatRaster} The input raster to be processed.}
 
-\item{pus}{A \code{SpatRaster} file that contains the reference spatial extent, crs etc.in form of the planning units}
+\item{pus}{\code{SpatVector} The planning units (PUs) to align the raster to.}
 
-\item{iso3}{A string of the iso3 name of the data (country name).}
+\item{iso3}{\code{character} ISO3 country code used for naming the output file.}
 
-\item{invert}{Logical. Default is FALSE. If TRUE, highest values in the original dataset should be valued the lowest in the prioritisation.}
+\item{invert}{\code{logical} If \code{TRUE}, inverts the raster values (default: \code{FALSE}).}
 
-\item{rescaled}{Logical. Default is TRUE. Should remain TRUE unless there is a very specific reason not to rescale.}
+\item{rescaled}{\code{logical} If \code{TRUE}, rescales the raster using \code{rescale_raster()} (default: \code{TRUE}).}
 
-\item{name_out}{A string with the data name that will be used for the output \code{tif}file}
+\item{method_override}{\code{character} Optional method for \code{terra::project()}, overriding the default (default: \code{NULL}).}
 
-\item{output_path}{An optional output path for the created file.}
+\item{conditional_expression}{\code{function} Optional method to apply a function to the raster before resampling to the PU layer (default: \code{NULL}).}
+
+\item{fill_na}{\code{logical} If \code{TRUE}, fills \code{NA} values with 0 before masking (default: \code{TRUE}).}
+
+\item{name_out}{\code{character} The name of the output raster file (without the extension).}
+
+\item{output_path}{\code{character} The directory path to save the output raster (default: \code{NULL}, i.e., not saved).}
 }
 \value{
-A \code{SpatRaster} file that has been aligned and normalised
+Returns a \link{SpatRaster} object that has been reprojected and processed.
+If \code{output_path} is specified, saves the raster as a COG (Cloud Optimized GeoTIFF).
 }
 \description{
-\code{make_normalised_raster()}allows you to align, normalise and save a raster file. This is applicable for the following data
-This is applicable for the following data sets: certified forests, drought risk, flood risk, intact wilderness area, soc difference, threatened species richness, voc, wad convergence evidence
+This function takes an input raster, aligns it with specified planning units (PUs),
+optionally inverts, rescales, applies conditional expressions, and saves the processed
+raster to a specified output path.
+}
+\details{
+This function reprojects the input raster (\code{raster_in}) to match the CRS and resolution
+of the planning units (\code{pus}). The method for reprojection can be overridden using \code{method_override}.
+If \code{conditional_expression} is provided, it is applied before any reprojection. The function can
+optionally rescale (0-1) and invert the raster values.
 }
 \examples{
-boundary_proj <- make_boundary(
-  boundary_in = boundary_dat,
-  iso3 = "NPL",
-  iso3_column = "iso3cd",
-  do_project = TRUE
+# Example usage:
+raster_out <- make_normalised_raster(
+  raster_in = my_raster,
+  pus = my_pus,
+  iso3 = "USA",
+  invert = TRUE,
+  rescaled = FALSE,
+  name_out = "aligned_raster",
+  output_path = "/path/to/output"
 )
 
-pus <- make_planning_units(boundary_proj = boundary_proj,
-                           pu_size = NULL,
-                           pu_threshold = 8.5e5,
-                           limit_to_mainland = FALSE)
-wad_dat <- get_wad_data()
-
-wadOut <- make_normalised_raster(raster_in = wad_dat,
-                                 pus = pus,
-                                 iso3 = "NPL")
+raster_out <- make_normalised_raster(
+  raster_in = my_raster,
+  pus = my_pus,
+  iso3 = "USA",
+  conditional_expression = function(r) ifel(r \%in\% c(1:4, 7, 9), 1, 0)
+)
 }
