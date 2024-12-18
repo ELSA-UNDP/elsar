@@ -21,7 +21,7 @@ test_that("make_boundary (do_project == TRUE)", {
     boundary_in = boundary_dat,
     iso3 = "NPL",
     iso3_column = "iso3cd",
-    do_project = TRUE
+    custom_projection = TRUE
   )
 
   expect_equal(class(boundary_proj)[1], "sf")

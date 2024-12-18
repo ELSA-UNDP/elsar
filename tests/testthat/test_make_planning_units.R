@@ -2,8 +2,7 @@ test_that("planning_units", {
   boundary_proj <- make_boundary(
     boundary_in = boundary_dat,
     iso3 = "NPL",
-    iso3_column = "iso3cd",
-    do_project = TRUE
+    iso3_column = "iso3cd"
   )
 
   pus <- make_planning_units(boundary_proj = boundary_proj,
