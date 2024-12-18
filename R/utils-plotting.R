@@ -13,8 +13,7 @@
 #' boundary_proj <- make_boundary(
 #'   boundary_in = boundary_dat,
 #'   iso3 = "NPL",
-#'   iso3_column = "iso3cd",
-#'   do_project = TRUE
+#'   iso3_column = "iso3cd"
 #' )
 #'
 #' pus <- make_planning_units(
@@ -104,8 +103,7 @@ elsar_plot_optics <- function(type = "ggplot",
 #' boundary_proj <- make_boundary(
 #'   boundary_in = boundary_dat,
 #'   iso3 = "NPL",
-#'   iso3_column = "iso3cd",
-#'   do_project = TRUE
+#'   iso3_column = "iso3cd"
 #' )
 #'
 #' pus <- make_planning_units(
@@ -243,8 +241,7 @@ elsar_plot_extra_data <- function(plot_type = "ggplot",
 #' boundary_proj <- make_boundary(
 #'   boundary_in = boundary_dat,
 #'   iso3 = "NPL",
-#'   iso3_column = "iso3cd",
-#'   do_project = TRUE
+#'   iso3_column = "iso3cd"
 #' )
 #'
 #' pus <- make_planning_units(
@@ -351,8 +348,7 @@ elsar_plot_background_c <- function(plot_type = "ggplot",
 #' boundary_proj <- make_boundary(
 #'   boundary_in = boundary_dat,
 #'   iso3 = "NPL",
-#'   iso3_column = "iso3cd",
-#'   do_project = TRUE
+#'   iso3_column = "iso3cd"
 #' )
 #'
 #' pus <- make_planning_units(
@@ -496,8 +492,7 @@ elsar_plot_background_d <- function(plot_type = "ggplot",
 #' boundary_proj <- make_boundary(
 #'   boundary_in = boundary_dat,
 #'   iso3 = "NPL",
-#'   iso3_column = "iso3cd",
-#'   do_project = TRUE
+#'   iso3_column = "iso3cd"
 #' )
 #'
 #' pus <- make_planning_units(
@@ -583,8 +578,7 @@ elsar_extend <- function(raster_main = NULL,
 #' boundary_proj <- make_boundary(
 #'   boundary_in = boundary_dat,
 #'   iso3 = "NPL",
-#'   iso3_column = "iso3cd",
-#'   do_project = TRUE
+#'   iso3_column = "iso3cd"
 #' )
 #'
 #' pus <- make_planning_units(
