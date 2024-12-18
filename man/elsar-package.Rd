@@ -16,7 +16,7 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Scott Atkinson \email{scott.atkinson@undp.org} (\href{https://orcid.org/YOUR-ORCID-ID}{ORCID})
+\strong{Maintainer}: Scott Atkinson \email{scott.atkinson@undp.org} (\href{https://orcid.org/0000-0001-5995-0199}{ORCID})
 
 Authors:
 \itemize{

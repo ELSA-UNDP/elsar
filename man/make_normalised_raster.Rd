@@ -54,6 +54,7 @@ If \code{conditional_expression} is provided, it is applied before any reproject
 optionally rescale (0-1) and invert the raster values.
 }
 \examples{
+\dontrun{
 # Example usage:
 raster_out <- make_normalised_raster(
   raster_in = my_raster,
@@ -71,4 +72,6 @@ raster_out <- make_normalised_raster(
   iso3 = "USA",
   conditional_expression = function(r) ifel(r \%in\% c(1:4, 7, 9), 1, 0)
 )
+}
+
 }

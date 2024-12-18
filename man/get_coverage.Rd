@@ -9,7 +9,7 @@ get_coverage(zone_layer, pu_layer)
 \arguments{
 \item{zone_layer}{A binary \code{spatRast} representing a zone or protected area type feature.}
 
-\item{pu_layer}{A binary `spatRast`` representing the planning units.}
+\item{pu_layer}{A binary `spatRast` representing the planning units.}
 }
 \value{
 A vector of areal targets of length 1.

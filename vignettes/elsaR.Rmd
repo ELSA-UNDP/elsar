@@ -52,7 +52,7 @@ boundary <- make_boundary(
   boundary_in = boundary_dat,
   iso3 = "NPL",
   iso3_column = "iso3cd",
-  do_project = FALSE
+  custom_projection = FALSE
 )
 
 ggplot() +
@@ -66,7 +66,7 @@ boundary_proj <- make_boundary(
   boundary_in = boundary_dat,
   iso3 = "NPL",
   iso3_column = "iso3cd",
-  do_project = TRUE
+  custom_projection = TRUE
 )
 
 # create custom projection and apply it to boundary
