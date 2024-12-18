@@ -8,8 +8,8 @@
 <title>An Example ELSA Workflow • elsar</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
-<link href="../deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="An Example ELSA Workflow">
 </head>
 <body>
@@ -105,7 +105,7 @@ use a pre-saved dataset.</p>
 <span>  boundary_in <span class="op">=</span> <span class="va">boundary_dat</span>,</span>
 <span>  iso3 <span class="op">=</span> <span class="st">"NPL"</span>,</span>
 <span>  iso3_column <span class="op">=</span> <span class="st">"iso3cd"</span>,</span>
-<span>  do_project <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  custom_projection <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
@@ -121,7 +121,7 @@ the <code><a href="../reference/make_boundary.html">make_boundary()</a></code> f
 <span>  boundary_in <span class="op">=</span> <span class="va">boundary_dat</span>,</span>
 <span>  iso3 <span class="op">=</span> <span class="st">"NPL"</span>,</span>
 <span>  iso3_column <span class="op">=</span> <span class="st">"iso3cd"</span>,</span>
-<span>  do_project <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  custom_projection <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># create custom projection and apply it to boundary</span></span>
@@ -165,19 +165,21 @@ planning units, which is based on previous experience with run time.</p>
 Features can range from species distributions, to more general
 over-arching datasets such as Key Biodiversity Areas (ref). In our
 example, we will use only one dataset, the World Atlas of
-Desertification (WAD). Again, input data can first be loaded using the
-<code><a href="../reference/elsar_load_data.html">elsar_load_data()</a></code> function (here we have the dataset
+Desertification’s (WAD; see <a href="https://wad.jrc.ec.europa.eu/" class="external-link uri">https://wad.jrc.ec.europa.eu/</a>) <em>Convergence of Global
+Change Issues</em> dataset. Again, input data can first be loaded using
+the <code><a href="../reference/elsar_load_data.html">elsar_load_data()</a></code> function (here we have the dataset
 already saved in the package; change later).</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># get feature data</span></span>
-<span><span class="va">wad_dat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/wad_data.html">get_wad_data</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p>The data then needs to be re-projected and re-sampled to the
-previously created planning units. We also normalise the data to only
-have values between 0-1.</p>
+<span><span class="va">wad_subset</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/wad_subset.html">get_wad_data</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p>The data then needs to be re-projected and re-sampled to exactly
+match the resolution and extent of the previously created planning
+units. We also normalise the data to only have values within the range
+0-1.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># crop and normalise data</span></span>
 <span><span class="va">wadOut</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/make_normalised_raster.html">make_normalised_raster</a></span><span class="op">(</span></span>
-<span>  raster_in <span class="op">=</span> <span class="va">wad_dat</span>,</span>
+<span>  raster_in <span class="op">=</span> <span class="va">wad_subset</span>,</span>
 <span>  pus <span class="op">=</span> <span class="va">pus</span>,</span>
 <span>  iso3 <span class="op">=</span> <span class="st">"NPL"</span></span>
 <span><span class="op">)</span></span>
@@ -185,11 +187,11 @@ have values between 0-1.</p>
 <span><span class="fu">terra</span><span class="fu">::</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/plot.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">wadOut</span><span class="op">)</span></span></code></pre></div>
 <p><img src="elsaR_files/figure-html/unnamed-chunk-8-1.png" width="336" style="display: block; margin: auto;"></p>
 <p>Instead of only having a quick look at the data by using the
-<code>terra</code> package, we can also create a plot using the plotting
-options integrated in the <code>elsar</code> package, such as
+<code>terra</code> package’s <code>plot</code> function, we can also
+create a plot using the plotting options integrated in the
+<code>elsar</code> package, such as
 <code><a href="../reference/elsar_plot_static_raster_c.html">elsar_plot_static_raster_c()</a></code>, which allows to plot
-continuous raster data with <code>ggplot</code> or
-<code>tmap</code>.</p>
+continuous raster data with <code>ggplot</code>.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="va">plot_wad</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/elsar_plot_static_raster_c.html">elsar_plot_static_raster_c</a></span><span class="op">(</span></span>
 <span>  raster_in <span class="op">=</span> <span class="va">wadOut</span>, type <span class="op">=</span> <span class="st">"ggplot_raster"</span>,</span>
@@ -212,19 +214,19 @@ to be something other than the default “viridis”.</p>
 <span><span class="op">(</span><span class="va">plot_wad</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/elsar_plot_static_raster_c.html">elsar_plot_static_raster_c</a></span><span class="op">(</span></span>
 <span>  raster_in <span class="op">=</span> <span class="va">wadOut</span>, type <span class="op">=</span> <span class="st">"ggplot_raster"</span>,</span>
 <span>  custom_palette <span class="op">=</span> <span class="va">custom_p</span>,</span>
-<span>  background <span class="op">=</span> <span class="va">wad_dat</span></span>
+<span>  background <span class="op">=</span> <span class="va">wad_subset</span></span>
 <span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/elsar_plot_optics.html">elsar_plot_optics</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Adding background layer.</span></span>
 <span><span class="co">#&gt; Extend based on ratio.</span></span></code></pre></div>
 <p><img src="elsaR_files/figure-html/unnamed-chunk-10-1.png" width="768" style="display: block; margin: auto;"></p>
 <p>If we are interested in the distribution, we can also plot the
-distribution on the plots. For this, we need to create two separate
-plots that we then put together:</p>
+distribution of raster values. For this, we need to create two
+individual plots that we then combine into a single output plot:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">plot_out</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/elsar_plot_static_raster_c.html">elsar_plot_static_raster_c</a></span><span class="op">(</span></span>
 <span>  raster_in <span class="op">=</span> <span class="va">wadOut</span>, type <span class="op">=</span> <span class="st">"ggplot_raster"</span>,</span>
-<span>  background <span class="op">=</span> <span class="va">wad_dat</span>,</span>
+<span>  background <span class="op">=</span> <span class="va">wad_subset</span>,</span>
 <span>  raster_df_out <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  legend_title <span class="op">=</span> <span class="st">"WAD"</span></span>
 <span><span class="op">)</span></span>
@@ -258,14 +260,14 @@ plots that we then put together:</p>
 <span>    align_to <span class="op">=</span> <span class="st">"plot"</span></span>
 <span>  <span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Picking joint bandwidth of 0.0113</span></span></code></pre></div>
-<p><img src="elsaR_files/figure-html/unnamed-chunk-11-1.png" width="768" style="display: block; margin: auto;">
-We can also transform the data into categories and plot the main plot
+<p><img src="elsaR_files/figure-html/unnamed-chunk-11-1.png" width="768" style="display: block; margin: auto;"></p>
+<p>We can also transform the data into categories and plot the main plot
 and the inset that way.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">plot_cat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/elsar_plot_static_raster_d.html">elsar_plot_static_raster_d</a></span><span class="op">(</span></span>
 <span>  raster_in <span class="op">=</span> <span class="va">wadOut</span>, type <span class="op">=</span> <span class="st">"ggplot_raster"</span>,</span>
 <span>  categorical <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  background <span class="op">=</span> <span class="va">wad_dat</span>,</span>
+<span>  background <span class="op">=</span> <span class="va">wad_subset</span>,</span>
 <span>  number_categories <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>  data_layer <span class="op">=</span> <span class="st">"wad_final_cog"</span>,</span>
 <span>  raster_df_out <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -312,7 +314,7 @@ and the inset that way.</p>
 <span></span>
 <span><span class="op">(</span><span class="va">plot_wad_pas</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/elsar_plot_static_raster_c.html">elsar_plot_static_raster_c</a></span><span class="op">(</span></span>
 <span>  raster_in <span class="op">=</span> <span class="va">wadOut</span>, type <span class="op">=</span> <span class="st">"ggplot_raster"</span>,</span>
-<span>  background <span class="op">=</span> <span class="va">wad_dat</span>,</span>
+<span>  background <span class="op">=</span> <span class="va">wad_subset</span>,</span>
 <span>  legend_title <span class="op">=</span> <span class="st">"WAD"</span></span>
 <span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/elsar_plot_extra_data.html">elsar_plot_extra_data</a></span><span class="op">(</span>include_pas <span class="op">=</span> <span class="va">current_pas</span>, color_pa <span class="op">=</span> <span class="st">"red"</span><span class="op">)</span> <span class="op">+</span></span>
@@ -326,7 +328,7 @@ and the inset that way.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="va">plot_wad_pas2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/elsar_plot_static_raster_c.html">elsar_plot_static_raster_c</a></span><span class="op">(</span></span>
 <span>  raster_in <span class="op">=</span> <span class="va">wadOut</span>, type <span class="op">=</span> <span class="st">"ggplot_raster"</span>,</span>
-<span>  background <span class="op">=</span> <span class="va">wad_dat</span>,</span>
+<span>  background <span class="op">=</span> <span class="va">wad_subset</span>,</span>
 <span>  legend_title <span class="op">=</span> <span class="st">"WAD"</span></span>
 <span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/elsar_plot_extra_data.html">elsar_plot_extra_data</a></span><span class="op">(</span>include_pas <span class="op">=</span> <span class="va">current_pas</span>, pas_look <span class="op">=</span> <span class="st">"area"</span>, color_pa <span class="op">=</span> <span class="st">"grey"</span><span class="op">)</span> <span class="op">+</span></span>

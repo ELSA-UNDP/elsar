@@ -20,8 +20,10 @@
 <url><loc>https://elsa-undp.github.io/elsar/reference/elsar_plot_optics.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/reference/elsar_plot_static_raster_c.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/reference/elsar_plot_static_raster_d.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/exact_rasterise.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/reference/extract_filename_filetype.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/reference/get_all_features.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/get_coverage.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/reference/index.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/reference/make_boundary.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/reference/make_custom_projection.html</loc></url>
@@ -33,6 +35,6 @@
 <url><loc>https://elsa-undp.github.io/elsar/reference/make_protected_areas.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/reference/pipe.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/reference/rescale_raster.html</loc></url>
-<url><loc>https://elsa-undp.github.io/elsar/reference/wad_data.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/wad_subset.html</loc></url>
 </urlset>
 
