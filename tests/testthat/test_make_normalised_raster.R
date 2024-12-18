@@ -10,9 +10,10 @@ test_that("make_normalised_raster (not inverted)", {
                              pu_size = NULL,
                              pu_threshold = 8.5e5,
                              limit_to_mainland = FALSE)
-  wad_dat <- get_wad_data()
 
-  wadOut <- make_normalised_raster(raster_in = wad_dat,
+  wad_subset <- elsar::get_wad_data()
+
+  wadOut <- make_normalised_raster(raster_in = wad_subset,
                                    pus = pus,
                                    iso3 = "NPL")
 
@@ -34,9 +35,9 @@ test_that("make_normalised_raster (inverted)", {
                              pu_threshold = 8.5e5,
                              limit_to_mainland = FALSE)
 
-  wad_dat <- get_wad_data()
+  wad_subset <- elsar::get_wad_data()
 
-  wadOut <- make_normalised_raster(raster_in = wad_dat,
+  wadOut <- make_normalised_raster(raster_in = wad_subset,
                                    pus = pus,
                                    invert = TRUE,
                                    iso3 = "NPL")
