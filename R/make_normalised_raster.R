@@ -23,7 +23,10 @@
 #' @return Returns a [SpatRaster] object that has been reprojected and processed.
 #' If `output_path` is specified, saves the raster as a COG (Cloud Optimized GeoTIFF).
 #'
+#' @export
+#'
 #' @examples
+#' \dontrun{
 #' # Example usage:
 #' raster_out <- make_normalised_raster(
 #'   raster_in = my_raster,
@@ -41,7 +44,8 @@
 #'   iso3 = "USA",
 #'   conditional_expression = function(r) ifel(r %in% c(1:4, 7, 9), 1, 0)
 #' )
-#' @export
+#' }
+#'
 make_normalised_raster <- function(raster_in,
                                    pus,
                                    iso3,

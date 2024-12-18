@@ -14,6 +14,6 @@ https:// add link here
 current_pas_sf
 }
 \description{
-\code{current_pas_sf} file from wdpa database
+\code{current_pas_sf} file from WDPA database
 }
 \keyword{datasets}
