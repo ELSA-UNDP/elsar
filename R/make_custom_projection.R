@@ -24,7 +24,7 @@ make_custom_projection <- function(boundary,
   ymid <- mean(c(sf::st_bbox(boundary)$ymin, sf::st_bbox(boundary)$ymax))
 
   # Create WKT projection string
-  wkt <- glue::glue('PROJCS["Mollweide_Custom_{iso3}",GEOGCS["GCS_unknown",
+  wkt <- glue::glue('PROJCS["Mollweide_{iso3}",GEOGCS["GCS_unknown",
                   DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,
                   AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],
                   PRIMEM["Greenwich",0],UNIT["Degree",0.0174532925199433]],

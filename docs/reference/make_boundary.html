@@ -55,9 +55,9 @@
 <span>  limit_to_mainland <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  col_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  filter_out <span class="op">=</span> <span class="fl">0</span>,</span>
-<span>  do_project <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  custom_projection <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  iso3 <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  <span class="va">iso3_column</span>,</span>
+<span>  iso3_column <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  output_path <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -84,10 +84,6 @@
 <dd><p>A value representing the outside area in the data (e.g. <code>0</code>)</p></dd>
 
 
-<dt>do_project</dt>
-<dd><p>Logical. <code>TRUE</code>if custom projection for planning region is wanted.</p></dd>
-
-
 <dt>iso3</dt>
 <dd><p>The iso3 country code (character) of the country of interest.</p></dd>
 
@@ -98,6 +94,10 @@
 
 <dt>output_path</dt>
 <dd><p>An optional output path for the created file. Only needed when do_project = TRUE.</p></dd>
+
+
+<dt>do_project</dt>
+<dd><p>Logical. <code>TRUE</code>if custom projection for planning region is wanted.</p></dd>
 
 </dl></div>
     <div class="section level2">

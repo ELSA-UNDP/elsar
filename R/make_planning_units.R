@@ -1,12 +1,12 @@
 #' Function to create planning units and custom projection
 #'
-#' This function creates planning units for a spatial prioritisation problem in a raster format. It also creates a custom projection (`wkt` file) centred on the planning region based on the Mollweide projection.
+#' This function creates planning units for a spatial prioritisation problem in a raster format.
 #'
 #' @param boundary_proj A `sf`object representing the boundary of the planning region in the preferred projection. Preferably generated with [make_boundary()]
 #' @param pu_size A way to define a custom planning unit size. Can be NULL to use default settings that generate planning units as small as possible whilst still being computationally efficient.
 #' @param pu_threshold An integer value that gives a maximum number of PUs. The default (`8.5e5`) is set based on `prioritizr` processing time, network transfer time and solver time.
-#' @param limit_to_mainland A logical that determines whether planning units should only be created for mainland area (`FALSE`; default) or not (`TRUE`)
-#' @param iso3 The iso3 country code (character) of the country of interest.
+#' @param limit_to_mainland A logical that determines whether planning units should only be created for mainland area (`FALSE`; default) or not (`TRUE`).
+#' @param iso3 The `ISO3` country code (character) of the country of interest.
 #' @param output_path An optional output path for the created file.
 #'
 #' @return A raster (`.tif`) file with the planning unit information for the chosen planning region.

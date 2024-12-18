@@ -34,6 +34,7 @@ reference:
   - convert_points_polygon
   - extract_filename_filetype
   - rescale_raster
+  - get_coverage
 
 - title: Plotting function
   desc: Functions to plot input and output data of an ELSA workflow
