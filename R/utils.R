@@ -138,7 +138,7 @@ extract_filename_filetype <- function(data_name, file_path) {
 #' Calculate country areal coverage (as a percentage) of an input binary layer, likely representing a zone.
 #'
 #' @param zone_layer A binary `spatRast` representing a zone or protected area type feature.
-#' @param pu_layer A binary `spatRast`` representing the planning units.
+#' @param pu_layer A binary `spatRast` representing the planning units.
 #' @return A vector of areal targets of length 1.
 #'
 #' @seealso [terra::global()] which this function wraps.
