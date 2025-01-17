@@ -28,8 +28,7 @@ A \code{SpatRaster} file that has been aligned and normalised
 boundary_proj <- make_boundary(
   boundary_in = boundary_dat,
   iso3 = "IND",
-  iso3_column = "iso3cd",
-  do_project = TRUE
+  iso3_column = "iso3cd"
 )
 
 # make planning units

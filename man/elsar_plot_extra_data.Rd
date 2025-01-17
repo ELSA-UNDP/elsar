@@ -40,8 +40,7 @@ For \code{ggplot} returns a list that can simply be added to a \code{ggplot}, e.
 boundary_proj <- make_boundary(
   boundary_in = boundary_dat,
   iso3 = "NPL",
-  iso3_column = "iso3cd",
-  custom_projection = TRUE
+  iso3_column = "iso3cd"
 )
 
 pus <- make_planning_units(

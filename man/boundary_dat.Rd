@@ -14,6 +14,6 @@ https:// add link here
 boundary_dat
 }
 \description{
-\code{sf} file containing the Souther Asia boundary information
+\code{sf} file containing the Southern Asia boundary information
 }
 \keyword{datasets}

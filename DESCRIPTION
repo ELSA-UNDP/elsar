@@ -2,15 +2,21 @@ Package: elsar
 Title: Functions and Tools For Creating ELSA Tier 1 Data Stacks
 Version: 0.0.2
 Authors@R: 
-    c(person("Scott", "Atkinson", , "scott.atkinson@undp.org", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID")),
+    c(
     person(
-    given = "Sandra",
+      given = "Scott",
+      family = "Atkinson",
+      role = c("aut", "cre"),
+      email = "scott.atkinson@undp.org",
+      comment = c(ORCID = "0000-0001-5995-0199")),
+    person(
+      given = "Sandra",
       family = "Neubert",
       role = c("aut"),
       email = "s.neubert@uq.edu.au",
       comment = c(ORCID = "0000-0002-3112-4116")
-      ))
+      )
+    )
 Description: What the package does (one paragraph).
 License: CC BY 4.0
 Encoding: UTF-8

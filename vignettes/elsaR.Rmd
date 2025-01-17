@@ -25,7 +25,6 @@ knitr::opts_chunk$set(
 
 ## Introduction
 
-
 ## Get started
 
 ```{r, message = FALSE}
@@ -44,7 +43,7 @@ set.seed(500)
 ## Planning Region
 
 At the start of the analysis, the planning region needs to be defined and planning units need to be created for the planning region. In this example, we use Nepal as our case study to demonstrate the functions within this package.
- 
+
 For this, we first obtain the country boundary of Nepal by using its iso3 string (“NPL”). Normally, you would need to provide your own data set with country boundaries to filter from. Data can be loaded from local machines in vector or raster format, or using a remote connection via postgres using the `elsar_load_data()` function. Here, we use a pre-saved dataset.
 
 ```{r, fig.width = w, fig.height = h}
@@ -98,19 +97,19 @@ pus <- make_planning_units(
 
 ## Features
 
-Biodiversity features are an integral part of conservation planning. Features can range from species distributions, to more general over-arching datasets such as Key Biodiversity Areas (ref). In our example, we will use only one dataset, the World Atlas of Desertification (WAD). Again, input data can first be loaded using the  `elsar_load_data()` function (here we have the dataset already saved in the package; change later).
+Biodiversity features are an integral part of conservation planning. Features can range from species distributions, to more general over-arching datasets such as Key Biodiversity Areas (ref). In our example, we will use only one dataset, the World Atlas of Desertification's (WAD; see <https://wad.jrc.ec.europa.eu/>) *Convergence of Global Change Issues* dataset. Again, input data can first be loaded using the `elsar_load_data()` function (here we have the dataset already saved in the package; change later).
 
 ```{r}
 # get feature data
-wad_dat <- get_wad_data()
+wad_subset <- get_wad_data()
 ```
 
-The data then needs to be re-projected and re-sampled to the previously created planning units. We also normalise the data to only have values between 0-1.
+The data then needs to be re-projected and re-sampled to exactly match the resolution and extent of the previously created planning units. We also normalise the data to only have values within the range 0-1.
 
 ```{r, fig.width = w, fig.height = h}
 # crop and normalise data
 wadOut <- make_normalised_raster(
-  raster_in = wad_dat,
+  raster_in = wad_subset,
   pus = pus,
   iso3 = "NPL"
 )
@@ -118,7 +117,7 @@ wadOut <- make_normalised_raster(
 terra::plot(wadOut)
 ```
 
-Instead of only having a quick look at the data by using the `terra` package, we can also create a plot using the plotting options integrated in the `elsar` package, such as `elsar_plot_static_raster_c()`, which allows to plot continuous raster data with `ggplot` or `tmap`.
+Instead of only having a quick look at the data by using the `terra` package's `plot` function, we can also create a plot using the plotting options integrated in the `elsar` package, such as `elsar_plot_static_raster_c()`, which allows to plot continuous raster data with `ggplot`.
 
 ```{r, fig.width = 7, fig.height = 4}
 (plot_wad <- elsar_plot_static_raster_c(
@@ -127,7 +126,7 @@ Instead of only having a quick look at the data by using the `terra` package, we
 ))
 ```
 
-We can also add background data to the plot and add additional properties to change the appearance of the plot by using the `elsar_plot_optics()` function that allows to specify a specifc `ggplot` them. We can also change the colour palette to be something other than the default "viridis". 
+We can also add background data to the plot and add additional properties to change the appearance of the plot by using the `elsar_plot_optics()` function that allows to specify a specifc `ggplot` them. We can also change the colour palette to be something other than the default "viridis".
 
 ```{r, fig.width = 8, fig.height = 6}
 custom_p <- ggplot2::scale_fill_distiller(
@@ -140,8 +139,7 @@ custom_p <- ggplot2::scale_fill_distiller(
 (plot_wad <- elsar_plot_static_raster_c(
   raster_in = wadOut, type = "ggplot_raster",
   custom_palette = custom_p,
-  background = wad_dat, 
-  expand_plot = TRUE
+  background = wad_subset
 ) +
   elsar_plot_optics())
 ```
@@ -180,7 +178,7 @@ If we are interested in the distribution, we can also plot the distribution on t
 ```{r, fig.width = 8, fig.height = 6}
 plot_out <- elsar_plot_static_raster_c(
   raster_in = wadOut, type = "ggplot_raster",
-  background = wad_dat,
+  background = wad_subset,
   raster_df_out = TRUE,
   legend_title = "WAD", 
   expand_plot = TRUE
@@ -214,13 +212,14 @@ plot_dist <- elsar_plot_distribution(
   )))
 
 ```
+
 We can also transform the data into categories and plot the main plot and the inset that way.
 
 ```{r, fig.width = 8, fig.height = 6}
 plot_cat <- elsar_plot_static_raster_d(
   raster_in = wadOut, type = "ggplot_raster",
   categorical = FALSE,
-  background = wad_dat,
+  background = wad_subset,
   number_categories = 10,
   data_layer = "wad_final_cog",
   raster_df_out = TRUE,
@@ -236,8 +235,6 @@ plot_dist_cat <- elsar_plot_distribution(
   raster_df = raster_df_cat,
   categorical = TRUE
 )
-
-browser()
 
 (plot_wad_cat_inset <- patchwork::wrap_plots((plot_wad_cat +
   elsar_plot_optics()) +
@@ -258,8 +255,6 @@ browser()
   )))
 ```
 
-
-
 ## Existing Protected Area
 
 ADD TEXT LATER
@@ -269,21 +264,18 @@ current_pas <- current_pas_sf
 
 (plot_wad_pas <- elsar_plot_static_raster_c(
   raster_in = wadOut, type = "ggplot_raster",
-  background = wad_dat,
-  legend_title = "WAD", 
-  expand_plot = TRUE
+  background = wad_subset,
+  legend_title = "WAD"
 ) +
   elsar_plot_extra_data(include_pas = current_pas, color_pa = "red") +
   elsar_plot_optics())
 ```
 
-
 ```{r, fig.width = 7, fig.height = 5}
 (plot_wad_pas2 <- elsar_plot_static_raster_c(
   raster_in = wadOut, type = "ggplot_raster",
-  background = wad_dat,
-  legend_title = "WAD", 
-  expand_plot = TRUE
+  background = wad_subset,
+  legend_title = "WAD"
 ) +
   elsar_plot_extra_data(include_pas = current_pas, pas_look = "area", color_pa = "grey") +
   elsar_plot_optics(include_north_scale = TRUE))

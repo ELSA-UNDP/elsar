@@ -58,6 +58,7 @@ reference:
   - convert_points_polygon
   - extract_filename_filetype
   - rescale_raster
+  - exact_rasterise
   - get_coverage
 
 - title: Plotting function

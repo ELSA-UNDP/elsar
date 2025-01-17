@@ -33,8 +33,7 @@ Function to create categories for plotting out of continuous data
 boundary_proj <- make_boundary(
   boundary_in = boundary_dat,
   iso3 = "NPL",
-  iso3_column = "iso3cd",
-  custom_projection = TRUE
+  iso3_column = "iso3cd"
 )
 
 pus <- make_planning_units(

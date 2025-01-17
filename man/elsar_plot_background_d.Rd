@@ -51,8 +51,7 @@ Function to create a plot with discrete background data for another plot
 boundary_proj <- make_boundary(
   boundary_in = boundary_dat,
   iso3 = "NPL",
-  iso3_column = "iso3cd",
-  custom_projection = TRUE
+  iso3_column = "iso3cd"
 )
 
 pus <- make_planning_units(

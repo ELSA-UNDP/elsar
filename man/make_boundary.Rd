@@ -33,7 +33,7 @@ make_boundary(
 
 \item{iso3_column}{Only relevant when \code{iso3} != NULL. A string of the name of where iso3 information can be found in a dataset.}
 
-\item{output_path}{An optional output path for the created file. Only needed when do_project = TRUE.}
+\item{output_path}{An optional output path for the created file. Only needed when custom_projection = TRUE.}
 }
 \value{
 \code{sf} object of the boundary of the planning region

@@ -8,7 +8,7 @@
 #' @param custom_projection Logical. `TRUE`if custom projection for planning region is wanted.
 #' @param iso3 The iso3 country code (character) of the country of interest.
 #' @param iso3_column Only relevant when `iso3` != NULL. A string of the name of where iso3 information can be found in a dataset.
-#' @param output_path An optional output path for the created file. Only needed when do_project = TRUE.
+#' @param output_path An optional output path for the created file. Only needed when custom_projection = TRUE.
 #'
 #' @return `sf` object of the boundary of the planning region
 #' @export
@@ -56,7 +56,12 @@ make_boundary <- function(boundary_in,
   }
 
   if (custom_projection) {
-    wkt <- make_custom_projection(boundary = nb, output_path = output_path, iso3_column = iso3_column, iso3 = iso3)
+    wkt <- make_custom_projection(
+      boundary = nb,
+      output_path = output_path,
+      iso3_column = iso3_column,
+      iso3 = iso3
+    )
     nb <- sf::st_transform(nb, crs = sf::st_crs(wkt))
   }
 
