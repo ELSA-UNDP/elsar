@@ -162,7 +162,7 @@ img_pos <- c(img_xmin, img_xmax, img_ymin, img_ymax)
 
 (plot_out <- elsar_plot_static_raster_c(
   raster_in = wadOut, type = "ggplot_raster",
-  background = wad_dat,
+  background = wad_subset,
   legend_title = "WAD", 
   expand_plot = TRUE
 ) +
