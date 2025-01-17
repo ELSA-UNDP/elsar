@@ -28,6 +28,9 @@
     <loc>https://elsa-undp.github.io/elsar/reference/boundary_dat.html</loc>
   </url>
   <url>
+    <loc>https://elsa-undp.github.io/elsar/reference/calc_feat_rep.html</loc>
+  </url>
+  <url>
     <loc>https://elsa-undp.github.io/elsar/reference/convert_points_polygon.html</loc>
   </url>
   <url>
@@ -73,10 +76,31 @@
     <loc>https://elsa-undp.github.io/elsar/reference/elsar_plot_static_raster_d.html</loc>
   </url>
   <url>
+    <loc>https://elsa-undp.github.io/elsar/reference/elsa_plot_output_map.html</loc>
+  </url>
+  <url>
+    <loc>https://elsa-undp.github.io/elsar/reference/elsa_plot_representation.html</loc>
+  </url>
+  <url>
+    <loc>https://elsa-undp.github.io/elsar/reference/exact_rasterise.html</loc>
+  </url>
+  <url>
     <loc>https://elsa-undp.github.io/elsar/reference/extract_filename_filetype.html</loc>
   </url>
   <url>
     <loc>https://elsa-undp.github.io/elsar/reference/get_all_features.html</loc>
+  </url>
+  <url>
+    <loc>https://elsa-undp.github.io/elsar/reference/get_coverage.html</loc>
+  </url>
+  <url>
+    <loc>https://elsa-undp.github.io/elsar/reference/get_elsa_coverage.html</loc>
+  </url>
+  <url>
+    <loc>https://elsa-undp.github.io/elsar/reference/get_elsa_min_lockin_target.html</loc>
+  </url>
+  <url>
+    <loc>https://elsa-undp.github.io/elsar/reference/get_elsa_target.html</loc>
   </url>
   <url>
     <loc>https://elsa-undp.github.io/elsar/reference/index.html</loc>
@@ -112,6 +136,9 @@
     <loc>https://elsa-undp.github.io/elsar/reference/make_protected_areas.html</loc>
   </url>
   <url>
+    <loc>https://elsa-undp.github.io/elsar/reference/make_protection_zone.html</loc>
+  </url>
+  <url>
     <loc>https://elsa-undp.github.io/elsar/reference/pipe.html</loc>
   </url>
   <url>
@@ -119,5 +146,8 @@
   </url>
   <url>
     <loc>https://elsa-undp.github.io/elsar/reference/wad_data.html</loc>
+  </url>
+  <url>
+    <loc>https://elsa-undp.github.io/elsar/reference/wad_subset.html</loc>
   </url>
 </urlset>
