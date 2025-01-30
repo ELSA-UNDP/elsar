@@ -102,6 +102,72 @@
 <p>A <code>list</code> of a <code>ggplot</code> or <code>tmap</code> object and a <code>SpatRaster</code> with the new background data.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">boundary_proj</span> <span class="op">&lt;-</span> <span class="fu"><a href="make_boundary.html">make_boundary</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  boundary_in <span class="op">=</span> <span class="va">boundary_dat</span>,</span></span>
+<span class="r-in"><span>  iso3 <span class="op">=</span> <span class="st">"NPL"</span>,</span></span>
+<span class="r-in"><span>  iso3_column <span class="op">=</span> <span class="st">"iso3cd"</span>,</span></span>
+<span class="r-in"><span>  custom_projection <span class="op">=</span> <span class="cn">TRUE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">pus</span> <span class="op">&lt;-</span> <span class="fu"><a href="make_planning_units.html">make_planning_units</a></span><span class="op">(</span>boundary_proj <span class="op">=</span> <span class="va">boundary_proj</span>,</span></span>
+<span class="r-in"><span>                           pu_size <span class="op">=</span> <span class="cn">NULL</span>,</span></span>
+<span class="r-in"><span>                           pu_threshold <span class="op">=</span> <span class="fl">8.5e5</span>,</span></span>
+<span class="r-in"><span>                           limit_to_mainland <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "The current number of planning units is: 3743382"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "The current number of planning units is: 2396805"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "The current number of planning units is: 1665187"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "The current number of planning units is: 1223941"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "The current number of planning units is: 741036"</span>
+<span class="r-in"><span><span class="va">wad_dat</span> <span class="op">&lt;-</span> <span class="fu"><a href="wad_subset.html">get_wad_data</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">wadOut</span> <span class="op">&lt;-</span> <span class="fu"><a href="make_normalised_raster.html">make_normalised_raster</a></span><span class="op">(</span>raster_in <span class="op">=</span> <span class="va">wad_dat</span>,</span></span>
+<span class="r-in"><span>                                 pus <span class="op">=</span> <span class="va">pus</span>,</span></span>
+<span class="r-in"><span>                                 iso3 <span class="op">=</span> <span class="st">"NPL"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">plot_cat</span> <span class="op">&lt;-</span> <span class="fu"><a href="elsar_plot_static_raster_d.html">elsar_plot_static_raster_d</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>raster_in <span class="op">=</span> <span class="va">wadOut</span>, type <span class="op">=</span> <span class="st">"ggplot_raster"</span>,</span></span>
+<span class="r-in"><span>categorical <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
+<span class="r-in"><span>background <span class="op">=</span> <span class="va">wad_dat</span>,</span></span>
+<span class="r-in"><span>number_categories <span class="op">=</span> <span class="fl">10</span>,</span></span>
+<span class="r-in"><span>data_layer <span class="op">=</span> <span class="st">"wad_final_cog"</span>,</span></span>
+<span class="r-in"><span>raster_df_out <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>legend_title <span class="op">=</span> <span class="st">"WAD"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Plotting input data that is continuous and will be split into categories.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Adding background layer.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Extend based on ratio.</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">plot_wad_cat</span> <span class="op">&lt;-</span> <span class="va">plot_cat</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span></span>
+<span class="r-in"><span><span class="va">raster_df_cat</span> <span class="op">&lt;-</span> <span class="va">plot_cat</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">plot_dist_cat</span> <span class="op">&lt;-</span> <span class="fu">elsar_plot_distribution</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  raster_df <span class="op">=</span> <span class="va">raster_df_cat</span>,</span></span>
+<span class="r-in"><span>  categorical <span class="op">=</span> <span class="cn">TRUE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="op">(</span><span class="va">plot_wad_cat_inset</span> <span class="op">&lt;-</span> <span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_plots.html" class="external-link">wrap_plots</a></span><span class="op">(</span><span class="op">(</span><span class="va">plot_wad_cat</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="elsar_plot_optics.html">elsar_plot_optics</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>  <span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/inset_element.html" class="external-link">inset_element</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="op">(</span><span class="va">plot_dist_cat</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>      <span class="fu"><a href="elsar_plot_optics.html">elsar_plot_optics</a></span><span class="op">(</span>include_text <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span></span></span>
+<span class="r-in"><span>      <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>        axis.title <span class="op">=</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>        axis.text.x <span class="op">=</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>        axis.ticks.x <span class="op">=</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span>      <span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="op">)</span>,</span></span>
+<span class="r-in"><span>    left <span class="op">=</span> <span class="fl">0.1</span>, <span class="co"># needs to be changed depending on plot dimensions</span></span></span>
+<span class="r-in"><span>    bottom <span class="op">=</span> <span class="fl">0.08</span>, <span class="co"># needs to be changed depending on plot dimensions</span></span></span>
+<span class="r-in"><span>    right <span class="op">=</span> <span class="fl">0.35</span>, <span class="co"># needs to be changed depending on plot dimensions</span></span></span>
+<span class="r-in"><span>    top <span class="op">=</span> <span class="fl">0.4</span>, <span class="co"># needs to be changed depending on plot dimensions</span></span></span>
+<span class="r-in"><span>    align_to <span class="op">=</span> <span class="st">"plot"</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="elsar_plot_distribution-1.png" alt="" width="700" height="433"></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside></div>
 

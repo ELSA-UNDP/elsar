@@ -59,12 +59,18 @@ make_normalised_raster <- function(raster_in,
   # Valid methods for terra::project
   valid_terra_methods <- c("near", "bilinear", "cubic", "cubicspline", "lanczos", "min", "q1", "med", "q3", "max", "average", "mode", "rms")
 
+
+  # then crop (make data a lot smaller)
+  # dat_aligned <- terra::crop(raster_in, pus_reproject) %>%
+  #  terra::subst(., NA, 0)
+
   # Temporarily reproject pus to the CRS of raster_in for resolution comparison
   pus_temp <- terra::project(pus, terra::crs(raster_in))
 
   # Calculate resolutions of both rasters in the same CRS
   raster_res <- min(terra::res(raster_in))    # Minimum resolution of input raster
   pus_res <- min(terra::res(pus_temp))        # Minimum resolution of re-projected pus
+
 
   # Determine the appropriate projection method based on data type and resolution comparison
   if (!is.null(method_override)) {

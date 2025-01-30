@@ -5,6 +5,15 @@
 #' @param type A character denoting whether "ggplot" or "tmap" is being used. Needs to match the main plot
 #' @param theme For `ggplot` this allows to use a pre-defined "deafult" plot theme or provide a custom one as a `list`.
 #' @param include_north_scale Logical. Determines whether a north arrow and scale should be added.
+#' @param include_logo Logical. Whether to include a logo (.png image) in the plot
+#' @param logo_path A path to where the `png` file of the logo is saved (e.g. "man/figures/elsaR_hex_sticker.png")
+#' @param logo_dim A vector with desired width and height of the image. Default is c(60, 60).
+#' @param logo_pos A vector of the desired position of the image (xmin, xmax, ymin, ymax).
+#' @param include_text Logical. Whether to include text in the plot (e.g. website).
+#' @param text_to_display The text to display. Dafult is "UNBL | www.unbiodiversitylab.org",
+#' @param text_location The location of the text. Options are "bottom_right" (default), "top_right", "top_left" and "bottom_left".
+#' @param move_horizontal After setting a text location, this attribute allows to move the text block horizontally if needed.
+#' @param move_vertical After setting a text location, this attribute allows to move the text block vertically if needed.
 #'
 #' @return For `ggplot` returns a list that can simply be added to a `ggplot`, e.g. [elsar_plot_static_raster_c()].
 #' @export
@@ -37,7 +46,17 @@
 #' ) + elsar_plot_optics()
 elsar_plot_optics <- function(type = "ggplot",
                               theme = "default",
-                              include_north_scale = FALSE) {
+                              include_north_scale = FALSE,
+                              include_logo = FALSE,
+                              logo_path = "man/figures/elsaR_hex_sticker.png", #change later
+                              logo_dim = c(60, 60),
+                              logo_pos,
+                              include_text = TRUE,
+                              text_to_display = "UNBL | www.unbiodiversitylab.org",
+                              text_location = "bottom_right",
+                              move_horizontal = NULL,
+                              move_vertical = NULL
+                              ) {
   # ggplot
   if (type == "ggplot") {
     ggList <- list()
@@ -54,6 +73,84 @@ elsar_plot_optics <- function(type = "ggplot",
             pad_x = ggplot2::unit(0.05, "in"),
             pad_y = ggplot2::unit(0.2, "in"),
             style = ggspatial::north_arrow_orienteering(text_size = 0)
+          )
+        )
+      )
+    }
+
+    # logo
+    if (include_logo) {
+      img <- png::readPNG(logo_path)
+      g <- grid::rasterGrob(img, interpolate=TRUE,
+                            width = grid::unit(logo_dim[1], "pt"),
+                             height = grid::unit(logo_dim[2], "pt"))
+      ggList <- c(
+        ggList,
+        list(ggplot2::annotation_custom(g,
+                                        xmin = logo_pos[1], xmax = logo_pos[2],
+                                        ymin = logo_pos[3], ymax = logo_pos[4])
+        )
+      )
+    }
+
+    # logo
+    if (include_text) {
+
+      if (text_location == "bottom_right") {
+        annotations <- data.frame(
+          xpos = c(Inf),
+          ypos = c(-Inf),
+          annotateText = text_to_display,
+          hjustvar = c(1),
+          vjustvar = c(0)
+        )
+      } else if (text_location == "bottom_left") {
+        annotations <- data.frame(
+          xpos = c(-Inf),
+          ypos = c(-Inf),
+          annotateText = text_to_display,
+          hjustvar = c(0),
+          vjustvar = c(0)
+        )
+      } else if (text_location == "top_right") {
+        annotations <- data.frame(
+          xpos = c(Inf),
+          ypos = c(Inf),
+          annotateText = text_to_display,
+          hjustvar = c(1),
+          vjustvar = c(1)
+        )
+      } else if (text_location == "top_left") {
+        annotations <- data.frame(
+          xpos = c(-Inf),
+          ypos = c(Inf),
+          annotateText = text_to_display,
+          hjustvar = c(0),
+          vjustvar = c(1)
+        )
+      }
+
+      #allow for manual adjustments when needed
+      if (!is.null(move_horizontal)) {
+        hjustvar = move_horizontal
+      }
+
+      if (!is.null(move_vertical)) {
+        vjustvar = move_vertical
+      }
+
+      ggList <- c(
+        ggList,
+        list(
+          ggplot2::geom_label(
+            data = annotations,
+            ggplot2::aes(
+              x = .data$xpos, y = .data$ypos,
+              hjust = hjustvar, vjust = vjustvar,
+              label = .data$annotateText
+            ),
+            label.r = ggplot2::unit(0.01, "lines"),
+            size = 3
           )
         )
       )
@@ -263,13 +360,13 @@ elsar_plot_extra_data <- function(plot_type = "ggplot",
 #'   main_data = wadOut
 #' ))
 elsar_plot_background_c <- function(plot_type = "ggplot",
-                                  background_dat = NULL, # SpatRaster file
-                                  rescale_background = TRUE,
-                                  increase_extend = 0.05,
-                                  main_data = NULL, # SpatRaster
-                                  background_alpha = 0.2,
-                                  color_map = "viridis",
-                                  custom_palette = NULL) {
+                                    background_dat = NULL, # SpatRaster file
+                                    rescale_background = TRUE,
+                                    increase_extend = 0.05,
+                                    main_data = NULL, # SpatRaster
+                                    background_alpha = 0.2,
+                                    color_map = "viridis",
+                                    custom_palette = NULL) {
   assertthat::assert_that(inherits(background_dat, "SpatRaster"))
   message("Adding background layer.")
 
@@ -405,7 +502,7 @@ elsar_plot_background_d <- function(plot_type = "ggplot",
   # categorize
 
   if (categorical) {
-    #message("Plotting input data that is already categorical.")
+    # message("Plotting input data that is already categorical.")
 
     assertthat::assert_that(
       terra::is.factor(bckgrnd_dat),
@@ -419,23 +516,27 @@ elsar_plot_background_d <- function(plot_type = "ggplot",
       stats::na.omit() %>%
       dplyr::rename(interval = .data[[data_layer]]) %>%
       dplyr::mutate(interval = as.factor(.data$interval))
-
   } else {
-    #message("Plotting input data that is continuous and will be split into categories.")
+    # message("Plotting input data that is continuous and will be split into categories.")
 
     assertthat::assert_that(
       !is.null(number_categories),
       msg = "Provide a valid number of categories to split your data into."
     )
 
-    raster_cat <- elsar_continuous_to_categorical(raster_in = bckgrnd_dat,
-                                                  data_layer = data_layer,
-                                                  number_categories = number_categories,
-                                                  hist_breaks_out = FALSE)
+    raster_cat <- elsar_continuous_to_categorical(
+      raster_in = bckgrnd_dat,
+      data_layer = data_layer,
+      number_categories = number_categories,
+      hist_breaks_out = FALSE
+    )
 
     bckgrnd_dat <- raster_cat %>%
-      dplyr::mutate(category = as.factor(.data$category),
-                    interval = as.factor(.data$interval)) }
+      dplyr::mutate(
+        category = as.factor(.data$category),
+        interval = as.factor(.data$interval)
+      )
+  }
 
   # plot
   if (plot_type == "ggplot") {
@@ -455,12 +556,12 @@ elsar_plot_background_d <- function(plot_type = "ggplot",
         ggplot2::scale_colour_viridis_d(
           option = color_map, alpha = background_alpha,
           guide = "none",
-          expand = c(0,0)
+          expand = c(0, 0)
         ) +
         ggplot2::scale_fill_viridis_d(
           option = color_map, alpha = background_alpha,
           guide = "none",
-          expand = c(0,0)
+          expand = c(0, 0)
         )
     } else {
       plot_background <- plot_background + custom_palette
@@ -596,23 +697,24 @@ elsar_extend <- function(raster_main = NULL,
 #' )
 #'
 #' wad_cat <- elsar_continuous_to_categorical(wadOut,
-#' data_layer = "wad_final_cog", number_categories = 10)
+#'   data_layer = "wad_final_cog", number_categories = 10
+#' )
 elsar_continuous_to_categorical <- function(raster_in,
                                             data_layer,
                                             number_categories,
                                             manual_breaks = NULL,
                                             hist_breaks_out = TRUE) {
-
-  raster_df <- as.data.frame(raster_in, xy = TRUE) %>% #ADD this with terra::hist later on to export a SpatRaster
+  raster_df <- as.data.frame(raster_in, xy = TRUE) %>% # ADD this with terra::hist later on to export a SpatRaster
     stats::na.omit()
 
   # get the categories
   if (is.null(manual_breaks)) {
-
-  hist_breaks <- graphics::hist(raster_df[[data_layer]],
-                      breaks = seq(min(raster_df[[data_layer]]),
-                                   max(raster_df[[data_layer]]),
-                                   length.out = number_categories + 1), plot=FALSE)$breaks
+    hist_breaks <- graphics::hist(raster_df[[data_layer]],
+      breaks = seq(min(raster_df[[data_layer]]),
+        max(raster_df[[data_layer]]),
+        length.out = number_categories + 1
+      ), plot = FALSE
+    )$breaks
   } else {
     hist_breaks <- manual_breaks
   }
@@ -620,13 +722,16 @@ elsar_continuous_to_categorical <- function(raster_in,
   # apply categories to data
   raster_df <- raster_df %>%
     dplyr::mutate(category = cut(raster_df[[data_layer]],
-                                 breaks = hist_breaks,
-                                 include.lowest = TRUE,
-                                 labels = FALSE))
+      breaks = hist_breaks,
+      include.lowest = TRUE,
+      labels = FALSE
+    ))
 
   # create extra column with labels
-  interval_labels <- paste0(round(utils::head(hist_breaks, -1), 2), "-",
-                            round(utils::tail(hist_breaks, -1), 2))
+  interval_labels <- paste0(
+    round(utils::head(hist_breaks, -1), 2), "-",
+    round(utils::tail(hist_breaks, -1), 2)
+  )
 
   raster_df <- raster_df %>%
     dplyr::mutate(interval = interval_labels[raster_df$category])
@@ -636,6 +741,4 @@ elsar_continuous_to_categorical <- function(raster_in,
   } else {
     return(raster_df)
   }
-
 }
-

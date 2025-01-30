@@ -97,16 +97,18 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">boundary_proj</span> <span class="op">&lt;-</span> <span class="fu"><a href="make_boundary.html">make_boundary</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  boundary_in <span class="op">=</span> <span class="va">boundary_dat</span>,</span></span>
 <span class="r-in"><span>  iso3 <span class="op">=</span> <span class="st">"NPL"</span>,</span></span>
-<span class="r-in"><span>  iso3_column <span class="op">=</span> <span class="st">"iso3cd"</span>,</span></span>
-<span class="r-in"><span>  do_project <span class="op">=</span> <span class="cn">TRUE</span></span></span>
+<span class="r-in"><span>  iso3_column <span class="op">=</span> <span class="st">"iso3cd"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in make_boundary(boundary_in = boundary_dat, iso3 = "NPL", iso3_column = "iso3cd",     do_project = TRUE):</span> unused argument (do_project = TRUE)</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">pus</span> <span class="op">&lt;-</span> <span class="fu">make_planning_units</span><span class="op">(</span>boundary_proj <span class="op">=</span> <span class="va">boundary_proj</span>,</span></span>
 <span class="r-in"><span>                           pu_size <span class="op">=</span> <span class="cn">NULL</span>,</span></span>
 <span class="r-in"><span>                           pu_threshold <span class="op">=</span> <span class="fl">8.5e5</span>,</span></span>
 <span class="r-in"><span>                           limit_to_mainland <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'boundary_proj' not found</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "The current number of planning units is: 3743382"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "The current number of planning units is: 2396805"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "The current number of planning units is: 1665187"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "The current number of planning units is: 1223941"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "The current number of planning units is: 741036"</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

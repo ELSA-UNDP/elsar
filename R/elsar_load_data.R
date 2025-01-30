@@ -16,49 +16,58 @@
 #'
 #' @examples
 #' \dontrun{
-#' load_tif <- elsar_load_data(file_name = "pu_nepal_450m.tif", file_path = localPath
-#'                           file_type = "tif")
+#' load_tif <- elsar_load_data(
+#'   file_name = "pu_nepal_450m.tif", file_path = localPath,
+#'   file_type = "tif"
+#' )
 #'
-#' load_geojson <- elsar_load_data(file_name = "nepal.geojson", file_path = localPath,
-#'                           file_type = "geojson")
+#' load_geojson <- elsar_load_data(
+#'   file_name = "nepal.geojson", file_path = localPath,
+#'   file_type = "geojson"
+#' )
 #'
-#' postgres_dict <- c(host = "yourhost",
-#'                    dbname ="yourdbname",
-#'                    port = portNumber,
-#'                    user = "yourusername",
-#'                    password = "yourpassword")
+#' postgres_dict <- c(
+#'   host = "yourhost",
+#'   dbname = "yourdbname",
+#'   port = portNumber,
+#'   user = "yourusername",
+#'   password = "yourpassword"
+#' )
 #'
-#' load_postgres <- elsar_load_data(file_name = "bnda_simplified",
-#'                            file_type = "postgres",
-#'                            db_info = postgres_dict,
-#'                            iso3_column = "iso3cd",
-#'                            iso3 = "NPL")
+#' load_postgres <- elsar_load_data(
+#'   file_name = "bnda_simplified",
+#'   file_type = "postgres",
+#'   db_info = postgres_dict,
+#'   iso3_column = "iso3cd",
+#'   iso3 = "NPL"
+#' )
 #'
 #' pg_conn <- make_postgres_connection(
 #'   dbname = "yourdatabase",
 #'   user = "yourusername",
-#'   password = "yourpassword")
+#'   password = "yourpassword"
+#' )
 #'
 #' load_postgres <- elsar_load_data(
 #'   file_name = "bnda_simplified",
 #'   file_type = "postgres",
 #'   pg_connection = pg_conn,
 #'   iso3_column = "iso3cd",
-#'   iso3 = "NPL")
+#'   iso3 = "NPL"
+#' )
 #' }
 elsar_load_data <- function(file_name,
-                      file_path = NULL,
-                      file_lyr = NULL,
-                      file_type,
-                      wkt_filter = FALSE,
-                      bb_extend = NULL,
-                      db_info = NULL,
-                      pg_connection = NULL,
-                      iso3_column = "iso3cd", # "iso_sov1",
-                      iso3) {
+                            file_path = NULL,
+                            file_lyr = NULL,
+                            file_type,
+                            wkt_filter = FALSE,
+                            bb_extend = NULL,
+                            db_info = NULL,
+                            pg_connection = NULL,
+                            iso3_column = "iso3cd", # "iso_sov1",
+                            iso3) {
   # create path to data
-  if (is.null(file_path) & file_type == "postgres" ) {
-
+  if (is.null(file_path) & file_type == "postgres") {
     # Check that at least one of db_info or pg_connection is provided
     if (is.null(pg_connection) && is.null(db_info)) {
       stop("Error: Both 'db_info' and 'pg_connection' are NULL. Please provide at least one.")
@@ -105,20 +114,22 @@ elsar_load_data <- function(file_name,
       if (!is.null(file_lyr)) {
         if (wkt_filter) {
           loaded_data <- sf::read_sf(to_load,
-                                     layer = file_lyr,
-                                     wkt_filter = use_to_crop)
+            layer = file_lyr,
+            wkt_filter = use_to_crop
+          )
         } else {
-        loaded_data <- sf::read_sf(to_load, layer = file_lyr)
+          loaded_data <- sf::read_sf(to_load, layer = file_lyr)
         }
       } else {
         if (wkt_filter) {
           loaded_data <- sf::read_sf(to_load,
-                                     wkt_filter = use_to_crop)
+            wkt_filter = use_to_crop
+          )
         } else {
           loaded_data <- sf::read_sf(to_load)
         }
       }
-    } else if (file_type %in% c("tif", "tiff", "grd", "gri", "nc", "hdf")) { #havent tested nc and hdf yet
+    } else if (file_type %in% c("tif", "tiff", "grd", "gri", "nc", "hdf")) { # havent tested nc and hdf yet
       if (!is.null(file_lyr)) {
         loaded_data <- terra::rast(to_load, lyrs = file_lyr)
       } else {
@@ -129,7 +140,6 @@ elsar_load_data <- function(file_name,
             issue on https://github.com/ELSA-UNDP/elsar/issues, so we can add it to this function. In the meantime,
             please load your data outside this function.")
     }
-
   } else {
     message("Please provide a file path for your local data.
             Remote accessing is currently only supported through postgres.
