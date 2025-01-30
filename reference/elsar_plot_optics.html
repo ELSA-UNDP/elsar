@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">elsar</a>
 
-    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.2</small>
+    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -45,7 +45,16 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">elsar_plot_optics</span><span class="op">(</span></span>
 <span>  type <span class="op">=</span> <span class="st">"ggplot"</span>,</span>
 <span>  theme <span class="op">=</span> <span class="st">"default"</span>,</span>
-<span>  include_north_scale <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  include_north_scale <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  include_logo <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  logo_path <span class="op">=</span> <span class="st">"man/figures/elsaR_hex_sticker.png"</span>,</span>
+<span>  logo_dim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">60</span>, <span class="fl">60</span><span class="op">)</span>,</span>
+<span>  <span class="va">logo_pos</span>,</span>
+<span>  include_text <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  text_to_display <span class="op">=</span> <span class="st">"UNBL | www.unbiodiversitylab.org"</span>,</span>
+<span>  text_location <span class="op">=</span> <span class="st">"bottom_right"</span>,</span>
+<span>  move_horizontal <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  move_vertical <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -63,6 +72,42 @@
 
 <dt id="arg-include-north-scale">include_north_scale<a class="anchor" aria-label="anchor" href="#arg-include-north-scale"></a></dt>
 <dd><p>Logical. Determines whether a north arrow and scale should be added.</p></dd>
+
+
+<dt id="arg-include-logo">include_logo<a class="anchor" aria-label="anchor" href="#arg-include-logo"></a></dt>
+<dd><p>Logical. Whether to include a logo (.png image) in the plot</p></dd>
+
+
+<dt id="arg-logo-path">logo_path<a class="anchor" aria-label="anchor" href="#arg-logo-path"></a></dt>
+<dd><p>A path to where the <code>png</code> file of the logo is saved (e.g. "man/figures/elsaR_hex_sticker.png")</p></dd>
+
+
+<dt id="arg-logo-dim">logo_dim<a class="anchor" aria-label="anchor" href="#arg-logo-dim"></a></dt>
+<dd><p>A vector with desired width and height of the image. Default is c(60, 60).</p></dd>
+
+
+<dt id="arg-logo-pos">logo_pos<a class="anchor" aria-label="anchor" href="#arg-logo-pos"></a></dt>
+<dd><p>A vector of the desired position of the image (xmin, xmax, ymin, ymax).</p></dd>
+
+
+<dt id="arg-include-text">include_text<a class="anchor" aria-label="anchor" href="#arg-include-text"></a></dt>
+<dd><p>Logical. Whether to include text in the plot (e.g. website).</p></dd>
+
+
+<dt id="arg-text-to-display">text_to_display<a class="anchor" aria-label="anchor" href="#arg-text-to-display"></a></dt>
+<dd><p>The text to display. Dafult is "UNBL | www.unbiodiversitylab.org",</p></dd>
+
+
+<dt id="arg-text-location">text_location<a class="anchor" aria-label="anchor" href="#arg-text-location"></a></dt>
+<dd><p>The location of the text. Options are "bottom_right" (default), "top_right", "top_left" and "bottom_left".</p></dd>
+
+
+<dt id="arg-move-horizontal">move_horizontal<a class="anchor" aria-label="anchor" href="#arg-move-horizontal"></a></dt>
+<dd><p>After setting a text location, this attribute allows to move the text block horizontally if needed.</p></dd>
+
+
+<dt id="arg-move-vertical">move_vertical<a class="anchor" aria-label="anchor" href="#arg-move-vertical"></a></dt>
+<dd><p>After setting a text location, this attribute allows to move the text block vertically if needed.</p></dd>
 
 </dl></div>
     <div class="section level2">
