@@ -19,12 +19,11 @@ library(here)
 
 # Set paths for data
 input_path <- "C:/Users/sandr/Documents/UNBL_work/Pipeline"
-output_path <- ""
+output_path <- "C:/Users/sandr/Documents/UNBL_work/Pipeline/output_dat"
 
 ## Country info
 iso3 <- "NPL"
 iso3_column <- "iso3cd"
-
 
 # Set actions to do
 #create_boundary <- 1 #now in csv
@@ -147,4 +146,6 @@ if (data_info %>%
   }
 
 }
+
+## Create feature stack
 
