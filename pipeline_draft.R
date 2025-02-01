@@ -40,7 +40,7 @@ data_info <- read_delim(file.path(input_path, "input_data.csv"),
 
 # Postgres check
 if (nrow(data_info %>%
-         dplyr::filter(file_type == "postgres"))) {
+         dplyr::filter(file_type == "postgres")) > 0) {
   {
     host <- readline(prompt = "Enter host: ");
     dbname <- readline(prompt = "Enter database name: ");
