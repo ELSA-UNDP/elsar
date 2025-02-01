@@ -38,26 +38,6 @@ data_info <- read_delim(file.path(input_path, "input_data.csv"),
                         delim = ";", escape_double = FALSE,
                         trim_ws = TRUE)
 
-# Set individual settings for actions
-## PUs
-
-##prep shit
-
-## Features
-feature_list <- data_info %>%
-  dplyr::filter(group == "feature",
-                include == 1)
-
-## Zones
-zones_list
-zones_data <- data_info %>%
-  dplyr::filter(group == "zone",
-                include == 1)
-
-## Locked-in Areas
-lockedIn_list <- c("avail")
-visualise_lockedIns <- 0
-
 # Postgres check
 if (nrow(data_info %>%
          dplyr::filter(file_type == "postgres"))) {
@@ -90,7 +70,7 @@ if (data_info %>%
   boundary_info <- data_info %>%
     dplyr::filter(group == "boundary")
 
-  boundary_dat <- "" # load data
+  boundary_dat <- "" # load data ###### DO THIS WITH GOOD INTERNET
 
   ### Create boundary
   if (create_boundary) {
@@ -149,3 +129,15 @@ if (data_info %>%
 
 ## Create feature stack
 
+feature_list <- data_info %>%
+  dplyr::filter(group == "feature",
+                include == 1)
+
+## Create zones
+zones_list
+zones_data <- data_info %>%
+  dplyr::filter(group == "zone",
+                include == 1)
+
+## Create locked-in areas
+lockedIn_list <- c("avail")
