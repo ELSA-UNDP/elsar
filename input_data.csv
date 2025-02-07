@@ -1,7 +1,7 @@
-group;data_name;file_name;file_type;include;link_to_data;default;visualise;save
-boundary;Boundary;bnda_simplified;postgres;1;default;1;0;
-pus;Planning Units;NA;NA;1;NA;1;1;
-feature;Certified Forests;;;0;;;;
+group;data_name;file_name;file_type;include;file_path;default_parameters;visualise;save
+boundary;Boundary;bnda_simplified;postgres;1;NULL;1;0;
+pus;Planning Units;NA;NA;1;NA;0;1;
+feature;Certified Forests;;;0;default;;;
 feature;Crop Suitability Difference;overall_cropsuit_i_diff_19812010_20712100;tif;1;;;;
 feature;Drought Risk;gDH19_oct2015;tif;1;;;;
 feature;Flood Risk;gfd_flood_database;tif;1;;;;

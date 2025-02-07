@@ -9,6 +9,7 @@ library(exactextractr)
 library(terra)
 library(tidyterra)
 library(here)
+library(RPostgres)
 
 #################################################################################
 
@@ -18,8 +19,8 @@ library(here)
 # terra::tmpFiles(remove = TRUE)
 
 # Set paths for data
-input_path <- "C:/Users/sandr/Documents/UNBL_work/Pipeline"
-output_path <- "C:/Users/sandr/Documents/UNBL_work/Pipeline/output_dat"
+input_path <- "C:/Users/sandr/Documents/Github/elsar"
+output_path <- "C:/Users/sandr/Documents/Github/elsar/output_dat"
 
 ## Country info
 iso3 <- "NPL"
@@ -36,7 +37,21 @@ create_lockedIn <- 0
 # Load data file
 data_info <- read_delim(file.path(input_path, "input_data.csv"),
                         delim = ";", escape_double = FALSE,
-                        trim_ws = TRUE)
+                        trim_ws = TRUE) %>%
+  dplyr::filter(include == 1) %>%
+  dplyr::mutate(full_name =
+  dplyr::case_when(
+    file_type != "postgres" ~ paste0(file_name, ".", file_type),
+    file_type == "postgres" ~ file_name,
+    file_type == NA  ~ file_name
+  ),
+  full_path =
+    dplyr::case_when(
+      (file_path == "default" | is.na(file_path)) ~ input_path,
+      file_type == "postgres" ~ NA,
+      (!is.na(file_path) & file_path != "default" & file_type != "postgres")  ~ file_path
+    )
+    )
 
 # Postgres check
 if (nrow(data_info %>%
@@ -45,23 +60,25 @@ if (nrow(data_info %>%
     host <- readline(prompt = "Enter host: ");
     dbname <- readline(prompt = "Enter database name: ");
     port <- readline(prompt = "Enter port: ");
-    username <- readline(prompt = "Enter user name: ");
+    user <- readline(prompt = "Enter user name: ");
     password <- readline(prompt = "Enter password: ");
   }
 
   postgres_dict <- elsar::make_postgres_connection(
-    host = as.integer(host),
+    host = host,
     dbname = dbname,
     port = as.integer(port),
-    user = username,
+    user = user,
     password = password
   )
+} else {
+  postgres_dict <- NULL
 }
 
 # Create data
 ## PUs
 if (data_info %>%
-    dplyr::filter(group == "PUs") %>%
+    dplyr::filter(group == "pus") %>%
     dplyr::pull(include)) {
 
   message("Creating Planning Units")
@@ -70,10 +87,19 @@ if (data_info %>%
   boundary_info <- data_info %>%
     dplyr::filter(group == "boundary")
 
-  boundary_dat <- "" # load data ###### DO THIS WITH GOOD INTERNET
+  boundary_dat <- elsar::elsar_load_data(
+      file_name = boundary_info$file_name,
+      file_path = (if (boundary_info$file_path == "NULL") NULL else boundary_info$file_path), #need this otherwise NULL is read as character
+      file_type = boundary_info$file_type,
+      db_info = postgres_dict,
+      iso3 = iso3,
+      iso3_column = iso3_column
+    )
 
   ### Create boundary
-  if (create_boundary) {
+  if (as.logical(data_info %>%
+      dplyr::filter(group == "boundary") %>%
+      dplyr::pull(include))) {
     boundary_proj <- make_boundary(
       boundary_in = boundary_dat,
       iso3 = iso3,
@@ -86,10 +112,10 @@ if (data_info %>%
   ### Create PUs
   defaults_pu <- data_info %>%
     dplyr::filter(group == "pus") %>%
-    dplyr::pull(default) #get whether to use default values or not
+    dplyr::pull(default_parameters) #get whether to use default values or not
 
-  if (defaults_pu ) { #use default values
-    pus <- make_planning_units(boundary_proj = boundary_proj,
+  if (defaults_pu) { #use default values
+    pus <- elsar::make_planning_units(boundary_proj = boundary_proj,
                                pu_size = NULL,
                                pu_threshold = 8.5e5,
                                limit_to_mainland = FALSE)
@@ -119,9 +145,9 @@ if (data_info %>%
   }
 
   ### Visualise PUs
-  if (data_info %>%
-      dplyr::filter(group == "PUs") %>%
-      dplyr::pull(visualise)) {
+  if (as.logical(data_info %>%
+      dplyr::filter(group == "pus") %>%
+      dplyr::pull(visualise))) {
     print("TBA")
   }
 

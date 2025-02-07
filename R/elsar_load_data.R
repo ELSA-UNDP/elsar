@@ -143,7 +143,7 @@ elsar_load_data <- function(file_name,
   } else {
     message("Please provide a file path for your local data.
             Remote accessing is currently only supported through postgres.
-            If you wish to use postgres, set file_type = 'postgress'.")
+            If you wish to use postgres, set file_type = 'postgres'.")
   }
 
   return(loaded_data)
