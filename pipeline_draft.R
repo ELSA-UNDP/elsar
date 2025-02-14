@@ -18,8 +18,9 @@ library(RPostgres)
 # terra::tmpFiles(remove = TRUE)
 
 # Set paths for data
-input_path <- "C:/Users/sandr/Documents/Github/elsar"
-output_path <- "C:/Users/sandr/Documents/Github/elsar/output_dat"
+sheet_path <- "C:/Users/sandr/Documents/Github/elsar"
+input_path <- "C:/Users/sandr/Documents/UNBL_work/Pipeline/input_dat"
+output_path <- "C:/Users/sandr/Documents/UNBL_work/Pipeline/output_dat"
 
 ## Country info
 iso3 <- "NPL"
@@ -34,7 +35,7 @@ create_lockedIn <- 0
 
 #################################################################################
 # Load data file
-data_info <- read_delim(file.path(input_path, "input_data.csv"),
+data_info <- read_delim(file.path(sheet_path, "input_data.csv"),
                         delim = ";", escape_double = FALSE,
                         trim_ws = TRUE) %>%
   dplyr::filter(include == 1) %>%
@@ -153,10 +154,106 @@ if (data_info %>%
 }
 
 ## Create feature stack
+# Assign data to functions
+feature_list <- data_info %>% #get all included features
+  dplyr::filter(
+    group == "feature",
+    include == 1
+  )
 
-feature_list <- data_info %>%
-  dplyr::filter(group == "feature",
-                include == 1)
+dat_default <- feature_list %>% #get those feature names that run with make_normalised_raster()
+  dplyr::filter(default_function == 1) %>%
+  dplyr::select("data_name") %>%
+  dplyr::pull()
+
+dat_non_default <- feature_list %>% #get those features that have their own function
+  dplyr::filter(default_function == 0) %>%
+  dplyr::select("data_name") %>%
+  dplyr::pull()
+
+## Prep data using default methods
+cat("Creating Default Features")
+
+# init data stack with pus as first layer
+raster_out <- pus
+for (i in 1:length(dat_default)) { #for all the data that runs with make_normalised_raster()
+  current_dat <- feature_list %>%
+    dplyr::filter(data_name == dat_default[[i]])
+
+  print(dat_default[[i]])
+
+  # load data
+  current_rast <- elsar_load_data(
+    file_name = current_dat$full_name,
+    file_type = current_dat$file_type, file_path = current_dat$full_path
+  )
+
+  if (current_dat$default_parameters != 1) { #if non default parameters in make_normalised_raster()
+    answer <- readline("Non-default option selected. Do you want to use pre-saved options? (yes/no): ")
+    answer <- tolower(trimws(answer)) #to streamline if someone says "Yes" or similar
+
+    if (answer == "yes") { #go through pre-saved options that we need to list down here. Will add to this
+      if (current_dat$data_name == "Crop Suitability Difference") {
+        rast_norm <- make_normalised_raster(
+          raster_in = current_rast,
+          pus = pus,
+          iso3 = iso3,
+          invert = TRUE,
+          output_path = output_path,
+          name_out = dat_default[[i]]
+        )
+      } else if (current_dat$data_name == "Yield Gap") {
+        cat("TBA")
+      } else {
+        cat("Your data might not have a pre-saved option yet. Please enter your processing options manually.")
+        next #jump to else if to enter options manually. Not tested yet!!!
+      }
+    } else if (answer == "no") { #manually add processing options
+      cat("Please enter your processing options manually\n")
+
+      {
+        invert <- readline(prompt = "Invert data (TRUE/FALSE; Default FALSE): ");
+        rescaled <- readline(prompt = "Rescale data (TRUE/FALSE; Default TRUE): ");
+        method_override <- readline(prompt = "Override projection method (any valid terra projection method or NULL): ");
+        conditional_expression <- readline(prompt = "Enter a conditional expression (or NULL if not needed): ");
+      }
+
+      if (method_override == "NULL") {
+        method_override <- as.null(method_override)
+      }
+
+      rast_norm <- make_normalised_raster(
+        raster_in = current_rast,
+        pus = pus,
+        iso3 = iso3,
+        invert = as.logical(invert),
+        rescaled = as.logical(rescaled),
+        method_override = method_override,
+        conditional_expression = eval(parse(text = conditional_expression)),
+        output_path = output_path,
+        name_out = dat_default[[i]]
+      )
+
+    } else {
+      cat("Invalid input. Please enter 'yes' or 'no'.\n")
+    }
+  } else { #everything default
+    rast_norm <- make_normalised_raster(
+      raster_in = current_rast,
+      pus = pus,
+      iso3 = iso3,
+      output_path = output_path,
+      name_out = dat_default[[i]]
+    )
+  }
+
+  # assign(current_dat$data_name, rast_norm)
+  raster_out <- c(raster_out, rast_norm)
+}
+
+### Prep data using non-default methods
+cat("Creating Non-Default Features")
+
 
 ## Create zones
 zones_list
