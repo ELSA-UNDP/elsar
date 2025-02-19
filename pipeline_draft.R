@@ -289,14 +289,10 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
     raster_out <- c(raster_out, mangrove_raster)
   }
 
-  if (j == "Forest Integrity Index") { # add saving
-
-    current_dat <- feature_list %>%
-      dplyr::filter(data_name == dat_non_default[[j]])
-
+  if (j == "Forest Integrity Index") { # add saving option
     print("Forest Integrity Index")
 
-    if (grepl(",", current_dat$file_name)) {
+    if (grepl(",", current_dat$file_name)) { # check if both flii and fsii should be used
       fii_names <- unlist(strsplit(current_dat$file_name, ", ", fixed = TRUE))
 
       file_labels <- c("flii", "fsii")
@@ -356,6 +352,62 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
       )
     }
     raster_out <- c(raster_out, forest_integrity)
+  }
+
+  if (j == "Existing PAs") {
+    print("Current PAs")
+
+    if (current_dat$default_parameters != 1) {
+      answer <- readline("Do you want to download current protected areas from wdpar package? (yes/no): ")
+      answer <- tolower(trimws(answer)) # to streamline if someone says "Yes" or similar
+
+      if (answer == "yes") {
+        from_wdpa <- TRUE
+        download_path <- output_path
+        sf_in <- NULL
+      } else {
+        # load data
+        sf_in <- elsar_load_data(
+          file_name = current_dat$full_name,
+          file_type = current_dat$file_type, file_path = current_dat$full_path
+        )
+
+        from_wdpa <- FALSE
+        download_path <- NULL
+      }
+
+      {
+        status <- readline(prompt = "Included wdpa database status as a list (e.g. c('Established', 'Inscribed', 'Designated')): ")
+        # pa_def <- readline(prompt = "Enter PA category (1: PA; 0: OECM): ") #Not supported yet
+        designation_mab <- readline(prompt = "Include UNESCO MAB areas (TRUE/FALSE): ")
+        buffer_points <- readline(prompt = "Create circular buffer around POINT geometries (TRUE/FALSE): ")
+        area_column <- readline(prompt = "Column name for buffer calculations (e.g. REP_AREA): ")
+        nQuadSegs <- readline(prompt = "Number of segments to use for buffering (e.g. 50): ")
+      }
+
+      current_pas <- make_protected_areas(
+        from_wdpa = from_wdpa,
+        sf_in = sf_in,
+        iso3 = iso3,
+        download_path = download_path,
+        status = eval(parse(text = status)),
+        pa_def = 1,
+        designation_mab = as.logical(designation_mab),
+        buffer_points = as.logical(buffer_points),
+        area_column = area_column,
+        nQuadSegs = as.integer(nQuadSegs),
+        pus = pus,
+        output_path = output_path
+      )
+    } else {
+      current_pas <- make_protected_areas(
+        iso3 = iso3,
+        download_path = output_path,
+        buffer_points = TRUE,
+        pus = pus,
+        output_path = output_path
+      )
+    }
   }
 }
 

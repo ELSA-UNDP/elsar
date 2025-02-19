@@ -27,7 +27,7 @@ feature;Threatened Ecosystems;;;0;1;;0;1;;
 feature;Underepresented Ecosystems;;;0;1;;0;1;;
 feature;Urban Greening Zones;;;0;1;;0;1;;
 feature;Ramsar Wetlands;ramsar_sites_20230920;gpkg;0;1;;0;1;;
-zone;;;;;;;;;;
+zone;Protection;;;1;1;;;;;
 zone;;;;;;;;;;
 zone;;;;;;;;;;
 zone;;;;;;;;;;
