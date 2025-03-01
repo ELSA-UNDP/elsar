@@ -192,52 +192,21 @@ for (i in 1:length(dat_default)) { # for all the data that runs with make_normal
   )
 
   if (current_dat$default_parameters != 1) { # if non default parameters in make_normalised_raster()
-    answer <- readline("Non-default option selected. Do you want to use pre-saved options? (yes/no): ")
-    answer <- tolower(trimws(answer)) # to streamline if someone says "Yes" or similar
 
-    if (answer == "yes") { # go through pre-saved options that we need to list down here. Will add to this
-      if (current_dat$data_name == "Crop Suitability Difference") {
-        rast_norm <- make_normalised_raster(
-          raster_in = current_rast,
-          pus = pus,
-          iso3 = iso3,
-          invert = TRUE,
-          output_path = output_path,
-          name_out = dat_default[[i]]
-        )
-      } else if (current_dat$data_name == "Yield Gap") {
-        cat("TBA")
-      } else {
-        cat("Your data might not have a pre-saved option yet. Please enter your processing options manually.")
-        next # jump to else if to enter options manually. Not tested yet!!!
-      }
-    } else if (answer == "no") { # manually add processing options
-      cat("Please enter your processing options manually\n")
-
-      {
-        invert <- readline(prompt = "Invert data (TRUE/FALSE; Default FALSE): ")
-        rescaled <- readline(prompt = "Rescale data (TRUE/FALSE; Default TRUE): ")
-        method_override <- readline(prompt = "Override projection method (any valid terra projection method or NULL): ")
-        conditional_expression <- readline(prompt = "Enter a conditional expression (or NULL if not needed): ")
-      }
-
-      if (method_override == "NULL") {
-        method_override <- as.null(method_override)
-      }
-
+    if (current_dat$data_name == "Crop Suitability Difference") {
       rast_norm <- make_normalised_raster(
         raster_in = current_rast,
         pus = pus,
         iso3 = iso3,
-        invert = as.logical(invert),
-        rescaled = as.logical(rescaled),
-        method_override = method_override,
-        conditional_expression = eval(parse(text = conditional_expression)),
+        invert = TRUE,
         output_path = output_path,
         name_out = dat_default[[i]]
       )
+    } else if (current_dat$data_name == "Yield Gap") {
+      cat("TBA")
     } else {
-      cat("Invalid input. Please enter 'yes' or 'no'.\n")
+      cat("Your data might not have a pre-saved option yet. Please enter your processing options manually.")
+      next # jump to else if to enter options manually. Not tested yet!!!
     }
   } else { # everything default
     rast_norm <- make_normalised_raster(
@@ -413,12 +382,39 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
 
 
 ## Create zones
-zones_list
-zones_data <- data_info %>%
+zones_list <- data_info %>%
   dplyr::filter(
     group == "zone",
     include == 1
+  )  %>%
+  dplyr::select("data_name") %>%
+  dplyr::pull()
+
+zones_data <- data_info %>%
+  dplyr::filter(
+    group == "zone_data",
+    include == 1
   )
+
+if (defaults_pu) { # use default values
+  pus <- elsar::make_planning_units(
+    boundary_proj = boundary_proj,
+    pu_size = NULL,
+    pu_threshold = 8.5e5,
+    limit_to_mainland = FALSE
+  )
+}
+
+protection_zone <- make_protection_zone(
+  hfp_in = load_hfp,
+  #crop_in = load_crop,
+  #built_in = load_built,
+  hfp_threshold = 22,
+  pus = pus,
+  iso3 = iso3
+)
+
+
 
 ## Create locked-in areas
 lockedIn_list <- c("avail")
