@@ -33,13 +33,14 @@ feature;Threatened Ecosystems for Protection;NA;NA;0;1;;0;1;0;;"Needs ""Intact a
 feature;Threatened Ecosystems for Restoration;NA;NA;0;1;;0;1;0;;Needs IUCN Ecosystems and restore zone (?)
 feature;Threatened Species Richness;threatened_species_richness_cog;tif;0;1;;1;1;0;;
 feature;Underepresented Ecosystems;NA;json;0;1;;0;1;0;;Needs IUCN Ecosystems
-feature;Urban Extreme Heat;wbgtmax30_join;tif;1;1;;0;1;0;;"Needs reverse NDVI and wbgtmax; combine with function for urban green opps because they need similar inputs "
+feature;Urban Areas;mod13q1_2022_ndvi_wgs84;tif;0;1;;1;0;;;"can use make_normalised_raster but with >1=1; would include this in one function on urban greening ops and give another output. Can chat about this if needed"
+feature;Urban Extreme Heat;wbgtmax30_join;tif;1;1;;0;1;0;;"Needs reverse NDVI, urban/buildup areas and wbgtmax; combine with function for urban green opps because they need similar inputs "
 feature;Urban Greening Opportunities;mod13q1_2022_ndvi_wgs84, ?;tif;0;1;;0;1;0;;"Needs reverse NDVI and urban/builtup areas; combine with a function for Urban Extreme Heat and get two raster outputs (need similar inputs)"
 feature;Velocity of Climate Change;vocc_ngb_all;tif;0;1;;1;1;0;;
 feature;Vulnerable Soil Organic Carbon Difference;soc-at-risk-V11;tif;1;1;;1;1;0;;
 feature;Wetlands and Ramsar;trop-subtrop_wetlandv3_2016_cifor_cog, ?;;0;1;;0;1;0;;Needs wetlands and ramsar files. Needs option to only use one if no sites for either of them in planning region (e.g. no ramsar in Haiti). Can be done similar to forest integrity index
 feature;Yield Gap;yield_gap;tif;0;1;;1;0;0;;double-check if in elsar
-lock_in;;;;;;;;;0;;
+lock_in;Existing PAs;TBA;TBA;TBA;;;;;;;
 pus;Planning Units;NA;NA;1;0;NA;NA;0;0;;
 zone;Protection;NA;NA;1;1;;0;0;0;;
 zone;Restoration;NA;NA;0;1;;0;0;0;;
@@ -47,4 +48,4 @@ zone;Management;NA;NA;0;1;;0;0;0;;There are several versions of this in Di's scr
 zone_data;Agriculture areas;?;?;0;1;;1;0;0;;>1 = 1
 zone_data;Human Footprint;hfp2013_merisINT;tif;1;1;;;;0;;
 zone_data;Managed Forests;FML_v3.2_near_cog;tif;1;1;;0;1;0;;double-check
-zone_data;Urban areas;;;0;;;;;;;
+zone_data;Urban areas;mod13q1_2022_ndvi_wgs84;tif;0;1;;1;0;;;Same as Urban Areas in features
