@@ -78,9 +78,9 @@ if (nrow(data_info %>%
 
 # Create data
 ## PUs
-if (data_info %>%
+if (as.logical(as.integer(data_info %>%
   dplyr::filter(group == "pus") %>%
-  dplyr::pull(include)) {
+  dplyr::pull(include)))) {
   message("Creating Planning Units")
 
   ### Load data
@@ -88,18 +88,19 @@ if (data_info %>%
     dplyr::filter(group == "boundary")
 
   boundary_dat <- elsar::elsar_load_data(
-    file_name = boundary_info$file_name,
-    file_path = (if (boundary_info$file_path == "NULL") NULL else boundary_info$file_path), # need this otherwise NULL is read as character
+    file_name = (if (boundary_info$file_type == "postgres") boundary_info$file_name else boundary_info$full_name),
+    file_path = (if (boundary_info$file_path == "NULL") NULL else if (boundary_info$file_path == "default") input_path else boundary_info$file_path), # need this otherwise NULL is read as character
     file_type = boundary_info$file_type,
     db_info = postgres_dict,
     iso3 = iso3,
-    iso3_column = iso3_column
+    iso3_column = iso3_column,
+    file_lyr = (if (boundary_info$file_type != "postgres") boundary_info$layer else NULL)
   )
 
   ### Create boundary
-  if (as.logical(data_info %>%
+  if (as.logical(as.integer(data_info %>%
     dplyr::filter(group == "boundary") %>%
-    dplyr::pull(include))) {
+    dplyr::pull(include)))) {
     boundary_proj <- make_boundary(
       boundary_in = boundary_dat,
       iso3 = iso3,

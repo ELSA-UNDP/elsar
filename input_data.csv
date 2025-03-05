@@ -1,51 +1,51 @@
-group;data_name;file_name;file_type;include;create;file_path;default_function;default_parameters;visualise;save;comments for those in red
-boundary;Boundary;bnda_simplified;postgres;1;0;NULL;NA;1;0;;
-feature;Agricultural Climate Stress;overall_cropsuit_i_diff_19812010_20712100;tif;0;1;;1;0;0;;can be done with make_normalised_raster() but needs some added functionality for extra calcs per Di's script
-feature;Alliance for Zero Extinction Sites;?;?;0;1;;0;1;0;;
-feature;Biodiversity Habitat Index;BILBI_P_BHIv2_Species_2020;tif;0;1;;1;1;0;;
-feature;Biodiversity Intactness Index;BIIAb-2015_cog;tif;0;1;;1;1;0;;
-feature;Biodiversity Restoration Potential;all_species_richness_cog;tif;0;1;;1;1;0;;
-feature;Biomass Carbon Density;biomass_carbon_density_opt;tif;1;1;;1;1;0;;
-feature;Burden of Wildlife Conflict;wildlifeconflict;tif;0;1;;1;1;0;;
-feature;Critical Connectivity Corridors;Global_MMP;tif;0;1;;1;1;0;;
-feature;Clean Water Provision;potential_clean_water_prov;tif;0;1;;1;1;0;;
-feature;Climate refugia - Bioclimatic Ecosystem Resilience Index;BILBI_P_BERI_2020;tif;0;1;;1;1;0;;
-feature;Crop Suitability Difference;overall_cropsuit_i_diff_19812010_20712100;tif;1;1;;1;0;0;;
-feature;Drought Abatement Opportunities;gDH19_oct2015;tif;1;1;;1;1;0;;
-feature;Evolutionary Distinct Endangered Species (EDGE) ;threatened_evo_history;tif;0;1;;1;1;0;;
-feature;Existing PAs;NA;NA;1;1;;0;1;0;;
-feature;Flood Abatement Opportunities;gfd_flood_database, mod13q1_2022_ndvi_wgs84;tif;0;1;;0;1;0;;Needs info on flood risk, wetlands and ndvi
-feature;Forest Integrity Index;flii_earth-001_cog, global_fsii_2023;tif;1;1;;0;1;0;;
-feature;Indigenous Managed Lands;?;?;0;1;;0;1;0;;
-feature;Intact Wilderness Area;intactness_Qprime_2009;tif;1;1;;1;1;0;;
-feature;Irrecoverable Carbon;Irrecoverable_C_Total_2018;tif;1;1;;1;1;0;;
-feature;Invasive species threat;panela_invthreat_wgs;tif;0;1;;1;1;0;;
-feature;Key Biodiversity Areas;KBAsGlobal_2024_June_merged;gpkg;0;1;;0;1;0;;
-feature;Managed Forests;FML_v3.2_near_cog;tif;1;1;;0;1;0;;Double-check with Di's script
-feature;Mangroves;gmw_v3_2020_vec;shp;1;1;;0;1;0;;
-feature;NPP;MOD17A3HGF_npp2021_global_cog;tif;0;1;;1;1;0;;
-feature;Pesticide risk;Global_pesticide_risk_scores;tif;0;1;;1;1;0;;
-feature;Potential Increase in SOC on Croplands;soc_dif_hi;tif;0;1;;1;1;0;;
-feature;Productive Managed Forests;MOD17A3HGF_npp2021_global_cog, FML_v3.2_near_cog;tif;0;1;;0;1;0;;Needs Managed Forests and NPP
-feature;Ramsar Wetlands;ramsar_sites_20230920;gpkg;0;1;;0;1;0;;
-feature;Rarity Weighted Richness;all_sp_rwr_all_sets_combined;tif;0;1;;1;1;0;;
-feature;Threatened Ecosystems for Protection;NA;NA;0;1;;0;1;0;;"Needs ""Intact and Wilderness Areas"" and IUCN Ecosystems"
-feature;Threatened Ecosystems for Restoration;NA;NA;0;1;;0;1;0;;Needs IUCN Ecosystems and restore zone (?)
-feature;Threatened Species Richness;threatened_species_richness_cog;tif;0;1;;1;1;0;;
-feature;Underepresented Ecosystems;NA;json;0;1;;0;1;0;;Needs IUCN Ecosystems
-feature;Urban Areas;mod13q1_2022_ndvi_wgs84;tif;0;1;;1;0;;;"can use make_normalised_raster but with >1=1; would include this in one function on urban greening ops and give another output. Can chat about this if needed"
-feature;Urban Extreme Heat;wbgtmax30_join;tif;1;1;;0;1;0;;"Needs reverse NDVI, urban/buildup areas and wbgtmax; combine with function for urban green opps because they need similar inputs "
-feature;Urban Greening Opportunities;mod13q1_2022_ndvi_wgs84, ?;tif;0;1;;0;1;0;;"Needs reverse NDVI and urban/builtup areas; combine with a function for Urban Extreme Heat and get two raster outputs (need similar inputs)"
-feature;Velocity of Climate Change;vocc_ngb_all;tif;0;1;;1;1;0;;
-feature;Vulnerable Soil Organic Carbon Difference;soc-at-risk-V11;tif;1;1;;1;1;0;;
-feature;Wetlands and Ramsar;trop-subtrop_wetlandv3_2016_cifor_cog, ?;;0;1;;0;1;0;;Needs wetlands and ramsar files. Needs option to only use one if no sites for either of them in planning region (e.g. no ramsar in Haiti). Can be done similar to forest integrity index
-feature;Yield Gap;yield_gap;tif;0;1;;1;0;0;;double-check if in elsar
-lock_in;Existing PAs;TBA;TBA;TBA;;;;;;;
-pus;Planning Units;NA;NA;1;0;NA;NA;0;0;;
-zone;Protection;NA;NA;1;1;;0;0;0;;
-zone;Restoration;NA;NA;0;1;;0;0;0;;
-zone;Management;NA;NA;0;1;;0;0;0;;There are several versions of this in Di's script, so should probs write this function to output all versions of this
-zone_data;Agriculture areas;?;?;0;1;;1;0;0;;>1 = 1
-zone_data;Human Footprint;hfp2013_merisINT;tif;1;1;;;;0;;
-zone_data;Managed Forests;FML_v3.2_near_cog;tif;1;1;;0;1;0;;double-check
-zone_data;Urban areas;mod13q1_2022_ndvi_wgs84;tif;0;1;;1;0;;;Same as Urban Areas in features
+group;data_name;file_name;file_type;layer;include;create;file_path;default_function;default_parameters;visualise;save;comments for those in red
+boundary;Boundary;un_geodata;gpkg;BNDA_CTY;1;0;default;NA;1;0;;
+feature;Agricultural Climate Stress;overall_cropsuit_i_diff_19812010_20712100;tif;NA;0;1;;1;0;0;;can be done with make_normalised_raster() but needs some added functionality for extra calcs per Di's script
+feature;Alliance for Zero Extinction Sites;?;?;NA;0;1;;0;1;0;;
+feature;Biodiversity Habitat Index;BILBI_P_BHIv2_Species_2020;tif;NA;0;1;;1;1;0;;
+feature;Biodiversity Intactness Index;BIIAb-2015_cog;tif;NA;0;1;;1;1;0;;
+feature;Biodiversity Restoration Potential;all_species_richness_cog;tif;NA;0;1;;1;1;0;;
+feature;Biomass Carbon Density;biomass_carbon_density_opt;tif;NA;1;1;;1;1;0;;
+feature;Burden of Wildlife Conflict;wildlifeconflict;tif;NA;0;1;;1;1;0;;
+feature;Critical Connectivity Corridors;Global_MMP;tif;NA;0;1;;1;1;0;;
+feature;Clean Water Provision;potential_clean_water_prov;tif;NA;0;1;;1;1;0;;
+feature;Climate refugia - Bioclimatic Ecosystem Resilience Index;BILBI_P_BERI_2020;tif;NA;0;1;;1;1;0;;
+feature;Crop Suitability Difference;overall_cropsuit_i_diff_19812010_20712100;tif;NA;1;1;;1;0;0;;
+feature;Drought Abatement Opportunities;gDH19_oct2015;tif;NA;1;1;;1;1;0;;
+feature;Evolutionary Distinct Endangered Species (EDGE) ;threatened_evo_history;tif;NA;0;1;;1;1;0;;
+feature;Existing PAs;NA;NA;NA;1;1;;0;1;0;;
+feature;Flood Abatement Opportunities;gfd_flood_database, mod13q1_2022_ndvi_wgs84;tif;NA;0;1;;0;1;0;;Needs info on flood risk, wetlands and ndvi
+feature;Forest Integrity Index;flii_earth-001_cog, global_fsii_2023;tif;NA;1;1;;0;1;0;;
+feature;Indigenous Managed Lands;?;?;NA;0;1;;0;1;0;;
+feature;Intact Wilderness Area;intactness_Qprime_2009;tif;NA;1;1;;1;1;0;;
+feature;Irrecoverable Carbon;Irrecoverable_C_Total_2018;tif;NA;1;1;;1;1;0;;
+feature;Invasive species threat;panela_invthreat_wgs;tif;NA;0;1;;1;1;0;;
+feature;Key Biodiversity Areas;KBAsGlobal_2024_June_merged;gpkg;NA;0;1;;0;1;0;;
+feature;Managed Forests;FML_v3.2_near_cog;tif;NA;1;1;;0;1;0;;Double-check with Di's script
+feature;Mangroves;gmw_v3_2020_vec;shp;NA;1;1;;0;1;0;;
+feature;NPP;MOD17A3HGF_npp2021_global_cog;tif;NA;0;1;;1;1;0;;
+feature;Pesticide risk;Global_pesticide_risk_scores;tif;NA;0;1;;1;1;0;;
+feature;Potential Increase in SOC on Croplands;soc_dif_hi;tif;NA;0;1;;1;1;0;;
+feature;Productive Managed Forests;MOD17A3HGF_npp2021_global_cog, FML_v3.2_near_cog;tif;NA;0;1;;0;1;0;;Needs Managed Forests and NPP
+feature;Ramsar Wetlands;ramsar_sites_20230920;gpkg;NA;0;1;;0;1;0;;
+feature;Rarity Weighted Richness;all_sp_rwr_all_sets_combined;tif;NA;0;1;;1;1;0;;
+feature;Threatened Ecosystems for Protection;NA;NA;NA;0;1;;0;1;0;;"Needs ""Intact and Wilderness Areas"" and IUCN Ecosystems"
+feature;Threatened Ecosystems for Restoration;NA;NA;NA;0;1;;0;1;0;;Needs IUCN Ecosystems and restore zone (?)
+feature;Threatened Species Richness;threatened_species_richness_cog;tif;NA;0;1;;1;1;0;;
+feature;Underepresented Ecosystems;NA;json;NA;0;1;;0;1;0;;Needs IUCN Ecosystems
+feature;Urban Areas;mod13q1_2022_ndvi_wgs84;tif;NA;0;1;;1;0;;;"can use make_normalised_raster but with >1=1; would include this in one function on urban greening ops and give another output. Can chat about this if needed"
+feature;Urban Extreme Heat;wbgtmax30_join;tif;NA;1;1;;0;1;0;;"Needs reverse NDVI, urban/buildup areas and wbgtmax; combine with function for urban green opps because they need similar inputs "
+feature;Urban Greening Opportunities;mod13q1_2022_ndvi_wgs84, ?;tif;NA;0;1;;0;1;0;;"Needs reverse NDVI and urban/builtup areas; combine with a function for Urban Extreme Heat and get two raster outputs (need similar inputs)"
+feature;Velocity of Climate Change;vocc_ngb_all;tif;NA;0;1;;1;1;0;;
+feature;Vulnerable Soil Organic Carbon Difference;soc-at-risk-V11;tif;NA;1;1;;1;1;0;;
+feature;Wetlands and Ramsar;trop-subtrop_wetlandv3_2016_cifor_cog, ?;;NA;0;1;;0;1;0;;Needs wetlands and ramsar files. Needs option to only use one if no sites for either of them in planning region (e.g. no ramsar in Haiti). Can be done similar to forest integrity index
+feature;Yield Gap;yield_gap;tif;NA;0;1;;1;0;0;;double-check if in elsar
+lock_in;Existing PAs;TBA;TBA;NA;TBA;;;;;;;
+pus;Planning Units;NA;NA;NA;1;0;NA;NA;1;0;;
+zone;Protection;NA;NA;NA;1;1;;0;0;0;;
+zone;Restoration;NA;NA;NA;0;1;;0;0;0;;
+zone;Management;NA;NA;NA;0;1;;0;0;0;;There are several versions of this in Di's script, so should probs write this function to output all versions of this
+zone_data;Agriculture areas;?;?;NA;0;1;;1;0;0;;>1 = 1
+zone_data;Human Footprint;hfp2013_merisINT;tif;NA;1;1;;;;0;;
+zone_data;Managed Forests;FML_v3.2_near_cog;tif;NA;1;1;;0;1;0;;double-check
+zone_data;Urban areas;mod13q1_2022_ndvi_wgs84;tif;NA;0;1;;1;0;;;Same as Urban Areas in features

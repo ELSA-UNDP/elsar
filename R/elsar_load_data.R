@@ -129,6 +129,12 @@ elsar_load_data <- function(file_name,
           loaded_data <- sf::read_sf(to_load)
         }
       }
+
+      if (!is.null(iso3_column)){
+        loaded_data <- loaded_data %>%
+          dplyr::filter(.data[[iso3_column]] == iso3)
+      }
+
     } else if (file_type %in% c("tif", "tiff", "grd", "gri", "nc", "hdf")) { # havent tested nc and hdf yet
       if (!is.null(file_lyr)) {
         loaded_data <- terra::rast(to_load, lyrs = file_lyr)
