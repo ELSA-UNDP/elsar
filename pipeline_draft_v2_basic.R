@@ -388,7 +388,8 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
     # process data
     managed_forests <- make_managed_forests(
       raster_in = raster_mf,
-      pus = pus
+      pus = pus,
+      include_disturbed_forest = TRUE #includes categories > 11
     )
 
     names(managed_forests) <- c(dat_non_default[[j]]) # set layer name
