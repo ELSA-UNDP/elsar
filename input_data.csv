@@ -21,7 +21,7 @@ feature;Intact Wilderness Area;intactness_Qprime_2009;tif;NA;1;1;;1;1;0;;
 feature;Irrecoverable Carbon;Irrecoverable_C_Total_2018;tif;NA;1;1;;1;1;0;;
 feature;Invasive species threat;panela_invthreat_wgs;tif;NA;0;1;;1;1;0;;
 feature;Key Biodiversity Areas;KBAsGlobal_2024_June_merged;gpkg;NA;0;1;;0;1;0;;
-feature;Managed Forests;FML_v3.2_near_cog;tif;NA;1;1;;0;1;0;;Double-check with Di's script
+feature;Managed Forests;FML_v32_near_cog;tif;NA;1;1;;0;1;0;;Double-check with Di's script
 feature;Mangroves;gmw_v3_2020_vec;shp;NA;1;1;;0;1;0;;
 feature;NPP;MOD17A3HGF_npp2021_global_cog;tif;NA;0;1;;1;1;0;;
 feature;Pesticide risk;Global_pesticide_risk_scores;tif;NA;0;1;;1;1;0;;

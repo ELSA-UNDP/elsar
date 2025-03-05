@@ -213,7 +213,7 @@ for (i in 1:length(dat_default)) { # for all the data that runs with make_normal
   }
 
   # assign(current_dat$data_name, rast_norm)
-  names(rast_norm) <- c(dat_default[[i]]) #set layer name
+  names(rast_norm) <- c(dat_default[[i]]) # set layer name
   raster_out <- c(raster_out, rast_norm)
 }
 
@@ -235,13 +235,11 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
       bb_extend = pus
     )
 
-    if (nrow(current_rast) == 0){
+    if (nrow(current_rast) == 0) {
       cat("No mangroves in the planning region.")
 
       raster_out <- raster_out
-
     } else {
-
       mangrove_raster <- make_mangroves(
         sf_in = current_rast,
         pus = pus,
@@ -249,7 +247,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
         output_path = output_path,
         name_out = dat_non_default[[j]]
       )
-      names(mangrove_raster) <- c(dat_non_default[[j]]) #set layer name
+      names(mangrove_raster) <- c(dat_non_default[[j]]) # set layer name
       raster_out <- c(raster_out, mangrove_raster)
     }
   }
@@ -316,7 +314,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
         pus = pus
       )
     }
-    names(forest_integrity) <- c(dat_non_default[[j]]) #set layer name
+    names(forest_integrity) <- c(dat_non_default[[j]]) # set layer name
     raster_out <- c(raster_out, forest_integrity)
   }
 
@@ -374,8 +372,27 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
         output_path = output_path
       )
     }
-    names(current_pas) <- c(dat_non_default[[j]]) #set layer name
+    names(current_pas) <- c(dat_non_default[[j]]) # set layer name
     raster_out <- c(raster_out, current_pas)
+  }
+
+  if (dat_non_default[[j]] == "Managed Forests") {
+    print("Managed Forests")
+
+    # load data
+    raster_mf <- elsar_load_data(
+      file_name = current_dat$full_name,
+      file_type = current_dat$file_type, file_path = current_dat$full_path
+    )
+
+    # process data
+    managed_forests <- make_managed_forests(
+      raster_in = raster_mf,
+      pus = pus
+    )
+
+    names(managed_forests) <- c(dat_non_default[[j]]) # set layer name
+    raster_out <- c(raster_out, managed_forests)
   }
 }
 
@@ -404,7 +421,6 @@ zones_data_incl <- zones_data %>%
 for (i in 1:length(dat_default)) { # for all the data that runs with make_normalised_raster()
   current_zone_dat <- feature_list %>%
     dplyr::filter(data_name == dat_default[[i]])
-
 }
 
 

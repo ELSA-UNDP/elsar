@@ -47,6 +47,11 @@ make_managed_forests <- function(raster_in, # ADD: option to generate productive
   # then crop (make data a lot smaller)
   dat_aligned <- terra::crop(raster_in, pus_reproject)
 
+  # check if data is categorical
+  if (!(terra::is.factor(dat_aligned))) {
+    dat_aligned <- terra::as.factor(dat_aligned)
+  }
+
   if (!is.null(manual_cats)) {
     dat_aligned <- terra::ifel(
       test = dat_aligned %in% manual_cats,
