@@ -13,7 +13,7 @@ elsar_load_data(
   bb_extend = NULL,
   db_info = NULL,
   pg_connection = NULL,
-  iso3_column = "iso3cd",
+  iso3_column = NULL,
   iso3
 )
 }

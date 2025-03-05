@@ -25,13 +25,6 @@ output_path <- "C:/Users/sandr/Documents/UNBL_work/Pipeline/output_dat"
 iso3 <- "NPL"
 iso3_column <- "iso3cd"
 
-# Set actions to do
-# create_boundary <- 1 #now in csv
-# create_PUs <- 1 #now in csv
-# create_featureStack <- 1 #now in csv
-create_zones <- 0
-create_lockedIn <- 0
-
 #################################################################################
 # Load data file
 data_info <- read_delim(file.path(sheet_path, "input_data.csv"),
@@ -220,6 +213,7 @@ for (i in 1:length(dat_default)) { # for all the data that runs with make_normal
   }
 
   # assign(current_dat$data_name, rast_norm)
+  names(rast_norm) <- c(dat_default[[i]]) #set layer name
   raster_out <- c(raster_out, rast_norm)
 }
 
@@ -231,15 +225,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
   current_dat <- feature_list %>%
     dplyr::filter(data_name == dat_non_default[[j]])
 
-  print(dat_default[[j]])
-
-  # # load data
-  # current_rast <- elsar_load_data(
-  #   file_name = current_dat$full_name,
-  #   file_type = current_dat$file_type, file_path = current_dat$full_path
-  # )
-
-  if (j == "Mangroves") {
+  if (dat_non_default[[j]] == "Mangroves") {
     print("Mangroves")
 
     current_rast <- elsar_load_data(
@@ -249,17 +235,26 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
       bb_extend = pus
     )
 
-    mangrove_raster <- make_mangroves(
-      sf_in = current_rast,
-      pus = pus,
-      iso3 = iso3,
-      output_path = output_path,
-      name_out = dat_default[[i]]
-    )
-    raster_out <- c(raster_out, mangrove_raster)
+    if (nrow(current_rast) == 0){
+      cat("No mangroves in the planning region.")
+
+      raster_out <- raster_out
+
+    } else {
+
+      mangrove_raster <- make_mangroves(
+        sf_in = current_rast,
+        pus = pus,
+        iso3 = iso3,
+        output_path = output_path,
+        name_out = dat_non_default[[j]]
+      )
+      names(mangrove_raster) <- c(dat_non_default[[j]]) #set layer name
+      raster_out <- c(raster_out, mangrove_raster)
+    }
   }
 
-  if (j == "Forest Integrity Index") { # add saving option
+  if (dat_non_default[[j]] == "Forest Integrity Index") { # add saving option
     print("Forest Integrity Index")
 
     if (grepl(",", current_dat$file_name)) { # check if both flii and fsii should be used
@@ -321,11 +316,12 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
         pus = pus
       )
     }
+    names(forest_integrity) <- c(dat_non_default[[j]]) #set layer name
     raster_out <- c(raster_out, forest_integrity)
   }
 
-  if (j == "Existing PAs") {
-    print("Current PAs")
+  if (dat_non_default[[j]] == "Existing PAs") {
+    print("Existing PAs")
 
     if (current_dat$default_parameters != 1) {
       answer <- readline("Do you want to download current protected areas from wdpar package? (yes/no): ")
@@ -378,44 +374,49 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
         output_path = output_path
       )
     }
+    names(current_pas) <- c(dat_non_default[[j]]) #set layer name
+    raster_out <- c(raster_out, current_pas)
   }
 }
 
-
 ## Create zones
+### Which zones to include
 zones_list <- data_info %>%
   dplyr::filter(
     group == "zone",
     include == 1
-  )  %>%
+  ) %>%
   dplyr::select("data_name") %>%
   dplyr::pull()
 
+### Which zones data to prep
 zones_data <- data_info %>%
   dplyr::filter(
     group == "zone_data",
     include == 1
   )
 
-if (defaults_pu) { # use default values
-  pus <- elsar::make_planning_units(
-    boundary_proj = boundary_proj,
-    pu_size = NULL,
-    pu_threshold = 8.5e5,
-    limit_to_mainland = FALSE
-  )
+zones_data_incl <- zones_data %>%
+  dplyr::select("data_name") %>%
+  dplyr::pull()
+
+### Prep zones data
+for (i in 1:length(dat_default)) { # for all the data that runs with make_normalised_raster()
+  current_zone_dat <- feature_list %>%
+    dplyr::filter(data_name == dat_default[[i]])
+
 }
 
+
+### Prep zones
 protection_zone <- make_protection_zone(
   hfp_in = load_hfp,
-  #crop_in = load_crop,
-  #built_in = load_built,
+  # crop_in = load_crop,
+  # built_in = load_built,
   hfp_threshold = 22,
   pus = pus,
   iso3 = iso3
 )
-
-
 
 ## Create locked-in areas
 lockedIn_list <- c("avail")

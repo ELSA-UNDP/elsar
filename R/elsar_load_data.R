@@ -64,7 +64,7 @@ elsar_load_data <- function(file_name,
                             bb_extend = NULL,
                             db_info = NULL,
                             pg_connection = NULL,
-                            iso3_column = "iso3cd", # "iso_sov1",
+                            iso3_column = NULL, # "iso_sov1",
                             iso3) {
   # create path to data
   if (is.null(file_path) & file_type == "postgres") {
