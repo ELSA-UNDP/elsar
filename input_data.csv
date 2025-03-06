@@ -33,8 +33,8 @@ feature;Threatened Ecosystems for Protection;NA;NA;NA;0;;0;1;0;;"Needs ""Intact 
 feature;Threatened Ecosystems for Restoration;NA;NA;NA;0;;0;1;0;;Needs IUCN Ecosystems and restore zone (?)
 feature;Threatened Species Richness;threatened_species_richness_cog;tif;NA;0;;1;1;0;;
 feature;Underepresented Ecosystems;NA;json;NA;0;;0;1;0;;Needs IUCN Ecosystems
-feature;Urban Areas;mod13q1_2022_ndvi_wgs84;tif;NA;0;;1;0;;;"can use make_normalised_raster but with >1=1; would include this in one function on urban greening ops and give another output. Can chat about this if needed"
-feature;Urban Extreme Heat;wbgtmax30_join;tif;NA;1;;0;1;0;;"Needs reverse NDVI, urban/buildup areas and wbgtmax; combine with function for urban green opps because they need similar inputs "
+feature;Urban Areas;?;tif;NA;0;;1;0;;;"can use make_normalised_raster but with >1=1; would include this in one function on urban greening ops and give another output. Can chat about this if needed"
+feature;Urban Extreme Heat;wbgtmax30_join;tif;NA;1;;0;1;0;;"Needs reverse NDVI, urban/buildup areas and wbgtmax; combine with function for urban green opps because they need similar inputs; currently not saved as extra output but only used as input for Greening Opportunities"
 feature;Urban Greening Opportunities;mod13q1_2022_ndvi_wgs84, ?;tif;NA;0;;0;1;0;;"Needs reverse NDVI and urban/builtup areas; combine with a function for Urban Extreme Heat and get two raster outputs (need similar inputs)"
 feature;Velocity of Climate Change;vocc_ngb_all;tif;NA;0;;1;1;0;;
 feature;Vulnerable Soil Organic Carbon Difference;soc-at-risk-V11;tif;NA;1;;1;1;0;;
@@ -48,5 +48,5 @@ zone;Management;NA;NA;NA;0;;0;0;0;;There are several versions of this in Di's sc
 zone_data;Agriculture areas;?;?;NA;0;;1;0;0;;>1 = 1
 zone_data;Human Footprint;hfp2013_merisINT;tif;NA;1;;;;0;;
 zone_data;Managed Forests;FML_v3.2_near_cog;tif;NA;1;;0;1;0;;double-check
-zone_data;Urban areas;mod13q1_2022_ndvi_wgs84;tif;NA;0;;1;0;;;Same as Urban Areas in features
+zone_data;Urban areas;?;tif;NA;0;;1;0;;;Same as Urban Areas in features
 zone_data;Degraded areas;?;NA;NA;0;;0;1;0;;Comment in Di's scipt that @Scott makes the restore zone, so I don't know what data is needed for this because I don't have a script for it
