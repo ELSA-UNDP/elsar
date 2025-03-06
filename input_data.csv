@@ -39,7 +39,7 @@ feature;Urban Greening Opportunities;mod13q1_2022_ndvi_wgs84, ?;tif;NA;0;;0;1;0;
 feature;Velocity of Climate Change;vocc_ngb_all;tif;NA;0;;1;1;0;;
 feature;Vulnerable Soil Organic Carbon Difference;soc-at-risk-V11;tif;NA;1;;1;1;0;;
 feature;Wetlands and Ramsar;trop-subtrop_wetlandv3_2016_cifor_cog, ?;;NA;0;;0;1;0;;Needs wetlands and ramsar files. Needs option to only use one if no sites for either of them in planning region (e.g. no ramsar in Haiti). Can be done similar to forest integrity index
-feature;Yield Gap;yield_gap;tif;NA;1;;1;0;0;;double-check if in elsar
+feature;Yield Gap;yield_gap;tif;NA;1;;1;0;0;;
 lock_in;Existing PAs;TBA;TBA;NA;TBA;;;;;;
 pus;Planning Units;NA;NA;NA;1;NA;NA;1;0;;
 zone;Protection;NA;NA;NA;1;;0;0;0;;Current function in elsar different to what Di is doing in script. Double-check with agricultural data and urban data
@@ -47,6 +47,6 @@ zone;Restoration;NA;NA;NA;0;;0;0;0;;Needs normal restore zones and option for fo
 zone;Management;NA;NA;NA;0;;0;0;0;;There are several versions of this in Di's script, so should probs write this function to output all versions of this
 zone_data;Agriculture areas;?;?;NA;0;;1;0;0;;>1 = 1
 zone_data;Human Footprint;hfp2013_merisINT;tif;NA;1;;0;1;0;;
-zone_data;Managed Forests;FML_v3.2_near_cog;tif;NA;1;;0;1;0;;double-check
+zone_data;Managed Forests;FML_v32_near_cog;tif;NA;1;;0;1;0;;double-check
 zone_data;Urban areas;?;tif;NA;0;;1;0;;;Same as Urban Areas in features
 zone_data;Degraded areas;?;NA;NA;0;;0;1;0;;Comment in Di's scipt that @Scott makes the restore zone, so I don't know what data is needed for this because I don't have a script for it

@@ -143,12 +143,11 @@ if (as.logical(as.integer(data_info %>%
     message("Default input needs to be 0 (use custom settings) or 1 (default values)")
   }
 
-  ### Visualise PUs
-  if (as.logical(data_info %>%
-    dplyr::filter(group == "pus") %>%
-    dplyr::pull(visualise))) {
-    print("TBA")
-  }
+  elsar_plot_feature(raster_in = pus,
+                     pus = pus,
+                     no_legend = TRUE,
+                     legend_title = "PUs",
+                     figure_path = figure_path)
 }
 
 ## Create feature stack #could have one master script and then extra feature generation scripts etc that are sourced + ADD visualisation option
@@ -505,6 +504,10 @@ for (l in 1:length(zones_list)) {
       iso3 = iso3
     )
   }
+
+  #save and vsiualise zone
+
+
 }
 
 ## Create locked-in areas

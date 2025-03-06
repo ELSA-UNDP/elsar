@@ -5,6 +5,7 @@
 #' @param legend_title An optional legend title.
 #' @param color_map The name of the `viridis` palette to be used. Default is "viridis".
 #' @param figure_path An optional path to save the produced figures
+#' @param no_legend Logical. TRUE means no legend will be shown
 #'
 #' @return A ggplot object with a map of the feature
 #' @export
@@ -37,9 +38,10 @@
 elsar_plot_feature <- function(raster_in,
                                pus,
                                legend_title = NULL,
-                               color_map = "mako", #"rocket",
+                               color_map = "viridis", #"rocket",
                                invert_palette = TRUE,
-                               figure_path = NULL) {
+                               figure_path = NULL,
+                               no_legend = FALSE) {
   # Prep outline
   outlines <- terra::as.polygons(pus) %>%
     # And convert to lines
@@ -92,6 +94,11 @@ elsar_plot_feature <- function(raster_in,
     ) +
     ggplot2::scale_x_continuous(expand = c(0, 0)) +
     ggplot2::scale_y_continuous(expand = c(0, 0))
+
+  if (no_legend) {
+    gg_feature <-   gg_feature +
+      ggplot2::theme(legend.position="none")
+  }
 
   if (!is.null(figure_path)) {
     ggsave(file.path(glue::glue("{figure_path}/{legend_title}_{iso3}.png")),

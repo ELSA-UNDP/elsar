@@ -8,9 +8,10 @@ elsar_plot_feature(
   raster_in,
   pus,
   legend_title = NULL,
-  color_map = "viridis",
+  color_map = "mako",
   invert_palette = TRUE,
-  figure_path = NULL
+  figure_path = NULL,
+  no_legend = FALSE
 )
 }
 \arguments{
@@ -23,6 +24,8 @@ elsar_plot_feature(
 \item{color_map}{The name of the \code{viridis} palette to be used. Default is "viridis".}
 
 \item{figure_path}{An optional path to save the produced figures}
+
+\item{no_legend}{Logical. TRUE means no legend will be shown}
 }
 \value{
 A ggplot object with a map of the feature
