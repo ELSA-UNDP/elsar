@@ -20,6 +20,7 @@ library(RPostgres)
 sheet_path <- "C:/Users/sandr/Documents/Github/elsar"
 input_path <- "C:/Users/sandr/Documents/UNBL_work/Pipeline/input_dat"
 output_path <- "C:/Users/sandr/Documents/UNBL_work/Pipeline/output_dat"
+figure_path <- "C:/Users/sandr/Documents/UNBL_work/Pipeline/output_dat/figures"
 
 ## Country info
 iso3 <- "NPL"
@@ -195,17 +196,17 @@ for (i in 1:length(dat_default)) { # for all the data that runs with make_normal
         pus = pus,
         iso3 = iso3,
         invert = TRUE,
-        output_path = output_path,
-        name_out = dat_default[[i]]
+       # output_path = output_path,
+       # name_out = dat_default[[i]]
       )
     } else if (current_dat$data_name == "Yield Gap") {
       rast_norm <- make_normalised_raster(
         raster_in = current_rast,
         pus = pus,
         iso3 = iso3,
-        output_path = output_path,
-        name_out = dat_default[[i]],
-        conditional_expression = function(r) 100-r
+       # output_path = output_path,
+       # name_out = dat_default[[i]],
+        conditional_expression = function(r) 100-r # based on % (so: 100% - r)
       )
     } else {
       cat("Your data might not have a pre-saved option yet. Please enter your processing options manually.")
@@ -216,13 +217,17 @@ for (i in 1:length(dat_default)) { # for all the data that runs with make_normal
       raster_in = current_rast,
       pus = pus,
       iso3 = iso3,
-      output_path = output_path,
-      name_out = dat_default[[i]]
+     # output_path = output_path,
+     # name_out = dat_default[[i]]
     )
   }
 
   # assign(current_dat$data_name, rast_norm)
   names(rast_norm) <- c(dat_default[[i]]) # set layer name
+  elsar_plot_feature(raster_in = rast_norm,
+                     pus = pus,
+                     legend_title = dat_default[[i]],
+                     figure_path = figure_path)
   raster_out <- c(raster_out, rast_norm)
 }
 
@@ -257,6 +262,10 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
         name_out = dat_non_default[[j]]
       )
       names(mangrove_raster) <- c(dat_non_default[[j]]) # set layer name
+      elsar_plot_feature(raster_in = mangrove_raster,
+                         pus = pus,
+                         legend_title = dat_non_default[[j]],
+                         figure_path = figure_path)
       raster_out <- c(raster_out, mangrove_raster)
     }
   }
@@ -324,6 +333,10 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
       )
     }
     names(forest_integrity) <- c(dat_non_default[[j]]) # set layer name
+    elsar_plot_feature(raster_in = forest_integrity,
+                       pus = pus,
+                       legend_title = dat_non_default[[j]],
+                       figure_path = figure_path)
     raster_out <- c(raster_out, forest_integrity)
   }
 
@@ -382,6 +395,10 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
       )
     }
     names(current_pas) <- c(dat_non_default[[j]]) # set layer name
+    elsar_plot_feature(raster_in = current_pas,
+                       pus = pus,
+                       legend_title = dat_non_default[[j]],
+                       figure_path = figure_path)
     raster_out <- c(raster_out, current_pas)
   }
 
@@ -402,6 +419,10 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
     )
 
     names(managed_forests) <- c(dat_non_default[[j]]) # set layer name
+    elsar_plot_feature(raster_in = managed_forests,
+                       pus = pus,
+                       legend_title = dat_non_default[[j]],
+                       figure_path = figure_path)
     raster_out <- c(raster_out, managed_forests)
   }
 }
@@ -488,3 +509,14 @@ for (l in 1:length(zones_list)) {
 
 ## Create locked-in areas
 lockedIn_list <- c("avail")
+
+#### Save raster stack ####
+out_name <- file.path(glue::glue("{output_path}/data_stack_{iso3}.tif"))
+
+writeRaster(raster_out, out_name,
+            filetype = "COG",
+            datatype = "FLT4S", # 32-bit float
+            gdal = c("COMPRESS=DEFLATE"),
+            overwrite = TRUE)
+
+#r_test <- terra::rast(out_name)
