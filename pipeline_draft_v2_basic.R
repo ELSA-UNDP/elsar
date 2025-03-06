@@ -199,7 +199,14 @@ for (i in 1:length(dat_default)) { # for all the data that runs with make_normal
         name_out = dat_default[[i]]
       )
     } else if (current_dat$data_name == "Yield Gap") {
-      cat("TBA")
+      rast_norm <- make_normalised_raster(
+        raster_in = current_rast,
+        pus = pus,
+        iso3 = iso3,
+        output_path = output_path,
+        name_out = dat_default[[i]],
+        conditional_expression = function(r) 100-r
+      )
     } else {
       cat("Your data might not have a pre-saved option yet. Please enter your processing options manually.")
       next # jump to else if to enter options manually. Not tested yet!!!
@@ -462,7 +469,6 @@ for (k in 1:length(zones_data_incl)) {
     )
   }
 }
-
 
 #### Prep zones ####
 for (l in 1:length(zones_list)) {
