@@ -177,6 +177,8 @@ for (i in 1:length(dat_default)) { # for all the data that runs with make_normal
   current_dat <- feature_list %>%
     dplyr::filter(data_name == dat_default[[i]])
 
+  # PUT AN IF STATEMENT HERE THAT CHECKS THE NAMES FOR THE COMMON NON-DEFAULT DATASETS AND GIVES A WARNING WHEN THEY ARE SET TO DEFAULT
+
   print(dat_default[[i]])
 
   # load data
@@ -389,7 +391,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
     managed_forests <- make_managed_forests(
       raster_in = raster_mf,
       pus = pus,
-      include_disturbed_forest = TRUE #includes categories > 11
+      include_disturbed_forest = TRUE # includes categories > 11
     )
 
     names(managed_forests) <- c(dat_non_default[[j]]) # set layer name
@@ -397,7 +399,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
   }
 }
 
-## Create zones
+#### Create zones ####
 ### Which zones to include
 zones_list <- data_info %>%
   dplyr::filter(
@@ -418,14 +420,51 @@ zones_data_incl <- zones_data %>%
   dplyr::select("data_name") %>%
   dplyr::pull()
 
-### Prep zones data
-for (i in 1:length(dat_default)) { # for all the data that runs with make_normalised_raster()
+#### Prep zones data ####
+for (k in 1:length(zones_data_incl)) {
   current_zone_dat <- feature_list %>%
-    dplyr::filter(data_name == dat_default[[i]])
+    dplyr::filter(data_name == zones_data_incl[[k]])
+
+  if (zones_data_incl[[k]] == "Managed Forests") {
+    print("Managed Forests")
+
+    # load data
+    raster_mf <- elsar_load_data(
+      file_name = current_zone_dat$full_name,
+      file_type = current_zone_dat$file_type, file_path = current_zone_dat$full_path
+    )
+
+    # # process data ### should be done in zone function for restore
+    # managed_forests <- make_managed_forests(
+    #   raster_in = raster_mf,
+    #   pus = pus,
+    #   include_disturbed_forest = TRUE #includes categories > 11
+    # )
+  }
+
+  if (zones_data_incl[[k]] == "Human Footprint") {
+    print("Human Footprint")
+
+    # load data
+    raster_hfp <- elsar_load_data(
+      file_name = current_zone_dat$full_name,
+      file_type = current_zone_dat$file_type, file_path = current_zone_dat$full_path
+    )
+  }
+
+  if (zones_data_incl[[k]] == "Urban Areas") {
+    print("Urban Areas")
+
+    # load data
+    raster_urbanareas <- elsar_load_data(
+      file_name = current_zone_dat$full_name,
+      file_type = current_zone_dat$file_type, file_path = current_zone_dat$full_path
+    )
+  }
 }
 
 
-### Prep zones
+#### Prep zones ####
 protection_zone <- make_protection_zone(
   hfp_in = load_hfp,
   # crop_in = load_crop,
