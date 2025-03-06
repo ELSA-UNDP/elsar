@@ -8,7 +8,7 @@ elsar_plot_feature(
   raster_in,
   pus,
   legend_title = NULL,
-  color_map = "mako",
+  color_map = "viridis",
   invert_palette = TRUE,
   figure_path = NULL,
   no_legend = FALSE

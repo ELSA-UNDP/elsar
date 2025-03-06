@@ -189,12 +189,12 @@ for (i in 1:length(dat_default)) { # for all the data that runs with make_normal
 
   if (current_dat$default_parameters != 1) { # if non default parameters in make_normalised_raster()
 
-    if (current_dat$data_name == "Crop Suitability Difference") {
+    if (current_dat$data_name == "Crop Suitability Difference" | current_dat$data_name == "Agricultural Climate Stress") {
       rast_norm <- make_normalised_raster(
         raster_in = current_rast,
         pus = pus,
         iso3 = iso3,
-        invert = TRUE,
+        conditional_expression = function(r) ifel(r > 0, 0 , -r)
        # output_path = output_path,
        # name_out = dat_default[[i]]
       )

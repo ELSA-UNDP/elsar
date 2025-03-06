@@ -1,6 +1,6 @@
 group;data_name;file_name;file_type;layer;include;file_path;default_function;default_parameters;visualise;save;comments for those in red
 boundary;Boundary;un_geodata;gpkg;BNDA_CTY;1;default;NA;1;0;;
-feature;Agricultural Climate Stress;overall_cropsuit_i_diff_19812010_20712100;tif;NA;0;;1;0;0;;can be done with make_normalised_raster() but needs some added functionality for extra calcs per Di's script
+feature;Agricultural Climate Stress;overall_cropsuit_i_diff_19812010_20712100;tif;NA;1;;1;0;0;;
 feature;Alliance for Zero Extinction Sites;?;?;NA;0;;0;1;0;;
 feature;Biodiversity Habitat Index;BILBI_P_BHIv2_Species_2020;tif;NA;0;;1;1;0;;
 feature;Biodiversity Intactness Index;BIIAb-2015_cog;tif;NA;0;;1;1;0;;
@@ -10,7 +10,6 @@ feature;Burden of Wildlife Conflict;wildlifeconflict;tif;NA;0;;1;1;0;;
 feature;Critical Connectivity Corridors;Global_MMP;tif;NA;0;;1;1;0;;
 feature;Clean Water Provision;potential_clean_water_prov;tif;NA;0;;1;1;0;;
 feature;Climate refugia - Bioclimatic Ecosystem Resilience Index;BILBI_P_BERI_2020;tif;NA;0;;1;1;0;;
-feature;Crop Suitability Difference;overall_cropsuit_i_diff_19812010_20712100;tif;NA;1;;1;0;0;;
 feature;Drought Abatement Opportunities;gDH19_oct2015;tif;NA;1;;1;1;0;;
 feature;Evolutionary Distinct Endangered Species (EDGE) ;threatened_evo_history;tif;NA;0;;1;1;0;;
 feature;Existing PAs;NA;NA;NA;0;;0;1;0;;
@@ -47,6 +46,6 @@ zone;Restoration;NA;NA;NA;0;;0;0;0;;Needs normal restore zones and option for fo
 zone;Management;NA;NA;NA;0;;0;0;0;;There are several versions of this in Di's script, so should probs write this function to output all versions of this
 zone_data;Agriculture areas;?;?;NA;0;;1;0;0;;>1 = 1
 zone_data;Human Footprint;hfp2013_merisINT;tif;NA;1;;0;1;0;;
-zone_data;Managed Forests;FML_v32_near_cog;tif;NA;1;;0;1;0;;double-check
+zone_data;Managed Forests;FML_v32_near_cog;tif;NA;1;;0;1;0;;
 zone_data;Urban areas;?;tif;NA;0;;1;0;;;Same as Urban Areas in features
 zone_data;Degraded areas;?;NA;NA;0;;0;1;0;;Comment in Di's scipt that @Scott makes the restore zone, so I don't know what data is needed for this because I don't have a script for it

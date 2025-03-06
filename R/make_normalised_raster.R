@@ -87,11 +87,6 @@ make_normalised_raster <- function(raster_in,
     }
   }
 
-  # Apply the conditional expression if provided
-  if (!is.null(conditional_expression)) {
-    raster_in <- conditional_expression(raster_in)
-  }
-
   # Re-project the original raster_in to match PUs with the selected method
   dat_aligned <- terra::project(
     x = raster_in,
@@ -99,6 +94,11 @@ make_normalised_raster <- function(raster_in,
     method = method,
     threads = TRUE
   )
+
+  # Apply the conditional expression if provided
+  if (!is.null(conditional_expression)) {
+    dat_aligned <- conditional_expression(dat_aligned)
+  }
 
   # Fill in NA background values before masking
   if (fill_na) {
