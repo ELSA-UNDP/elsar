@@ -422,7 +422,7 @@ zones_data_incl <- zones_data %>%
 
 #### Prep zones data ####
 for (k in 1:length(zones_data_incl)) {
-  current_zone_dat <- feature_list %>%
+  current_zone_dat <- zones_data %>%
     dplyr::filter(data_name == zones_data_incl[[k]])
 
   if (zones_data_incl[[k]] == "Managed Forests") {
@@ -465,14 +465,20 @@ for (k in 1:length(zones_data_incl)) {
 
 
 #### Prep zones ####
-protection_zone <- make_protection_zone(
-  hfp_in = load_hfp,
-  # crop_in = load_crop,
-  # built_in = load_built,
-  hfp_threshold = 22,
-  pus = pus,
-  iso3 = iso3
-)
+for (l in 1:length(zones_list)) {
+  if (zones_list[[l]] == "Protection Zone") {
+    print("Protection Zone")
+
+    protection_zone <- make_protection_zone(
+      hfp_in = raster_hfp,
+      # crop_in = load_crop,
+      # built_in = load_built,
+      hfp_threshold = 22,
+      pus = pus,
+      iso3 = iso3
+    )
+  }
+}
 
 ## Create locked-in areas
 lockedIn_list <- c("avail")
