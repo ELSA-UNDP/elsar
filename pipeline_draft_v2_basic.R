@@ -8,6 +8,7 @@ library(terra)
 library(tidyterra)
 library(here)
 library(RPostgres)
+"%ni%" = Negate( "%in%" )
 
 #################################################################################
 
@@ -167,6 +168,16 @@ dat_non_default <- feature_list %>% # get those features that have their own fun
   dplyr::filter(default_function == 0) %>%
   dplyr::select("data_name") %>%
   dplyr::pull()
+
+if ("Productive Managed Forests" %in% dat_non_default) { #managed forests and productive managed forests handled within same function
+  include_productive <- TRUE
+  dat_non_default <- dat_non_default[ dat_non_default %ni% c("Productive Managed Forests")]
+  if ("Managed Forests" %ni% dat_non_default ) {
+    dat_non_default <- append(dat_non_default, "Managed Forests") # Managed Forests always need to be there if productive managed forests are needed
+  }
+} else {
+  include_productive <- FALSE
+}
 
 ## Prep data using default methods
 cat("Creating Default Features")
@@ -410,6 +421,60 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
       file_type = current_dat$file_type, file_path = current_dat$full_path
     )
 
+    if (include_productive) {
+
+      current_dat <- feature_list %>%
+        dplyr::filter(data_name == "Productive Managed Forests")
+
+      dat_names <- unlist(strsplit(current_dat$file_name, ", ", fixed = TRUE))
+
+      file_labels <- c("npp", "FML")
+      named_files <- setNames(
+        dat_names[sapply(
+          file_labels,
+          function(x) {
+            any(grepl(x,
+                      dat_names,
+                      ignore.case = TRUE
+            ))
+          }
+        )],
+        file_labels
+      )
+      #load NPP data
+      # load data
+      npp_in <- elsar_load_data(
+        file_name = paste0(named_files[["npp"]], ".", current_dat$file_type),
+        file_type = current_dat$file_type, file_path = current_dat$full_path
+      )
+
+      raster_mf <- elsar_load_data(
+        file_name = paste0(named_files[["FML"]], ".", current_dat$file_type),
+        file_type = current_dat$file_type, file_path = current_dat$full_path
+      )
+
+      # process data
+      managed_forests <- make_managed_forests(
+        raster_in = raster_mf,
+        pus = pus,
+        include_disturbed_forest = TRUE, # includes categories > 11
+        make_productive = include_productive,
+        raster_npp = npp_in
+      )
+
+      names(managed_forests) <- c(dat_non_default[[j]], "Productive Managed Forests") # set layer name
+      elsar_plot_feature(raster_in = managed_forests[[1]],
+                         pus = pus,
+                         legend_title = dat_non_default[[j]],
+                         figure_path = figure_path)
+      elsar_plot_feature(raster_in = managed_forests[[2]],
+                         pus = pus,
+                         legend_title = "Productive Managed Forests",
+                         figure_path = figure_path)
+      raster_out <- c(raster_out, managed_forests)
+
+    } else {
+
     # process data
     managed_forests <- make_managed_forests(
       raster_in = raster_mf,
@@ -423,6 +488,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
                        legend_title = dat_non_default[[j]],
                        figure_path = figure_path)
     raster_out <- c(raster_out, managed_forests)
+    }
   }
 }
 

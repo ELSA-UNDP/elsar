@@ -10,6 +10,8 @@ make_managed_forests(
   iso3,
   manual_cats = NULL,
   include_disturbed_forest = FALSE,
+  make_productive = FALSE,
+  raster_npp = NULL,
   name_out,
   output_path = NULL
 )
@@ -24,6 +26,10 @@ make_managed_forests(
 \item{manual_cats}{If file does not contain default categories (11 (not managed), 20 (disturbed forests; can be interpreted as managed), 31, 32, 40, 53 (all managed)), allows to provide a vector with the right values.}
 
 \item{include_disturbed_forest}{logical. Whether or not to include disturbed forests as managed forests (default is FALSE).}
+
+\item{make_productive}{Logical. Also make the Productive Managed Forests layer.}
+
+\item{raster_npp}{A \code{SpatRaster} file containing the NPP information needed to calculate the Productive Managed Forests layer. Needed if make_productive = TRUE}
 
 \item{name_out}{A string with the data name that will be used for the output \code{tif}file}
 

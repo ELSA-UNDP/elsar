@@ -7,6 +7,9 @@
 #' @param include_disturbed_forest logical. Whether or not to include disturbed forests as managed forests (default is FALSE).
 #' @param name_out A string with the data name that will be used for the output `tif`file
 #' @param output_path An optional output path for the created file.
+#' @param make_productive Logical. Also make the Productive Managed Forests layer.
+#' @param raster_npp A `SpatRaster` file containing the NPP information needed to calculate the Productive Managed Forests layer. Needed if make_productive = TRUE
+#'
 #' @importFrom terra %in%
 #'
 #' @return A `SpatRaster` file of managed forests that has been aligned and normalised
@@ -38,8 +41,25 @@ make_managed_forests <- function(raster_in, # ADD: option to generate productive
                                  iso3,
                                  manual_cats = NULL,
                                  include_disturbed_forest = FALSE,
+                                 make_productive = FALSE,
+                                 raster_npp = NULL,
                                  name_out,
                                  output_path = NULL) {
+
+  if (!is.null(raster_in) & !is.null(npp_in)) {
+
+    assertthat::assert_that(
+      inherits(raster_in, "SpatRaster"),
+      inherits(raster_npp, "SpatRaster")
+    )
+  }
+
+  if (make_productive) {
+    assertthat::assert_that(
+      inherits(raster_npp, "SpatRaster"),
+      msg = "NPP data needs to be provided as a SpatRaster when make_productive option is selected."
+    )
+  }
   # reprojecting the global data would take too long
   # to speed up: reproject PUs to projection of global data first
   pus_reproject <- terra::project(pus, terra::crs(raster_in))
@@ -94,5 +114,31 @@ make_managed_forests <- function(raster_in, # ADD: option to generate productive
     )
   }
 
-  return(dat_aligned)
+  if (make_productive) {
+    npp_norm <- elsar::make_normalised_raster( # doesn't need to be saved because would have been included separately
+      raster_in = raster_npp,
+      pus = pus,
+      iso3 = iso3
+      # output_path = output_path,
+      # name_out = dat_default[[i]]
+    )
+
+    prod_man_forest <- dat_aligned*npp_norm
+    prod_man_forest <- rescale_raster( prod_man_forest)
+
+    if (!is.null(output_path)) {
+      terra::writeRaster(npp_norm,
+                         glue::glue("{output_path}/productive_managed_forests_{iso3}.tif"),
+                         gdal = c("COMPRESS=DEFLATE"),
+                         NAflag = -9999,
+                         overwrite = TRUE,
+                         filetype = "COG"
+      )}
+
+    all_managed_forests <- c(dat_aligned, prod_man_forest)
+    return(all_managed_forests)
+
+  } else {
+    return(dat_aligned)
+  }
 }
