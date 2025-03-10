@@ -490,6 +490,31 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
     raster_out <- c(raster_out, managed_forests)
     }
   }
+
+  if (dat_non_default[[j]] == "Key Biodiversity Areas") {
+    print("Key Biodiversity Areas")
+
+    # load data
+    kba_sf <- elsar_load_data(
+      file_name = current_dat$full_name,
+      file_type = current_dat$file_type, file_path = current_dat$full_path,
+      file_lyr = (if (current_dat$layer != "NA") current_dat$layer else NULL)
+    )
+
+    kba_raster <- make_kbas(
+      kba_in =  kba_sf,
+      pus = pus,
+      iso3_in = iso3
+    )
+
+    names(kba_raster) <- c(dat_non_default[[j]]) # set layer name
+    elsar_plot_feature(raster_in = kba_raster,
+                       pus = pus,
+                       legend_title = dat_non_default[[j]],
+                       figure_path = figure_path)
+    raster_out <- c(raster_out, kba_raster)
+
+  }
 }
 
 #### Create zones ####

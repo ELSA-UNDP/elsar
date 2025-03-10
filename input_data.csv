@@ -19,13 +19,13 @@ feature;Indigenous Managed Lands;?;?;NA;0;;0;1;0;;
 feature;Intact Wilderness Area;intactness_Qprime_2009;tif;NA;1;;1;1;0;;
 feature;Irrecoverable Carbon;Irrecoverable_C_Total_2018;tif;NA;1;;1;1;0;;
 feature;Invasive species threat;panela_invthreat_wgs;tif;NA;0;;1;1;0;;
-feature;Key Biodiversity Areas;KBAsGlobal_2024_June_merged;gpkg;NA;0;;0;1;0;;
+feature;Key Biodiversity Areas;KBAsGlobal_2024_June_merged;gpkg;KBAsGlobal_2024_June_merged;1;;0;1;0;;
 feature;Managed Forests;FML_v32_near_cog;tif;NA;1;;0;1;0;;
 feature;Mangroves;gmw_v3_2020_vec;shp;NA;1;;0;1;0;;
 feature;NPP;MOD17A3HGF_npp2021_global_cog;tif;NA;1;;1;1;0;;
 feature;Pesticide risk;Global_pesticide_risk_scores;tif;NA;0;;1;1;0;;
 feature;Potential Increase in SOC on Croplands;soc_dif_hi;tif;NA;0;;1;1;0;;
-feature;Productive Managed Forests;MOD17A3HGF_npp2021_global_cog, FML_v32_near_cog;tif;NA;1;;0;1;0;;Needs Managed Forests and NPP
+feature;Productive Managed Forests;MOD17A3HGF_npp2021_global_cog, FML_v32_near_cog;tif;NA;1;;0;1;0;;
 feature;Ramsar Wetlands;ramsar_sites_20230920;gpkg;NA;0;;0;1;0;;
 feature;Rarity Weighted Richness;all_sp_rwr_all_sets_combined;tif;NA;0;;1;1;0;;
 feature;Threatened Ecosystems for Protection;NA;NA;NA;0;;0;1;0;;"Needs ""Intact and Wilderness Areas"" and IUCN Ecosystems"

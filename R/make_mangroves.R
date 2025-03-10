@@ -1,4 +1,4 @@
-#' Function to extract general vector data
+#' Function to make standardised mangroves data
 #'
 #' `make_mangroves()`allows you to align, normalise an `sf`file and save it as a raster file. Originally created to prepare the Global Mangrove Watch data.
 #'
