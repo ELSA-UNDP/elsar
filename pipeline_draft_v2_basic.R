@@ -8,7 +8,7 @@ library(terra)
 library(tidyterra)
 library(here)
 library(RPostgres)
-"%ni%" = Negate( "%in%" )
+"%ni%" <- Negate("%in%")
 
 #################################################################################
 
@@ -144,11 +144,13 @@ if (as.logical(as.integer(data_info %>%
     message("Default input needs to be 0 (use custom settings) or 1 (default values)")
   }
 
-  elsar_plot_feature(raster_in = pus,
-                     pus = pus,
-                     no_legend = TRUE,
-                     legend_title = "PUs",
-                     figure_path = figure_path)
+  elsar_plot_feature(
+    raster_in = pus,
+    pus = pus,
+    no_legend = TRUE,
+    legend_title = "PUs",
+    figure_path = figure_path
+  )
 }
 
 ## Create feature stack #could have one master script and then extra feature generation scripts etc that are sourced + ADD visualisation option
@@ -169,10 +171,10 @@ dat_non_default <- feature_list %>% # get those features that have their own fun
   dplyr::select("data_name") %>%
   dplyr::pull()
 
-if ("Productive Managed Forests" %in% dat_non_default) { #managed forests and productive managed forests handled within same function
+if ("Productive Managed Forests" %in% dat_non_default) { # managed forests and productive managed forests handled within same function
   include_productive <- TRUE
-  dat_non_default <- dat_non_default[ dat_non_default %ni% c("Productive Managed Forests")]
-  if ("Managed Forests" %ni% dat_non_default ) {
+  dat_non_default <- dat_non_default[dat_non_default %ni% c("Productive Managed Forests")]
+  if ("Managed Forests" %ni% dat_non_default) {
     dat_non_default <- append(dat_non_default, "Managed Forests") # Managed Forests always need to be there if productive managed forests are needed
   }
 } else {
@@ -205,18 +207,18 @@ for (i in 1:length(dat_default)) { # for all the data that runs with make_normal
         raster_in = current_rast,
         pus = pus,
         iso3 = iso3,
-        conditional_expression = function(r) ifel(r > 0, 0 , -r)
-       # output_path = output_path,
-       # name_out = dat_default[[i]]
+        conditional_expression = function(r) ifel(r > 0, 0, -r)
+        # output_path = output_path,
+        # name_out = dat_default[[i]]
       )
     } else if (current_dat$data_name == "Yield Gap") {
       rast_norm <- make_normalised_raster(
         raster_in = current_rast,
         pus = pus,
         iso3 = iso3,
-       # output_path = output_path,
-       # name_out = dat_default[[i]],
-        conditional_expression = function(r) 100-r # based on % (so: 100% - r)
+        # output_path = output_path,
+        # name_out = dat_default[[i]],
+        conditional_expression = function(r) 100 - r # based on % (so: 100% - r)
       )
     } else {
       cat("Your data might not have a pre-saved option yet. Please enter your processing options manually.")
@@ -227,17 +229,19 @@ for (i in 1:length(dat_default)) { # for all the data that runs with make_normal
       raster_in = current_rast,
       pus = pus,
       iso3 = iso3,
-     # output_path = output_path,
-     # name_out = dat_default[[i]]
+      # output_path = output_path,
+      # name_out = dat_default[[i]]
     )
   }
 
   # assign(current_dat$data_name, rast_norm)
   names(rast_norm) <- c(dat_default[[i]]) # set layer name
-  elsar_plot_feature(raster_in = rast_norm,
-                     pus = pus,
-                     legend_title = dat_default[[i]],
-                     figure_path = figure_path)
+  elsar_plot_feature(
+    raster_in = rast_norm,
+    pus = pus,
+    legend_title = dat_default[[i]],
+    figure_path = figure_path
+  )
   raster_out <- c(raster_out, rast_norm)
 }
 
@@ -272,10 +276,12 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
         name_out = dat_non_default[[j]]
       )
       names(mangrove_raster) <- c(dat_non_default[[j]]) # set layer name
-      elsar_plot_feature(raster_in = mangrove_raster,
-                         pus = pus,
-                         legend_title = dat_non_default[[j]],
-                         figure_path = figure_path)
+      elsar_plot_feature(
+        raster_in = mangrove_raster,
+        pus = pus,
+        legend_title = dat_non_default[[j]],
+        figure_path = figure_path
+      )
       raster_out <- c(raster_out, mangrove_raster)
     }
   }
@@ -343,10 +349,12 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
       )
     }
     names(forest_integrity) <- c(dat_non_default[[j]]) # set layer name
-    elsar_plot_feature(raster_in = forest_integrity,
-                       pus = pus,
-                       legend_title = dat_non_default[[j]],
-                       figure_path = figure_path)
+    elsar_plot_feature(
+      raster_in = forest_integrity,
+      pus = pus,
+      legend_title = dat_non_default[[j]],
+      figure_path = figure_path
+    )
     raster_out <- c(raster_out, forest_integrity)
   }
 
@@ -405,10 +413,12 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
       )
     }
     names(current_pas) <- c(dat_non_default[[j]]) # set layer name
-    elsar_plot_feature(raster_in = current_pas,
-                       pus = pus,
-                       legend_title = dat_non_default[[j]],
-                       figure_path = figure_path)
+    elsar_plot_feature(
+      raster_in = current_pas,
+      pus = pus,
+      legend_title = dat_non_default[[j]],
+      figure_path = figure_path
+    )
     raster_out <- c(raster_out, current_pas)
   }
 
@@ -422,7 +432,6 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
     )
 
     if (include_productive) {
-
       current_dat <- feature_list %>%
         dplyr::filter(data_name == "Productive Managed Forests")
 
@@ -434,14 +443,14 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
           file_labels,
           function(x) {
             any(grepl(x,
-                      dat_names,
-                      ignore.case = TRUE
+              dat_names,
+              ignore.case = TRUE
             ))
           }
         )],
         file_labels
       )
-      #load NPP data
+      # load NPP data
       # load data
       npp_in <- elsar_load_data(
         file_name = paste0(named_files[["npp"]], ".", current_dat$file_type),
@@ -463,31 +472,35 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
       )
 
       names(managed_forests) <- c(dat_non_default[[j]], "Productive Managed Forests") # set layer name
-      elsar_plot_feature(raster_in = managed_forests[[1]],
-                         pus = pus,
-                         legend_title = dat_non_default[[j]],
-                         figure_path = figure_path)
-      elsar_plot_feature(raster_in = managed_forests[[2]],
-                         pus = pus,
-                         legend_title = "Productive Managed Forests",
-                         figure_path = figure_path)
+      elsar_plot_feature(
+        raster_in = managed_forests[[1]],
+        pus = pus,
+        legend_title = dat_non_default[[j]],
+        figure_path = figure_path
+      )
+      elsar_plot_feature(
+        raster_in = managed_forests[[2]],
+        pus = pus,
+        legend_title = "Productive Managed Forests",
+        figure_path = figure_path
+      )
       raster_out <- c(raster_out, managed_forests)
-
     } else {
+      # process data
+      managed_forests <- make_managed_forests(
+        raster_in = raster_mf,
+        pus = pus,
+        include_disturbed_forest = TRUE # includes categories > 11
+      )
 
-    # process data
-    managed_forests <- make_managed_forests(
-      raster_in = raster_mf,
-      pus = pus,
-      include_disturbed_forest = TRUE # includes categories > 11
-    )
-
-    names(managed_forests) <- c(dat_non_default[[j]]) # set layer name
-    elsar_plot_feature(raster_in = managed_forests,
-                       pus = pus,
-                       legend_title = dat_non_default[[j]],
-                       figure_path = figure_path)
-    raster_out <- c(raster_out, managed_forests)
+      names(managed_forests) <- c(dat_non_default[[j]]) # set layer name
+      elsar_plot_feature(
+        raster_in = managed_forests,
+        pus = pus,
+        legend_title = dat_non_default[[j]],
+        figure_path = figure_path
+      )
+      raster_out <- c(raster_out, managed_forests)
     }
   }
 
@@ -502,18 +515,19 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
     )
 
     kba_raster <- make_kbas(
-      kba_in =  kba_sf,
+      kba_in = kba_sf,
       pus = pus,
       iso3_in = iso3
     )
 
     names(kba_raster) <- c(dat_non_default[[j]]) # set layer name
-    elsar_plot_feature(raster_in = kba_raster,
-                       pus = pus,
-                       legend_title = dat_non_default[[j]],
-                       figure_path = figure_path)
+    elsar_plot_feature(
+      raster_in = kba_raster,
+      pus = pus,
+      legend_title = dat_non_default[[j]],
+      figure_path = figure_path
+    )
     raster_out <- c(raster_out, kba_raster)
-
   }
 
   if (dat_non_default[[j]] == "Wetlands and Ramsar") { # add saving option
@@ -529,8 +543,8 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
           file_labels,
           function(x) {
             any(grepl(x,
-                      dat_names,
-                      ignore.case = TRUE
+              dat_names,
+              ignore.case = TRUE
             ))
           }
         )],
@@ -569,7 +583,6 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
         pus = pus,
         iso3_in = iso3
       )
-
     } else if ((!(grepl(",", current_dat$file_name))) & (grepl("ramsar", current_dat$file_name))) {
       # load data
       sf_ramsar <- elsar_load_data(
@@ -586,13 +599,14 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
       )
     }
     names(wetlands_ramsar) <- c(dat_non_default[[j]]) # set layer name
-    elsar_plot_feature(raster_in = wetlands_ramsar,
-                       pus = pus,
-                       legend_title = dat_non_default[[j]],
-                       figure_path = figure_path)
+    elsar_plot_feature(
+      raster_in = wetlands_ramsar,
+      pus = pus,
+      legend_title = dat_non_default[[j]],
+      figure_path = figure_path
+    )
     raster_out <- c(raster_out, wetlands_ramsar)
   }
-
 }
 
 #### Create zones ####
@@ -674,9 +688,7 @@ for (l in 1:length(zones_list)) {
     )
   }
 
-  #save and vsiualise zone
-
-
+  # save and vsiualise zone
 }
 
 ## Create locked-in areas
@@ -686,9 +698,10 @@ lockedIn_list <- c("avail")
 out_name <- file.path(glue::glue("{output_path}/data_stack_{iso3}.tif"))
 
 writeRaster(raster_out, out_name,
-            filetype = "COG",
-            datatype = "FLT4S", # 32-bit float
-            gdal = c("COMPRESS=DEFLATE"),
-            overwrite = TRUE)
+  filetype = "COG",
+  datatype = "FLT4S", # 32-bit float
+  gdal = c("COMPRESS=DEFLATE"),
+  overwrite = TRUE
+)
 
-#r_test <- terra::rast(out_name)
+# r_test <- terra::rast(out_name)
