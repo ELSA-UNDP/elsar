@@ -9,7 +9,8 @@ convert_points_polygon(
   area_attr = "REP_AREA",
   area_crs = "ESRI:54009",
   nQuadSegs = 50,
-  append_sf = TRUE
+  append_sf = TRUE,
+  area_multiplier = 1e+06
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ convert_points_polygon(
 \item{nQuadSegs}{An integer specifying the number of segments to use for buffering. Default is 50.}
 
 \item{append_sf}{logical. If \code{TRUE}, returns the initial wdpa_layer with polygons instead of points. If \code{FALSE}, will only returned the points with buffers.}
+
+\item{area_multiplier}{Numeric value for the buffer calculations, e.g. 1e6 for km, 1e4 for ha}
 }
 \value{
 An \code{sf} object with buffered polygon geometries.

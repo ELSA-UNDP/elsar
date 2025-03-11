@@ -179,7 +179,7 @@ if ("Productive Managed Forests" %in% dat_non_default) { #managed forests and pr
   include_productive <- FALSE
 }
 
-## Prep data using default methods
+#### Prep data using default methods ####
 cat("Creating Default Features")
 
 # init data stack with pus as first layer
@@ -241,7 +241,7 @@ for (i in 1:length(dat_default)) { # for all the data that runs with make_normal
   raster_out <- c(raster_out, rast_norm)
 }
 
-### Prep data using non-default methods
+#### Prep data using non-default methods ####
 cat("Creating Non-Default Features")
 
 for (j in 1:length(dat_non_default)) { # for all the data that runs with non-default functions
@@ -515,6 +515,84 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
     raster_out <- c(raster_out, kba_raster)
 
   }
+
+  if (dat_non_default[[j]] == "Wetlands and Ramsar") { # add saving option
+    print("Wetlands and Ramsar")
+
+    if (grepl(",", current_dat$file_name)) { # check if both flii and fsii should be used
+      dat_names <- unlist(strsplit(current_dat$file_name, ", ", fixed = TRUE))
+      filetype_names <- unlist(strsplit(current_dat$file_type, ", ", fixed = TRUE))
+
+      file_labels <- c("wetland", "ramsar")
+      named_files <- setNames(
+        dat_names[sapply(
+          file_labels,
+          function(x) {
+            any(grepl(x,
+                      dat_names,
+                      ignore.case = TRUE
+            ))
+          }
+        )],
+        file_labels
+      )
+
+      # load data
+      raster_wetlands <- elsar_load_data(
+        file_name = paste0(named_files[["wetland"]], ".", filetype_names[[1]]),
+        file_type = filetype_names[[1]], file_path = current_dat$full_path
+      )
+
+      sf_ramsar <- elsar_load_data(
+        file_name = paste0(named_files[["ramsar"]], ".", filetype_names[[2]]),
+        file_type = filetype_names[[2]], file_path = current_dat$full_path,
+        file_lyr = (if (current_dat$layer != "NA") current_dat$layer else NULL)
+      )
+
+      # wetlands and ramsar
+      wetlands_ramsar <- make_wetlands_ramsar(
+        wetlands_in = raster_wetlands,
+        ramsar_in = sf_ramsar,
+        pus = pus,
+        iso3_in = iso3
+      )
+    } else if ((!(grepl(",", current_dat$file_name))) & (grepl("wetland", current_dat$file_name))) {
+      # load data
+      raster_wetlands <- elsar_load_data(
+        file_name = paste0(named_files[["wetland"]], ".", filetype_names[[1]]),
+        file_type = filetype_names[[1]], file_path = current_dat$full_path
+      )
+
+      # wetlands and ramsar
+      wetlands_ramsar <- make_wetlands_ramsar(
+        wetlands_in = raster_wetlands,
+        pus = pus,
+        iso3_in = iso3
+      )
+
+    } else if ((!(grepl(",", current_dat$file_name))) & (grepl("ramsar", current_dat$file_name))) {
+      # load data
+      sf_ramsar <- elsar_load_data(
+        file_name = paste0(named_files[["ramsar"]], ".", filetype_names[[2]]),
+        file_type = filetype_names[[2]], file_path = current_dat$full_path,
+        file_lyr = (if (current_dat$layer != "NA") current_dat$layer else NULL)
+      )
+
+      # wetlands and ramsar
+      wetlands_ramsar <- make_wetlands_ramsar(
+        ramsar_in = sf_ramsar,
+        pus = pus,
+        iso3_in = iso3
+      )
+    }
+    names(wetlands_ramsar) <- c(dat_non_default[[j]]) # set layer name
+    elsar_plot_feature(raster_in = wetlands_ramsar,
+                       pus = pus,
+                       legend_title = dat_non_default[[j]],
+                       figure_path = figure_path)
+    raster_out <- c(raster_out, wetlands_ramsar)
+  }
+
 }
 
 #### Create zones ####

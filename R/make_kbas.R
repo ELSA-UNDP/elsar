@@ -76,6 +76,8 @@ make_kbas <- function(kba_in,
     terra::mask(pus, maskvalues = 0) %>%
     rescale_raster()
 
+  kba_out[is.na(kba_out)] <- 0
+
   #save if wanted
   if (!is.null(output_path)) {
     terra::writeRaster(kba_out,
@@ -86,4 +88,5 @@ make_kbas <- function(kba_in,
                        filetype = "COG"
     )
   }
+  return(kba_out)
 }

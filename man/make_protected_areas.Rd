@@ -48,7 +48,7 @@ make_protected_areas(
 \item{output_path}{An optional output path for the created file.}
 }
 \value{
-A \code{raster}file that has been aligned to the planning units
+A \code{SpatRaster}file that has been aligned to the planning units
 }
 \description{
 Function to create existing protected area raster file.

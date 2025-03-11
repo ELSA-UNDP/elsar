@@ -26,7 +26,6 @@ feature;NPP;MOD17A3HGF_npp2021_global_cog;tif;NA;1;;1;1;0;;
 feature;Pesticide risk;Global_pesticide_risk_scores;tif;NA;0;;1;1;0;;
 feature;Potential Increase in SOC on Croplands;soc_dif_hi;tif;NA;0;;1;1;0;;
 feature;Productive Managed Forests;MOD17A3HGF_npp2021_global_cog, FML_v32_near_cog;tif;NA;1;;0;1;0;;
-feature;Ramsar Wetlands;ramsar_sites_20230920;gpkg;NA;0;;0;1;0;;
 feature;Rarity Weighted Richness;all_sp_rwr_all_sets_combined;tif;NA;0;;1;1;0;;
 feature;Threatened Ecosystems for Protection;NA;NA;NA;0;;0;1;0;;"Needs ""Intact and Wilderness Areas"" and IUCN Ecosystems"
 feature;Threatened Ecosystems for Restoration;NA;NA;NA;0;;0;1;0;;Needs IUCN Ecosystems and restore zone (?)
@@ -37,7 +36,7 @@ feature;Urban Extreme Heat;wbgtmax30_join;tif;NA;1;;0;1;0;;"Needs reverse NDVI, 
 feature;Urban Greening Opportunities;mod13q1_2022_ndvi_wgs84, ?;tif;NA;0;;0;1;0;;"Needs reverse NDVI and urban/builtup areas; combine with a function for Urban Extreme Heat and get two raster outputs (need similar inputs)"
 feature;Velocity of Climate Change;vocc_ngb_all;tif;NA;0;;1;1;0;;
 feature;Vulnerable Soil Organic Carbon Difference;soc-at-risk-V11;tif;NA;1;;1;1;0;;
-feature;Wetlands and Ramsar;trop-subtrop_wetlandv3_2016_cifor_cog, ?;;NA;0;;0;1;0;;Needs wetlands and ramsar files. Needs option to only use one if no sites for either of them in planning region (e.g. no ramsar in Haiti). Can be done similar to forest integrity index
+feature;Wetlands and Ramsar;trop-subtrop_wetlandv3_2016_cifor_cog, ramsar_sites_20230920;tif, gpkg;ramsar_sites_20230920;1;;0;1;0;;Needs wetlands and ramsar files. Needs option to only use one if no sites for either of them in planning region (e.g. no ramsar in Haiti). Can be done similar to forest integrity index
 feature;Yield Gap;yield_gap;tif;NA;1;;1;0;0;;
 lock_in;Existing PAs;TBA;TBA;NA;TBA;;;;;;
 pus;Planning Units;NA;NA;NA;1;NA;NA;1;0;;

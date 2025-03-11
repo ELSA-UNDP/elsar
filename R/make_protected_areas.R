@@ -14,7 +14,7 @@
 #' @param pus A raster file that contains the reference spatial extent, crs etc.in form of the planning units.
 #' @param output_path An optional output path for the created file.
 #'
-#' @return A `raster`file that has been aligned to the planning units
+#' @return A `SpatRaster`file that has been aligned to the planning units
 #' @export
 #'
 #' @examples

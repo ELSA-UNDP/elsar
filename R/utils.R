@@ -35,6 +35,7 @@ rescale_raster <- function(raster_in,
 #' @param area_crs A character string specifying the coordinate reference system for area calculations. Default is 'ESRI:54009' (World Mollweide projection).
 #' @param nQuadSegs An integer specifying the number of segments to use for buffering. Default is 50.
 #' @param append_sf logical. If `TRUE`, returns the initial wdpa_layer with polygons instead of points. If `FALSE`, will only returned the points with buffers.
+#' @param area_multiplier Numeric value for the buffer calculations, e.g. 1e6 for km, 1e4 for ha
 #'
 #' @return An `sf` object with buffered polygon geometries.
 #' @export
@@ -52,7 +53,8 @@ convert_points_polygon <- function(wdpa_layer,
                                    area_attr = "REP_AREA",
                                    area_crs = "ESRI:54009", # Calculates areas by default using the World Mollweide projection, per Protected Planet
                                    nQuadSegs = 50,
-                                   append_sf = TRUE) {
+                                   append_sf = TRUE,
+                                   area_multiplier = 1e6) {
   # Error checking for input types
   if (!inherits(wdpa_layer, "sf")) {
     stop("wdpa_layer must be an sf object.")
@@ -82,7 +84,7 @@ convert_points_polygon <- function(wdpa_layer,
 
   # Calculate the buffer distance
   points_buffered <- sf::st_buffer(points_transformed,
-                                   dist = sqrt((sf::st_drop_geometry(points_with_area)[[area_attr]] * 1e6) / pi),
+                                   dist = sqrt((as.numeric(sf::st_drop_geometry(points_with_area)[[area_attr]]) * area_multiplier) / pi), #1e4 if ha, 1e6 if km
                                    nQuadSegs = nQuadSegs
   )
 
