@@ -55,7 +55,8 @@ make_normalised_raster <- function(raster_in,
                                    conditional_expression = NULL,
                                    fill_na = TRUE,
                                    name_out,
-                                   output_path = NULL) {
+                                   output_path = NULL,
+                                   threads = TRUE) {
   # Valid methods for terra::project
   valid_terra_methods <- c("near", "bilinear", "cubic", "cubicspline", "lanczos", "min", "q1", "med", "q3", "max", "average", "mode", "rms")
 
@@ -65,7 +66,7 @@ make_normalised_raster <- function(raster_in,
   #  terra::subst(., NA, 0)
 
   # Temporarily reproject pus to the CRS of raster_in for resolution comparison
-  pus_temp <- terra::project(pus, terra::crs(raster_in))
+  pus_temp <- terra::project(pus, terra::crs(raster_in), threads = threads)
 
   # Calculate resolutions of both rasters in the same CRS
   raster_res <- min(terra::res(raster_in))    # Minimum resolution of input raster
@@ -92,7 +93,7 @@ make_normalised_raster <- function(raster_in,
     x = raster_in,
     y = pus,
     method = method,
-    threads = TRUE
+    threads = threads
   )
 
   # Apply the conditional expression if provided
@@ -111,11 +112,11 @@ make_normalised_raster <- function(raster_in,
     dat_aligned <- -dat_aligned
   }
 
-  # Rescale the raster if needed
+  # Rescale the raster values if needed
   if (rescaled) {
     dat_aligned <- rescale_raster(dat_aligned)
   } else {
-    warning("NOTE: Raster is NOT rescaled.")
+    warning("NOTE: Raster values are NOT rescaled.")
   }
 
   # Save the output file if output_path is provided
@@ -124,11 +125,22 @@ make_normalised_raster <- function(raster_in,
     data_type <- if (terra::is.int(dat_aligned)) "INT1S" else "FLT4S"  # Adjust data type
     na_value <- if (terra::is.int(dat_aligned)) 255 else -9999         # Adjust NoData value
 
+    # Dynamically set GDAL options while avoiding NULL values
+    gdal_options <- c(
+      "COMPRESS=ZSTD",
+      "NUM_THREADS=ALL_CPUS",
+      "OVERVIEWS=NONE",
+      if (data_type == "INT1S") "PREDICTOR=2" else if (data_type == "FLT4S") "PREDICTOR=3"
+    )
+
+    # Remove NULL values (in case no PREDICTOR was added)
+    gdal_options <- gdal_options[!is.na(gdal_options)]
+
     # Write the raster with the determined settings
     terra::writeRaster(
       dat_aligned,
       glue::glue("{output_path}/{name_out}_{iso3}.tif"),
-      gdal = c("COMPRESS=ZSTD", "NUM_THREADS=4", "OVERVIEWS=NONE", "PREDICTOR=3"),
+      gdal = gdal_options,
       datatype = data_type,
       NAflag = na_value,
       overwrite = TRUE,
