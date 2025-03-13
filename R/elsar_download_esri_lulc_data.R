@@ -23,20 +23,27 @@
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' my_boundary <- sf::st_read("my_boundary.gpkg")
 #'
 #' lulc <- elsar_download_esri_lulc_data(boundary = my_boundary, iso3 = 'NPL')
-#'
+#' }
 elsar_download_esri_lulc_data <- function(
     boundary_layer,
     iso3,
     output_dir = here::here(),
     lulc_data_source = "projects/sat-io/open-datasets/landcover/ESRI_Global-LULC_10m_TS"
 ) {
+
+  assertthat::assert_that(
+    inherits(boundary_layer, "sf"),
+    msg = "boundary_layer must be an sf object"
+  )
+
   temp_dir <- file.path(Sys.getenv("HOME"), paste0("gee_exports_", Sys.getpid()))
   terra::terraOptions(tempdir = temp_dir)
   dir.create(temp_dir, showWarnings = FALSE)
-  cat("Temporary directory created at:", temp_dir, "\n")
+  print(glue::glue("Temporary directory created at: {temp_dir}."))
 
   if (Sys.getenv("RETICULATE_PYTHON") != "") {
     reticulate::use_python(Sys.getenv("RETICULATE_PYTHON"), required = TRUE)
@@ -45,41 +52,41 @@ elsar_download_esri_lulc_data <- function(
     temp_env <- paste0("gee_temp_env_", Sys.getpid())
     reticulate::conda_create(temp_env, packages = c("python=3.12", "earthengine-api"))
     reticulate::use_condaenv(temp_env, required = TRUE)
-    cat("Temporary Conda environment created:", temp_env, "\n")
+    print(glue::glue("Temporary Conda environment created: {temp_env}."))
   }
 
   ee <- reticulate::import("ee")
   ee$Initialize()
-  cat("Google Earth Engine initialized.\n")
+  print("Google Earth Engine initialized.")
 
   lulc_data_source <- ee$ImageCollection(lulc_data_source)
-  cat("Loaded ESRI LULC dataset from GEE.\n")
+  print("Loaded ESRI LULC dataset from GEE.")
 
   YEAR <- as.numeric(format(Sys.Date(), "%Y")) - 1
   while (lulc_data_source$filterDate(ee$Date(glue::glue("{YEAR}-01-01")),
                                      ee$Date(glue::glue("{YEAR}-12-31")))$size()$getInfo() == 0) {
-    cat(glue::glue("No valid bands found for {YEAR}, trying {YEAR - 1}...\n"))
+    print(glue::glue("No valid bands found for {YEAR}, trying {YEAR - 1}..."))
     YEAR <- YEAR - 1
   }
-  cat("Using LULC data for year:", YEAR, "\n")
+  print(glue::glue("Using LULC data for year: {YEAR}."))
 
   boundary_layer <- sf::st_transform(boundary_layer, crs = 4326)
   bounding_box <- sf::st_bbox(boundary_layer)
   ee_bounding_box <- ee$Geometry$Rectangle(c(bounding_box$xmin, bounding_box$ymin,
                                              bounding_box$xmax, bounding_box$ymax),
                                            proj = "EPSG:4326", geodesic = FALSE)
-  cat("Bounding box converted to Earth Engine geometry.\n")
+  print("Bounding box converted to Earth Engine geometry.")
 
   file_name <- glue::glue("esri_10m_lulc_{YEAR}_{iso3}")
-  cat("Checking Google Drive for existing files: ", file_name, "\n")
+  print(glue::glue("Checking Google Drive for existing files: {file_name}."))
 
   files <- googledrive::drive_ls(path = "gee_exports")
   existing_files <- files[grepl(paste0("^", file_name, "-"), files$name) & grepl("\\.tif$", files$name), ]
 
   if (nrow(existing_files) > 0) {
-    cat("Existing files found on Google Drive. Downloading instead of exporting...\n")
+    print("Existing files found on Google Drive. Downloading instead of exporting...")
   } else {
-    cat("No existing files found. Proceeding with GEE export.\n")
+    print("No existing files found. Proceeding with GEE export.\n")
     start_date <- ee$Date(glue::glue("{YEAR}-01-01"))
     end_date <- ee$Date(glue::glue("{YEAR}-12-31"))
     filtered_lulc <- lulc_data_source$filterDate(start_date, end_date)$filterBounds(ee_bounding_box)
@@ -95,7 +102,7 @@ elsar_download_esri_lulc_data <- function(
       fileFormat = "GeoTIFF"
     )
     task$start()
-    cat("Export task started. Waiting for files to appear in Google Drive...\n")
+    print("Export task started. Waiting for files to appear in Google Drive...")
 
     start_time <- Sys.time()
     repeat {
@@ -103,7 +110,7 @@ elsar_download_esri_lulc_data <- function(
       matching_files <- files[grepl(paste0("^", file_name, "-"), files$name) & grepl("\\.tif$", files$name), ]
 
       if (nrow(matching_files) > 0) {
-        cat("Files found. Proceeding with download.\n")
+        print("Files found. Proceeding with download.")
         break
       }
 
@@ -111,7 +118,7 @@ elsar_download_esri_lulc_data <- function(
         stop("Timeout: No files available after 3 minutes. Try running again later.")
       }
 
-      cat("File not yet available, waiting 30 seconds...\n")
+      print("File not yet available, waiting 30 seconds...")
       Sys.sleep(30)
     }
   }
@@ -123,7 +130,7 @@ elsar_download_esri_lulc_data <- function(
     for (i in seq_len(nrow(matching_files))) {
       file_path <- file.path(local_path, matching_files$name[i])
       googledrive::drive_download(googledrive::as_id(matching_files$id[i]), path = file_path, overwrite = TRUE)
-      cat("Downloaded:", matching_files$name[i], "\n")
+      print(glue::glue("Downloaded: {matching_files$name[i]}."))
     }
   }
 
@@ -141,11 +148,12 @@ elsar_download_esri_lulc_data <- function(
       gdal = c(
         "COMPRESS=ZSTD",
         "NUM_THREADS=ALL_CPUS",
-        "BIGTIFF=IF_SAFER"
+        "BIGTIFF=IF_SAFER",
+        "NUM_THREADS=ALL_CPUS"
         ),
       NAflag = 255,
       overwrite = TRUE)
-    cat("COG created successfully:", output_file, "\n")
+    print(glue::glue("COG successfully written to disk at: {output_file}."))
     return(terra::rast(output_file))
   }
 
@@ -153,6 +161,6 @@ elsar_download_esri_lulc_data <- function(
   output_raster <- merge_tiles(temp_dir, output_dir)
   unlink(temp_dir, recursive = TRUE)
   if (!is.null(temp_env)) reticulate::conda_remove(temp_env)
-  cat("Temporary files and Conda environment deleted.\n")
+  print("Temporary files and Conda environment deleted.")
   return(output_raster)
 }
