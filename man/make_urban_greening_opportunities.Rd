@@ -10,7 +10,6 @@ make_urban_greening_opportunities(
   sdei_statistics,
   pus,
   iso3,
-  name_out,
   output_path = NULL,
   cores = 4
 )
@@ -49,11 +48,7 @@ ndvi_raster <- elsar::elsar_load_data(file_path = ".", file_name = "mod13q1_2022
 lulc_raster <- elsar::elsar_load_data(file_path = ".", file_name = "esri_10m_lulc_2023_NPL.tif", file_type = "tiff")
 
 sdei_statistics <- sf::read_sf(
-  "~/sdei-high-res-daily-uhe-1983-2016-shp/wbgtmax30_join.gpkg") |>
-  sf::st_set_geometry(NULL) |>
-  dplyr::group_by(ID_HDC_G0) |>
-  dplyr::summarise(avg_intens = mean(avg_intens)
-  )
+  "~/sdei-high-res-daily-uhe-1983-2016-shp/wbgtmax30_join.gpkg")
 
 urban_green_opportunities <- make_urban_greening_opportunities(
   ndvi_raster = ndvi,
