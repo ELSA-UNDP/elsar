@@ -4,7 +4,7 @@
 \alias{exact_rasterise}
 \title{Efficient Rasterization of polygon features with Coverage Fraction, based on some attribute}
 \usage{
-exact_rasterise(features, attribute, pu_layer, fun = sum)
+exact_rasterise(features, attribute, pu_layer, fun = sum, cores = 4)
 }
 \arguments{
 \item{features}{A spatial feature object (e.g., \code{sf} or \code{SpatVector}) containing
@@ -17,7 +17,7 @@ values to each raster cell.}
 for rasterization.}
 
 \item{fun}{A function used to aggregate values in overlapping layers (default is \code{sum}).
-Other functions, like \code{mean}, can also be used.}
+Other functions, like \code{mean} or \code{max}, can also be used.}
 }
 \value{
 A raster stack with each layer representing the rasterized attribute for each

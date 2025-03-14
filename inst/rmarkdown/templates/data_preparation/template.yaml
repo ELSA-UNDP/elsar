@@ -1,0 +1,4 @@
+name: "Data preparation R Notebook template for using the elsar package"
+description: "R Notebook Template to set up and process spatial data layers using elsar."
+create_dir: true
+template: skeleton.Rmd

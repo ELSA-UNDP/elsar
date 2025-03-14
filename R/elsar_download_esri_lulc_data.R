@@ -38,36 +38,43 @@ elsar_download_esri_lulc_data <- function(
     gee_project = "unbl-misc",
     googledrive_folder = 'gee_exports') {
 
+  if (!requireNamespace("googledrive", quietly = TRUE)) {
+    stop("Package 'googledrive' is required but not installed.")
+  }
+
+  if (!requireNamespace("reticulate", quietly = TRUE)) {
+    stop("Package 'reticulate' is required but not installed.")
+  }
+
   assertthat::assert_that(inherits(boundary_layer, "sf"), msg = "boundary_layer must be an sf object")
 
-  temp_dir <- file.path(Sys.getenv("HOME"), paste0("gee_exports_", Sys.getpid()))
-  terra::terraOptions(tempdir = temp_dir)
+  temp_dir <- file.path(Sys.getenv("HOME"), glue::glue("{googledrive_folder}_{Sys.getpid()}"))
   dir.create(temp_dir, showWarnings = FALSE)
-  cat(glue::glue("Temporary directory created at: {temp_dir}."))
+  cat(glue::glue("Temporary directory created at: {temp_dir}."), "\n")
 
   if (Sys.getenv("RETICULATE_PYTHON") != "") {
     reticulate::use_python(Sys.getenv("RETICULATE_PYTHON"), required = TRUE)
 
     # Check if `earthengine-api` is installed in the existing environment
     if (reticulate::py_module_available("ee")) {
-      cat("Using existing Python environment with Earth Engine API installed.")
+      cat("Using existing Python environment with Earth Engine API installed.\n")
       temp_env <- NULL  # No need to create a temp environment
     } else {
       cat(
-        "Existing Python environment is missing Earth Engine API. Creating a temporary Conda environment."
+        "Existing Python environment is missing Earth Engine API. Creating a temporary Conda environment.\n"
       )
 
       temp_env <- paste0("gee_temp_env_", Sys.getpid())
       reticulate::conda_create(temp_env, packages = c("python=3.12", "earthengine-api"))
       reticulate::use_condaenv(temp_env, required = TRUE)
-      cat(glue::glue("Temporary Conda environment created: {temp_env}."))
+      cat(glue::glue("Temporary Conda environment created: {temp_env}."), "\n")
     }
   } else {
-    cat("RETICULATE_PYTHON is not set. Creating a temporary Conda environment.")
+    cat("RETICULATE_PYTHON is not set. Creating a temporary Conda environment.\n")
     temp_env <- paste0("gee_temp_env_", Sys.getpid())
     reticulate::conda_create(temp_env, packages = c("python=3.12", "earthengine-api"))
     reticulate::use_condaenv(temp_env, required = TRUE)
-    cat(glue::glue("Temporary Conda environment created: {temp_env}."))
+    cat(glue::glue("Temporary Conda environment created: {temp_env}."), "\n")
   }
 
   ee <- reticulate::import("ee")
@@ -81,17 +88,17 @@ elsar_download_esri_lulc_data <- function(
   }
 
   ee$Initialize(project = gee_project)
-  cat("Google Earth Engine initialized.")
+  cat("Google Earth Engine initialized.\n")
 
   lulc_data_source <- ee$ImageCollection(lulc_data_source)
-  cat("Loaded ESRI LULC dataset from GEE.")
+  cat("Loaded ESRI LULC dataset from GEE.\n")
 
   YEAR <- as.numeric(format(Sys.Date(), "%Y")) - 1
   while (lulc_data_source$filterDate(ee$Date(glue::glue("{YEAR}-01-01")), ee$Date(glue::glue("{YEAR}-12-31")))$size()$getInfo() == 0) {
-    print(glue::glue("No valid bands found for {YEAR}, trying {YEAR - 1}..."))
+    cat(glue::glue("No valid bands found for {YEAR}, trying {YEAR - 1}..."), "\n")
     YEAR <- YEAR - 1
   }
-  print(glue::glue("Using LULC data for year: {YEAR}."))
+  cat(glue::glue("Using LULC data for year: {YEAR}."), "\n")
 
   boundary_layer <- sf::st_transform(boundary_layer, crs = 4326)
   bounding_box <- sf::st_bbox(boundary_layer)
@@ -105,20 +112,20 @@ elsar_download_esri_lulc_data <- function(
     proj = "EPSG:4326",
     geodesic = FALSE
   )
-  cat("Bounding box converted to Earth Engine geometry.")
+  cat("Bounding box converted to Earth Engine geometry.\n")
 
   file_name <- glue::glue("esri_10m_lulc_{YEAR}_{iso3}")
-  cat(glue::glue("Checking Google Drive for existing files: {file_name}*."))
+  cat(glue::glue("Checking Google Drive for existing files: {file_name}*."), "\n")
 
 
   # Function to create Google Drive folder if it doesn't exist
   ensure_drive_folder <- function(folder_name) {
     existing_folders <- googledrive::drive_ls(path = NULL, type = "folder")
     if (!(folder_name %in% existing_folders$name)) {
-      cat(glue::glue("Folder '{folder_name}' does not exist. Creating it in Google Drive..."))
+      cat(glue::glue("Folder '{folder_name}' does not exist. Creating it in Google Drive..."), "\n")
       googledrive::drive_mkdir(folder_name)
     } else {
-      cat(glue::glue("Folder '{folder_name}' already exists."))
+      cat(glue::glue("Folder '{folder_name}' already exists."), "\n")
     }
   }
 
@@ -148,9 +155,7 @@ elsar_download_esri_lulc_data <- function(
     if (!is.null(existing_task)) {
       cat(
         glue::glue(
-          "Existing export task '{file_name}' is still running. Waiting instead of starting a new one.\n"
-        )
-      )
+          "Existing export task '{file_name}' is still running. Waiting instead of starting a new one."), "\n")
     } else {
       cat("No running tasks found. Proceeding with new export.\n")
 
@@ -204,7 +209,7 @@ elsar_download_esri_lulc_data <- function(
         path = file_path,
         overwrite = TRUE
       )
-      cat(glue::glue("Downloaded: {matching_files$name[i]}."))
+      cat(glue::glue("Downloaded: {matching_files$name[i]}."), "\n")
     }
   }
 
@@ -230,7 +235,7 @@ elsar_download_esri_lulc_data <- function(
       NAflag = 255,
       overwrite = TRUE
     )
-    cat(glue::glue("COG successfully written to disk at: {output_file}."))
+    cat(glue::glue("COG successfully written to disk at: {output_file}."), "\n")
     return(terra::rast(output_file))
   }
 
@@ -239,6 +244,6 @@ elsar_download_esri_lulc_data <- function(
   unlink(temp_dir, recursive = TRUE)
   if (!is.null(temp_env))
     reticulate::conda_remove(temp_env)
-  cat("Temporary files and Conda environment deleted.")
+  cat("Temporary files and Conda environment deleted.\n")
   return(output_raster)
 }
