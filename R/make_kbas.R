@@ -82,7 +82,12 @@ make_kbas <- function(kba_in,
   if (!is.null(output_path)) {
     terra::writeRaster(kba_out,
                        glue::glue("{output_path}/{name_out}_{iso3}.tif"),
-                       gdal = c("COMPRESS=DEFLATE"),
+                       gdal = c(
+                         "COMPRESS=ZSTD",
+                         "PREDICTOR=3",
+                         "OVERVIEWS=NONE",
+                         "NUM_THREADS=ALL_CPUS"
+                         ),
                        NAflag = -9999,
                        overwrite = TRUE,
                        filetype = "COG"

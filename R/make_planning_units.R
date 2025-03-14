@@ -17,12 +17,14 @@
 #'   boundary_in = boundary_dat,
 #'   iso3 = "NPL",
 #'   iso3_column = "iso3cd"
-#' )
+#'   )
 #'
-#' pus <- make_planning_units(boundary_proj = boundary_proj,
-#'                            pu_size = NULL,
-#'                            pu_threshold = 8.5e5,
-#'                            limit_to_mainland = FALSE)
+#' pus <- make_planning_units(
+#'   boundary_proj = boundary_proj,
+#'   pu_size = NULL,
+#'   pu_threshold = 8.5e5,
+#'   limit_to_mainland = FALSE
+#'   )
 make_planning_units <- function(boundary_proj,
                                 pu_size = NULL,
                                 pu_threshold = 8.5e5,

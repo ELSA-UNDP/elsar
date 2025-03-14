@@ -10,15 +10,17 @@
 #' @param invert `logical` If `TRUE`, inverts the raster values (default: `FALSE`).
 #' @param rescaled `logical` If `TRUE`, rescales the raster using `rescale_raster()` (default: `TRUE`).
 #' @param method_override `character` Optional method for `terra::project()`, overriding the default (default: `NULL`).
-#' @param conditional_expression `function` Optional method to apply a function to the raster before resampling to the PU layer (default: `NULL`).
+#' @param input_raster_conditional_expression `function` Optional method to apply a function to the raster before resampling to the PU layer (default: `NULL`).
+#' @param conditional_expression `function` Optional method to apply a function to the raster after resampling to the PU layer (default: `NULL`).
 #' @param fill_na `logical` If `TRUE`, fills `NA` values with 0 before masking (default: `TRUE`).
 #' @param name_out `character` The name of the output raster file (without the extension).
 #' @param output_path `character` The directory path to save the output raster (default: `NULL`, i.e., not saved).
 #'
 #' @details This function reprojects the input raster (`raster_in`) to match the CRS and resolution
 #' of the planning units (`pus`). The method for reprojection can be overridden using `method_override`.
-#' If `conditional_expression` is provided, it is applied before any reprojection. The function can
-#' optionally rescale (0-1) and invert the raster values.
+#' If `input_raster_conditional_expression` is provided, it is applied before any reprojection. The function can
+#' optionally rescale (0-1) and invert the raster values. It can also make processing times
+#' significantly longer for high resolution input rasters.
 #'
 #' @return Returns a [SpatRaster] object that has been reprojected and processed.
 #' If `output_path` is specified, saves the raster as a COG (Cloud Optimized GeoTIFF).
@@ -38,11 +40,24 @@
 #'   output_path = "/path/to/output"
 #' )
 #'
+#' # Applies a conditional expression to the layer that hase been projected to the
+#'   planning unit layer.
+#' inverted_ndvi <- make_normalised_raster(
+#'   raster_in = ndvi_raster,
+#'   pus = pus,
+#'   iso3 = iso3,
+#'   invert = TRUE,
+#'   conditional_expression = function(x) terra::ifel(x < 0, NA, 1 - x)
+#'   )
+#'
+#' # Convert a landcover classifgiation layer into a binary - applied a conditional
+#'   function to the input layer, not the layer that has been projected to the planning
+#'   units.
 #' raster_out <- make_normalised_raster(
-#'   raster_in = my_raster,
+#'   raster_in = land_cover_raster,
 #'   pus = my_pus,
 #'   iso3 = "USA",
-#'   conditional_expression = function(r) ifel(r %in% c(1:4, 7, 9), 1, 0)
+#'   input_raster_conditional_expression = function(r) ifel(r %in% c(1:4, 7, 9), 1, 0)
 #' )
 #' }
 #'
@@ -52,6 +67,7 @@ make_normalised_raster <- function(raster_in,
                                    invert = FALSE,
                                    rescaled = TRUE,
                                    method_override = NULL,
+                                   input_raster_conditional_expression = NULL,
                                    conditional_expression = NULL,
                                    fill_na = TRUE,
                                    name_out,
@@ -88,6 +104,12 @@ make_normalised_raster <- function(raster_in,
     }
   }
 
+  # Apply the conditional expression if provided to the input raster - for example if the input is landcover
+  # dataset that you want to reclass before doing any aggregation.
+  if (!is.null(input_raster_conditional_expression)) {
+    raster_in <- input_raster_conditional_expression(raster_in)
+  }
+
   # Re-project the original raster_in to match PUs with the selected method
   dat_aligned <- terra::project(
     x = raster_in,
@@ -104,7 +126,7 @@ make_normalised_raster <- function(raster_in,
   # Fill in NA background values before masking
   if (fill_na) {
     dat_aligned[is.na(dat_aligned)] <- 0
-    dat_aligned <- dat_aligned %>% terra::mask(pus) # Mask areas outside of planning units
+    dat_aligned <- dat_aligned  |> terra::mask(pus, maskvalues = 0) # Mask areas outside of planning units
   }
 
   # Invert values if required
