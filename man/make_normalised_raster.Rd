@@ -11,10 +11,12 @@ make_normalised_raster(
   invert = FALSE,
   rescaled = TRUE,
   method_override = NULL,
+  input_raster_conditional_expression = NULL,
   conditional_expression = NULL,
   fill_na = TRUE,
   name_out,
-  output_path = NULL
+  output_path = NULL,
+  threads = TRUE
 )
 }
 \arguments{
@@ -30,7 +32,9 @@ make_normalised_raster(
 
 \item{method_override}{\code{character} Optional method for \code{terra::project()}, overriding the default (default: \code{NULL}).}
 
-\item{conditional_expression}{\code{function} Optional method to apply a function to the raster before resampling to the PU layer (default: \code{NULL}).}
+\item{input_raster_conditional_expression}{\code{function} Optional method to apply a function to the raster before resampling to the PU layer (default: \code{NULL}).}
+
+\item{conditional_expression}{\code{function} Optional method to apply a function to the raster after resampling to the PU layer (default: \code{NULL}).}
 
 \item{fill_na}{\code{logical} If \code{TRUE}, fills \code{NA} values with 0 before masking (default: \code{TRUE}).}
 
@@ -50,8 +54,9 @@ raster to a specified output path.
 \details{
 This function reprojects the input raster (\code{raster_in}) to match the CRS and resolution
 of the planning units (\code{pus}). The method for reprojection can be overridden using \code{method_override}.
-If \code{conditional_expression} is provided, it is applied before any reprojection. The function can
-optionally rescale (0-1) and invert the raster values.
+If \code{input_raster_conditional_expression} is provided, it is applied before any reprojection. The function can
+optionally rescale (0-1) and invert the raster values. It can also make processing times
+significantly longer for high resolution input rasters.
 }
 \examples{
 \dontrun{
@@ -66,11 +71,24 @@ raster_out <- make_normalised_raster(
   output_path = "/path/to/output"
 )
 
+# Applies a conditional expression to the layer that hase been projected to the
+  planning unit layer.
+inverted_ndvi <- make_normalised_raster(
+  raster_in = ndvi_raster,
+  pus = pus,
+  iso3 = iso3,
+  invert = TRUE,
+  conditional_expression = function(x) terra::ifel(x < 0, NA, 1 - x)
+  )
+
+# Convert a landcover classifgiation layer into a binary - applied a conditional
+  function to the input layer, not the layer that has been projected to the planning
+  units.
 raster_out <- make_normalised_raster(
-  raster_in = my_raster,
+  raster_in = land_cover_raster,
   pus = my_pus,
   iso3 = "USA",
-  conditional_expression = function(r) ifel(r \%in\% c(1:4, 7, 9), 1, 0)
+  input_raster_conditional_expression = function(r) ifel(r \%in\% c(1:4, 7, 9), 1, 0)
 )
 }
 
