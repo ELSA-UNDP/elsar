@@ -153,6 +153,9 @@ if (as.logical(as.integer(data_info %>%
   )
 }
 
+# clean env
+rm(boundary_info, boundary_dat)
+
 ## Create feature stack #could have one master script and then extra feature generation scripts etc that are sourced + ADD visualisation option
 # Assign data to functions
 feature_list <- data_info %>% # get all included features
