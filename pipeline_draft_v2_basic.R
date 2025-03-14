@@ -156,7 +156,8 @@ if (as.logical(as.integer(data_info %>%
 # clean env
 rm(boundary_info, boundary_dat)
 
-## Create feature stack #could have one master script and then extra feature generation scripts etc that are sourced + ADD visualisation option
+##### Create feature stack #####
+# could have one master script and then extra feature generation scripts etc that are sourced + ADD visualisation option
 # Assign data to functions
 feature_list <- data_info %>% # get all included features
   dplyr::filter(
@@ -295,28 +296,14 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
     if (grepl(",", current_dat$file_name)) { # check if both flii and fsii should be used
       fii_names <- unlist(strsplit(current_dat$file_name, ", ", fixed = TRUE))
 
-      file_labels <- c("flii", "fsii")
-      named_files <- setNames(
-        fii_names[sapply(
-          file_labels,
-          function(x) {
-            any(grepl(x,
-              fii_names,
-              ignore.case = TRUE
-            ))
-          }
-        )],
-        file_labels
-      )
-
       # load data
       raster_flii <- elsar_load_data(
-        file_name = paste0(named_files[["flii"]], ".", current_dat$file_type),
+        file_name = paste0(fii_names[grepl("flii", fii_names)], ".", current_dat$file_type),
         file_type = current_dat$file_type, file_path = current_dat$full_path
       )
 
       raster_fsii <- elsar_load_data(
-        file_name = paste0(named_files[["fsii"]], ".", current_dat$file_type),
+        file_name = paste0(fii_names[grepl("fsii", fii_names)], ".", current_dat$file_type),
         file_type = current_dat$file_type, file_path = current_dat$full_path
       )
 
@@ -440,28 +427,15 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
 
       dat_names <- unlist(strsplit(current_dat$file_name, ", ", fixed = TRUE))
 
-      file_labels <- c("npp", "FML")
-      named_files <- setNames(
-        dat_names[sapply(
-          file_labels,
-          function(x) {
-            any(grepl(x,
-              dat_names,
-              ignore.case = TRUE
-            ))
-          }
-        )],
-        file_labels
-      )
       # load NPP data
       # load data
       npp_in <- elsar_load_data(
-        file_name = paste0(named_files[["npp"]], ".", current_dat$file_type),
+        file_name = paste0(dat_names[grepl("npp", dat_names)], ".", current_dat$file_type),
         file_type = current_dat$file_type, file_path = current_dat$full_path
       )
 
       raster_mf <- elsar_load_data(
-        file_name = paste0(named_files[["FML"]], ".", current_dat$file_type),
+        file_name = paste0(dat_names[grepl("FML", dat_names)], ".", current_dat$file_type),
         file_type = current_dat$file_type, file_path = current_dat$full_path
       )
 
@@ -540,28 +514,14 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
       dat_names <- unlist(strsplit(current_dat$file_name, ", ", fixed = TRUE))
       filetype_names <- unlist(strsplit(current_dat$file_type, ", ", fixed = TRUE))
 
-      file_labels <- c("wetland", "ramsar")
-      named_files <- setNames(
-        dat_names[sapply(
-          file_labels,
-          function(x) {
-            any(grepl(x,
-              dat_names,
-              ignore.case = TRUE
-            ))
-          }
-        )],
-        file_labels
-      )
-
       # load data
       raster_wetlands <- elsar_load_data(
-        file_name = paste0(named_files[["wetland"]], ".", filetype_names[[1]]),
+        file_name = paste0(dat_names[grepl("wetland", dat_names)], ".", filetype_names[[1]]),
         file_type = filetype_names[[1]], file_path = current_dat$full_path
       )
 
       sf_ramsar <- elsar_load_data(
-        file_name = paste0(named_files[["ramsar"]], ".", filetype_names[[2]]),
+        file_name = paste0(dat_names[grepl("ramsar", dat_names)], ".", filetype_names[[2]]),
         file_type = filetype_names[[2]], file_path = current_dat$full_path,
         file_lyr = (if (current_dat$layer != "NA") current_dat$layer else NULL)
       )
@@ -598,7 +558,8 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
       wetlands_ramsar <- make_wetlands_ramsar(
         ramsar_in = sf_ramsar,
         pus = pus,
-        iso3_in = iso3
+        iso3_in = iso3,
+        buffer_points = FALSE
       )
     }
     names(wetlands_ramsar) <- c(dat_non_default[[j]]) # set layer name
@@ -609,6 +570,52 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
       figure_path = figure_path
     )
     raster_out <- c(raster_out, wetlands_ramsar)
+  }
+  if (dat_non_default[[j]] == "Urban Greening Opportunities") {
+    print("Urban Greening Opportunities")
+
+    urb_green_names <- unlist(strsplit(current_dat$file_name, ", ", fixed = TRUE))
+    filetype_names <- unlist(strsplit(current_dat$file_type, ", ", fixed = TRUE))
+
+    # load data
+    raster_ndvi <- elsar_load_data(
+      file_name = paste0(urb_green_names[grepl("ndvi", urb_green_names)], ".", filetype_names[[1]]),
+      file_type = filetype_names[[1]], file_path = current_dat$full_path
+    )
+
+    lulc_name <- urb_green_names[grepl("lulc", urb_green_names)]
+
+    if (!grepl(iso3, lulc_name)) {
+      lulc_name <- paste0(lulc_name, "_", iso3)
+    }
+
+    raster_lulc <- elsar_load_data(
+      file_name = paste0(lulc_name, ".", filetype_names[[1]]),
+      file_type = filetype_names[[1]], file_path = current_dat$full_path
+    )
+
+    sf_wbgtmax <- elsar_load_data(
+      file_name = paste0(urb_green_names[grepl("wbgtmax", urb_green_names)], ".", filetype_names[[2]]),
+      file_type = filetype_names[[2]], file_path = current_dat$full_path
+    )
+
+    # urban greenining opportunities
+    urban_green_opps <- make_urban_greening_opportunities(
+      ndvi_raster = raster_ndvi,
+      lulc_raster = raster_lulc,
+      sdei_statistics = sf_wbgtmax,
+      pus = pus,
+      iso3 = iso3
+    )
+
+    names(urban_green_opps) <- c(dat_non_default[[j]]) # set layer name
+    elsar_plot_feature(
+      raster_in = urban_green_opps,
+      pus = pus,
+      legend_title = dat_non_default[[j]],
+      figure_path = figure_path
+    )
+    raster_out <- c(raster_out, urban_green_opps)
   }
 }
 
