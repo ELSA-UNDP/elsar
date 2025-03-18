@@ -9,7 +9,8 @@ make_flood_abatement_opportunities(
   ndvi_raster,
   pus,
   iso3,
-  output_path = NULL
+  output_path = NULL,
+  threads = TRUE
 )
 }
 \arguments{
