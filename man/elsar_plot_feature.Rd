@@ -9,7 +9,7 @@ elsar_plot_feature(
   pus,
   legend_title = NULL,
   color_map = "viridis",
-  invert_palette = TRUE,
+  invert_palette = FALSE,
   figure_path = NULL,
   no_legend = FALSE
 )

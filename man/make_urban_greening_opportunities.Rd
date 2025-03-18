@@ -56,7 +56,7 @@ urban_green_opportunities <- make_urban_greening_opportunities(
   sdei_statistics = sdei_statistics,
   pus = planning_units,
   iso3 = "NPL",
-  )
+)
 
 terra::plot(urban_green_opportunities)
 }

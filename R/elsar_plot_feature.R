@@ -39,7 +39,7 @@ elsar_plot_feature <- function(raster_in,
                                pus,
                                legend_title = NULL,
                                color_map = "viridis", #"rocket",
-                               invert_palette = TRUE,
+                               invert_palette = FALSE,
                                figure_path = NULL,
                                no_legend = FALSE) {
   # Prep outline

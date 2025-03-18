@@ -26,11 +26,8 @@
 #' lulc_raster <- elsar::elsar_load_data(file_path = ".", file_name = "esri_10m_lulc_2023_NPL.tif", file_type = "tiff")
 #'
 #' sdei_statistics <- sf::read_sf(
-#'   "~/sdei-high-res-daily-uhe-1983-2016-shp/wbgtmax30_join.gpkg") |>
-#'   sf::st_set_geometry(NULL) |>
-#'   dplyr::group_by(ID_HDC_G0) |>
-#'   dplyr::summarise(avg_intens = mean(avg_intens)
-#'   )
+#'   "~/sdei-high-res-daily-uhe-1983-2016-shp/wbgtmax30_join.gpkg"
+#' )
 #'
 #' urban_green_opportunities <- make_urban_greening_opportunities(
 #'   ndvi_raster = ndvi,
@@ -38,7 +35,7 @@
 #'   sdei_statistics = sdei_statistics,
 #'   pus = planning_units,
 #'   iso3 = "NPL",
-#'   )
+#' )
 #'
 #' terra::plot(urban_green_opportunities)
 #' }
@@ -50,20 +47,19 @@ make_urban_greening_opportunities <- function(ndvi_raster,
                                               name_out,
                                               output_path = NULL,
                                               cores = 4) {
-
   # Input Validation
   assertthat::assert_that(
     inherits(ndvi_raster, "SpatRaster"),
     msg = "ndvi_raster must be a SpatRaster object"
-    )
+  )
   assertthat::assert_that(
     inherits(lulc_raster, "SpatRaster"),
     msg = "lulc_raster must be a SpatRaster object"
-    )
+  )
   assertthat::assert_that(
     inherits(sdei_statistics, "sf"),
     msg = "sdei_stats_file must be a sf object"
-    )
+  )
 
   # Normalizing NDVI
   print("Normalizing NDVI raster and and inverting values...")
@@ -72,8 +68,9 @@ make_urban_greening_opportunities <- function(ndvi_raster,
     pus = pus,
     iso3 = iso3,
     invert = TRUE,
-    conditional_expression = function(x)
-      terra::ifel(x < 0, NA, 1 - x),
+    conditional_expression = function(x) {
+      terra::ifel(x < 0, NA, 1 - x)
+    },
   )
 
   # Extracting Urban Areas from LULC - Converts inputs to float type to allow for
@@ -83,7 +80,7 @@ make_urban_greening_opportunities <- function(ndvi_raster,
     raster_in = lulc_raster,
     pus = pus,
     iso3 = iso3,
-    method_override = 'bilinear', # Use bilinear so that values are continuous 0-1.
+    method_override = "bilinear", # Use bilinear so that values are continuous 0-1.
     input_raster_conditional_expression = function(x) terra::ifel(x == 7, 1, 0)
   )
 
@@ -92,29 +89,32 @@ make_urban_greening_opportunities <- function(ndvi_raster,
   print("Reading, spatially filtering GHS and SDEI statistics, and rasterising data...")
 
   # Get PU boundary for spatial subsetting of global layer
-  pu_proj <- terra::as.polygons(pus) |>
-    sf::st_as_sf() |>
-    dplyr::filter(layer == 1) |>
-    sf::st_transform(sf::st_crs(sdei_statistics)) |>   # Re-project to match sdei_statistics
-    sf::st_make_valid() |>
+  pu_proj <- terra::as.polygons(pus) %>%
+    sf::st_as_sf() %>%
+    dplyr::filter(layer == 1) %>%
+    sf::st_transform(sf::st_crs(sdei_statistics)) %>% # Re-project to match sdei_statistics
+    sf::st_make_valid() %>%
     terra::vect()
 
-  urban_extreme_heat <- sdei_statistics |>
-    terra::vect() |>
-    terra::intersect(y = pu_proj) |>
-    sf::st_as_sf() |>
-    sf::st_transform(crs = sf::st_crs(pus)) |> # Re-project back to PU crs
-    dplyr::group_by(ID_HDC_G0) |>
-    dplyr::summarise(avg_intens = mean(avg_intens)) |>
-    dplyr::filter(!is.na(avg_intens)) |>
-    elsar::exact_rasterise(attribute = "avg_intens",
-                           pu_layer = pus,
-                           fun = mean) |>
+  urban_extreme_heat <- sdei_statistics %>%
+    dplyr::filter(CTR_MN_ISO == iso3) %>%
+    terra::vect() %>%
+    terra::intersect(y = pu_proj) %>%
+    sf::st_as_sf() %>%
+    sf::st_transform(crs = sf::st_crs(pus)) %>% # Re-project back to PU crs
+    dplyr::group_by(ID_HDC_G0) %>%
+    dplyr::summarise(avg_intens = mean(avg_intens)) %>%
+    dplyr::filter(!is.na(avg_intens)) %>%
+    elsar::exact_rasterise(
+      attribute = "avg_intens",
+      pu_layer = pus,
+      fun = mean
+    ) %>%
     elsar::rescale_raster()
 
   # Combining and Normalizing Urban Greening Opportunities
   print("Combining layers and normalising urban greening opportunities layer...")
-  urban_greening_opportunities <- ((rev_ndvi + urban_extreme_heat) / 2 * urban_areas) |>
+  urban_greening_opportunities <- ((rev_ndvi + urban_extreme_heat) / 2 * urban_areas) %>%
     elsar::rescale_raster()
 
   names(urban_greening_opportunities) <- "urban_greening_opportunities"
@@ -141,5 +141,4 @@ make_urban_greening_opportunities <- function(ndvi_raster,
   }
 
   return(urban_greening_opportunities)
-
 }
