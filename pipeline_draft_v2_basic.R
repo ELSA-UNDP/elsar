@@ -415,12 +415,6 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
   if (dat_non_default[[j]] == "Managed Forests") {
     print("Managed Forests")
 
-    # load data
-    raster_mf <- elsar_load_data(
-      file_name = current_dat$full_name,
-      file_type = current_dat$file_type, file_path = current_dat$full_path
-    )
-
     if (include_productive) {
       current_dat <- feature_list %>%
         dplyr::filter(data_name == "Productive Managed Forests")
@@ -463,6 +457,12 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
       )
       raster_out <- c(raster_out, managed_forests)
     } else {
+      # load data
+      raster_mf <- elsar_load_data(
+        file_name = current_dat$full_name,
+        file_type = current_dat$file_type, file_path = current_dat$full_path
+      )
+
       # process data
       managed_forests <- make_managed_forests(
         raster_in = raster_mf,
@@ -599,7 +599,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
       file_type = filetype_names[[2]], file_path = current_dat$full_path
     )
 
-    # urban greenining opportunities
+    # urban greening opportunities
     urban_green_opps <- make_urban_greening_opportunities(
       ndvi_raster = raster_ndvi,
       lulc_raster = raster_lulc,
@@ -617,6 +617,42 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
     )
     raster_out <- c(raster_out, urban_green_opps)
   }
+
+  if (dat_non_default[[j]] == "Flood Abatement Opportunities") {
+    print("Flood Abatement Opportunities")
+
+    #load data
+    flood_names <- unlist(strsplit(current_dat$file_name, ", ", fixed = TRUE))
+    filetype_names <- unlist(strsplit(current_dat$file_type, ", ", fixed = TRUE))
+
+    #flood abatement
+    raster_ndvi <- elsar_load_data(
+      file_name = paste0(flood_names[grepl("ndvi", flood_names)], ".", filetype_names),
+      file_type = filetype_names, file_path = current_dat$full_path
+    )
+
+    raster_flood <- elsar_load_data(
+      file_name = paste0(flood_names[grepl("flood", flood_names)], ".", filetype_names),
+      file_type = filetype_names, file_path = current_dat$full_path
+    )
+
+    flood_abate <- make_flood_abatement_opportunities(
+      gfd_raster = raster_flood,
+      ndvi_raster = raster_ndvi,
+      pus = pus,
+      iso3 = iso3
+    )
+
+    names(flood_abate) <- c(dat_non_default[[j]]) # set layer name
+    elsar_plot_feature(
+      raster_in = flood_abate,
+      pus = pus,
+      legend_title = dat_non_default[[j]],
+      figure_path = figure_path
+    )
+    raster_out <- c(raster_out, flood_abate)
+  }
+
 }
 
 #### Create zones ####

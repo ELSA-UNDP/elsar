@@ -1,7 +1,7 @@
 group;data_name;file_name;file_type;layer;include;file_path;default_function;default_parameters;visualise;save;comments for those in red
 boundary;Boundary;un_geodata;gpkg;BNDA_CTY;1;default;NA;1;0;;
 feature;Agricultural Climate Stress;overall_cropsuit_i_diff_19812010_20712100;tif;NA;1;;1;0;0;;
-feature;Alliance for Zero Extinction Sites;?;?;NA;0;;0;1;0;;
+feature;Alliance for Zero Extinction Sites;KBAsGlobal_2024_June_merged;gpkg;NA;0;;0;1;0;;
 feature;Biodiversity Habitat Index;BILBI_P_BHIv2_Species_2020;tif;NA;0;;1;1;0;;
 feature;Biodiversity Intactness Index;BIIAb-2015_cog;tif;NA;0;;1;1;0;;
 feature;Biodiversity Restoration Potential;all_species_richness_cog;tif;NA;0;;1;1;0;;
@@ -13,7 +13,7 @@ feature;Climate refugia - Bioclimatic Ecosystem Resilience Index;BILBI_P_BERI_20
 feature;Drought Abatement Opportunities;gDH19_oct2015;tif;NA;1;;1;1;0;;
 feature;Evolutionary Distinct Endangered Species (EDGE) ;threatened_evo_history;tif;NA;0;;1;1;0;;
 feature;Existing PAs;NA;NA;NA;0;;0;1;0;;
-feature;Flood Abatement Opportunities;gfd_flood_database, mod13q1_2022_ndvi_wgs84, trop-subtrop_wetlandv3_2016_cifor_cog;tif;NA;0;;0;1;0;;Needs info on flood risk, wetlands and ndvi
+feature;Flood Abatement Opportunities;gfd_flood_database, mod13q1_2022_ndvi_wgs84, trop-subtrop_wetlandv3_2016_cifor_cog;tif;NA;1;;0;1;0;;Needs info on flood risk, wetlands and ndvi
 feature;Forest Integrity Index;flii_earth-001_cog, global_fsii_2023;tif;NA;1;;0;1;0;;
 feature;Indigenous Managed Lands;?;?;NA;0;;0;1;0;;
 feature;Intact Wilderness Area;intactness_Qprime_2009;tif;NA;1;;1;1;0;;
