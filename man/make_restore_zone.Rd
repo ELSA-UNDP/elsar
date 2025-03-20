@@ -8,7 +8,8 @@ make_restore_zone(
   iso3,
   pus,
   sdg_degradation_input = NULL,
-  lulc_raster = NULL,
+  agri_raster = NULL,
+  built_raster = NULL,
   hii_input = NULL,
   sdg_threshold = 0.1,
   lulc_threshold = 0.1,
@@ -28,7 +29,9 @@ make_restore_zone(
 
 \item{sdg_degradation_input}{A \code{SpatRaster} representing productivity degradation data (default: \code{NULL}).}
 
-\item{lulc_raster}{A \code{SpatRaster} of land use/land cover (LULC) data (default: \code{NULL}).}
+\item{agri_raster}{A \code{SpatRaster} of land use/land cover (LULC) data (default: \code{NULL}) filtered for agricultural areas. Can be processed or unprocessed (if unprocessed: can be the same input as built_raster)}
+
+\item{built_raster}{A \code{SpatRaster} of land use/land cover (LULC) data (default: \code{NULL}) filtered for built-up areas. Can be processed or unprocessed (if unprocessed: can be the same input as agri_raster)}
 
 \item{hii_input}{A \code{SpatRaster} of the Human Industrial Footprint Index (HII) (default: \code{NULL}).}
 
@@ -66,7 +69,7 @@ Intermediate layers (agriculture, built-up areas, and HII) can also be saved if 
 }
 \examples{
 \dontrun{
-restore_zone <- make_degraded_areas(
+restore_zone <- make_restore_zone(
   iso3 = "CHL",
   pus = planning_units,
   sdg_degradation_input = sdg_raster,

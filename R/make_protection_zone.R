@@ -12,6 +12,8 @@
 #' @param pus A `SpatRaster` file that contains the reference spatial extent, crs etc.in form of the planning units.
 #' @param iso3 A string of the iso3 name of the data (country name).
 #' @param hfp_threshold If <1, HFP threshold is calculated based on a quantile approach (HFP inside PAs excluding x% highest; default is 0.95). If >1, that value will be used as the threshold.
+#' @param agriculture_lulc_value The LULC classification value representing agricultural areas, based on the ESRI 10m LULC dataset (default: `4`).
+#' @param built_area_lulc_value The LULC classification value representing built-up areas, based on the ESRI 10m LULC dataset (default: `7`).
 #' @param filter_patch_size Logical. Whether to filter out clumps smaller than a given threshold.
 #' @param min_patch_size Positive integer. Clumps smaller than this are removed.
 #' @param make_locked_out Logical. Whether to change data from available planning units for a zone to a layer for a locked-out constraint in `prioritizr`. Will swap 0s and 1s.
@@ -102,12 +104,14 @@ make_protection_zone <- function(current_pas = NULL,
                                  built_in = NULL,
                                  pus,
                                  iso3,
+                                 agriculture_lulc_value = 4,
+                                 built_area_lulc_value = 7,
                                  hfp_threshold = 0.95,
                                  filter_patch_size = TRUE,
                                  min_patch_size = 20,
                                  make_locked_out = FALSE,
                                  output_path = NULL) {
-  if (hfp_threshold <= 1) {  # If HFP already provided as absolute number, don't need PA info
+  if (hfp_threshold <= 1) { # If HFP already provided as absolute number, don't need PA info
     if (is.null(current_pas)) {
       current_pas <- make_protected_areas(
         iso3 = iso3,
@@ -132,18 +136,25 @@ make_protection_zone <- function(current_pas = NULL,
     iso3 = iso3,
     rescaled = FALSE
   ))
-
   if (!is.null(crop_in)) {
     assertthat::assert_that(
       inherits(crop_in, "SpatRaster"),
       msg = "'Crops' data needs to be a SpatRaster."
     )
 
-    crops <- make_normalised_raster(
-      raster_in = crop_in,
-      pus = pus,
-      iso3 = iso3
-    )
+    # Extracting Agricultural Areas from LULC
+    cat("Extracting agricultural areas from LULC raster...\n")
+    if (terra::minmax(crop_in)[[2]] <= 1) {
+      crops <- crop_in
+    } else {
+      crops <- make_normalised_raster(
+        raster_in = crop_in,
+        pus = pus,
+        iso3 = iso3,
+        method_override = "bilinear",
+        input_raster_conditional_expression = function(x) terra::ifel(x == agriculture_lulc_value, 1, 0)
+      )
+    }
   }
 
   if (!is.null(built_in)) {
@@ -152,11 +163,19 @@ make_protection_zone <- function(current_pas = NULL,
       msg = "'Built' data needs to be a SpatRaster."
     )
 
-    built <- make_normalised_raster(
-      raster_in = built_in,
-      pus = pus,
-      iso3 = iso3
-    )
+    # Extracting Built-Up Areas from LULC
+    cat("Extracting built areas from LULC raster...\n")
+    if (terra::minmax(built_in)[[2]] <= 1) {
+      built <- built_in
+    } else {
+      built <- make_normalised_raster(
+        raster_in = built_in,
+        pus = pus,
+        iso3 = iso3,
+        method_override = "bilinear",
+        input_raster_conditional_expression = function(x) terra::ifel(x == built_area_lulc_value, 1, 0)
+      )
+    }
   }
 
   # HFP inside PAs excluding x% highest

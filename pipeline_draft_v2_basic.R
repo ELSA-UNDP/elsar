@@ -49,6 +49,7 @@ data_info <- read_delim(file.path(sheet_path, "input_data.csv"),
       )
   )
 
+
 # Postgres check
 if (nrow(data_info %>%
   dplyr::filter(file_type == "postgres")) > 0) {
@@ -151,6 +152,49 @@ if (as.logical(as.integer(data_info %>%
     legend_title = "PUs",
     figure_path = figure_path
   )
+}
+
+# check if lulc data is ready for this country
+download_lulc <- data_info %>%
+  dplyr::filter(data_name %in% c(
+    "Urban Greening Opportunities",
+    "Restoration Zone",
+    "Protection Zone",
+    "Agriculture Areas",
+    "Urban Areas"
+  ))
+
+if (nrow(download_lulc) > 0) {
+  # search input data folder for lulc data
+  all_dat <- list.files(input_path)
+  lulc_there <- all_dat[grepl("lulc", all_dat)]
+
+  if (rlang::is_empty(lulc_there)) {
+    cat("No LULC data available in input_path.")
+    #{
+    answer <- readline("Do you need to download country-specific LULC data? This is only needed once. (yes/no): ")
+    answer <- tolower(trimws(answer)) # to streamline if someone says "Yes" or similar
+
+    if (answer == "yes") { # go through pre-saved options that we need to list down here. Will add to this
+      cat("You need access to the unbl_misc gee repository. Please do this before trying to download the data. ")
+      cat("Make sure you have a working internet connection.")
+     # {
+      answer2 <- readline("Do you have access to the unbl-misc gee repository and a working internet connection? (yes/no): ")
+      answer2 <- tolower(trimws(answer2)) # to streamline if someone says "Yes" or similar
+      if (answer2 == "yes") {
+        lulc <- elsar_download_esri_lulc_data(boundary = boundary_proj,
+                                              iso3 = iso3,
+                                              output_dir = input_path)
+      } else {
+        cat("You can't download the data without access to the gee repository.")
+      }
+
+     # }
+    } else {
+      cat("You either need to change the path of the data to where to LULC data is saved or change what data you want to process. LULC data is needed for some of the data selected in the spreadsheet.")
+    }
+    #}
+  }
 }
 
 # clean env
@@ -531,7 +575,8 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
         wetlands_in = raster_wetlands,
         ramsar_in = sf_ramsar,
         pus = pus,
-        iso3_in = iso3
+        iso3_in = iso3,
+        buffer_points = FALSE
       )
     } else if ((!(grepl(",", current_dat$file_name))) & (grepl("wetland", current_dat$file_name))) {
       # load data
@@ -544,7 +589,8 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
       wetlands_ramsar <- make_wetlands_ramsar(
         wetlands_in = raster_wetlands,
         pus = pus,
-        iso3_in = iso3
+        iso3_in = iso3,
+        buffer_points = FALSE
       )
     } else if ((!(grepl(",", current_dat$file_name))) & (grepl("ramsar", current_dat$file_name))) {
       # load data
@@ -554,6 +600,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
         file_lyr = (if (current_dat$layer != "NA") current_dat$layer else NULL)
       )
 
+      browser()
       # wetlands and ramsar
       wetlands_ramsar <- make_wetlands_ramsar(
         ramsar_in = sf_ramsar,
@@ -600,13 +647,16 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
     )
 
     # urban greening opportunities
-    urban_green_opps <- make_urban_greening_opportunities(
+    urban_out <- make_urban_greening_opportunities(
       ndvi_raster = raster_ndvi,
       lulc_raster = raster_lulc,
       sdei_statistics = sf_wbgtmax,
       pus = pus,
-      iso3 = iso3
+      iso3 = iso3,
+      return_urban_areas = TRUE
     )
+
+    urban_green_opps <- urban_out[[1]]
 
     names(urban_green_opps) <- c(dat_non_default[[j]]) # set layer name
     elsar_plot_feature(
@@ -621,11 +671,11 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
   if (dat_non_default[[j]] == "Flood Abatement Opportunities") {
     print("Flood Abatement Opportunities")
 
-    #load data
+    # load data
     flood_names <- unlist(strsplit(current_dat$file_name, ", ", fixed = TRUE))
     filetype_names <- unlist(strsplit(current_dat$file_type, ", ", fixed = TRUE))
 
-    #flood abatement
+    # flood abatement
     raster_ndvi <- elsar_load_data(
       file_name = paste0(flood_names[grepl("ndvi", flood_names)], ".", filetype_names),
       file_type = filetype_names, file_path = current_dat$full_path
@@ -652,7 +702,6 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
     )
     raster_out <- c(raster_out, flood_abate)
   }
-
 }
 
 #### Create zones ####
@@ -689,13 +738,6 @@ for (k in 1:length(zones_data_incl)) {
       file_name = current_zone_dat$full_name,
       file_type = current_zone_dat$file_type, file_path = current_zone_dat$full_path
     )
-
-    # # process data ### should be done in zone function for restore
-    # managed_forests <- make_managed_forests(
-    #   raster_in = raster_mf,
-    #   pus = pus,
-    #   include_disturbed_forest = TRUE #includes categories > 11
-    # )
   }
 
   if (zones_data_incl[[k]] == "Human Footprint") {
@@ -711,8 +753,50 @@ for (k in 1:length(zones_data_incl)) {
   if (zones_data_incl[[k]] == "Urban Areas") {
     print("Urban Areas")
 
+    if (terra::nlyr(urban_out) == 2) {
+      raster_urban <- urban_out[[2]]
+    } else {
+      raster_urbanareas <- elsar_load_data(
+        file_name = current_zone_dat$full_name,
+        file_type = current_zone_dat$file_type, file_path = current_zone_dat$full_path
+      )
+    }
+  }
+
+  if (zones_data_incl[[k]] == "Agriculture Areas") {
+    print("Agriculture Areas")
+
     # load data
-    raster_urbanareas <- elsar_load_data(
+    raster_agri_in <- elsar_load_data(
+      file_name = current_zone_dat$full_name,
+      file_type = current_zone_dat$file_type, file_path = current_zone_dat$full_path
+    )
+
+    # process here because computationally expensive and we only want to do this once:
+    raster_agri <- make_normalised_raster(
+      raster_in = raster_agri_in,
+      pus = pus,
+      iso3 = iso3,
+      method_override = "bilinear",
+      input_raster_conditional_expression = function(x) terra::ifel(x == 4, 1, 0)
+    )
+  }
+
+  if (zones_data_incl[[k]] == "Degraded Areas") {
+    print("Degraded Areas")
+
+    # load data
+    raster_degraded <- elsar_load_data(
+      file_name = current_zone_dat$full_name,
+      file_type = current_zone_dat$file_type, file_path = current_zone_dat$full_path
+    )
+  }
+
+  if (zones_data_incl[[k]] == "Human Industrial Footprint") {
+    print("Human Industrial Footprint")
+
+    # load data
+    raster_hii <- elsar_load_data(
       file_name = current_zone_dat$full_name,
       file_type = current_zone_dat$file_type, file_path = current_zone_dat$full_path
     )
@@ -726,15 +810,43 @@ for (l in 1:length(zones_list)) {
 
     protection_zone <- make_protection_zone(
       hfp_in = raster_hfp,
-      # crop_in = load_crop,
-      # built_in = load_built,
+      crop_in = raster_agri,
+      built_in = raster_urban,
       hfp_threshold = 22,
       pus = pus,
       iso3 = iso3
     )
+
+    names(protection_zone) <- c(zones_list[[l]]) # set layer name
+    elsar_plot_feature(
+      raster_in = protection_zone,
+      pus = pus,
+      legend_title = zones_list[[l]],
+      figure_path = figure_path
+    )
   }
 
-  # save and vsiualise zone
+  if (zones_list[[l]] == "Restoration Zone") {
+    print("Restoration Zone")
+
+    restoration_zone <- make_restore_zone(
+      iso3 = iso3,
+      pus = pus,
+      sdg_degradation_input = sdg_raster,
+      agri_raster = raster_agri,
+      built_raster = raster_urban,
+      hii_input = hii_raster,
+      output_path = "path/to/output"
+    )
+
+    names(restoration_zone) <- c(zones_list[[l]]) # set layer name
+    elsar_plot_feature(
+      raster_in = restoration_zone,
+      pus = pus,
+      legend_title = zones_list[[l]],
+      figure_path = figure_path
+    )
+  }
 }
 
 ## Create locked-in areas

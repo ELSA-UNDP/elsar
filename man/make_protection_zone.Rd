@@ -11,6 +11,8 @@ make_protection_zone(
   built_in = NULL,
   pus,
   iso3,
+  agriculture_lulc_value = 4,
+  built_area_lulc_value = 7,
   hfp_threshold = 0.95,
   filter_patch_size = TRUE,
   min_patch_size = 20,
@@ -30,6 +32,10 @@ make_protection_zone(
 \item{pus}{A \code{SpatRaster} file that contains the reference spatial extent, crs etc.in form of the planning units.}
 
 \item{iso3}{A string of the iso3 name of the data (country name).}
+
+\item{agriculture_lulc_value}{The LULC classification value representing agricultural areas, based on the ESRI 10m LULC dataset (default: \code{4}).}
+
+\item{built_area_lulc_value}{The LULC classification value representing built-up areas, based on the ESRI 10m LULC dataset (default: \code{7}).}
 
 \item{hfp_threshold}{If <1, HFP threshold is calculated based on a quantile approach (HFP inside PAs excluding x\% highest; default is 0.95). If >1, that value will be used as the threshold.}
 

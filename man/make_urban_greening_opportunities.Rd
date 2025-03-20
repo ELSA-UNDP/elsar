@@ -10,6 +10,7 @@ make_urban_greening_opportunities(
   sdei_statistics,
   pus,
   iso3,
+  return_urban_areas = FALSE,
   name_out,
   output_path = NULL,
   cores = 4
@@ -26,6 +27,8 @@ urban heat data.}
 \item{pus}{A \code{SpatRaster} defining the planning unit (PU) grid.}
 
 \item{iso3}{A character string representing the ISO3 country code.}
+
+\item{return_urban_areas}{logical. Whether to return also urban areas for potential downstream analyses.}
 
 \item{output_path}{A character string specifying the output directory (optional).}
 

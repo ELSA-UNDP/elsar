@@ -12,6 +12,7 @@
 #'      urban heat data.
 #' @param pus A `SpatRaster` defining the planning unit (PU) grid.
 #' @param iso3 A character string representing the ISO3 country code.
+#' @param return_urban_areas logical. Whether to return also urban areas for potential downstream analyses.
 #' @param output_path A character string specifying the output directory (optional).
 #' @param cores A number allocating the availabe cores for `terra` tools that allow
 #'        multi-core processing (if available on your machine). Defaults to 4.
@@ -44,6 +45,7 @@ make_urban_greening_opportunities <- function(ndvi_raster,
                                               sdei_statistics,
                                               pus,
                                               iso3,
+                                              return_urban_areas = FALSE,
                                               name_out,
                                               output_path = NULL,
                                               cores = 4) {
@@ -117,7 +119,7 @@ make_urban_greening_opportunities <- function(ndvi_raster,
   urban_greening_opportunities <- ((rev_ndvi + urban_extreme_heat) / 2 * urban_areas) %>%
     elsar::rescale_raster()
 
-  names(urban_greening_opportunities) <- "urban_greening_opportunities"
+#  names(urban_greening_opportunities) <- "urban_greening_opportunities"
 
   # Writing Output
   if (!is.null(output_path)) {
@@ -140,5 +142,10 @@ make_urban_greening_opportunities <- function(ndvi_raster,
     print(glue::glue("Urban greening opportunities raster created and saved to: {output_file}"))
   }
 
+  if (return_urban_areas) {
+    combined_urban <- c(urban_greening_opportunities, urban_areas)
+    return(combined_urban)
+  } else{
   return(urban_greening_opportunities)
+  }
 }
