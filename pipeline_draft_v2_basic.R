@@ -229,6 +229,22 @@ if ("Productive Managed Forests" %in% dat_non_default) { # managed forests and p
   include_productive <- FALSE
 }
 
+if (("Alliance for Zero Extinction Sites") %in% dat_non_default & ( "Key Biodiversity Areas") %in% dat_non_default) { # managed forests and productive managed forests handled within same function
+  include_kbas <- TRUE
+  include_aze <- TRUE
+  dat_non_default <- dat_non_default[dat_non_default %ni% c("Alliance for Zero Extinction Sites")]
+} else if  (("Alliance for Zero Extinction Sites") %in% dat_non_default & !(( "Key Biodiversity Areas") %in% dat_non_default)) {
+  include_kbas <- FALSE
+  include_aze <- TRUE
+} else if  ((!("Alliance for Zero Extinction Sites") %in% dat_non_default) & (( "Key Biodiversity Areas") %in% dat_non_default)) {
+  include_kbas <- TRUE
+  include_aze <- FALSE
+} else {
+  include_kbas <- FALSE
+  include_aze <- FALSE
+}
+
+
 #### Prep data using default methods ####
 cat("Creating Default Features")
 
@@ -525,7 +541,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
     }
   }
 
-  if (dat_non_default[[j]] == "Key Biodiversity Areas") {
+  if (dat_non_default[[j]] == "Key Biodiversity Areas" | dat_non_default[[j]] == "Alliance for Zero Extinction Sites") {
     print("Key Biodiversity Areas")
 
     # load data
@@ -535,20 +551,74 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
       file_lyr = (if (current_dat$layer != "NA") current_dat$layer else NULL)
     )
 
-    kba_raster <- make_kbas(
-      kba_in = kba_sf,
-      pus = pus,
-      iso3_in = iso3
-    )
+    if (include_kbas & include_aze){
+      kba_raster <- make_kbas(
+        kba_in = kba_sf%>%
+          dplyr::filter(azestatus != "confirmed"),
+        pus = pus,
+        iso3_in = iso3
+      )
 
-    names(kba_raster) <- c(dat_non_default[[j]]) # set layer name
-    elsar_plot_feature(
-      raster_in = kba_raster,
-      pus = pus,
-      legend_title = dat_non_default[[j]],
-      figure_path = figure_path
-    )
-    raster_out <- c(raster_out, kba_raster)
+      aze_raster <- make_kbas(
+        kba_in = kba_sf,
+        pus = pus,
+        iso3_in = iso3,
+        aze_only = TRUE
+      )
+
+      kba_raster <- c(kba_out, aze_raster)
+
+      names(kba_raster) <- c("Key Biodiversity Areas", "Alliance for Zero Extinction Sites") # set layer name
+      elsar_plot_feature(
+        raster_in = kba_raster[[1]],
+        pus = pus,
+        legend_title = "Key Biodiversity Areas",
+        figure_path = figure_path
+      )
+
+      elsar_plot_feature(
+        raster_in = kba_raster[[2]],
+        pus = pus,
+        legend_title = "Alliance for Zero Extinction Sites",
+        figure_path = figure_path
+      )
+
+    } else if (!include_kbas & include_aze) {
+
+      kba_raster <- make_kbas(
+        kba_in = kba_sf,
+        pus = pus,
+        iso3_in = iso3,
+        aze_only = TRUE
+      )
+
+      names(kba_raster) <- c("Alliance for Zero Extinction Sites") # set layer name
+      elsar_plot_feature(
+        raster_in = kba_raster,
+        pus = pus,
+        legend_title = dat_non_default[[j]],
+        figure_path = figure_path
+      )
+      raster_out <- c(raster_out, kba_raster)
+
+    } else if (include_kbas & !include_aze) {
+    cat("KBAs include Alliance for Zero Extinction Sites.")
+      kba_raster <- make_kbas(
+        kba_in = kba_sf,
+        pus = pus,
+        iso3_in = iso3
+      )
+
+      names(kba_raster) <- c("Key Biodiversity Areas") # set layer name
+      elsar_plot_feature(
+        raster_in = kba_raster,
+        pus = pus,
+        legend_title = dat_non_default[[j]],
+        figure_path = figure_path
+      )
+      raster_out <- c(raster_out, kba_raster)
+
+    }
   }
 
   if (dat_non_default[[j]] == "Wetlands and Ramsar") { # add saving option
@@ -600,7 +670,6 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
         file_lyr = (if (current_dat$layer != "NA") current_dat$layer else NULL)
       )
 
-      browser()
       # wetlands and ramsar
       wetlands_ramsar <- make_wetlands_ramsar(
         ramsar_in = sf_ramsar,
