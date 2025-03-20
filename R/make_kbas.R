@@ -61,6 +61,17 @@ make_kbas <- function(kba_in,
       dplyr::filter(azestatus == "confirmed")
   }
 
+  if (nrow(kba_in)== 0){
+    if (aze_only) {
+      cat("No Alliance for Zero Extinction Sites in the study region")
+    } else {
+      cat("No Key Biodiversity Areas in the study region")
+    }
+
+    kba_out <- pus
+
+  } else {
+
   if (!incl_regional_kba) {
     kba_in <- kba_in %>%
       dplyr::filter(kba_qual %ni% c("Regional", "Global/ Regional to be determined"))
@@ -68,20 +79,21 @@ make_kbas <- function(kba_in,
 
   kba_in <- kba_in %>%
     sf::st_transform(crs = sf::st_crs(pus)) %>%
+    sf::st_make_valid() %>%
     dplyr::summarise() %>%
     sf::st_make_valid()
-
 
   kba_out <- exactextractr::coverage_fraction(pus, kba_in)[[1]] %>%
     terra::mask(pus, maskvalues = 0) %>%
     rescale_raster()
 
   kba_out[is.na(kba_out)] <- 0
+  }
 
   #save if wanted
   if (!is.null(output_path)) {
     terra::writeRaster(kba_out,
-                       glue::glue("{output_path}/{name_out}_{iso3}.tif"),
+                       glue::glue("{output_path}/{name_out}_{iso3_in}.tif"),
                        gdal = c(
                          "COMPRESS=ZSTD",
                          "PREDICTOR=3",

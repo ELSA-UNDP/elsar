@@ -552,9 +552,9 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
     )
 
     if (include_kbas & include_aze){
-      kba_raster <- make_kbas(
-        kba_in = kba_sf%>%
-          dplyr::filter(azestatus != "confirmed"),
+      kba_out <- make_kbas(
+        kba_in = kba_sf %>%
+          dplyr::filter(is.na(azestatus) | azestatus != "confirmed"),
         pus = pus,
         iso3_in = iso3
       )
@@ -613,7 +613,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
       elsar_plot_feature(
         raster_in = kba_raster,
         pus = pus,
-        legend_title = dat_non_default[[j]],
+        legend_title ="Key Biodiversity Areas",
         figure_path = figure_path
       )
       raster_out <- c(raster_out, kba_raster)
