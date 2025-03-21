@@ -171,29 +171,31 @@ if (nrow(download_lulc) > 0) {
 
   if (rlang::is_empty(lulc_there)) {
     cat("No LULC data available in input_path.")
-    #{
+    # {
     answer <- readline("Do you need to download country-specific LULC data? This is only needed once. (yes/no): ")
     answer <- tolower(trimws(answer)) # to streamline if someone says "Yes" or similar
 
     if (answer == "yes") { # go through pre-saved options that we need to list down here. Will add to this
       cat("You need access to the unbl_misc gee repository. Please do this before trying to download the data. ")
       cat("Make sure you have a working internet connection.")
-     # {
+      # {
       answer2 <- readline("Do you have access to the unbl-misc gee repository and a working internet connection? (yes/no): ")
       answer2 <- tolower(trimws(answer2)) # to streamline if someone says "Yes" or similar
       if (answer2 == "yes") {
-        lulc <- elsar_download_esri_lulc_data(boundary = boundary_proj,
-                                              iso3 = iso3,
-                                              output_dir = input_path)
+        lulc <- elsar_download_esri_lulc_data(
+          boundary = boundary_proj,
+          iso3 = iso3,
+          output_dir = input_path
+        )
       } else {
         cat("You can't download the data without access to the gee repository.")
       }
 
-     # }
+      # }
     } else {
       cat("You either need to change the path of the data to where to LULC data is saved or change what data you want to process. LULC data is needed for some of the data selected in the spreadsheet.")
     }
-    #}
+    # }
   }
 }
 
@@ -229,14 +231,14 @@ if ("Productive Managed Forests" %in% dat_non_default) { # managed forests and p
   include_productive <- FALSE
 }
 
-if (("Alliance for Zero Extinction Sites") %in% dat_non_default & ( "Key Biodiversity Areas") %in% dat_non_default) { # managed forests and productive managed forests handled within same function
+if (("Alliance for Zero Extinction Sites") %in% dat_non_default & ("Key Biodiversity Areas") %in% dat_non_default) { # managed forests and productive managed forests handled within same function
   include_kbas <- TRUE
   include_aze <- TRUE
   dat_non_default <- dat_non_default[dat_non_default %ni% c("Alliance for Zero Extinction Sites")]
-} else if  (("Alliance for Zero Extinction Sites") %in% dat_non_default & !(( "Key Biodiversity Areas") %in% dat_non_default)) {
+} else if (("Alliance for Zero Extinction Sites") %in% dat_non_default & !(("Key Biodiversity Areas") %in% dat_non_default)) {
   include_kbas <- FALSE
   include_aze <- TRUE
-} else if  ((!("Alliance for Zero Extinction Sites") %in% dat_non_default) & (( "Key Biodiversity Areas") %in% dat_non_default)) {
+} else if ((!("Alliance for Zero Extinction Sites") %in% dat_non_default) & (("Key Biodiversity Areas") %in% dat_non_default)) {
   include_kbas <- TRUE
   include_aze <- FALSE
 } else {
@@ -551,7 +553,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
       file_lyr = (if (current_dat$layer != "NA") current_dat$layer else NULL)
     )
 
-    if (include_kbas & include_aze){
+    if (include_kbas & include_aze) {
       kba_out <- make_kbas(
         kba_in = kba_sf %>%
           dplyr::filter(is.na(azestatus) | azestatus != "confirmed"),
@@ -582,9 +584,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
         legend_title = "Alliance for Zero Extinction Sites",
         figure_path = figure_path
       )
-
     } else if (!include_kbas & include_aze) {
-
       kba_raster <- make_kbas(
         kba_in = kba_sf,
         pus = pus,
@@ -600,9 +600,8 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
         figure_path = figure_path
       )
       raster_out <- c(raster_out, kba_raster)
-
     } else if (include_kbas & !include_aze) {
-    cat("KBAs include Alliance for Zero Extinction Sites.")
+      cat("KBAs include Alliance for Zero Extinction Sites.")
       kba_raster <- make_kbas(
         kba_in = kba_sf,
         pus = pus,
@@ -613,11 +612,10 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
       elsar_plot_feature(
         raster_in = kba_raster,
         pus = pus,
-        legend_title ="Key Biodiversity Areas",
+        legend_title = "Key Biodiversity Areas",
         figure_path = figure_path
       )
       raster_out <- c(raster_out, kba_raster)
-
     }
   }
 
@@ -785,7 +783,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
   if (dat_non_default[[j]] == "Indigenous Managed Lands") {
     print("Indigenous Managed Lands")
 
-    #load data
+    # load data
 
 
     # process data
@@ -828,24 +826,25 @@ for (k in 1:length(zones_data_incl)) {
   current_zone_dat <- zones_data %>%
     dplyr::filter(data_name == zones_data_incl[[k]])
 
-  if (zones_data_incl[[k]] == "Managed Forests") {
-    print("Managed Forests")
-
-    # load data
-    raster_mf <- elsar_load_data(
-      file_name = current_zone_dat$full_name,
-      file_type = current_zone_dat$file_type, file_path = current_zone_dat$full_path
-    )
-  }
 
   if (zones_data_incl[[k]] == "Human Footprint") {
     print("Human Footprint")
-
     # load data
     raster_hfp <- elsar_load_data(
       file_name = current_zone_dat$full_name,
       file_type = current_zone_dat$file_type, file_path = current_zone_dat$full_path
     )
+  }
+
+  if (zones_data_incl[[k]] == "Managed Forests") {
+    print("Managed Forests")
+
+    # load data
+    if ("Managed Forests" %in% dat_non_default) {
+      raster_mf <- managed_forests[[1]]
+    } else {
+      cat("Please include Managed Forests in the generated features in input spreadsheet.")
+    }
   }
 
   if (zones_data_incl[[k]] == "Urban Areas") {
@@ -855,7 +854,7 @@ for (k in 1:length(zones_data_incl)) {
       raster_urban <- urban_out[[2]]
     } else {
       raster_urbanareas <- elsar_load_data(
-        file_name = current_zone_dat$full_name,
+        file_name = paste0(current_zone_dat$file_name, "_", iso3, ".", current_zone_dat$file_type),
         file_type = current_zone_dat$file_type, file_path = current_zone_dat$full_path
       )
     }
@@ -866,7 +865,7 @@ for (k in 1:length(zones_data_incl)) {
 
     # load data
     raster_agri_in <- elsar_load_data(
-      file_name = current_zone_dat$full_name,
+      file_name = paste0(current_zone_dat$file_name, "_", iso3, ".", current_zone_dat$file_type),
       file_type = current_zone_dat$file_type, file_path = current_zone_dat$full_path
     )
 
@@ -910,7 +909,7 @@ for (l in 1:length(zones_list)) {
       hfp_in = raster_hfp,
       crop_in = raster_agri,
       built_in = raster_urban,
-      hfp_threshold = 22,
+      hfp_threshold = 17, # DOUBLE CHECK THIS NUMBER WITH DI, IS 17 IN NEW BRAZIL SCRIPT. Where does this come from?
       pus = pus,
       iso3 = iso3
     )
@@ -933,8 +932,8 @@ for (l in 1:length(zones_list)) {
       sdg_degradation_input = sdg_raster,
       agri_raster = raster_agri,
       built_raster = raster_urban,
-      hii_input = hii_raster,
-      output_path = "path/to/output"
+      mf_raster = ,
+      hii_input = hii_raster
     )
 
     names(restoration_zone) <- c(zones_list[[l]]) # set layer name
@@ -945,10 +944,29 @@ for (l in 1:length(zones_list)) {
       figure_path = figure_path
     )
   }
-}
 
-## Create locked-in areas
-lockedIn_list <- c("avail")
+  if (zones_list[[l]] == "Management Zone") {
+    print("Management Zone")
+
+    management_zone <- make_manage_zone(
+      hfp_raster = raster_hfp,
+      agri_raster = raster_agri,
+      built_raster = raster_urban,
+      mf_raster = raster_mf,
+      hfp_threshold = 10, # DOUBLE CHECK THIS NUMBER WITH DI, IS 17 IN NEW BRAZIL SCRIPT. Where does this come from?
+      pus = pus,
+      iso3 = iso3
+    )
+
+    names(protection_zone) <- c(zones_list[[l]]) # set layer name
+    elsar_plot_feature(
+      raster_in = protection_zone,
+      pus = pus,
+      legend_title = zones_list[[l]],
+      figure_path = figure_path
+    )
+  }
+}
 
 #### Save raster stack ####
 out_name <- file.path(glue::glue("{output_path}/data_stack_{iso3}.tif"))

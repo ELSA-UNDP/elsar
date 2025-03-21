@@ -136,6 +136,7 @@ make_protection_zone <- function(current_pas = NULL,
     iso3 = iso3,
     rescaled = FALSE
   ))
+
   if (!is.null(crop_in)) {
     assertthat::assert_that(
       inherits(crop_in, "SpatRaster"),
