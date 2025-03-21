@@ -726,6 +726,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
     )
 
     urban_green_opps <- urban_out[[1]]
+    urban_areas <- urban_out[[2]]
 
     names(urban_green_opps) <- c(dat_non_default[[j]]) # set layer name
     elsar_plot_feature(
@@ -734,7 +735,16 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
       legend_title = dat_non_default[[j]],
       figure_path = figure_path
     )
-    raster_out <- c(raster_out, urban_green_opps)
+
+    names(urban_areas) <- c("Urban Areas") # set layer name
+    elsar_plot_feature(
+      raster_in = urban_areas,
+      pus = pus,
+      legend_title = "Urban Areas",
+      figure_path = figure_path
+    )
+
+    raster_out <- c(raster_out, urban_out)
   }
 
   if (dat_non_default[[j]] == "Flood Abatement Opportunities") {
@@ -770,6 +780,25 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
       figure_path = figure_path
     )
     raster_out <- c(raster_out, flood_abate)
+  }
+
+  if (dat_non_default[[j]] == "Indigenous Managed Lands") {
+    print("Indigenous Managed Lands")
+
+    #load data
+
+
+    # process data
+
+
+    names(indigenous_lands) <- c(dat_non_default[[j]]) # set layer name
+    elsar_plot_feature(
+      raster_in = indigenous_lands,
+      pus = pus,
+      legend_title = dat_non_default[[j]],
+      figure_path = figure_path
+    )
+    raster_out <- c(raster_out, indigenous_lands)
   }
 }
 
