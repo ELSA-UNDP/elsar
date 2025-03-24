@@ -1,37 +1,46 @@
 #' Generate a Degraded Areas Layer for Restoration Planning
 #'
-#' This function identifies degraded areas for potential restoration efforts. It integrates multiple input layers, including:
-#' - **Productivity degradation data (SDG degradation)**
-#' - **Land use/land cover (LULC) for agriculture and built-up areas**
+#' This function identifies degraded areas for potential restoration based on a combination of:
+#' - **SDG productivity degradation data**
+#' - **Agricultural and built-up areas** (either provided or derived from a LULC raster)
 #' - **Human Industrial Footprint Index (HII)**
-#' The function applies user-defined thresholds to classify degraded areas and optionally filters small patches to remove noise.
-#' Intermediate layers (agriculture, built-up areas, and HII) can also be saved if `output_path` is provided.
+#' - **IUCN GET forest ecosystems coverage** (used to create `restore_zone_v1` and `restore_zone_v2`)
 #'
-#' @param iso3 A character string representing the ISO3 country code (e.g., "CHL" for Chile).
-#' @param pus A `SpatRaster` defining the planning units grid.
-#' @param sdg_degradation_input A `SpatRaster` representing productivity degradation data (default: `NULL`).
-#' @param agri_raster A `SpatRaster` of land use/land cover (LULC) data (default: `NULL`) filtered for agricultural areas. Can be processed or unprocessed (if unprocessed: can be the same input as built_raster)
-#' @param built_raster A `SpatRaster` of land use/land cover (LULC) data (default: `NULL`) filtered for built-up areas. Can be processed or unprocessed (if unprocessed: can be the same input as agri_raster)
-#' @param hii_input A `SpatRaster` of the Human Industrial Footprint Index (HII) (default: `NULL`).
-#' @param sdg_threshold A numeric threshold for productivity degradation classification (default: `0.1`).
-#' @param lulc_threshold A numeric threshold for agriculture and built-up areas classification (default: `0.1`).
-#' @param hii_threshold A numeric threshold for identifying human impact areas in HII (default: `4`).
-#' @param agriculture_lulc_value The LULC classification value representing agricultural areas, based on the ESRI 10m LULC dataset (default: `4`).
-#' @param built_area_lulc_value The LULC classification value representing built-up areas, based on the ESRI 10m LULC dataset (default: `7`).
-#' @param filter_patch_size Logical; if `TRUE`, small patches below `min_patch_size` are removed (default: `TRUE`).
-#' @param min_patch_size The minimum patch size (in pixels) to retain during filtering (default: `10`).
-#' @param output_path A character string specifying the directory to save output rasters (default: `NULL`, i.e., not saved).
-#' @param threads Logical; whether to enable multi-threaded processing where available (default: `TRUE`).
+#' The function applies user-defined thresholds to generate two outputs:
+#' - `restore_zone_v1`: Based on SDG degradation, agriculture, built-up, and HII thresholds
+#' - `restore_zone_v2`: Same as `v1` but masked by IUCN GET forest extent
 #'
-#' @return A `SpatRaster` object representing degraded areas for restoration, classified as `1` (degraded) and `0` (not degraded).
-#' If `output_path` is provided, the raster is saved as a Cloud-Optimized GeoTIFF (COG).
+#' If `output_path` is provided, the intermediate layers and final output are saved as Cloud Optimized GeoTIFFs.
+#'
+#' @param iso3 Character. ISO3 country code (e.g., "CHL").
+#' @param pus SpatRaster. Planning units raster used to define resolution and extent.
+#' @param sdg_degradation_input SpatRaster. SDG degradation raster input.
+#' @param agricultural_areas_input SpatRaster or NULL. Optional input raster for agricultural areas. If NULL, `lulc_raster` must be provided.
+#' @param built_areas_input SpatRaster or NULL. Optional input raster for built-up areas. If NULL, `lulc_raster` must be provided.
+#' @param lulc_raster SpatRaster or NULL. LULC raster used to derive agriculture/built areas if not directly provided. Assumes using the ESRI 10m LULC dataset.
+#' @param hii_input SpatRaster. Human Industrial Footprint Index (HII) raster.
+#' @param iucn_get_forest_input SpatRaster. IUCN GET forest raster used to create `restore_zone_v2`.
+#' @param sdg_threshold Numeric. Threshold for SDG degradation to classify as degraded (default: 0.1).
+#' @param lulc_threshold Numeric. Threshold for agri/built classification (default: 0.1).
+#' @param hii_threshold Numeric. HII threshold for defining high human pressure (default: 4).
+#' @param iucn_get_forest_threshold Numeric. Minimum forest cover value to retain in restore zone 2 (default: 0.1).
+#' @param agriculture_lulc_value Integer. LULC value representing agriculture if derived from `lulc_raster` (default: 4).
+#' @param built_area_lulc_value Integer. LULC value representing built-up areas if derived from `lulc_raster` (default: 7).
+#' @param filter_patch_size Logical. Whether to remove small isolated patches (default: TRUE).
+#' @param min_patch_size Integer. Minimum number of connected pixels to retain (default: 10).
+#' @param output_path Character or NULL. Directory to save output rasters. If NULL, outputs are returned but not saved (default: NULL).
+#' @param threads Logical. Whether to use multithreading where possible (default: TRUE).
+#'
+#' @return A `SpatRaster` with two layers:
+#' - `restore_zone_v1`: Degraded areas based on SDG, LULC, and HII thresholds
+#' - `restore_zone_v2`: `v1` masked by IUCN forest coverage
+#'
+#' @export
 #'
 #' @import terra
 #' @import glue
 #' @import assertthat
 #' @import elsar
-#'
-#' @export
 #'
 #' @examples
 #' \dontrun{
@@ -39,41 +48,61 @@
 #'   iso3 = "CHL",
 #'   pus = planning_units,
 #'   sdg_degradation_input = sdg_raster,
-#'   lulc_raster = landcover_raster,
+#'   agricultural_areas_input = NULL,
+#'   built_areas_input = NULL,
+#'   lulc_raster = lulc_input,
 #'   hii_input = hii_raster,
-#'   output_path = "path/to/output"
+#'   iucn_get_forest_input = forest_raster,
+#'   output_path = "outputs/"
+#' )
+#'
+#' restore_zone <- make_restore_zone(
+#'   iso3 = "CHL",
+#'   pus = planning_units,
+#'   sdg_degradation_input = sdg_raster,
+#'   agricultural_areas_input = ag_areas_input,
+#'   built_areas_input = built_areas_input,
+#'   lulc_raster = NULL,
+#'   hii_input = hii_raster,
+#'   iucn_get_forest_input = forest_raster,
+#'   output_path = "outputs/"
 #' )
 #' }
+
 make_restore_zone <- function(
     iso3,
     pus,
     sdg_degradation_input = NULL,
-    #lulc_raster = NULL,
-    agri_raster = NULL,
-    built_raster = NULL,
+    agricultural_areas_input = NULL,
+    built_areas_input = NULL,
+    lulc_raster = NULL,
     hii_input = NULL,
+    iucn_get_forest_input = NULL,
     sdg_threshold = 0.1,
     lulc_threshold = 0.1,
     hii_threshold = 4,
+    iucn_get_forest_threshold = 0.1,
     agriculture_lulc_value = 4,
     built_area_lulc_value = 7,
     filter_patch_size = TRUE,
     min_patch_size = 10,
     output_path = NULL,
-    threads = TRUE) {
+    threads = TRUE
+) {
+  # Input validation
+  assert_that(is.string(iso3))
+  assert_that(inherits(pus, "SpatRaster"))
+  assert_that(inherits(sdg_degradation_input, "SpatRaster"))
+  assert_that(inherits(hii_input, "SpatRaster"))
+  assert_that(inherits(iucn_get_forest_input, "SpatRaster"))
 
-  # Ensure required inputs are provided
-  if (is.null(sdg_degradation_input) || is.null(hii_input) || is.null(agri_raster) || is.null(built_raster)) {
-    stop("All required input rasters (sdg_degradation_input, hii_input, lulc_raster) must be provided.")
-  }
+  # Ensure at least one valid input source for agricultural/built areas exists
+  assert_that(
+    !(is.null(agricultural_areas_input) && is.null(built_areas_input) && is.null(lulc_raster)),
+    msg = "Either 'agricultural_areas_input' and/or 'built_areas_input' must be provided, or 'lulc_raster' must be supplied to derive them."
+  )
 
-  # Validate input types
-  assertthat::assert_that(inherits(sdg_degradation_input, "SpatRaster"), msg = "'sdg_degradation_input' must be a SpatRaster.")
-  assertthat::assert_that(inherits(agri_raster, "SpatRaster"), msg = "'agri_raster' must be a SpatRaster.")
-  assertthat::assert_that(inherits(built_raster, "SpatRaster"), msg = "'built_raster' must be a SpatRaster.")
-  assertthat::assert_that(inherits(hii_input, "SpatRaster"), msg = "'hii_input' must be a SpatRaster.")
-
-  # Normalize and reclassify SDG degradation layer
+  # SDG degradation layer
   cat("Processing SDG degradation layer...\n")
   sdg_degraded_areas <- elsar::make_normalised_raster(
     raster_in = sdg_degradation_input,
@@ -84,36 +113,41 @@ make_restore_zone <- function(
     threads = threads
   )
 
-  # Extracting Agricultural Areas from LULC
-  cat("Extracting agricultural areas from LULC raster...\n")
-  if (terra::minmax(agri_raster)[[2]] <= 1) {
-    agricultural_areas <- agri_raster
-  } else{
-  agricultural_areas <- make_normalised_raster(
-    raster_in = agri_raster,
-    pus = pus,
-    iso3 = iso3,
-    method_override = "bilinear",
-    input_raster_conditional_expression = function(x) terra::ifel(x == agriculture_lulc_value, 1, 0)
-  )
-}
-  # Extracting Built-Up Areas from LULC
-  cat("Extracting built areas from LULC raster...\n")
-  if (terra::minmax(built_raster)[[2]] <= 1) {
-    built_areas <- built_raster
-  } else{
-  built_areas <- make_normalised_raster(
-    raster_in = built_raster,
-    pus = pus,
-    iso3 = iso3,
-    method_override = "bilinear",
-    input_raster_conditional_expression = function(x) terra::ifel(x == built_area_lulc_value, 1, 0)
-  )
+  # Agricultural areas
+  cat("Processing agricultural areas...\n")
+  if (!is.null(agricultural_areas_input)) {
+    cat("Using previously saved agricultural areas raster...\n")
+    agricultural_areas <- agricultural_areas_input
+  } else {
+    assert_that(!is.null(lulc_raster), msg = "When 'agricultural_areas_input' is NULL, 'lulc_raster' must be provided.")
+    cat("Extracting agricultural areas from LULC raster...\n")
+    agricultural_areas <- elsar::make_normalised_raster(
+      raster_in = lulc_raster,
+      pus = pus,
+      iso3 = iso3,
+      method_override = "bilinear",
+      input_raster_conditional_expression = function(x) terra::ifel(x == agriculture_lulc_value, 1, 0)
+    )
   }
 
-  # Resample and align HII raster
-  cat("Processing Human Industrial Footprint Index (HII)...\n")
-  hii_resampled <- make_normalised_raster(
+  # Built-up areas
+  cat("Processing built-up areas...\n")
+  if (!is.null(built_areas_input)) {
+    built_areas <- built_areas_input
+  } else {
+    assert_that(!is.null(lulc_raster), msg = "When 'built_areas_input' is NULL, 'lulc_raster' must be provided.")
+    built_areas <- elsar::make_normalised_raster(
+      raster_in = lulc_raster,
+      pus = pus,
+      iso3 = iso3,
+      method_override = "bilinear",
+      input_raster_conditional_expression = function(x) terra::ifel(x == built_area_lulc_value, 1, 0)
+    )
+  }
+
+  # Human Industrial Footprint Index (HII) layer
+  cat("Processing HII layer...\n")
+  hii_resampled <- elsar::make_normalised_raster(
     raster_in = hii_input,
     pus = pus,
     iso3 = iso3,
@@ -121,11 +155,9 @@ make_restore_zone <- function(
     method_override = "bilinear"
   )
 
-  # Save intermediate outputs
+  # Helper function to save rasters
   save_raster <- function(raster, filename, datatype = "FLT4S") {
-    # Determine the correct predictor value based on datatype
     predictor_value <- ifelse(datatype == "FLT4S", "3", "1")
-
     terra::writeRaster(
       raster,
       filename = filename,
@@ -133,23 +165,27 @@ make_restore_zone <- function(
       datatype = datatype,
       gdal = c(
         "COMPRESS=ZSTD",
-        glue::glue("PREDICTOR={predictor_value}"),  # Set appropriate predictor
+        glue::glue("PREDICTOR={predictor_value}"),
         "NUM_THREADS=ALL_CPUS",
         "OVERVIEWS=NONE"
       ),
       overwrite = TRUE
     )
-
-    cat(glue::glue("Saved: {filename}"), "\n")
+    cat(glue::glue("Saved: {filename}."), "\n")
   }
 
+  # Optional output of intermediate layers
   if (!is.null(output_path)) {
-    save_raster(agricultural_areas, glue::glue("{output_path}/agriculture_areas_{iso3}.tif"))
-    save_raster(built_areas, glue::glue("{output_path}/built_areas_{iso3}.tif"))
+    if (!is.null(agricultural_areas_input)) {
+      save_raster(agricultural_areas, glue::glue("{output_path}/agriculture_areas_{iso3}.tif"))
+    }
+    if (!is.null(built_areas_input)) {
+      save_raster(built_areas, glue::glue("{output_path}/built_areas_{iso3}.tif"))
+    }
     save_raster(hii_resampled, glue::glue("{output_path}/hii_{iso3}.tif"))
   }
 
-  # Create degraded areas mask
+  # Combine degradation indicators into restore zone v1 (the Default Restore Zone)
   restore_zone <- terra::ifel(
     agricultural_areas > lulc_threshold |
       built_areas > lulc_threshold |
@@ -158,19 +194,26 @@ make_restore_zone <- function(
     1, 0
   )
 
-  if (filter_patch_size) {
-    restore_zone <- terra::sieve(restore_zone, threshold = min_patch_size)
-  }
+  # Create Restore Zone v2 (the alternative Restore Zone) as only degraded forest areas
+  restore_zone_alt <- terra::ifel(
+    restore_zone == 1 & iucn_get_forest_input > iucn_get_forest_threshold,
+    1, 0
+  )
 
-  names(restore_zone) <- "restore_zone"
+  # Combine outputs
+  restore_zones <- c(restore_zone, restore_zone_alt)
+  names(restore_zones) <- c("restore_zone_v1", "restore_zone_v2")
+
+  # Optionally remove small patches (default behaviour)
+  if (filter_patch_size) {
+    restore_zones[[1]] <- terra::sieve(restore_zones[[1]], threshold = min_patch_size)
+    restore_zones[[2]] <- terra::sieve(restore_zones[[2]], threshold = min_patch_size)
+  }
 
   # Save final output
   if (!is.null(output_path)) {
-    save_raster(
-      restore_zone,
-      glue::glue("{output_path}/restore_zone_{iso3}.tif"),
-      datatype = "INT1U")
+    save_raster(restore_zones, glue::glue("{output_path}/restore_zones_{iso3}.tif"), datatype = "INT1U")
   }
 
-  return(restore_zone)
+  return(restore_zones)
 }

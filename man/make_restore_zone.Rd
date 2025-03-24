@@ -8,12 +8,15 @@ make_restore_zone(
   iso3,
   pus,
   sdg_degradation_input = NULL,
-  agri_raster = NULL,
-  built_raster = NULL,
+  agricultural_areas_input = NULL,
+  built_areas_input = NULL,
+  lulc_raster = NULL,
   hii_input = NULL,
+  iucn_get_forest_input = NULL,
   sdg_threshold = 0.1,
   lulc_threshold = 0.1,
   hii_threshold = 4,
+  iucn_get_forest_threshold = 0.1,
   agriculture_lulc_value = 4,
   built_area_lulc_value = 7,
   filter_patch_size = TRUE,
@@ -23,49 +26,66 @@ make_restore_zone(
 )
 }
 \arguments{
-\item{iso3}{A character string representing the ISO3 country code (e.g., "CHL" for Chile).}
+\item{iso3}{Character. ISO3 country code (e.g., "CHL").}
 
-\item{pus}{A \code{SpatRaster} defining the planning units grid.}
+\item{pus}{SpatRaster. Planning units raster used to define resolution and extent.}
 
-\item{sdg_degradation_input}{A \code{SpatRaster} representing productivity degradation data (default: \code{NULL}).}
+\item{sdg_degradation_input}{SpatRaster. SDG degradation raster input.}
 
-\item{agri_raster}{A \code{SpatRaster} of land use/land cover (LULC) data (default: \code{NULL}) filtered for agricultural areas. Can be processed or unprocessed (if unprocessed: can be the same input as built_raster)}
+\item{agricultural_areas_input}{SpatRaster or NULL. Optional input raster for agricultural areas. If NULL, \code{lulc_raster} must be provided.}
 
-\item{built_raster}{A \code{SpatRaster} of land use/land cover (LULC) data (default: \code{NULL}) filtered for built-up areas. Can be processed or unprocessed (if unprocessed: can be the same input as agri_raster)}
+\item{built_areas_input}{SpatRaster or NULL. Optional input raster for built-up areas. If NULL, \code{lulc_raster} must be provided.}
 
-\item{hii_input}{A \code{SpatRaster} of the Human Industrial Footprint Index (HII) (default: \code{NULL}).}
+\item{lulc_raster}{SpatRaster or NULL. LULC raster used to derive agriculture/built areas if not directly provided. Assumes using the ESRI 10m LULC dataset.}
 
-\item{sdg_threshold}{A numeric threshold for productivity degradation classification (default: \code{0.1}).}
+\item{hii_input}{SpatRaster. Human Industrial Footprint Index (HII) raster.}
 
-\item{lulc_threshold}{A numeric threshold for agriculture and built-up areas classification (default: \code{0.1}).}
+\item{iucn_get_forest_input}{SpatRaster. IUCN GET forest raster used to create \code{restore_zone_v2}.}
 
-\item{hii_threshold}{A numeric threshold for identifying human impact areas in HII (default: \code{4}).}
+\item{sdg_threshold}{Numeric. Threshold for SDG degradation to classify as degraded (default: 0.1).}
 
-\item{agriculture_lulc_value}{The LULC classification value representing agricultural areas, based on the ESRI 10m LULC dataset (default: \code{4}).}
+\item{lulc_threshold}{Numeric. Threshold for agri/built classification (default: 0.1).}
 
-\item{built_area_lulc_value}{The LULC classification value representing built-up areas, based on the ESRI 10m LULC dataset (default: \code{7}).}
+\item{hii_threshold}{Numeric. HII threshold for defining high human pressure (default: 4).}
 
-\item{filter_patch_size}{Logical; if \code{TRUE}, small patches below \code{min_patch_size} are removed (default: \code{TRUE}).}
+\item{iucn_get_forest_threshold}{Numeric. Minimum forest cover value to retain in restore zone 2 (default: 0.1).}
 
-\item{min_patch_size}{The minimum patch size (in pixels) to retain during filtering (default: \code{10}).}
+\item{agriculture_lulc_value}{Integer. LULC value representing agriculture if derived from \code{lulc_raster} (default: 4).}
 
-\item{output_path}{A character string specifying the directory to save output rasters (default: \code{NULL}, i.e., not saved).}
+\item{built_area_lulc_value}{Integer. LULC value representing built-up areas if derived from \code{lulc_raster} (default: 7).}
 
-\item{threads}{Logical; whether to enable multi-threaded processing where available (default: \code{TRUE}).}
+\item{filter_patch_size}{Logical. Whether to remove small isolated patches (default: TRUE).}
+
+\item{min_patch_size}{Integer. Minimum number of connected pixels to retain (default: 10).}
+
+\item{output_path}{Character or NULL. Directory to save output rasters. If NULL, outputs are returned but not saved (default: NULL).}
+
+\item{threads}{Logical. Whether to use multithreading where possible (default: TRUE).}
 }
 \value{
-A \code{SpatRaster} object representing degraded areas for restoration, classified as \code{1} (degraded) and \code{0} (not degraded).
-If \code{output_path} is provided, the raster is saved as a Cloud-Optimized GeoTIFF (COG).
+A \code{SpatRaster} with two layers:
+\itemize{
+\item \code{restore_zone_v1}: Degraded areas based on SDG, LULC, and HII thresholds
+\item \code{restore_zone_v2}: \code{v1} masked by IUCN forest coverage
+}
 }
 \description{
-This function identifies degraded areas for potential restoration efforts. It integrates multiple input layers, including:
+This function identifies degraded areas for potential restoration based on a combination of:
 \itemize{
-\item \strong{Productivity degradation data (SDG degradation)}
-\item \strong{Land use/land cover (LULC) for agriculture and built-up areas}
+\item \strong{SDG productivity degradation data}
+\item \strong{Agricultural and built-up areas} (either provided or derived from a LULC raster)
 \item \strong{Human Industrial Footprint Index (HII)}
-The function applies user-defined thresholds to classify degraded areas and optionally filters small patches to remove noise.
-Intermediate layers (agriculture, built-up areas, and HII) can also be saved if \code{output_path} is provided.
+\item \strong{IUCN GET forest ecosystems coverage} (used to create \code{restore_zone_v1} and \code{restore_zone_v2})
 }
+}
+\details{
+The function applies user-defined thresholds to generate two outputs:
+\itemize{
+\item \code{restore_zone_v1}: Based on SDG degradation, agriculture, built-up, and HII thresholds
+\item \code{restore_zone_v2}: Same as \code{v1} but masked by IUCN GET forest extent
+}
+
+If \code{output_path} is provided, the intermediate layers and final output are saved as Cloud Optimized GeoTIFFs.
 }
 \examples{
 \dontrun{
@@ -73,9 +93,24 @@ restore_zone <- make_restore_zone(
   iso3 = "CHL",
   pus = planning_units,
   sdg_degradation_input = sdg_raster,
-  lulc_raster = landcover_raster,
+  agricultural_areas_input = NULL,
+  built_areas_input = NULL,
+  lulc_raster = lulc_input,
   hii_input = hii_raster,
-  output_path = "path/to/output"
+  iucn_get_forest_input = forest_raster,
+  output_path = "outputs/"
+)
+
+restore_zone <- make_restore_zone(
+  iso3 = "CHL",
+  pus = planning_units,
+  sdg_degradation_input = sdg_raster,
+  agricultural_areas_input = ag_areas_input,
+  built_areas_input = built_areas_input,
+  lulc_raster = NULL,
+  hii_input = hii_raster,
+  iucn_get_forest_input = forest_raster,
+  output_path = "outputs/"
 )
 }
 }

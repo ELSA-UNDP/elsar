@@ -2,69 +2,93 @@
 % Please edit documentation in R/make_manage_zone.R
 \name{make_manage_zone}
 \alias{make_manage_zone}
-\title{Generate Sustainable Management Zone}
+\title{Generate Sustainable Management Zones for ELSA Analysis}
 \usage{
 make_manage_zone(
   iso3,
   pus,
-  mf_raster = NULL,
-  agri_raster = NULL,
-  built_raster = NULL,
-  hfp_raster = NULL,
-  hfp_threshold = 10,
-  agriculture_lulc_value = 4,
+  managed_forests_input,
+  agricultural_areas_input = NULL,
+  built_areas_input = NULL,
+  lulc_raster = NULL,
+  hii_input = NULL,
+  hii_threshold = 10,
+  agriculture_lulc_value = 5,
   built_area_lulc_value = 7,
+  forest_classes = c(20, 31, 32, 40, 53),
+  forest_class_threshold = 0.1,
+  agriculture_threshold = 0.1,
+  built_areas_threshold = 0.1,
   filter_patch_size = TRUE,
   min_patch_size = 10,
-  output_path = NULL,
-  threads = TRUE
+  output_path = NULL
 )
 }
 \arguments{
-\item{iso3}{A character string representing the ISO3 country code (e.g., "CHL" for Chile).}
+\item{iso3}{Character. ISO3 country code (e.g., "CHL").}
 
-\item{pus}{A \code{SpatRaster} defining the planning units grid.}
+\item{pus}{SpatRaster. Planning units raster to which all inputs are aligned.}
 
-\item{mf_raster}{A \code{SpatRaster} of Managed Forests (default: \code{NULL}).}
+\item{managed_forests_input}{SpatRaster. A raster of forest classes to identify managed forests.}
 
-\item{agri_raster}{A \code{SpatRaster} of land use/land cover (LULC) data (default: \code{NULL}) filtered for agricultural areas. Can be processed or unprocessed (if unprocessed: can be the same input as built_raster)}
+\item{agricultural_areas_input}{SpatRaster. A binary or categorical raster representing agricultural areas.}
 
-\item{built_raster}{A \code{SpatRaster} of land use/land cover (LULC) data (default: \code{NULL}) filtered for built-up areas. Can be processed or unprocessed (if unprocessed: can be the same input as agri_raster)}
+\item{built_areas_input}{SpatRaster. A binary or categorical raster representing built-up/urban areas.}
 
-\item{hfp_raster}{A \code{SpatRaster} of the Human Footprint Index (HFP) (default: \code{NULL}).}
+\item{lulc_raster}{SpatRaster or NULL. Optional raw LULC input used to extract agriculture and built-up layers if those inputs are categorical.}
 
-\item{hfp_threshold}{A numeric threshold for identifying human impact areas in HFP (default: \code{10}).}
+\item{hii_input}{SpatRaster. Human Footprint Index raster.}
 
-\item{agriculture_lulc_value}{The LULC classification value representing agricultural areas, based on the ESRI 10m LULC dataset (default: \code{4}).}
+\item{hii_threshold}{Numeric. Threshold to define "middle" HFP range. If 0.2–0.8 quantiles are desired, this is ignored.}
 
-\item{built_area_lulc_value}{The LULC classification value representing built-up areas, based on the ESRI 10m LULC dataset (default: \code{7}).}
+\item{agriculture_lulc_value}{Integer. LULC value for agriculture (default = 4).}
 
-\item{filter_patch_size}{Logical; if \code{TRUE}, small patches below \code{min_patch_size} are removed (default: \code{TRUE}).}
+\item{built_area_lulc_value}{Integer. LULC value for built-up areas (default = 5).}
 
-\item{min_patch_size}{The minimum patch size (in pixels) to retain during filtering (default: \code{10}).}
+\item{forest_classes}{Integer vector. LULC values representing managed forests (default = c(20, 31, 32, 40, 53)).}
 
-\item{output_path}{A character string specifying the directory to save output rasters (default: \code{NULL}, i.e., not saved).}
+\item{forest_class_threshold}{Numeric. Minimum proportion of managed forest in a cell to include (default = 0.1).}
 
-\item{threads}{Logical; whether to enable multi-threaded processing where available (default: \code{TRUE}).}
+\item{agriculture_threshold}{Numeric. Minimum proportion of agriculture in a cell to include (default = 0.1).}
 
-\item{lulc_threshold}{A numeric threshold for agriculture and built-up areas classification (default: \code{0.1}).}
+\item{built_areas_threshold}{Numeric. Threshold above which cells are considered built-up and excluded (default = 0.1).}
+
+\item{filter_patch_size}{Logical. Whether to remove small patches (default = TRUE).}
+
+\item{min_patch_size}{Integer. Minimum size of patches to retain (in cells; default = 10).}
+
+\item{output_path}{Character or NULL. If provided, save result to this path as a COG (default = NULL).}
 }
 \value{
-A \code{SpatRaster} object representing degraded areas for restoration, classified as \code{1} (degraded) and \code{0} (not degraded).
-If \code{output_path} is provided, the raster is saved as a Cloud-Optimized GeoTIFF (COG).
+A SpatRaster with two layers: \code{manage_zone_v1} and \code{manage_zone_v2}.
 }
 \description{
-Manage zone: 0<HFP<10 (middle 60\% of whole country), include all managed forests and agricultural areas, NOT include urban areas#####
+This function identifies planning units eligible for the "Manage" zone under the ELSA framework.
+The zone (default) includes areas with a moderate level of human influence (HII between
+20th and 80th percentiles), all managed forest types, and agricultural areas, but
+explicitly excludes built-up areas. An alternative zone includes is limtied to all
+agricultural areas.
+}
+\details{
+Two layers are returned:
+\itemize{
+\item \code{manage_zone_v1}: Based on HII quantile range, agriculture, and managed forests (excluding built-up areas)
+\item \code{manage_zone_v2}: Simplified zone based on agriculture only
+}
+
+If \code{output_path} is provided, both layers are saved as a (multiband) Cloud Optimized GeoTIFF (COG).
 }
 \examples{
 \dontrun{
-restore_zone <- make_restore_zone(
+manage_zone <- make_manage_zone(
   iso3 = "CHL",
   pus = planning_units,
-  sdg_degradation_input = sdg_raster,
+  managed_forests_input = forest_raster,
+  agricultural_areas_input = agri_raster,
+  built_areas_input = built_raster,
   lulc_raster = landcover_raster,
-  hii_input = hii_raster,
-  output_path = "path/to/output"
+  hii_input = hfp_raster,
+  output_path = "outputs/"
 )
 }
 }

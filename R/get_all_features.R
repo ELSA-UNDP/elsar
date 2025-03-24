@@ -19,12 +19,13 @@
 #'                               pus = pus,
 #'                               iso3 = "NPL")
 #' }
-get_all_features <- function (feature_list, # needs lyr info added in somewhere
-                     path_in,
-                     pus,
-                     iso3,
-                     output_path = NULL,
-                     ...) {
+get_all_features <- function (
+    feature_list, # needs lyr info added in somewhere
+    path_in,
+    pus,
+    iso3,
+    output_path = NULL,
+    ...) {
   # init out raster
   raster_out <- pus
 
@@ -32,35 +33,50 @@ get_all_features <- function (feature_list, # needs lyr info added in somewhere
   if (any(c("FML", "fml", "certified_forests", "Certified_Forests") %in% feature_list)) {
     message("Processing certified forests data (FML)")
 
-    list_dat <- extract_filename_filetype(data_name = "FML", #currently hard-coded; maybe change later; or make dictionary input that gives all the data options and takes e.g. certified_forests = "FML" or NULL when data not wanted.
-                                          file_path = path_in)
+    list_dat <- extract_filename_filetype(
+      data_name = "FML", #currently hard-coded; maybe change later; or make dictionary input that gives all the data options and takes e.g. certified_forests = "FML" or NULL when data not wanted.
+      file_path = path_in)
 
-    raster_fml <- elsar_load_data(file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
-                             file_type = list_dat["filetype"][[1]], file_path = path_in)
+    raster_fml <- elsar_load_data(
+      file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
+      file_type = list_dat["filetype"][[1]],
+      file_path = path_in
+      )
 
-    fml <- make_normalised_raster(raster_in = raster_fml,
-                                            pus = pus,
-                                            iso3 = iso3,
-                                            output_path = output_path,
-                                            name_out = "FML")
+    fml <- make_normalised_raster(
+      raster_in = raster_fml,
+      pus = pus,
+      iso3 = iso3,
+      output_path = output_path,
+      name_out = "FML"
+      )
+
     raster_out <- c(raster_out, fml)
   }
 
   if (any(c("cropsuit", "crop_suitability", "crop_suitability_difference") %in% feature_list)) {
     message("Processing crop suitability difference data (cropsuit)")
 
-    list_dat <- extract_filename_filetype(data_name = "cropsuit", #currently hard-coded; maybe change later; or make dictionary input that gives all the data options and takes e.g. certified_forests = "FML" or NULL when data not wanted.
-                                          file_path = path_in)
+    list_dat <- extract_filename_filetype(
+      data_name = "cropsuit", #currently hard-coded; maybe change later; or make dictionary input that gives all the data options and takes e.g. certified_forests = "FML" or NULL when data not wanted.
+      file_path = path_in
+      )
 
-    raster_cropsuit <- elsar_load_data(file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
-                            file_type = list_dat["filetype"][[1]], file_path = path_in)
+    raster_cropsuit <- elsar_load_data(
+      file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
+      file_type = list_dat["filetype"][[1]],
+      file_path = path_in
+      )
 
-    cropsuit <- make_normalised_raster(raster_in = raster_cropsuit,
-                                  pus = pus,
-                                  iso3 = iso3,
-                                  invert = TRUE,
-                                  output_path = output_path,
-                                  name_out = "cropsuit")
+    cropsuit <- make_normalised_raster(
+      raster_in = raster_cropsuit,
+      pus = pus,
+      iso3 = iso3,
+      invert = TRUE,
+      output_path = output_path,
+      name_out = "cropsuit"
+      )
+
     raster_out <- c(raster_out, cropsuit)
   }
 
@@ -70,71 +86,105 @@ get_all_features <- function (feature_list, # needs lyr info added in somewhere
     list_dat <- extract_filename_filetype(data_name = " ", #currently hard-coded; maybe change later; or make dictionary input that gives all the data options and takes e.g. certified_forests = "FML" or NULL when data not wanted.
                                           file_path = path_in)
 
-    raster_dr <- elsar_load_data(file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
-                            file_type = list_dat["filetype"][[1]], file_path = path_in)
+    raster_dr <- elsar_load_data(
+      file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
+      file_type = list_dat["filetype"][[1]],
+      file_path = path_in
+      )
 
-    dr <- make_normalised_raster(raster_in = raster_dr,
-                                  pus = pus,
-                                  iso3 = iso3,
-                                  output_path = output_path,
-                                  name_out = " ")
+    dr <- make_normalised_raster(
+      raster_in = raster_dr,
+      pus = pus,
+      iso3 = iso3,
+      output_path = output_path,
+      name_out = " "
+      )
+
     raster_out <- c(raster_out, dr)
   }
 
   if (any(c("fi", "forest_integrity", "Forest_Integrity") %in% feature_list)) {
     message("Processing forest integrity data")
 
-    list_dat <- extract_filename_filetype(data_name = "flii",
-                                          file_path = path_in)
+    list_dat <- extract_filename_filetype(
+      data_name = "flii",
+      file_path = path_in
+      )
 
-    raster_flii <- elsar_load_data(file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
-                             file_type = list_dat["filetype"][[1]], file_path = path_in)
+    raster_flii <- elsar_load_data(
+      file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
+      file_type = list_dat["filetype"][[1]],
+      file_path = path_in
+      )
 
-    list_dat <- extract_filename_filetype(data_name = "fsii",
-                                          file_path = path_in)
+    list_dat <- extract_filename_filetype(
+      data_name = "fsii",
+      file_path = path_in
+      )
 
-    raster_fsii <- elsar_load_data(file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
-                             file_type = list_dat["filetype"][[1]], file_path = path_in)
+    raster_fsii <- elsar_load_data(
+      file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
+      file_type = list_dat["filetype"][[1]],
+      file_path = path_in
+      )
 
+    fi <- make_forest_integrity(
+      raster_flii = raster_flii,
+      raster_fsii = raster_fsii,
+      pus = pus,
+      output_path = output_path
+      )
 
-    fi <- make_forest_integrity(raster_flii = raster_flii,
-                                              raster_fsii = raster_fsii,
-                                              pus = pus,
-                                              output_path = output_path)
     raster_out <- c(raster_out, fi)
   }
 
   if (any(c("soc_at_risk", "vulnerable_soc", "soc") %in% feature_list)) {
     message("Processing vulnerable soil organic carbon difference data")
 
-    list_dat <- extract_filename_filetype(data_name = "soc", #currently hard-coded; maybe change later; or make dictionary input that gives all the data options and takes e.g. certified_forests = "FML" or NULL when data not wanted.
-                                          file_path = path_in)
+    list_dat <- extract_filename_filetype(
+      data_name = "soc", #currently hard-coded; maybe change later; or make dictionary input that gives all the data options and takes e.g. certified_forests = "FML" or NULL when data not wanted.
+      file_path = path_in
+      )
 
-    raster_soc <- elsar_load_data(file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
-                           file_type = list_dat["filetype"][[1]], file_path = path_in)
+    raster_soc <- elsar_load_data(
+      file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
+      file_type = list_dat["filetype"][[1]],
+      file_path = path_in
+      )
 
-    soc <- make_normalised_raster(raster_in = raster_soc,
-                                 pus = pus,
-                                 iso3 = iso3,
-                                 output_path = output_path,
-                                 name_out = "soc_at_risk")
+    soc <- make_normalised_raster(
+      raster_in = raster_soc,
+      pus = pus,
+      iso3 = iso3,
+      output_path = output_path,
+      name_out = "soc_at_risk"
+      )
+
     raster_out <- c(raster_out, soc)
   }
 
   if (any(c("wad") %in% feature_list)) {
     message("Processing WAD convergence evidence data")
 
-    list_dat <- extract_filename_filetype(data_name = "wad", #currently hard-coded; maybe change later; or make dictionary input that gives all the data options and takes e.g. certified_forests = "FML" or NULL when data not wanted.
-                                          file_path = path_in)
+    list_dat <- extract_filename_filetype(
+      data_name = "wad", #currently hard-coded; maybe change later; or make dictionary input that gives all the data options and takes e.g. certified_forests = "FML" or NULL when data not wanted.
+      file_path = path_in
+      )
 
-    raster_wad <- elsar_load_data(file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
-                            file_type = list_dat["filetype"][[1]], file_path = path_in)
+    raster_wad <- elsar_load_data(
+      file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
+      file_type = list_dat["filetype"][[1]],
+      file_path = path_in
+      )
 
-    wad <- make_normalised_raster(raster_in = raster_wad,
-                                  pus = pus,
-                                  iso3 = iso3,
-                                  output_path = output_path,
-                                  name_out = "wad")
+    wad <- make_normalised_raster(
+      raster_in = raster_wad,
+      pus = pus,
+      iso3 = iso3,
+      output_path = output_path,
+      name_out = "wad"
+      )
+
     raster_out <- c(raster_out, wad)
   }
 
