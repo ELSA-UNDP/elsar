@@ -905,11 +905,11 @@ for (l in 1:length(zones_list)) {
   if (zones_list[[l]] == "Protection Zone") {
     print("Protection Zone")
 
-    protection_zone <- make_protection_zone(
-      hfp_in = raster_hfp,
-      crop_in = raster_agri,
-      built_in = raster_urban,
-      hfp_threshold = 17, # DOUBLE CHECK THIS NUMBER WITH DI, IS 17 IN NEW BRAZIL SCRIPT. Where does this come from?
+    protection_zone <- make_protect_zone(
+      hii_input = raster_hfp,
+      agricultural_areas_input = raster_agri,
+      built_areas_input = raster_urban,
+      #hii_threshold = 17, # DOUBLE CHECK THIS NUMBER WITH DI, IS 17 IN NEW BRAZIL SCRIPT. Where does this come from?
       pus = pus,
       iso3 = iso3
     )
@@ -930,9 +930,9 @@ for (l in 1:length(zones_list)) {
       iso3 = iso3,
       pus = pus,
       sdg_degradation_input = sdg_raster,
-      agri_raster = raster_agri,
-      built_raster = raster_urban,
-      mf_raster = ,
+      agricultural_areas_input = raster_agri,
+      built_areas_input = raster_urban,
+      iucn_get_forest_input = ,
       hii_input = hii_raster
     )
 
@@ -949,11 +949,11 @@ for (l in 1:length(zones_list)) {
     print("Management Zone")
 
     management_zone <- make_manage_zone(
-      hfp_raster = raster_hfp,
-      agri_raster = raster_agri,
-      built_raster = raster_urban,
-      mf_raster = raster_mf,
-      hfp_threshold = 10, # DOUBLE CHECK THIS NUMBER WITH DI, IS 17 IN NEW BRAZIL SCRIPT. Where does this come from?
+      hii_input = raster_hfp,
+      agricultural_areas_input = raster_agri,
+      built_areas_input = raster_urban,
+      managed_forests_input = ,
+      hii_threshold = 10, # DOUBLE CHECK THIS NUMBER WITH DI, IS 17 IN NEW BRAZIL SCRIPT. Where does this come from?
       pus = pus,
       iso3 = iso3
     )

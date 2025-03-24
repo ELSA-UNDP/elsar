@@ -13,16 +13,16 @@
 #' \dontrun{
 #' raster_rescaled <- rescale_raster(dat_aligned)
 #' }
-rescale_raster <- function(raster_in,
-                           raster_in_min = terra::global(raster_in, min, na.rm = TRUE)$min,
-                           raster_in_max = terra::global(raster_in, max, na.rm = TRUE)$max,
-                           new_min = 0,
-                           new_max = 1){
+rescale_raster <- function(
+    raster_in,
+    raster_in_min = terra::global(raster_in, min, na.rm = TRUE)$min,
+    raster_in_max = terra::global(raster_in, max, na.rm = TRUE)$max,
+    new_min = 0,
+    new_max = 1){
   if(is.null(raster_in_min)) raster_in_min = terra::global(raster_in, min, na.rm = TRUE)$min
   if(is.null(raster_in_max)) raster_in_max = terra::global(raster_in, max, na.rm = TRUE)$max
   new_min + (raster_in - raster_in_min) * ((new_max - new_min) / (raster_in_max - raster_in_min))
 }
-
 
 #' Create Buffered Polygons from Point Geometries
 #'
@@ -49,12 +49,13 @@ rescale_raster <- function(raster_in,
 #' buffered_polygons <- convert_points_polygon(wdpa_layer = pa,
 #'       area_crs = sf::st_crs(pa))
 #'       }
-convert_points_polygon <- function(wdpa_layer,
-                                   area_attr = "REP_AREA",
-                                   area_crs = "ESRI:54009", # Calculates areas by default using the World Mollweide projection, per Protected Planet
-                                   nQuadSegs = 50,
-                                   append_sf = TRUE,
-                                   area_multiplier = 1e6) {
+convert_points_polygon <- function(
+    wdpa_layer,
+    area_attr = "REP_AREA",
+    area_crs = "ESRI:54009", # Calculates areas by default using the World Mollweide projection, per Protected Planet
+    nQuadSegs = 50,
+    append_sf = TRUE,
+    area_multiplier = 1e6) {
   # Error checking for input types
   if (!inherits(wdpa_layer, "sf")) {
     stop("wdpa_layer must be an sf object.")
@@ -83,10 +84,11 @@ convert_points_polygon <- function(wdpa_layer,
   points_transformed <- sf::st_transform(points_with_area, crs = area_crs)
 
   # Calculate the buffer distance
-  points_buffered <- sf::st_buffer(points_transformed,
-                                   dist = sqrt((as.numeric(sf::st_drop_geometry(points_with_area)[[area_attr]]) * area_multiplier) / pi), #1e4 if ha, 1e6 if km
-                                   nQuadSegs = nQuadSegs
-  )
+  points_buffered <- sf::st_buffer(
+    points_transformed,
+    dist = sqrt((as.numeric(sf::st_drop_geometry(points_with_area)[[area_attr]]) * area_multiplier) / pi), #1e4 if ha, 1e6 if km
+    nQuadSegs = nQuadSegs
+    )
 
   # Transform back to the original CRS
   points_buffered <- sf::st_transform(points_buffered, crs = sf::st_crs(wdpa_layer))
