@@ -2,28 +2,18 @@
 % Please edit documentation in R/utils.R
 \name{get_coverage}
 \alias{get_coverage}
-\title{Calculate country areal coverage (as a percentage) of an input binary layer, likely representing a zone.}
+\title{Calculate Areal Coverage of a Zone Relative to Planning Units}
 \usage{
 get_coverage(zone_layer, pu_layer)
 }
 \arguments{
-\item{zone_layer}{A binary \code{spatRast} representing a zone or protected area type feature.}
+\item{zone_layer}{A binary \code{SpatRaster} representing a target zone.}
 
-\item{pu_layer}{A binary \code{spatRast} representing the planning units.}
+\item{pu_layer}{A binary \code{SpatRaster} representing planning units.}
 }
 \value{
-A vector of areal targets of length 1.
+Numeric. Percentage of zone coverage across PUs.
 }
 \description{
-Calculate country areal coverage (as a percentage) of an input binary layer, likely representing a zone.
-}
-\examples{
-\dontrun{
-   get_coverage(PA, pu)
-   get_coverage(zone_protect, pu)
-   get_coverage(zone_manage, pu)
-}
-}
-\seealso{
-\code{\link[terra:global]{terra::global()}} which this function wraps.
+Calculates percentage of a zone layer relative to the total area of planning units.
 }

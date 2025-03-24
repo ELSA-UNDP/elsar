@@ -2,32 +2,48 @@
 % Please edit documentation in R/get_iucn_forests.R
 \name{get_iucn_forests}
 \alias{get_iucn_forests}
-\title{Extract and rasterise IUCN GET forest ecosystems vector layers}
+\title{Extract and Rasterise IUCN GET Forest Ecosystems}
 \usage{
-get_iucn_forests(iucn_get_directory, pus, iso3, output_path = NULL)
+get_iucn_forests(
+  iucn_get_directory,
+  iso3,
+  pus,
+  iucn_get_prefixes = "T",
+  include_minor_occurence = TRUE,
+  output_path = NULL
+)
 }
 \arguments{
 \item{iucn_get_directory}{Character. Path to the directory containing the IUCN \code{.gpkg} files.}
 
+\item{iso3}{Character. ISO3 country code, used for naming and passed to \code{make_normalised_raster()}.}
+
 \item{pus}{SpatRaster. The planning units raster (terra object) over which to compute forest coverage.}
 
-\item{iso3}{Character. ISO3 country code, passed to \code{make_normalised_raster()}.}
+\item{include_minor_occurence}{Logical. Whether to include polygons marked as minor occurrence (default = TRUE).}
 
-\item{output_path}{Optional character. Path to save the output raster as a GeoTIFF. If \code{NULL} (default), the raster is not written to disk.}
+\item{output_path}{Optional character. If provided, the output raster is saved to this directory as a GeoTIFF.}
 }
 \value{
-A normalized raster of IUCN forest coverage aligned to the input planning units.
+A normalized \code{SpatRaster} showing fractional IUCN forest coverage across planning units.
 }
 \description{
-This function reads and merges all \code{.gpkg} files in a specified directory
-that start with \code{T1}, \code{T2}, etc. (but not \code{TF}) — these represent forest classes
-in the IUCN GET Methodology — and intersect with the extent of a planning units
-raster. The merged features are used to compute coverage fractions over the
-planning units using \code{exactextractr}, and then normalized via
-\code{elsar::make_normalised_raster()}. If \code{output_path} is provided, the result
-will be written to a GeoTIFF.
+This function extracts forest ecosystem vector layers from IUCN GET \code{.gpkg} files
+(those starting with \code{"T"}), merges and dissolves them, and calculates the proportional
+coverage of forests across each planning unit using \code{exactextractr}. The result is then
+normalized to a 0–1 scale using \code{elsar::make_normalised_raster()}.
+}
+\details{
+Optionally, the result can be written to a Cloud-Optimized GeoTIFF file.
 }
 \examples{
-pus <- terra::rast("path/to/planning_units.tif")
-forests <- get_iucn_forests("data/iucn_layers/", pus, iso3 = "KEN", output_path = "forest_cover.tif")
+\dontrun{
+pus <- terra::rast("data/pus.tif")
+forest_layer <- get_iucn_forests(
+  iucn_get_directory = "data/iucn_layers",
+  pus = pus,
+  iso3 = "KEN",
+  output_path = "outputs"
+)
+}
 }
