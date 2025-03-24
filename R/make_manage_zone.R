@@ -181,7 +181,7 @@ make_manage_zone <- function(
   manage_zone <- terra::ifel(built_areas > built_areas_threshold, 0, manage_zone)
 
   # Secondary zone (agriculture only)
-  cat("Creating the alternatuve manage zone using agricultural areas only...\n")
+  cat("Creating the alternative manage zone using agricultural areas only...\n")
   manage_zone_alt <- terra::ifel(agricultural_areas > agriculture_threshold, 1, 0)
 
   # Combine into multi-layer SpatRaster
@@ -190,7 +190,7 @@ make_manage_zone <- function(
 
   # Filter out small patches
   if (filter_patch_size) {
-    cat(glue::glue("Sieving out patch sizes smaller than {min_patch_size} pixels..."), "\n")
+    cat(glue::glue("Sieving out patch sizes smaller than {min_patch_size} planning units..."), "\n")
     manage_zones[[1]] <- terra::sieve(manage_zones[[1]], threshold = min_patch_size)
     manage_zones[[2]] <- terra::sieve(manage_zones[[2]], threshold = min_patch_size)
   }
@@ -198,7 +198,7 @@ make_manage_zone <- function(
   # Save to disk if needed
   if (!is.null(output_path)) {
     filename <- glue::glue("{output_path}/manage_zone_{iso3}.tif")
-    cat(glue::glue("Saving to: {filename}..."), "\n")
+    cat(glue::glue("Saving manage zone rasters to: {filename}..."), "\n")
     terra::writeRaster(
       manage_zones,
       filename = filename,
