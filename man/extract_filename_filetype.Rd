@@ -2,18 +2,18 @@
 % Please edit documentation in R/utils.R
 \name{extract_filename_filetype}
 \alias{extract_filename_filetype}
-\title{Extract the file name and file type of data in the local path}
+\title{Extract Filename and Filetype from Directory}
 \usage{
 extract_filename_filetype(data_name, file_path)
 }
 \arguments{
-\item{data_name}{The name of the data of interest (needs to be in the way provided here in the file name)}
+\item{data_name}{Character. Name pattern of the file to search.}
 
-\item{file_path}{The local path where the data is saved.}
+\item{file_path}{Character. Path to the folder.}
 }
 \value{
-A \code{list} in the form of a dictionary that contains "filename" and "filetype". Can be used as inputs for \code{\link[=elsar_load_data]{elsar_load_data()}}.
+A named list with elements: \code{filename} and \code{filetype}.
 }
 \description{
-This is a helper function used in the wrapper function to load local data (can be extended later to work with postgres).
+Extracts the base filename and file extension for a given \code{data_name} in a specified folder.
 }

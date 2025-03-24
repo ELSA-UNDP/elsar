@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{convert_points_polygon}
 \alias{convert_points_polygon}
-\title{Create Buffered Polygons from Point Geometries}
+\title{Convert Points to Buffered Polygons Based on Area}
 \usage{
 convert_points_polygon(
   wdpa_layer,
@@ -14,33 +14,21 @@ convert_points_polygon(
 )
 }
 \arguments{
-\item{wdpa_layer}{An \code{sf} object containing point geometries and the area attribute.}
+\item{wdpa_layer}{An \code{sf} object with point or multipoint geometries and an area field.}
 
-\item{area_attr}{A character string specifying the name of the area attribute. Default is 'REP_AREA'.}
+\item{area_attr}{Name of the area attribute column (default = "REP_AREA").}
 
-\item{area_crs}{A character string specifying the coordinate reference system for area calculations. Default is 'ESRI:54009' (World Mollweide projection).}
+\item{area_crs}{CRS to use for buffering (default = 'ESRI:54009' = World Mollweide).}
 
-\item{nQuadSegs}{An integer specifying the number of segments to use for buffering. Default is 50.}
+\item{nQuadSegs}{Number of segments per circle quadrant used in buffering (default = 50).}
 
-\item{append_sf}{logical. If \code{TRUE}, returns the initial wdpa_layer with polygons instead of points. If \code{FALSE}, will only returned the points with buffers.}
+\item{append_sf}{Logical. If TRUE, append buffered geometries to existing polygons (default = TRUE).}
 
-\item{area_multiplier}{Numeric value for the buffer calculations, e.g. 1e6 for km, 1e4 for ha}
+\item{area_multiplier}{Numeric. Scaling multiplier for area units (e.g., 1e6 for km^2).}
 }
 \value{
-An \code{sf} object with buffered polygon geometries.
+An \code{sf} object with polygons for both original and buffered geometries.
 }
 \description{
-This function creates polygon buffers around point geometries within a given spatial layer.
-It uses the specified area attribute to determine the size of each buffer and transforms
-geometries into a specified coordinate reference system for accurate area calculations.
-}
-\examples{
-\dontrun{
- pa <- wdpar::wdpa_fetch("NPL",
-  wait = TRUE,
-  download_dir = here::here()
-)
-buffered_polygons <- convert_points_polygon(wdpa_layer = pa,
-      area_crs = sf::st_crs(pa))
-      }
+Converts point geometries to circular polygon buffers based on an area attribute.
 }
