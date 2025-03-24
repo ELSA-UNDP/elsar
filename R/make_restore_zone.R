@@ -116,9 +116,11 @@ make_restore_zone <- function(
   # Agricultural areas
   cat("Processing agricultural areas...\n")
   if (!is.null(agricultural_areas_input)) {
+    cat("Using previously saved agricultural areas raster...\n")
     agricultural_areas <- agricultural_areas_input
   } else {
     assert_that(!is.null(lulc_raster), msg = "When 'agricultural_areas_input' is NULL, 'lulc_raster' must be provided.")
+    cat("Extracting agricultural areas from LULC raster...\n")
     agricultural_areas <- elsar::make_normalised_raster(
       raster_in = lulc_raster,
       pus = pus,
@@ -169,7 +171,7 @@ make_restore_zone <- function(
       ),
       overwrite = TRUE
     )
-    cat(glue::glue("Saved: {filename}\n"))
+    cat(glue::glue("Saved: {filename}."), "\n")
   }
 
   # Optional output of intermediate layers
