@@ -15,10 +15,6 @@
 #' @return A `SpatRaster` representing flood abatement opportunities, rescaled between 0 and 1.
 #' If `output_path` is provided, the raster is saved as a Cloud-Optimized GeoTIFF (COG).
 #'
-#' @import terra
-#' @import glue
-#' @import elsar
-#'
 #' @export
 #'
 #' @examples
