@@ -117,8 +117,9 @@ make_urban_greening_opportunities <- function(ndvi_raster,
     dplyr::filter(!is.na(avg_intens)) %>%
     elsar::exact_rasterise(
       attribute = "avg_intens",
-      pu_layer = pus,
-      fun = mean
+      pus = pus,
+      fun = mean,
+      iso3 = iso3
     ) %>%
     elsar::rescale_raster()
 

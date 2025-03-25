@@ -12,6 +12,7 @@
 #' @param iso3 Character. ISO3 country code, used for naming and passed to `make_normalised_raster()`.
 #' @param include_minor_occurence Logical. Whether to include polygons marked as minor occurrence (default = TRUE).
 #' @param output_path Optional character. If provided, the output raster is saved to this directory as a GeoTIFF.
+#' @param boundary_layer Boundary of the planning region.
 #'
 #' @return A normalized `SpatRaster` showing fractional IUCN forest coverage across planning units.
 #' @export
@@ -32,6 +33,7 @@ get_iucn_forests <- function(
     iucn_get_directory,
     iso3,
     pus,
+    boundary_layer,
     iucn_get_prefixes = "T",
     include_minor_occurrence = TRUE,
     output_path = NULL

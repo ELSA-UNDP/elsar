@@ -337,7 +337,6 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
       sf_in = current_rast,
       pus = pus,
       iso3 = iso3,
-      output_path = output_path,
       name_out = dat_non_default[[j]]
     )
     names(mangrove_raster) <- c(dat_non_default[[j]]) # set layer name
@@ -950,7 +949,8 @@ for (k in 1:length(zones_data_incl)) {
     raster_iucnForest <- get_iucn_forests(
       iucn_get_directory = file.path(current_zone_dat$full_path, current_zone_dat$file_name),
       pus = pus,
-      iso3 = iso3
+      iso3 = iso3,
+      boundary_layer = boundary_proj
     )
 
   }
@@ -1046,11 +1046,11 @@ if ("Threatened Ecosystems for Restoration" %in% dat_non_default) {
     dplyr::filter(data_name == "Threatened Ecosystems for Restoration")
 
   # process data
-  threat_r <- make_threatened_ecosystems_protection(
+  threat_r <- make_threatened_ecosystems_restoration(
     iso3 = iso3,
     pus = pus,
     threatened_ecosystems_input = threat_p,
-    degradation_input = restore_zone[[1]]
+    degradation_input = restoration_zone[[1]]
   )
 
   names(threat_r) <- c("Threatened Ecosystems for Restoration") # set layer name

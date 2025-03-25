@@ -8,6 +8,7 @@ get_iucn_forests(
   iucn_get_directory,
   iso3,
   pus,
+  boundary_layer,
   iucn_get_prefixes = "T",
   include_minor_occurrence = TRUE,
   output_path = NULL
@@ -19,6 +20,8 @@ get_iucn_forests(
 \item{iso3}{Character. ISO3 country code, used for naming and passed to \code{make_normalised_raster()}.}
 
 \item{pus}{SpatRaster. The planning units raster (terra object) over which to compute forest coverage.}
+
+\item{boundary_layer}{Boundary of the planning region.}
 
 \item{output_path}{Optional character. If provided, the output raster is saved to this directory as a GeoTIFF.}
 
