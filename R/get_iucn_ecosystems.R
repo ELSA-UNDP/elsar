@@ -18,12 +18,6 @@
 #' @return An `sf` object containing all filtered IUCN GET ecosystem polygons intersecting the PUs extent.
 #' @export
 #'
-#' @import sf
-#' @import terra
-#' @import dplyr
-#' @import assertthat
-#' @import glue
-#'
 #' @examples
 #' \dontrun{
 #' pus <- terra::rast("data/pus_raster.tif")

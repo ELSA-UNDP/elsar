@@ -32,12 +32,6 @@
 #'
 #' @return A SpatRaster with two layers: `manage_zone_v1` and `manage_zone_v2`.
 #' @export
-#'
-#' @import terra
-#' @import glue
-#' @import assertthat
-#' @import elsar
-#'
 #' @examples
 #' \dontrun{
 #' manage_zone <- make_manage_zone(

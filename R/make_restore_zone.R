@@ -37,10 +37,6 @@
 #'
 #' @export
 #'
-#' @import terra
-#' @import glue
-#' @import assertthat
-#' @import elsar
 #'
 #' @examples
 #' \dontrun{

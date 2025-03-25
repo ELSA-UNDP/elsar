@@ -30,11 +30,6 @@
 #' @return A `SpatRaster` with values 1 (eligible) and 0 (excluded), or the inverse if `make_locked_out = TRUE`.
 #' @export
 #'
-#' @import terra
-#' @import glue
-#' @import assertthat
-#' @importFrom exactextractr exact_extract
-#'
 #' @examples
 #' \dontrun{
 #' protect_zone <- make_protect_zone(

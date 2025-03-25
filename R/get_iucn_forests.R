@@ -16,12 +16,6 @@
 #' @return A normalized `SpatRaster` showing fractional IUCN forest coverage across planning units.
 #' @export
 #'
-#' @import terra
-#' @import sf
-#' @import dplyr
-#' @import assertthat
-#' @import exactextractr
-#' @importFrom elsar make_normalised_raster
 #'
 #' @examples
 #' \dontrun{

@@ -16,13 +16,6 @@
 #' @return A normalized `SpatRaster` layer representing average underrepresentation across ecosystems.
 #' @export
 #'
-#' @import terra
-#' @import sf
-#' @import dplyr
-#' @import assertthat
-#' @import glue
-#' @import units
-#'
 #' @examples
 #' \dontrun{
 #' underrep <- make_underrepresented_ecosystems(
@@ -69,7 +62,7 @@ make_underrepresented_ecosystems <- function(
     iucn_get_directory = iucn_get_directory,
     iso3 = iso3,
     pus = pus,
-    prefixes = iucn_get_prefixes,
+    iucn_get_prefixes = iucn_get_prefixes,
     include_minor_occurence = include_minor_occurence,
     output_path = NULL
   )
