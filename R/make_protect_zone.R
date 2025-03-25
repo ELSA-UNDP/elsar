@@ -30,11 +30,6 @@
 #' @return A `SpatRaster` with values 1 (eligible) and 0 (excluded), or the inverse if `make_locked_out = TRUE`.
 #' @export
 #'
-#' @import terra
-#' @import glue
-#' @import assertthat
-#' @importFrom exactextractr exact_extract
-#'
 #' @examples
 #' \dontrun{
 #' protect_zone <- make_protect_zone(
@@ -90,14 +85,15 @@ make_protect_zone <- function(
     agricultural_areas <- agricultural_areas_input
   } else {
     assertthat::assert_that(!is.null(lulc_raster), msg = "If 'agricultural_areas_input' is NULL, 'lulc_raster' must be provided.")
-    agricultural_areas <- elsar::make_normalised_raster(
-      raster_in = lulc_raster,
-      pus = pus,
-      iso3 = iso3,
-      method_override = "bilinear",
-      input_raster_conditional_expression = function(x)
-        terra::ifel(x == agriculture_lulc_value, 1, 0)
-    )
+    agricultural_areas <- elsar::crop_global_raster(raster_in = lulc_raster, pus = pus) %>%
+      elsar::make_normalised_raster(
+        raster_in = .,
+        pus = pus,
+        iso3 = iso3,
+        method_override = "bilinear",
+        input_raster_conditional_expression = function(x)
+          terra::ifel(x == agriculture_lulc_value, 1, 0)
+        )
   }
 
   # Process built-up areas
@@ -106,25 +102,27 @@ make_protect_zone <- function(
     built_areas <- built_areas_input
   } else {
     assertthat::assert_that(!is.null(lulc_raster), msg = "If 'built_areas_input' is NULL, 'lulc_raster' must be provided.")
-    built_areas <- elsar::make_normalised_raster(
-      raster_in = lulc_raster,
-      pus = pus,
-      iso3 = iso3,
-      method_override = "bilinear",
-      input_raster_conditional_expression = function(x)
-        terra::ifel(x == built_area_lulc_value, 1, 0)
-    )
+    built_areas <-  elsar::crop_global_raster(raster_in = lulc_raster, pus = pus) %>%
+      elsar::make_normalised_raster(
+        raster_in = .,
+        pus = pus,
+        iso3 = iso3,
+        method_override = "bilinear",
+        input_raster_conditional_expression = function(x)
+          terra::ifel(x == built_area_lulc_value, 1, 0)
+        )
   }
 
   # Normalize HII
   cat("Processing HII raster...\n")
-  hii_resampled <- elsar::make_normalised_raster(
-    raster_in = hii_input,
-    pus = pus,
-    iso3 = iso3,
-    rescale = FALSE,
-    method_override = "bilinear"
-  )
+  hii_resampled <- elsar::crop_global_raster(raster_in = hii_input, pus = pus) %>%
+    elsar::make_normalised_raster(
+      raster_in = .,
+      pus = pus,
+      iso3 = iso3,
+      rescale = FALSE,
+      method_override = "bilinear"
+      )
 
   # Determine threshold from fixed value or quantile
   if (!is.null(hii_threshold)) {

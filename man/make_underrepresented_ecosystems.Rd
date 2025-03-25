@@ -8,9 +8,10 @@ make_underrepresented_ecosystems(
   iucn_get_directory,
   iso3,
   pus,
+  boundary_layer = boundary_layer,
   current_protected_areas = NULL,
   iucn_get_prefixes = NULL,
-  include_minor_occurence = TRUE,
+  include_minor_occurrence = TRUE,
   output_path = NULL
 )
 }
@@ -25,7 +26,7 @@ make_underrepresented_ecosystems(
 
 \item{iucn_get_prefixes}{Optional character vector. Filter to only include layers with specific IUCN ecosystem prefixes (e.g., "T", "M", etc.).}
 
-\item{include_minor_occurence}{Logical. Whether to include ecosystems marked as minor occurrences (default: TRUE).}
+\item{include_minor_occurrence}{Logical. Whether to include ecosystems marked as minor occurrences (default: TRUE).}
 
 \item{output_path}{Optional character. If provided, saves the output raster to this directory.}
 }
@@ -42,6 +43,7 @@ to which ecosystems are underrepresented across planning units.
 \dontrun{
 underrep <- make_underrepresented_ecosystems(
   iucn_get_directory = "data/iucn_layers",
+  boundary_layer = boundary_layer,
   iso3 = "KEN",
   pus = planning_units,
   output_path = "outputs"

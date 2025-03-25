@@ -125,47 +125,151 @@ get_coverage <- function(zone_layer, pu_layer) {
     terra::global(pu_layer, sum, na.rm = TRUE)$sum * 100
 }
 
-#' Calculate Underrepresented Ecosystems Across a Set
+#' Efficient Attribute-Weighted Rasterization Using Coverage Fraction
 #'
-#' Applies a weighted averaging function across a set of ecosystem coverage rasters.
+#' Rasterizes vector features to a raster grid defined by a planning unit (`pus`) layer,
+#' assigning values based on a given attribute and the actual coverage fraction of
+#' each feature over each raster cell. This method is optimized for speed and precision
+#' and is especially useful when features overlap or vary in size and shape.
 #'
-#' @param x An `sf` or `data.frame` with one row per ecosystem polygon and a `target` column.
-#' @param pus A `SpatRaster` representing the planning units grid.
-#' @param iso3 ISO3 country code used for naming.
-#' @param invert Logical. If TRUE, invert values before normalization (default = FALSE).
-#' @param rescaled Logical. If TRUE, normalize result to [0, 1] (default = TRUE).
-#' @param fun Function. Aggregation function to apply across rasters (default = mean).
+#' If multiple features are provided, each is rasterized independently and aggregated
+#' across the stack using the specified function (`fun`), typically `sum`, `mean`, or `max`.
 #'
-#' @return A normalized `SpatRaster` showing weighted average underrepresentation.
+#' @param features An `sf` or `SpatVector` object containing the vector features to rasterize.
+#' @param attribute Character. The column name in `features` to use as a weight for raster values.
+#' @param iso3 Character. ISO3 country code, passed to `make_normalised_raster()`.
+#' @param pus A `SpatRaster` object defining the resolution, extent, and CRS of the output raster.
+#' @param invert Logical. If `TRUE`, inverts the resulting values during normalization (default: `FALSE`).
+#' @param rescaled Logical. If `TRUE`, rescales the output to 0–1 using `make_normalised_raster()` (default: `TRUE`).
+#' @param fun Function. Aggregation function applied across overlapping rasterized features (default: `mean`).
+#' @param cores Integer. Number of CPU cores to use for multi-core processing (default: 4).
+#'
+#' @return A `SpatRaster` object representing the attribute-weighted rasterization of the input features.
+#'
 #' @export
-get_underrepresented_ecosystems = function(
-    x,
+#'
+#' @examples
+#' \dontrun{
+#' # Rasterize polygons using a 'score' attribute
+#' result <- exact_rasterise(features = my_polygons, attribute = "score", pus = my_raster, fun = sum)
+#' }
+
+exact_rasterise <- function(
+    features,
+    attribute,
+    iso3,
     pus,
-    iso3 = iso3,
     invert = FALSE,
     rescaled = TRUE,
-    fun = mean) {
-  r_stack  = terra::rast()
+    fun = mean,
+    cores = 4
+) {
 
-  for (i in 1:nrow(x)) {
-    f <- dplyr::slice(x, i)
-    f_r <- exactextractr::coverage_fraction(pus, f)[[1]]
-    f_r <- f_r * f$target
-    r_stack <- c(r_stack, f_r)
-  }
+  # Validate inputs
+  assertthat::assert_that(
+    inherits(features, "sf") || inherits(features, "SpatVector"),
+    msg = "'features' must be an 'sf' or 'SpatVector' object."
+  )
 
-  r_out = terra::app(
-    r_stack,
-    fun = function(x, ...)
-      fun(x, na.rm = TRUE)
-  ) %>%
-    elsar::make_normalised_raster(
-      raster_in = .,
-      pus = pus,
-      iso3 = iso3,
-      invert = invert,
-      rescaled = rescaled
+  assertthat::assert_that(
+    attribute %in% colnames(features),
+    msg = glue::glue("Attribute '{attribute}' not found in 'features'.")
+  )
+
+  assertthat::assert_that(
+    inherits(pus, "SpatRaster"),
+    msg = "'pus' must be a 'SpatRaster' object."
+  )
+
+  assertthat::assert_that(
+    is.character(iso3) && nchar(iso3) == 3,
+    msg = "'iso3' must be a 3-letter country code string."
+  )
+
+  # Initialize an empty raster stack
+  r_stack <- terra::rast()
+
+  # Handle multiple features by rasterizing each individually and stacking
+  if (nrow(features) > 1) {
+    for (i in 1:nrow(features)) {
+      f <- dplyr::slice(features, i)
+      attr_val <- dplyr::pull(f, attribute)        # Get attribute value directly
+
+      # Rasterize the coverage fraction of this feature
+      f_r <- exactextractr::coverage_fraction(pus, f)[[1]]
+
+      # Multiply by the attribute value (to weight by that attribute)
+      f_r <- f_r * attr_val
+
+      r_stack <- c(r_stack, f_r)
+
+      cat(glue::glue("Feature {i} processed."), "\n")
+    }
+
+    # Aggregate across all rasterized layers using the specified function
+    cat(glue::glue("Aggregating layers..."), "\n")
+    r_stack <- terra::app(
+      r_stack,
+      cores = cores,
+      fun = fun,
+      na.rm = TRUE
     )
 
-  return(r_out)
+  } else {
+    # Single feature: get coverage fraction directly.
+    cat(glue::glue("Calculating weighted coverage fraction using a single feature..."), "\n")
+    r_stack <- exactextractr::coverage_fraction(pus, features)[[1]]
+    r_stack <- r_stack * attr_val
+  }
+
+  # Normalise the final result
+  cat(glue::glue("Normalising output..."), "\n")
+  result <- elsar::make_normalised_raster(
+    raster_in = r_stack,
+    pus = pus,
+    iso3 = iso3,
+    invert = invert,
+    rescaled = rescaled
+  )
+
+  return(result)
 }
+
+#' Crop a Global Raster to the Extent of Planning Units
+#'
+#' This function crops a large global raster to the spatial extent of a planning units raster (`pus`).
+#' It reprojects the `pus` extent to the coordinate reference system of the input global raster
+#' to ensure accurate cropping. This is useful for pre-processing global inputs before using
+#' functions like `make_normalised_raster()` to reduce processing time.
+#'
+#' @param raster_in SpatRaster. A large input raster (e.g., global dataset).
+#' @param pus SpatRaster. Planning units raster used to define the target extent.
+#'
+#' @return A cropped SpatRaster with the same CRS as `raster_in` and extent matching the reprojected `pus`.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' cropped <- crop_global_raster(global_raster, pus) |>
+#'   elsar::make_normalised_raster(pus = pus, iso3 = "KEN")
+#' }
+crop_global_raster <- function(raster_in, pus) {
+  assertthat::assert_that(inherits(raster_in, "SpatRaster"),
+                          msg = "'raster_in' must be a SpatRaster.")
+  assertthat::assert_that(inherits(pus, "SpatRaster"),
+                          msg = "'pus' must be a SpatRaster.")
+
+  # Project extent of PUs to match raster CRS
+  pus_extent <- pus %>%
+    terra::project(terra::crs(raster_in)) %>%
+    terra::ext()
+
+  # Crop raster to extent
+  cropped <- terra::crop(
+    raster_in,
+    pus_extent,
+    extend = TRUE)
+
+  return(cropped)
+}
+

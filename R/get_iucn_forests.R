@@ -16,13 +16,6 @@
 #' @return A normalized `SpatRaster` showing fractional IUCN forest coverage across planning units.
 #' @export
 #'
-#' @import terra
-#' @import sf
-#' @import dplyr
-#' @import assertthat
-#' @import exactextractr
-#' @importFrom elsar make_normalised_raster
-#'
 #' @examples
 #' \dontrun{
 #' pus <- terra::rast("data/pus.tif")
@@ -39,7 +32,7 @@ get_iucn_forests <- function(
     iso3,
     pus,
     iucn_get_prefixes = "T",
-    include_minor_occurence = TRUE,
+    include_minor_occurrence = TRUE,
     output_path = NULL
 ) {
   # Validate inputs
@@ -50,12 +43,13 @@ get_iucn_forests <- function(
 
   # Get forest ecosystems from IUCN GET (prefix "T")
   cat("Collecting IUCN GET forest ecosystems (prefix = 'T')...\n")
-  iucn_forests <- get_iucn_ecosystems(
+  iucn_forests <- elsar::get_iucn_ecosystems(
     iucn_get_directory = iucn_get_directory,
     iso3 = iso3,
+    boundary_layer = boundary_layer,
     pus = pus,
     iucn_get_prefixes = iucn_get_prefixes,
-    include_minor_occurence = include_minor_occurence,
+    include_minor_occurrence = include_minor_occurrence,
     output_path = NULL  # Don't write intermediate vector layer here
   )
 

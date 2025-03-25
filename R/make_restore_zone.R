@@ -37,11 +37,6 @@
 #'
 #' @export
 #'
-#' @import terra
-#' @import glue
-#' @import assertthat
-#' @import elsar
-#'
 #' @examples
 #' \dontrun{
 #' restore_zone <- make_restore_zone(
@@ -90,28 +85,29 @@ make_restore_zone <- function(
     threads = TRUE
 ) {
   # Input validation
-  assert_that(is.string(iso3))
-  assert_that(inherits(pus, "SpatRaster"))
-  assert_that(inherits(sdg_degradation_input, "SpatRaster"))
-  assert_that(inherits(hii_input, "SpatRaster"))
-  assert_that(inherits(iucn_get_forest_input, "SpatRaster"))
+  assertthat::assert_that(assertthat::is.string(iso3))
+  assertthat::assert_that(inherits(pus, "SpatRaster"))
+  assertthat::assert_that(inherits(sdg_degradation_input, "SpatRaster"))
+  assertthat::assert_that(inherits(hii_input, "SpatRaster"))
+  assertthat::assert_that(inherits(iucn_get_forest_input, "SpatRaster"))
 
   # Ensure at least one valid input source for agricultural/built areas exists
-  assert_that(
+  assertthat::assert_that(
     !(is.null(agricultural_areas_input) && is.null(built_areas_input) && is.null(lulc_raster)),
     msg = "Either 'agricultural_areas_input' and/or 'built_areas_input' must be provided, or 'lulc_raster' must be supplied to derive them."
   )
 
   # SDG degradation layer
   cat("Processing SDG degradation layer...\n")
-  sdg_degraded_areas <- elsar::make_normalised_raster(
-    raster_in = sdg_degradation_input,
-    pus = pus,
-    iso3 = iso3,
-    method = "bilinear",
-    input_raster_conditional_expression = function(x) terra::ifel(x == -1, 1, 0),
-    threads = threads
-  )
+  sdg_degraded_areas <- elsar::crop_global_raster(raster_in = sdg_degradation_input, pus = pus) %>%
+    elsar::make_normalised_raster(
+      raster_in = .,
+      pus = pus,
+      iso3 = iso3,
+      method = "bilinear",
+      input_raster_conditional_expression = function(x) terra::ifel(x == -1, 1, 0),
+      threads = threads
+      )
 
   # Agricultural areas
   cat("Processing agricultural areas...\n")
@@ -121,13 +117,14 @@ make_restore_zone <- function(
   } else {
     assert_that(!is.null(lulc_raster), msg = "When 'agricultural_areas_input' is NULL, 'lulc_raster' must be provided.")
     cat("Extracting agricultural areas from LULC raster...\n")
-    agricultural_areas <- elsar::make_normalised_raster(
-      raster_in = lulc_raster,
-      pus = pus,
-      iso3 = iso3,
-      method_override = "bilinear",
-      input_raster_conditional_expression = function(x) terra::ifel(x == agriculture_lulc_value, 1, 0)
-    )
+    agricultural_areas <- elsar::crop_global_raster(raster_in = lulc_raster,pus = pus) %>%
+      elsar::make_normalised_raster(
+        raster_in = .,
+        pus = pus,
+        iso3 = iso3,
+        method_override = "bilinear",
+        input_raster_conditional_expression = function(x) terra::ifel(x == agriculture_lulc_value, 1, 0)
+        )
   }
 
   # Built-up areas
@@ -136,24 +133,26 @@ make_restore_zone <- function(
     built_areas <- built_areas_input
   } else {
     assert_that(!is.null(lulc_raster), msg = "When 'built_areas_input' is NULL, 'lulc_raster' must be provided.")
-    built_areas <- elsar::make_normalised_raster(
-      raster_in = lulc_raster,
-      pus = pus,
-      iso3 = iso3,
-      method_override = "bilinear",
-      input_raster_conditional_expression = function(x) terra::ifel(x == built_area_lulc_value, 1, 0)
-    )
+    built_areas <- elsar::crop_global_raster(raster_in = lulc_raster, pus = pus) %>%
+      elsar::make_normalised_raster(
+        raster_in = .,
+        pus = pus,
+        iso3 = iso3,
+        method_override = "bilinear",
+        input_raster_conditional_expression = function(x) terra::ifel(x == built_area_lulc_value, 1, 0)
+        )
   }
 
   # Human Industrial Footprint Index (HII) layer
   cat("Processing HII layer...\n")
-  hii_resampled <- elsar::make_normalised_raster(
-    raster_in = hii_input,
-    pus = pus,
-    iso3 = iso3,
-    rescale = FALSE,
-    method_override = "bilinear"
-  )
+  hii_resampled <- elsar::crop_global_raster(raster_in = hii_input, pus = pus) %>%
+    elsar::make_normalised_raster(
+      raster_in = .,
+      pus = pus,
+      iso3 = iso3,
+      rescale = FALSE,
+      method_override = "bilinear"
+      )
 
   # Helper function to save rasters
   save_raster <- function(raster, filename, datatype = "FLT4S") {

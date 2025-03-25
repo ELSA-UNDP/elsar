@@ -33,11 +33,6 @@
 #' @return A SpatRaster with two layers: `manage_zone_v1` and `manage_zone_v2`.
 #' @export
 #'
-#' @import terra
-#' @import glue
-#' @import assertthat
-#' @import elsar
-#'
 #' @examples
 #' \dontrun{
 #' manage_zone <- make_manage_zone(
@@ -102,14 +97,15 @@ make_manage_zone <- function(
   if (!is.null(agricultural_areas_input)) {
     agricultural_areas <- agricultural_areas_input
   } else {
-    agricultural_areas <- elsar::make_normalised_raster(
-      raster_in = lulc_raster,
-      pus = pus,
-      iso3 = iso3,
-      method_override = "bilinear",
-      input_raster_conditional_expression = function(x)
-        terra::ifel(x == agriculture_lulc_value, 1, 0)
-    )
+    agricultural_areas <- elsar::crop_global_raster(raster_in = lulc_raster, pus = pus) %>%
+      elsar::make_normalised_raster(
+        raster_in = .,
+        pus = pus,
+        iso3 = iso3,
+        method_override = "bilinear",
+        input_raster_conditional_expression = function(x)
+          terra::ifel(x == agriculture_lulc_value, 1, 0)
+        )
   }
 
   # Process built-up areas
@@ -117,25 +113,27 @@ make_manage_zone <- function(
   if (!is.null(built_areas_input)) {
     built_areas <- built_areas_input
   } else {
-    built_areas <- elsar::make_normalised_raster(
-      raster_in = lulc_raster,
-      pus = pus,
-      iso3 = iso3,
-      method_override = "bilinear",
-      input_raster_conditional_expression = function(x)
-        terra::ifel(x == built_area_lulc_value, 1, 0)
-    )
+    built_areas <- elsar::crop_global_raster(raster_in = lulc_raster, pus = pus) %>%
+      elsar::make_normalised_raster(
+        raster_in = .,
+        pus = pus,
+        iso3 = iso3,
+        method_override = "bilinear",
+        input_raster_conditional_expression = function(x)
+          terra::ifel(x == built_area_lulc_value, 1, 0)
+        )
   }
 
   # Normalize HFP and extract middle 60%
   cat("Processing HII layer and extracting middle 60% quantile range...\n")
-  hii_resampled <- elsar::make_normalised_raster(
-    raster_in = hii_input,
-    pus = pus,
-    iso3 = iso3,
-    rescale = FALSE,
-    method_override = "bilinear"
-  )
+  hii_resampled <- elsar::crop_global_raster(raster_in = hii_input, pus = pus) %>%
+    elsar::make_normalised_raster(
+      raster_in = .,
+      pus = pus,
+      iso3 = iso3,
+      rescale = FALSE,
+      method_override = "bilinear"
+      )
 
   breaks <- terra::global(hii_resampled, fun = quantile, probs = c(0.2, 0.8), na.rm = TRUE)
   hii_middle_60_pct <- terra::ifel(hii_resampled >= breaks[,1] & hii_resampled <= breaks[,2], 1, 0)
@@ -143,29 +141,18 @@ make_manage_zone <- function(
   # Process managed forests
   cat("Processing managed forests...\n")
   # Process managed forests
-  # First: crop the raster at native resolution to the extent of PUs - this will speed
-  # up processing of the global raster significantly.
-  managed_forests_cropped <- terra::crop(
-    managed_forests_input,
-    terra::project(
-      pus,
-      y = terra::crs(
-        managed_forests_input,
-        proj = TRUE)
-      )
-    )
-
   # Normalise and reclass
-  managed_forests <- elsar::make_normalised_raster(
-    raster_in = managed_forests_cropped,
-    pus = pus,
-    iso3 = iso3,
-    method_override = "bilinear",
-    input_raster_conditional_expression = function(x)
-      terra::classify(x, rcl = matrix(c(
-        forest_classes, rep(1, length(forest_classes))
-      ), ncol = 2), others = 0)
-  )
+  managed_forests <- elsar::crop_global_raster(raster_in = managed_forests_input, pus = pus) %>%
+    elsar::make_normalised_raster(
+      raster_in = .,
+      pus = pus,
+      iso3 = iso3,
+      method_override = "bilinear",
+      input_raster_conditional_expression = function(x)
+        terra::classify(x, rcl = matrix(c(
+          forest_classes, rep(1, length(forest_classes))
+          ), ncol = 2), others = 0)
+      )
 
   # Main management zone: moderate HFP, OR managed forests, OR ag areas — minus built-up
   cat("Creating the default manage zone using middle 60% of HII value, managed forests, and agricultural areas...\n")

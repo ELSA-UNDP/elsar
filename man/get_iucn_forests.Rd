@@ -9,7 +9,7 @@ get_iucn_forests(
   iso3,
   pus,
   iucn_get_prefixes = "T",
-  include_minor_occurence = TRUE,
+  include_minor_occurrence = TRUE,
   output_path = NULL
 )
 }
@@ -20,9 +20,9 @@ get_iucn_forests(
 
 \item{pus}{SpatRaster. The planning units raster (terra object) over which to compute forest coverage.}
 
-\item{include_minor_occurence}{Logical. Whether to include polygons marked as minor occurrence (default = TRUE).}
-
 \item{output_path}{Optional character. If provided, the output raster is saved to this directory as a GeoTIFF.}
+
+\item{include_minor_occurence}{Logical. Whether to include polygons marked as minor occurrence (default = TRUE).}
 }
 \value{
 A normalized \code{SpatRaster} showing fractional IUCN forest coverage across planning units.

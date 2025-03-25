@@ -10,23 +10,17 @@
 #' @param pus SpatRaster. Planning units raster (terra object) defining resolution and extent.
 #' @param current_protected_areas Optional. An `sf` or `SpatVector` of protected areas. If `NULL`, the function calls `make_protected_areas()`.
 #' @param iucn_get_prefixes Optional character vector. Filter to only include layers with specific IUCN ecosystem prefixes (e.g., "T", "M", etc.).
-#' @param include_minor_occurence Logical. Whether to include ecosystems marked as minor occurrences (default: TRUE).
+#' @param include_minor_occurrence Logical. Whether to include ecosystems marked as minor occurrences (default: TRUE).
 #' @param output_path Optional character. If provided, saves the output raster to this directory.
 #'
 #' @return A normalized `SpatRaster` layer representing average underrepresentation across ecosystems.
 #' @export
 #'
-#' @import terra
-#' @import sf
-#' @import dplyr
-#' @import assertthat
-#' @import glue
-#' @import units
-#'
 #' @examples
 #' \dontrun{
 #' underrep <- make_underrepresented_ecosystems(
 #'   iucn_get_directory = "data/iucn_layers",
+#'   boundary_layer = boundary_layer,
 #'   iso3 = "KEN",
 #'   pus = planning_units,
 #'   output_path = "outputs"
@@ -36,9 +30,10 @@ make_underrepresented_ecosystems <- function(
     iucn_get_directory,
     iso3,
     pus,
+    boundary_layer = boundary_layer,
     current_protected_areas = NULL,
     iucn_get_prefixes = NULL,
-    include_minor_occurence = TRUE,
+    include_minor_occurrence = TRUE,
     output_path = NULL
 ) {
   # Validate inputs
@@ -46,6 +41,7 @@ make_underrepresented_ecosystems <- function(
   assertthat::assert_that(dir.exists(iucn_get_directory))
   assertthat::assert_that(inherits(pus, "SpatRaster"), msg = "'pus' must be a SpatRaster.")
   assertthat::assert_that(assertthat::is.string(iso3), msg = "'iso3' must be a valid ISO3 code, e.g., 'NPL'.")
+  assertthat::assert_that(inherits(boundary_layer, "sf"), msg = "'boundary_layer' must be a sf object.")
 
   # Load or validate protected areas
   if (is.null(current_protected_areas)) {
@@ -65,38 +61,35 @@ make_underrepresented_ecosystems <- function(
 
   # Extract IUCN GET ecosystems from .gpkg files
   cat("Collecting IUCN GET ecosystems...\n")
-  iucn_ecosystems <- get_iucn_ecosystems(
+  iucn_ecosystems <- elsar::get_iucn_ecosystems(
     iucn_get_directory = iucn_get_directory,
     iso3 = iso3,
+    boundary_layer = boundary_layer,
     pus = pus,
-    prefixes = iucn_get_prefixes,
-    include_minor_occurence = include_minor_occurence,
+    iucn_get_prefixes = iucn_get_prefixes,
+    include_minor_occurrence = include_minor_occurrence,
     output_path = NULL
   )
-
-  # Clip ecosystems to planning unit boundary (if not already)
-  iucn_ecosystems <- iucn_ecosystems %>%
-    sf::st_make_valid()
 
   # Calculate protected area coverage per ecosystem
   cat("Calculating protected area coverage of each IUCN GET ecosystem...\n")
   iucn_ecosysytems_pa_area <- iucn_ecosystems %>%
     sf::st_filter(current_protected_areas) %>%
-    sf::st_make_valid() %>%
     sf::st_intersection(current_protected_areas) %>%
-    dplyr::group_by(ID) %>%
+    sf::st_make_valid() %>%
+    dplyr::group_by(id) %>%
     dplyr::summarise() %>%
     dplyr::mutate(area_protected = units::drop_units(sf::st_area(.))) %>%
     sf::st_set_geometry(NULL) %>%
-    dplyr::select(ID, area_protected)
+    dplyr::select(id, area_protected)
 
   # Calculate total area and underrepresentation gap per ecosystem
   cat("Calculating representation gap from 30% protection target...\n")
   iucn_ecosysytems_total <- iucn_ecosystems %>%
-    dplyr::group_by(ID) %>%
+    dplyr::group_by(id) %>%
     dplyr::summarise() %>%
     dplyr::mutate(area = units::drop_units(sf::st_area(.))) %>%
-    dplyr::left_join(iucn_ecosysytems_pa_area, by = 'ID') %>%
+    dplyr::left_join(iucn_ecosysytems_pa_area, by = 'id') %>%
     dplyr::mutate(
       percent_protected = area_protected / area * 100,
       target = ifelse(percent_protected < 30, 30 - percent_protected, 0)
@@ -104,9 +97,11 @@ make_underrepresented_ecosystems <- function(
 
   # Rasterize and normalize the representation gap
   cat("Calculating average representation gap and normalising raster output...\n")
-  underrepresented_ecosystems <- elsar::get_underrepresented_ecosystems(
-    x = iucn_ecosysytems_total,
-    pus = pus
+  underrepresented_ecosystems <- elsar::exact_rasterise(
+    features = iucn_ecosysytems_total,
+    pus = pus,
+    iso3 = iso3,
+    attribute = "target"
     )
   names(underrepresented_ecosystems) <- "underrepresented_ecosystems"
 

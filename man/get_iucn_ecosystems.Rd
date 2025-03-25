@@ -7,6 +7,7 @@
 get_iucn_ecosystems(
   iucn_get_directory,
   iso3,
+  boundary_layer,
   pus,
   include_minor_occurence = TRUE,
   iucn_get_prefixes = NULL,
@@ -14,39 +15,46 @@ get_iucn_ecosystems(
 )
 }
 \arguments{
-\item{iucn_get_directory}{Character. Path to the directory containing \code{.gpkg} files.}
+\item{iucn_get_directory}{Character. Directory containing IUCN GET \code{.gpkg} files.}
 
-\item{iso3}{Character. ISO3 country code (e.g., "KEN"), used in optional output naming.}
+\item{iso3}{Character. ISO3 country code used for naming the output (e.g., "KEN").}
 
-\item{pus}{SpatRaster. Planning units raster used to define spatial extent and CRS.}
+\item{boundary_layer}{sf object. Vector polygon used to spatially clip features (usually country boundary).}
 
-\item{include_minor_occurence}{Logical. If FALSE, features marked as "minor" occurrence will be excluded (default = TRUE).}
+\item{pus}{SpatRaster. Planning units raster used to define spatial extent and target CRS.}
 
-\item{output_path}{Optional character. If provided, writes the merged ecosystem layer as a GeoPackage.}
+\item{iucn_get_prefixes}{Character vector of filename prefixes to include (e.g., c("T", "TF", "FM")) or NULL to include all \code{.gpkg} files.}
 
-\item{prefixes}{Character vector of filename prefixes to include (e.g., \code{c("T", "TF", "FM")}).
-Must match one or more of: \code{"F"}, \code{"FM"}, \code{"M"}, \code{"MFT"}, \code{"MT"}, \code{"S"}, \code{"SF"}, \code{"SM"}, \code{"T"}, \code{"TF"}.
-If \code{NULL} (default), all \code{.gpkg} files in the directory will be included.}
+\item{output_path}{Character or NULL. If provided, writes the merged output to a GeoPackage.}
+
+\item{include_minor_occurrence}{Logical. If FALSE, excludes features with minor occurrence (default: TRUE).}
 }
 \value{
-An \code{sf} object containing all filtered IUCN GET ecosystem polygons intersecting the PUs extent.
+An \code{sf} object containing merged and filtered IUCN GET ecosystem features with valid geometry.
 }
 \description{
 This function reads and merges \code{.gpkg} vector files representing IUCN GET ecosystems
-from a specified directory. Optionally, it filters files by a set of filename prefixes
-(e.g., "T", "TF", "FM", etc.), restricts features to those intersecting the extent
-of a planning units raster, and filters out minor occurrence ecosystems. If \code{output_path}
-is specified, the result is written to a GeoPackage.
+from a specified directory. It optionally filters files based on filename prefixes
+(e.g., "T", "TF", "FM"), restricts features to those intersecting a country boundary,
+reprojects them to match a planning units raster (\code{pus}), and removes ecosystems
+marked as "minor occurrence" if desired.
+}
+\details{
+The layer ID (e.g., "F1.1") is derived from the source filename and added to each feature
+for tracking. If \code{output_path} is provided, the final merged and filtered layer is saved
+as a GeoPackage.
 }
 \examples{
 \dontrun{
 pus <- terra::rast("data/pus_raster.tif")
+boundary <- sf::st_read("data/country_boundary.gpkg")
 ecosystems <- get_iucn_ecosystems(
   iucn_get_directory = "data/iucn_layers",
   iso3 = "KEN",
+  boundary_layer = boundary,
   pus = pus,
-  prefixes = c("T", "TF"),
-  include_minor_occurence = FALSE,
+  iucn_get_prefixes = c("T", "TF"),
+  include_minor_occurrence = FALSE,
   output_path = "outputs"
 )
 }
