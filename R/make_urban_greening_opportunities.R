@@ -22,9 +22,17 @@
 #'
 #' @examples
 #' \dontrun{
-#' ndvi_raster <- elsar::elsar_load_data(file_path = ".", file_name = "mod13q1_2022_ndvi_wgs84.tif", file_type = "tiff")
+#' ndvi_raster <- elsar::elsar_load_data(
+#'   file_path = ".",
+#'   file_name = "mod13q1_2022_ndvi_wgs84.tif",
+#'   file_type = "tiff"
+#'   )
 #'
-#' lulc_raster <- elsar::elsar_load_data(file_path = ".", file_name = "esri_10m_lulc_2023_NPL.tif", file_type = "tiff")
+#' lulc_raster <- elsar::elsar_load_data(
+#'   file_path = ".",
+#'   file_name = "esri_10m_lulc_2023_NPL.tif",
+#'   file_type = "tiff"
+#'   )
 #'
 #' sdei_statistics <- sf::read_sf(
 #'   "~/sdei-high-res-daily-uhe-1983-2016-shp/wbgtmax30_join.gpkg"

@@ -1,32 +1,37 @@
 #' Extract IUCN GET Ecosystems Vector Layers
 #'
 #' This function reads and merges `.gpkg` vector files representing IUCN GET ecosystems
-#' from a specified directory. Optionally, it filters files by a set of filename prefixes
-#' (e.g., "T", "TF", "FM", etc.), restricts features to those intersecting the extent
-#' of a planning units raster, and filters out minor occurrence ecosystems. If `output_path`
-#' is specified, the result is written to a GeoPackage.
+#' from a specified directory. It optionally filters files based on filename prefixes
+#' (e.g., "T", "TF", "FM"), restricts features to those intersecting a country boundary,
+#' reprojects them to match a planning units raster (`pus`), and removes ecosystems
+#' marked as `minor occurrence` if desired.
 #'
-#' @param iucn_get_directory Character. Path to the directory containing `.gpkg` files.
-#' @param iso3 Character. ISO3 country code (e.g., "KEN"), used in optional output naming.
-#' @param pus SpatRaster. Planning units raster used to define spatial extent and CRS.
-#' @param include_minor_occurence Logical. If FALSE, features marked as "minor" occurrence will be excluded (default = TRUE).
-#' @param prefixes Character vector of filename prefixes to include (e.g., `c("T", "TF", "FM")`).
-#' Must match one or more of: `"F"`, `"FM"`, `"M"`, `"MFT"`, `"MT"`, `"S"`, `"SF"`, `"SM"`, `"T"`, `"TF"`.
-#' If `NULL` (default), all `.gpkg` files in the directory will be included.
-#' @param output_path Optional character. If provided, writes the merged ecosystem layer as a GeoPackage.
+#' The layer ID (e.g., "F1.1") is derived from the source filename and added to each feature
+#' for tracking. If `output_path` is provided, the final merged and filtered layer is saved
+#' as a GeoPackage.
 #'
-#' @return An `sf` object containing all filtered IUCN GET ecosystem polygons intersecting the PUs extent.
+#' @param iucn_get_directory Character. Directory containing IUCN GET `.gpkg` files.
+#' @param iso3 Character. ISO3 country code used for naming the output (e.g., "KEN").
+#' @param boundary_layer sf object. Vector polygon used to spatially clip features (usually country boundary).
+#' @param pus SpatRaster. Planning units raster used to define spatial extent and target CRS.
+#' @param include_minor_occurrence Logical. If FALSE, excludes features with minor occurrence (default: TRUE).
+#' @param iucn_get_prefixes Character vector of filename prefixes to include (e.g., c("T", "TF", "FM")) or NULL to include all `.gpkg` files.
+#' @param output_path Character or NULL. If provided, writes the merged output to a GeoPackage.
+#'
+#' @return An `sf` object containing merged and filtered IUCN GET ecosystem features with valid geometry.
 #' @export
 #'
 #' @examples
 #' \dontrun{
 #' pus <- terra::rast("data/pus_raster.tif")
+#' boundary <- sf::st_read("data/country_boundary.gpkg")
 #' ecosystems <- get_iucn_ecosystems(
 #'   iucn_get_directory = "data/iucn_layers",
 #'   iso3 = "KEN",
+#'   boundary_layer = boundary,
 #'   pus = pus,
-#'   prefixes = c("T", "TF"),
-#'   include_minor_occurence = FALSE,
+#'   iucn_get_prefixes = c("T", "TF"),
+#'   include_minor_occurrence = FALSE,
 #'   output_path = "outputs"
 #' )
 #' }
@@ -34,6 +39,7 @@
 get_iucn_ecosystems <- function(
     iucn_get_directory,
     iso3,
+    boundary_layer,
     pus,
     include_minor_occurence = TRUE,
     iucn_get_prefixes = NULL,
@@ -41,51 +47,58 @@ get_iucn_ecosystems <- function(
 ) {
   # Validate inputs
   assertthat::assert_that(assertthat::is.string(iucn_get_directory), dir.exists(iucn_get_directory))
-  assertthat::assert_that(assertthat::is.string(iso3), msg = "'iso3' must be a valid country ISO3 code string (e.g., 'KEN').")
-  assertthat::assert_that(inherits(pus, "SpatRaster"), msg = "'pus' must be a SpatRaster object.")
+  assertthat::assert_that(assertthat::is.string(iso3))
+  assertthat::assert_that(inherits(pus, "SpatRaster"))
+  assertthat::assert_that(inherits(boundary_layer, "sf"))
 
-  # Allowed filename prefixes from IUCN GET
   allowed_prefixes <- c("F", "FM", "M", "MFT", "MT", "S", "SF", "SM", "T", "TF")
 
-  # Validate prefixes if provided
   if (!is.null(iucn_get_prefixes)) {
     invalid <- setdiff(iucn_get_prefixes, allowed_prefixes)
-    assertthat::assert_that(length(invalid) == 0,
-                            msg = glue::glue(
-                              "Invalid prefixes detected: {paste(invalid, collapse = ', ')}.\n",
-                              "Allowed prefixes are: {paste(allowed_prefixes, collapse = ', ')}."
-                            )
+    assertthat::assert_that(
+      length(invalid) == 0,
+      msg = glue::glue(
+        "Invalid prefixes: {paste(invalid, collapse = ', ')}.\n",
+        "Allowed prefixes: {paste(allowed_prefixes, collapse = ', ')}."
+      )
     )
     pattern <- paste0("^(", paste(iucn_get_prefixes, collapse = "|"), ").*\\.gpkg$")
   } else {
     pattern <- "\\.gpkg$"
   }
 
-  # List matching files
-  all_files <- list.files(
-    iucn_get_directory,
-    pattern = pattern,
-    full.names = TRUE
+  all_files <- list.files(iucn_get_directory, pattern = pattern, full.names = TRUE)
+
+  assertthat::assert_that(
+    length(all_files) > 0,
+    msg = paste("No matching '.gpkg' files found in", iucn_get_directory)
   )
 
-  # Ensure at least one file found
-  assertthat::assert_that(length(all_files) > 0,
-                          msg = paste("No matching '.gpkg' files found in", iucn_get_directory)
-  )
-
-  # Convert PUs extent to WGS84 sf polygon for filtering
-  pus_bbox <- terra::as.polygons(terra::ext(pus)) |>
+  # Get bounding box for fast filtering (WGS84)
+  pus_bbox <- terra::as.polygons(terra::ext(pus)) %>%
     sf::st_as_sf()
   sf::st_crs(pus_bbox) <- terra::crs(pus)
-  pus_bbox <- sf::st_transform(pus_bbox, crs = "EPSG:4326")
+  pus_bbox_wgs <- sf::st_transform(pus_bbox, crs = "EPSG:4326") %>%
+    terra::vect()
 
-  # Read and spatially filter files
-  cat("Reading and filtering IUCN GET ecosystem layers...\n")
+  cat("Reading, reprojecting, and intersecting IUCN GET ecosystem layers...\n")
   iucn_list <- lapply(all_files, function(file) {
-    terra::vect(file, extent = pus_bbox)
+    v <- terra::vect(file, extent = pus_bbox_wgs)
+    if (NROW(v) == 0) return(NULL)
+
+    # Intersect and reproject
+    v <- terra::intersect(v, terra::project(terra::vect(boundary_layer), terra::crs(v)))
+    if (terra::crs(v) != terra::crs(pus)) {
+      v <- terra::project(v, terra::crs(pus))
+    }
+
+    # Safely derive layer ID from filename
+    layer_id <- gsub("_", ".", gsub("_v.*$", "", tools::file_path_sans_ext(basename(file))))
+    v$id <- layer_id
+
+    return(v)
   })
 
-  # Remove empty results
   iucn_list <- Filter(NROW, iucn_list)
 
   if (length(iucn_list) == 0) {
@@ -93,42 +106,31 @@ get_iucn_ecosystems <- function(
     return(NULL)
   }
 
-  # Merge and convert to sf
-  iucn_ecosystems <- do.call(rbind, iucn_list) |>
-    sf::st_as_sf()
+  iucn_ecosystems <- do.call(rbind, iucn_list)
 
-  # Reproject to match PUs
-  if (sf::st_crs(iucn_ecosystems) != terra::crs(pus)) {
-    iucn_ecosystems <- sf::st_transform(iucn_ecosystems, terra::crs(pus))
+  # Correct for issues in GET attribute spelling of occurrence (vs. occurence)
+  col_names <- names(iucn_ecosystems)
+  if ("occurence" %in% col_names && !"occurrence" %in% col_names) {
+    iucn_ecosystems <- dplyr::rename(iucn_ecosystems, occurrence = occurence)
+  } else if ("occurence" %in% col_names && "occurrence" %in% col_names) {
+    warning(
+      "Both 'occurrence' and 'occurence' columns found - merging with preference to 'occurrence'."
+    )
+    iucn_ecosystems$occurrence <- dplyr::coalesce(iucn_ecosystems$occurrence, iucn_ecosystems$occurence)
+    iucn_ecosystems <- dplyr::select(iucn_ecosystems, -occurence)
   }
 
-  # Optionally exclude minor occurrences
-  if (!include_minor_occurence) {
-    # Merge 'occurence' and 'occurrence' into a single column
-    col_names <- names(iucn_ecosystems)
-
-    if ("occurence" %in% col_names && !"occurrence" %in% col_names) {
-      # Rename occurence → occurrence
-      iucn_ecosystems <- dplyr::rename(iucn_ecosystems, occurrence = occurence)
-    } else if ("occurence" %in% col_names && "occurrence" %in% col_names) {
-      warning("Both 'occurrence' and 'occurence' columns found — merging into 'occurrence' with preference to the correctly spelled column.")
-      # Use 'occurrence' where not NA, fallback to 'occurence' otherwise
-      iucn_ecosystems$occurrence <- dplyr::coalesce(
-        iucn_ecosystems$occurrence,
-        iucn_ecosystems$occurence
-      )
-      iucn_ecosystems <- dplyr::select(iucn_ecosystems, -occurence)
-    } else if (!"occurrence" %in% col_names) {
-      warning("No 'occurrence' column found — skipping minor occurrence filtering.")
-    }
-
-    # If we have a valid 'occurrence' column, filter on it
-    if ("occurrence" %in% names(iucn_ecosystems)) {
-      iucn_ecosystems <- dplyr::filter(iucn_ecosystems, occurrence != 1)
-    }
+  # Optionally filter out minor occurrence
+  if (!include_minor_occurrence) {
+    iucn_ecosystems <- dplyr::filter(iucn_ecosystems, occurrence != 1)
   }
 
-  # Write to disk if requested
+  # Ensure valid geometry and select output fields
+  iucn_ecosystems <- sf::st_as_sf(iucn_ecosystems) %>%
+    sf::st_make_valid() %>%
+    dplyr::select(id, occurrence)
+
+  # Optionally write to file
   if (!is.null(output_path)) {
     dir.create(output_path, showWarnings = FALSE, recursive = TRUE)
     out_file <- file.path(output_path, glue::glue("iucn_ecosystems_{iso3}.gpkg"))

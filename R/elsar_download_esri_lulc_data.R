@@ -14,13 +14,6 @@
 #' @param gee_project A string specifying the GEE cloud project; default to `unbl-misc`. You must be a member of the project.
 #' @param googledrive_folder A string specifying the folder in Google Drive that GEE exports will go to, or where files will be searched for. Default to `gee_exports`. This folder will be created if if does not exist.
 #'
-#' @import sf
-#' @import terra
-#' @import glue
-#' @import googledrive
-#' @import reticulate
-#' @import here
-#'
 #' @return A Cloud-Optimized GeoTIFF file stored in the specified output directory.
 #' @export
 #'
