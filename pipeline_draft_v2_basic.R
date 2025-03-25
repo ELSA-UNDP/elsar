@@ -331,9 +331,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
 
     if (nrow(current_rast) == 0) {
       cat("No mangroves in the planning region.")
-
-      raster_out <- raster_out
-    } else {
+    }
       mangrove_raster <- make_mangroves(
         sf_in = current_rast,
         pus = pus,
@@ -349,7 +347,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
         figure_path = figure_path
       )
       raster_out <- c(raster_out, mangrove_raster)
-    }
+
   }
 
   if (dat_non_default[[j]] == "Forest Integrity Index") { # add saving option
@@ -798,6 +796,26 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
     )
     raster_out <- c(raster_out, indigenous_lands)
   }
+
+  if (dat_non_default[[j]] == "Underepresented Ecosystems") {
+    print("Underepresented Ecosystems")
+
+    # process data
+    underrep <- make_underrepresented_ecosystems(
+      iucn_get_directory = file.path(current_dat$full_path, current_dat$file_name),
+      iso3 = iso3,
+      pus = pus
+    )
+
+    names(underrep) <- c(dat_non_default[[j]]) # set layer name
+    elsar_plot_feature(
+      raster_in = underrep,
+      pus = pus,
+      legend_title = dat_non_default[[j]],
+      figure_path = figure_path
+    )
+    raster_out <- c(raster_out, underrep)
+  }
 }
 
 #### Create zones ####
@@ -825,16 +843,6 @@ zones_data_incl <- zones_data %>%
 for (k in 1:length(zones_data_incl)) {
   current_zone_dat <- zones_data %>%
     dplyr::filter(data_name == zones_data_incl[[k]])
-
-
-  if (zones_data_incl[[k]] == "Human Footprint") {
-    print("Human Footprint")
-    # load data
-    raster_hfp <- elsar_load_data(
-      file_name = current_zone_dat$full_name,
-      file_type = current_zone_dat$file_type, file_path = current_zone_dat$full_path
-    )
-  }
 
   if (zones_data_incl[[k]] == "Managed Forests") {
     print("Managed Forests")
@@ -898,6 +906,16 @@ for (k in 1:length(zones_data_incl)) {
       file_type = current_zone_dat$file_type, file_path = current_zone_dat$full_path
     )
   }
+
+  if (zones_data_incl[[k]] == "IUCN Forests") {
+    print("IUCN Forests")
+
+    # load data
+    raster_IUCNforests <- elsar_load_data(
+      file_name = current_zone_dat$full_name,
+      file_type = current_zone_dat$file_type, file_path = current_zone_dat$full_path
+    )
+  }
 }
 
 #### Prep zones ####
@@ -906,21 +924,21 @@ for (l in 1:length(zones_list)) {
     print("Protection Zone")
 
     protection_zone <- make_protect_zone(
-      hii_input = raster_hfp,
+      hii_input = raster_hii,
       agricultural_areas_input = raster_agri,
       built_areas_input = raster_urban,
-      #hii_threshold = 17, # DOUBLE CHECK THIS NUMBER WITH DI, IS 17 IN NEW BRAZIL SCRIPT. Where does this come from?
+      #hii_threshold = 17,
       pus = pus,
       iso3 = iso3
     )
 
-    names(protection_zone) <- c(zones_list[[l]]) # set layer name
     elsar_plot_feature(
       raster_in = protection_zone,
       pus = pus,
       legend_title = zones_list[[l]],
       figure_path = figure_path
     )
+    raster_out <- c(raster_out, protection_zone)
   }
 
   if (zones_list[[l]] == "Restoration Zone") {
@@ -929,42 +947,54 @@ for (l in 1:length(zones_list)) {
     restoration_zone <- make_restore_zone(
       iso3 = iso3,
       pus = pus,
-      sdg_degradation_input = sdg_raster,
+      sdg_degradation_input = raster_degraded,
       agricultural_areas_input = raster_agri,
       built_areas_input = raster_urban,
-      iucn_get_forest_input = ,
+      iucn_get_forest_input = raster_IUCNforests,
       hii_input = hii_raster
     )
 
-    names(restoration_zone) <- c(zones_list[[l]]) # set layer name
     elsar_plot_feature(
-      raster_in = restoration_zone,
+      raster_in = restoration_zone[[1]],
       pus = pus,
-      legend_title = zones_list[[l]],
+      legend_title = "restore_zone_v1",
       figure_path = figure_path
     )
+    elsar_plot_feature(
+      raster_in = restoration_zone[[2]],
+      pus = pus,
+      legend_title = "restore_zone_v2",
+      figure_path = figure_path
+    )
+    raster_out <- c(raster_out, restoration_zone)
   }
 
   if (zones_list[[l]] == "Management Zone") {
     print("Management Zone")
 
     management_zone <- make_manage_zone(
-      hii_input = raster_hfp,
+      hii_input = raster_hii,
       agricultural_areas_input = raster_agri,
       built_areas_input = raster_urban,
-      managed_forests_input = ,
-      hii_threshold = 10, # DOUBLE CHECK THIS NUMBER WITH DI, IS 17 IN NEW BRAZIL SCRIPT. Where does this come from?
+      managed_forests_input = raster_mf,
+ #     hii_threshold = 10,
       pus = pus,
       iso3 = iso3
     )
 
-    names(protection_zone) <- c(zones_list[[l]]) # set layer name
     elsar_plot_feature(
-      raster_in = protection_zone,
+      raster_in = management_zone[[1]],
       pus = pus,
-      legend_title = zones_list[[l]],
+      legend_title = "manage_zone_v1",
       figure_path = figure_path
     )
+    elsar_plot_feature(
+      raster_in = management_zone[[2]],
+      pus = pus,
+      legend_title = "manage_zone_v2",
+      figure_path = figure_path
+    )
+    raster_out <- c(raster_out, management_zone)
   }
 }
 
@@ -978,4 +1008,3 @@ writeRaster(raster_out, out_name,
   overwrite = TRUE
 )
 
-# r_test <- terra::rast(out_name)

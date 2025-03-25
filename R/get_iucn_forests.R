@@ -16,6 +16,7 @@
 #' @return A normalized `SpatRaster` showing fractional IUCN forest coverage across planning units.
 #' @export
 #'
+#'
 #' @examples
 #' \dontrun{
 #' pus <- terra::rast("data/pus.tif")

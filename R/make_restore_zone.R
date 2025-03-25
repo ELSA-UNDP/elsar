@@ -37,6 +37,7 @@
 #'
 #' @export
 #'
+#'
 #' @examples
 #' \dontrun{
 #' restore_zone <- make_restore_zone(
