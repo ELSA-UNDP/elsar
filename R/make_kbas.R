@@ -87,7 +87,7 @@ make_kbas <- function(kba_in,
     terra::mask(pus, maskvalues = 0) %>%
     rescale_raster()
 
-  kba_out[is.na(kba_out)] <- 0
+ # kba_out[is.na(kba_out)] <- 0
   }
 
   #save if wanted

@@ -94,7 +94,7 @@ make_managed_forests <- function(raster_in, # ADD: option to generate productive
     }
   }
 
-  dat_aligned[is.na(dat_aligned)] <- 0
+  #dat_aligned[is.na(dat_aligned)] <- 0
 
   dat_aligned <- dat_aligned %>%
     terra::project(., terra::crs(pus)) %>% # reproject the data to the crs we actually want (the original pu crs)

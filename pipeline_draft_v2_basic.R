@@ -25,7 +25,7 @@ figure_path <- "C:/Users/sandr/Documents/UNBL_work/Pipeline/output_dat/figures"
 
 ## Country info
 iso3 <- "NPL"
-iso3_column <- "iso3cd"
+iso3_column <- "iso3cd" # for boundary data
 
 #################################################################################
 # Load data file
@@ -48,7 +48,6 @@ data_info <- read_delim(file.path(sheet_path, "input_data.csv"),
         (!is.na(file_path) & file_path != "default" & file_type != "postgres") ~ file_path
       )
   )
-
 
 # Postgres check
 if (nrow(data_info %>%
@@ -332,22 +331,21 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
     if (nrow(current_rast) == 0) {
       cat("No mangroves in the planning region.")
     }
-      mangrove_raster <- make_mangroves(
-        sf_in = current_rast,
-        pus = pus,
-        iso3 = iso3,
-        output_path = output_path,
-        name_out = dat_non_default[[j]]
-      )
-      names(mangrove_raster) <- c(dat_non_default[[j]]) # set layer name
-      elsar_plot_feature(
-        raster_in = mangrove_raster,
-        pus = pus,
-        legend_title = dat_non_default[[j]],
-        figure_path = figure_path
-      )
-      raster_out <- c(raster_out, mangrove_raster)
-
+    mangrove_raster <- make_mangroves(
+      sf_in = current_rast,
+      pus = pus,
+      iso3 = iso3,
+      output_path = output_path,
+      name_out = dat_non_default[[j]]
+    )
+    names(mangrove_raster) <- c(dat_non_default[[j]]) # set layer name
+    elsar_plot_feature(
+      raster_in = mangrove_raster,
+      pus = pus,
+      legend_title = dat_non_default[[j]],
+      figure_path = figure_path
+    )
+    raster_out <- c(raster_out, mangrove_raster)
   }
 
   if (dat_non_default[[j]] == "Forest Integrity Index") { # add saving option
@@ -458,8 +456,8 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
         iso3 = iso3,
         download_path = output_path,
         buffer_points = TRUE,
-        pus = pus,
-        output_path = output_path
+        pus = pus#,
+        #output_path = output_path
       )
     }
     names(current_pas) <- c(dat_non_default[[j]]) # set layer name
@@ -927,7 +925,7 @@ for (l in 1:length(zones_list)) {
       hii_input = raster_hii,
       agricultural_areas_input = raster_agri,
       built_areas_input = raster_urban,
-      #hii_threshold = 17,
+      # hii_threshold = 17,
       pus = pus,
       iso3 = iso3
     )
@@ -977,7 +975,7 @@ for (l in 1:length(zones_list)) {
       agricultural_areas_input = raster_agri,
       built_areas_input = raster_urban,
       managed_forests_input = raster_mf,
- #     hii_threshold = 10,
+      #     hii_threshold = 10,
       pus = pus,
       iso3 = iso3
     )
@@ -1007,4 +1005,3 @@ writeRaster(raster_out, out_name,
   gdal = c("COMPRESS=DEFLATE"),
   overwrite = TRUE
 )
-
