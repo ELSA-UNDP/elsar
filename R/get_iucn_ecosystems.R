@@ -4,7 +4,7 @@
 #' from a specified directory. It optionally filters files based on filename prefixes
 #' (e.g., "T", "TF", "FM"), restricts features to those intersecting a country boundary,
 #' reprojects them to match a planning units raster (`pus`), and removes ecosystems
-#' marked as "minor occurrence" if desired.
+#' marked as `minor occurrence` if desired.
 #'
 #' The layer ID (e.g., "F1.1") is derived from the source filename and added to each feature
 #' for tracking. If `output_path` is provided, the final merged and filtered layer is saved
@@ -114,7 +114,7 @@ get_iucn_ecosystems <- function(
     iucn_ecosystems <- dplyr::rename(iucn_ecosystems, occurrence = occurence)
   } else if ("occurence" %in% col_names && "occurrence" %in% col_names) {
     warning(
-      "Both 'occurrence' and 'occurence' columns found — merging with preference to 'occurrence'."
+      "Both 'occurrence' and 'occurence' columns found - merging with preference to 'occurrence'."
     )
     iucn_ecosystems$occurrence <- dplyr::coalesce(iucn_ecosystems$occurrence, iucn_ecosystems$occurence)
     iucn_ecosystems <- dplyr::select(iucn_ecosystems, -occurence)

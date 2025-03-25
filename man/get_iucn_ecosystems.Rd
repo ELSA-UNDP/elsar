@@ -37,7 +37,7 @@ This function reads and merges \code{.gpkg} vector files representing IUCN GET e
 from a specified directory. It optionally filters files based on filename prefixes
 (e.g., "T", "TF", "FM"), restricts features to those intersecting a country boundary,
 reprojects them to match a planning units raster (\code{pus}), and removes ecosystems
-marked as "minor occurrence" if desired.
+marked as \verb{minor occurrence} if desired.
 }
 \details{
 The layer ID (e.g., "F1.1") is derived from the source filename and added to each feature
