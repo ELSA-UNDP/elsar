@@ -11,7 +11,6 @@ make_urban_greening_opportunities(
   pus,
   iso3,
   return_urban_areas = FALSE,
-  name_out,
   output_path = NULL,
   cores = 4
 )
@@ -21,18 +20,19 @@ make_urban_greening_opportunities(
 
 \item{lulc_raster}{A \code{SpatRaster} of the land use/land cover (LULC) classification.}
 
-\item{sdei_statistics}{A \code{sf} object represetning GHS boundaries and SDEI extreme
+\item{sdei_statistics}{A \code{sf} object representing GHS boundaries and SDEI extreme
 urban heat data.}
 
 \item{pus}{A \code{SpatRaster} defining the planning unit (PU) grid.}
 
 \item{iso3}{A character string representing the ISO3 country code.}
 
-\item{return_urban_areas}{logical. Whether to return also urban areas for potential downstream analyses.}
+\item{return_urban_areas}{logical. Whether to also return the urban areas raster
+for potential downstream analyses.}
 
 \item{output_path}{A character string specifying the output directory (optional).}
 
-\item{cores}{A number allocating the availabe cores for \code{terra} tools that allow
+\item{cores}{A number allocating the available cores for \code{terra} tools that allow
 multi-core processing (if available on your machine). Defaults to 4.}
 }
 \value{

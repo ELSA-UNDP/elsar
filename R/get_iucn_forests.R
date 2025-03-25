@@ -10,7 +10,9 @@
 #' @param iucn_get_directory Character. Path to the directory containing the IUCN `.gpkg` files.
 #' @param pus SpatRaster. The planning units raster (terra object) over which to compute forest coverage.
 #' @param iso3 Character. ISO3 country code, used for naming and passed to `make_normalised_raster()`.
-#' @param include_minor_occurence Logical. Whether to include polygons marked as minor occurrence (default = TRUE).
+#' @param boundary_layer sf object. Vector polygon used to spatially clip features (usually country boundary).
+#' @param include_minor_occurrence Logical. Whether to include polygons marked as minor occurrence (default = TRUE).
+#' @param iucn_get_prefixes Character vector of filename prefixes to include (e.g., c("T", "TF", "FM")) or NULL to include all `.gpkg` files.
 #' @param output_path Optional character. If provided, the output raster is saved to this directory as a GeoTIFF.
 #'
 #' @return A normalized `SpatRaster` showing fractional IUCN forest coverage across planning units.
@@ -32,15 +34,16 @@ get_iucn_forests <- function(
     iucn_get_directory,
     iso3,
     pus,
-    iucn_get_prefixes = "T",
+    boundary_layer = boundary_layer,
     include_minor_occurrence = TRUE,
+    iucn_get_prefixes = "T",
     output_path = NULL
 ) {
   # Validate inputs
-  assertthat::assert_that(assertthat::is.string(iucn_get_directory))
-  assertthat::assert_that(dir.exists(iucn_get_directory))
+  assertthat::assert_that(assertthat::is.string(iucn_get_directory), dir.exists(iucn_get_directory))
   assertthat::assert_that(inherits(pus, "SpatRaster"), msg = "'pus' must be a SpatRaster.")
   assertthat::assert_that(assertthat::is.string(iso3), msg = "'iso3' must be a valid ISO3 code, e.g., 'NPL'.")
+  assertthat::assert_that(inherits(boundary_layer, "sf"))
 
   # Get forest ecosystems from IUCN GET (prefix "T")
   cat("Collecting IUCN GET forest ecosystems (prefix = 'T')...\n")

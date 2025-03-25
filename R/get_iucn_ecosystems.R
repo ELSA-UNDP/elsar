@@ -12,8 +12,8 @@
 #'
 #' @param iucn_get_directory Character. Directory containing IUCN GET `.gpkg` files.
 #' @param iso3 Character. ISO3 country code used for naming the output (e.g., "KEN").
-#' @param boundary_layer sf object. Vector polygon used to spatially clip features (usually country boundary).
 #' @param pus SpatRaster. Planning units raster used to define spatial extent and target CRS.
+#' @param boundary_layer sf object. Vector polygon used to spatially clip features (usually country boundary).
 #' @param include_minor_occurrence Logical. If FALSE, excludes features with minor occurrence (default: TRUE).
 #' @param iucn_get_prefixes Character vector of filename prefixes to include (e.g., c("T", "TF", "FM")) or NULL to include all `.gpkg` files.
 #' @param output_path Character or NULL. If provided, writes the merged output to a GeoPackage.
@@ -39,9 +39,9 @@
 get_iucn_ecosystems <- function(
     iucn_get_directory,
     iso3,
-    boundary_layer,
     pus,
-    include_minor_occurence = TRUE,
+    boundary_layer,
+    include_minor_occurrence = TRUE,
     iucn_get_prefixes = NULL,
     output_path = NULL
 ) {

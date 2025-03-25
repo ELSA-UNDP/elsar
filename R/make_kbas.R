@@ -43,18 +43,18 @@
 #' kba_raster <- make_kbas(
 #'   kba_in = kba_in,
 #'   pus = pus,
-#'   iso3_in = iso3
+#'   iso3 = iso3
 #' )
 #' }
 make_kbas <- function(kba_in,
                       pus,
-                      iso3_in,
+                      iso3,
                       aze_only = FALSE,
                       incl_regional_kba = FALSE,
                       name_out,
                       output_path = NULL) {
   kba_in <- kba_in %>%
-    dplyr::filter(iso3 == iso3_in)
+    dplyr::filter(iso3 == iso3)
 
   if (aze_only) {
     kba_in <- kba_in %>%
@@ -93,7 +93,7 @@ make_kbas <- function(kba_in,
   #save if wanted
   if (!is.null(output_path)) {
     terra::writeRaster(kba_out,
-                       glue::glue("{output_path}/{name_out}_{iso3_in}.tif"),
+                       glue::glue("{output_path}/{name_out}_{iso3}.tif"),
                        gdal = c(
                          "COMPRESS=ZSTD",
                          "PREDICTOR=3",

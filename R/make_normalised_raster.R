@@ -15,6 +15,7 @@
 #' @param fill_na `logical` If `TRUE`, fills `NA` values with 0 before masking (default: `TRUE`).
 #' @param name_out `character` The name of the output raster file (without the extension).
 #' @param output_path `character` The directory path to save the output raster (default: `NULL`, i.e., not saved).
+#' @param threads Optional method to use multi-core processing - to speed on some `terra` functions (default: `TRUE`).
 #'
 #' @details This function reprojects the input raster (`raster_in`) to match the CRS and resolution
 #' of the planning units (`pus`). The method for reprojection can be overridden using `method_override`.

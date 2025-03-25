@@ -65,14 +65,14 @@ make_wetlands_ramsar <- function(ramsar_in = NULL,
       raster_in = wetlands_in,
       pus = pus,
       iso3 = iso3,
-      conditional_expression = function(r) ifel(r > 1, 1, r)
+      conditional_expression = function(r) terra::ifel(r > 1, 1, r)
     )
   }
 
   if ((!is.null(wetlands_in)) & (!is.null(ramsar_in))) {
     cat("Wetlands and Ramsar calculated on Wetalnds AND Ramsar data.")
     ramsar_wetlands <- (0.5 * raster_wetlands + raster_ramsar) %>%
-      terra::app(function(x) ifelse(x > 1, 1, x))
+      terra::app(function(x) terra::ifel(x > 1, 1, x))
   } else if ((is.null(wetlands_in)) & (!is.null(ramsar_in))) {
     cat("Wetlands and Ramsar only calculated on Ramsar data.")
     ramsar_wetlands <- raster_ramsar
