@@ -27,8 +27,8 @@ feature;Pesticide risk;Global_pesticide_risk_scores;tif;NA;0;;1;1;;
 feature;Potential Increase in SOC on Croplands;soc_dif_hi;tif;NA;0;;1;1;;
 feature;Productive Managed Forests;MOD17A3HGF_npp2021_global_cog, FML_v32_near_cog;tif;NA;1;;0;1;;
 feature;Rarity Weighted Richness;all_sp_rwr_all_sets_combined;tif;NA;0;;1;1;;
-feature;Threatened Ecosystems for Protection;NA;NA;NA;0;;0;1;;"Needs ""Intact and Wilderness Areas"" and IUCN Ecosystems"
-feature;Threatened Ecosystems for Restoration;NA;NA;NA;0;;0;1;;Needs IUCN Ecosystems and restore zone (?)
+feature;Threatened Ecosystems for Protection;iucn_ecosystem, intactness_Qprime_2009;NA, tif;NA;1;;0;1;;"Needs ""Intact and Wilderness Areas"" and IUCN Ecosystems"
+feature;Threatened Ecosystems for Restoration;iucn_ecosystem;NA;NA;1;;0;1;;Needs IUCN Ecosystems and restore zone (?)
 feature;Threatened Species Richness;threatened_species_richness_cog;tif;NA;0;;1;1;;
 feature;Underepresented Ecosystems;iucn_ecosystem;NA;NA;1;;0;1;;Needs folder name with json files
 feature;Urban Greening Opportunities;mod13q1_2022_ndvi_wgs84, wbgtmax30_join, esri_10m_lulc_2023;tif, gpkg;NA;1;;0;1;;

@@ -41,7 +41,7 @@ get_iucn_ecosystems <- function(
     iso3,
     boundary_layer,
     pus,
-    include_minor_occurence = TRUE,
+    include_minor_occurrence = TRUE,
     iucn_get_prefixes = NULL,
     output_path = NULL
 ) {
