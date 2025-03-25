@@ -874,6 +874,9 @@ zones_data_incl <- zones_data %>%
 
 #### Prep zones data ####
 for (k in 1:length(zones_data_incl)) {
+
+  gc()
+
   current_zone_dat <- zones_data %>%
     dplyr::filter(data_name == zones_data_incl[[k]])
 
@@ -943,11 +946,13 @@ for (k in 1:length(zones_data_incl)) {
   if (zones_data_incl[[k]] == "IUCN Forests") {
     print("IUCN Forests")
 
-    # load data
-    raster_IUCNforests <- elsar_load_data(
-      file_name = current_zone_dat$full_name,
-      file_type = current_zone_dat$file_type, file_path = current_zone_dat$full_path
+    # process data
+    raster_iucnForest <- get_iucn_forests(
+      iucn_get_directory = file.path(current_zone_dat$full_path, current_zone_dat$file_name),
+      pus = pus,
+      iso3 = iso3
     )
+
   }
 }
 
@@ -983,7 +988,7 @@ for (l in 1:length(zones_list)) {
       sdg_degradation_input = raster_degraded,
       agricultural_areas_input = raster_agri,
       built_areas_input = raster_urban,
-      iucn_get_forest_input = raster_IUCNforests,
+      iucn_get_forest_input = raster_iucnForest,
       hii_input = hii_raster
     )
 
@@ -1032,26 +1037,30 @@ for (l in 1:length(zones_list)) {
 }
 
 #### add threatened
-if (dat_non_default[[j]] == "Threatened Ecosystems for Restoration") {
-  print("Threatened Ecosystems for Restoration")
+if ("Threatened Ecosystems for Restoration" %in% dat_non_default) {
+  print("Threatened Ecosystems for Restoration (done now because it needs the restore zone)")
+
+  gc()
+
+  current_dat <- feature_list %>%
+    dplyr::filter(data_name == "Threatened Ecosystems for Restoration")
 
   # process data
-  threat_p <- make_threatened_ecosystems_protection(
+  threat_r <- make_threatened_ecosystems_protection(
     iso3 = iso3,
     pus = pus,
-    boundary_layer = boundary_proj,
-    #  intactness_input = rast("data/intactness.tif"), # add this
-    iucn_get_directory = file.path(current_dat$full_path, current_dat$file_name)
+    threatened_ecosystems_input = threat_p,
+    degradation_input = restore_zone[[1]]
   )
 
-  names(threat_p) <- c(dat_non_default[[j]]) # set layer name
+  names(threat_r) <- c("Threatened Ecosystems for Restoration") # set layer name
   elsar_plot_feature(
-    raster_in = threat_p,
+    raster_in = threat_r,
     pus = pus,
-    legend_title = dat_non_default[[j]],
+    legend_title = "Threatened Ecosystems for Restoration",
     figure_path = figure_path
   )
-  raster_out <- c(raster_out, threat_p)
+  raster_out <- c(raster_out, threat_r)
 }
 
 #### Save raster stack ####

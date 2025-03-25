@@ -13,7 +13,7 @@ feature;Climate refugia - Bioclimatic Ecosystem Resilience Index;BILBI_P_BERI_20
 feature;Drought Abatement Opportunities;gDH19_oct2015;tif;NA;0;;1;1;;
 feature;Evolutionary Distinct Endangered Species (EDGE) ;threatened_evo_history;tif;NA;0;;1;1;;
 feature;Existing PAs;NA;NA;NA;1;;0;1;;
-feature;Flood Abatement Opportunities;gfd_flood_database, mod13q1_2022_ndvi_wgs84, trop-subtrop_wetlandv3_2016_cifor_cog;tif;NA;1;;0;1;;Needs info on flood risk, wetlands and ndvi
+feature;Flood Abatement Opportunities;gfd_flood_database, mod13q1_2022_ndvi_wgs84, trop-subtrop_wetlandv3_2016_cifor_cog;tif;NA;1;;0;1;;
 feature;Forest Integrity Index;flii_earth-001_cog, global_fsii_2023;tif;NA;0;;0;1;;
 feature;Indigenous Managed Lands;?;?;NA;0;;0;1;;
 feature;Intact Wilderness Area;intactness_Qprime_2009;tif;NA;0;;1;1;;
@@ -27,22 +27,22 @@ feature;Pesticide risk;Global_pesticide_risk_scores;tif;NA;0;;1;1;;
 feature;Potential Increase in SOC on Croplands;soc_dif_hi;tif;NA;0;;1;1;;
 feature;Productive Managed Forests;MOD17A3HGF_npp2021_global_cog, FML_v32_near_cog;tif;NA;1;;0;1;;
 feature;Rarity Weighted Richness;all_sp_rwr_all_sets_combined;tif;NA;0;;1;1;;
-feature;Threatened Ecosystems for Protection;iucn_ecosystem, intactness_Qprime_2009;NA, tif;NA;1;;0;1;;"Needs ""Intact and Wilderness Areas"" and IUCN Ecosystems"
+feature;Threatened Ecosystems for Protection;iucn_ecosystem, intactness_Qprime_2009;NA, tif;NA;1;;0;1;;
 feature;Threatened Ecosystems for Restoration;iucn_ecosystem;NA;NA;1;;0;1;;Needs IUCN Ecosystems and restore zone (?)
 feature;Threatened Species Richness;threatened_species_richness_cog;tif;NA;0;;1;1;;
-feature;Underepresented Ecosystems;iucn_ecosystem;NA;NA;1;;0;1;;Needs folder name with json files
+feature;Underepresented Ecosystems;iucn_ecosystem;NA;NA;1;;0;1;;Needs folder name with gpkg files
 feature;Urban Greening Opportunities;mod13q1_2022_ndvi_wgs84, wbgtmax30_join, esri_10m_lulc_2023;tif, gpkg;NA;1;;0;1;;
 feature;Velocity of Climate Change;vocc_ngb_all;tif;NA;0;;1;1;;
 feature;Vulnerable Soil Organic Carbon Difference;soc-at-risk-V11;tif;NA;1;;1;1;;
 feature;Wetlands and Ramsar;trop-subtrop_wetlandv3_2016_cifor_cog, ramsar_sites_20230920;tif, gpkg;ramsar_sites_20230920;1;;0;1;;
 feature;Yield Gap;yield_gap;tif;NA;1;;1;0;;
 pus;Planning Units;NA;NA;NA;1;NA;NA;1;;
-zone;Protection Zone;NA;NA;NA;1;;0;0;;Current function in elsar different to what Di is doing in script. Double-check with agricultural data and urban data
+zone;Protection Zone;NA;NA;NA;1;;0;0;;
 zone;Restoration Zone;NA;NA;NA;0;;0;0;;Needs normal restore zones and option for forested biomes only (see Moore spreadsheet)
-zone;Management Zone;NA;NA;NA;1;;0;0;;There are several versions of this in Di's script, so should probs write this function to output all versions of this
+zone;Management Zone;NA;NA;NA;1;;0;0;;
 zone_data;Agriculture Areas;esri_10m_lulc_2023;tif;NA;1;;1;0;;
 zone_data;Human Industrial Footprint;hfp2013_merisINT;tif;NA;1;;0;1;;
 zone_data;Managed Forests;FML_v32_near_cog;tif;NA;1;;0;1;;
 zone_data;Urban Areas;esri_10m_lulc_2023;tif;NA;1;;1;0;;Same as Urban Areas in features
 zone_data;Degraded Areas;trendsearth-sdg15.3.1;tif;NA;1;;0;1;;
-zone_data;IUCN Forests;;gpkg;;1;;0;1;;
+zone_data;IUCN Forests;iucn_ecosystem;NA;NA;1;;0;1;;
