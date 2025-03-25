@@ -7,7 +7,7 @@
 make_kbas(
   kba_in,
   pus,
-  iso3_in,
+  iso3,
   aze_only = FALSE,
   incl_regional_kba = FALSE,
   name_out,
@@ -19,6 +19,8 @@ make_kbas(
 
 \item{pus}{A \code{SpatRaster} file that contains the reference spatial extent, crs etc.in form of the planning units}
 
+\item{iso3}{A string of the iso3 name of the data (country name)}
+
 \item{aze_only}{Logical. TBA explanation by Scott}
 
 \item{incl_regional_kba}{Logical. Whether to include regional KBAs}
@@ -26,8 +28,6 @@ make_kbas(
 \item{name_out}{A string with the data name that will be used for the output \code{tif}file}
 
 \item{output_path}{An optional output path for the created file.}
-
-\item{iso3}{A string of the iso3 name of the data (country name)}
 }
 \value{
 A \code{SpatRaster} file that has been aligned and normalised
@@ -67,7 +67,7 @@ kba_in <- load_data(
 kba_raster <- make_kbas(
   kba_in = kba_in,
   pus = pus,
-  iso3_in = iso3
+  iso3 = iso3
 )
 }
 }

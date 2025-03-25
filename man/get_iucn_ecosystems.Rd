@@ -7,9 +7,9 @@
 get_iucn_ecosystems(
   iucn_get_directory,
   iso3,
-  boundary_layer,
   pus,
-  include_minor_occurence = TRUE,
+  boundary_layer,
+  include_minor_occurrence = TRUE,
   iucn_get_prefixes = NULL,
   output_path = NULL
 )
@@ -19,15 +19,15 @@ get_iucn_ecosystems(
 
 \item{iso3}{Character. ISO3 country code used for naming the output (e.g., "KEN").}
 
+\item{pus}{SpatRaster. Planning units raster used to define spatial extent and target CRS.}
+
 \item{boundary_layer}{sf object. Vector polygon used to spatially clip features (usually country boundary).}
 
-\item{pus}{SpatRaster. Planning units raster used to define spatial extent and target CRS.}
+\item{include_minor_occurrence}{Logical. If FALSE, excludes features with minor occurrence (default: TRUE).}
 
 \item{iucn_get_prefixes}{Character vector of filename prefixes to include (e.g., c("T", "TF", "FM")) or NULL to include all \code{.gpkg} files.}
 
 \item{output_path}{Character or NULL. If provided, writes the merged output to a GeoPackage.}
-
-\item{include_minor_occurrence}{Logical. If FALSE, excludes features with minor occurrence (default: TRUE).}
 }
 \value{
 An \code{sf} object containing merged and filtered IUCN GET ecosystem features with valid geometry.

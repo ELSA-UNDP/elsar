@@ -8,6 +8,7 @@
 #' @param iucn_get_directory Character. Path to the directory containing the IUCN `.gpkg` files.
 #' @param iso3 Character. ISO3 country code, used for layer processing and output naming.
 #' @param pus SpatRaster. Planning units raster (terra object) defining resolution and extent.
+#' @param boundary_layer. An `sf` layer of the national bondary of the country; the same as used to create the planning units layer.
 #' @param current_protected_areas Optional. An `sf` or `SpatVector` of protected areas. If `NULL`, the function calls `make_protected_areas()`.
 #' @param iucn_get_prefixes Optional character vector. Filter to only include layers with specific IUCN ecosystem prefixes (e.g., "T", "M", etc.).
 #' @param include_minor_occurrence Logical. Whether to include ecosystems marked as minor occurrences (default: TRUE).

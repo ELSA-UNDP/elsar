@@ -29,6 +29,8 @@ make_underrepresented_ecosystems(
 \item{include_minor_occurrence}{Logical. Whether to include ecosystems marked as minor occurrences (default: TRUE).}
 
 \item{output_path}{Optional character. If provided, saves the output raster to this directory.}
+
+\item{boundary_layer.}{An \code{sf} layer of the national bondary of the country; the same as used to create the planning units layer.}
 }
 \value{
 A normalized \code{SpatRaster} layer representing average underrepresentation across ecosystems.

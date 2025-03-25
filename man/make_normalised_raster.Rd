@@ -41,6 +41,8 @@ make_normalised_raster(
 \item{name_out}{\code{character} The name of the output raster file (without the extension).}
 
 \item{output_path}{\code{character} The directory path to save the output raster (default: \code{NULL}, i.e., not saved).}
+
+\item{threads}{Optional method to use multi-core processing - to speed on some \code{terra} functions (default: \code{TRUE}).}
 }
 \value{
 Returns a \link{SpatRaster} object that has been reprojected and processed.

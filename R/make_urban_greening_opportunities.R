@@ -8,13 +8,14 @@
 #'
 #' @param ndvi_raster A `SpatRaster` representing the NDVI data.
 #' @param lulc_raster A `SpatRaster` of the land use/land cover (LULC) classification.
-#' @param sdei_statistics A `sf` object represetning GHS boundaries and SDEI extreme
+#' @param sdei_statistics A `sf` object representing GHS boundaries and SDEI extreme
 #'      urban heat data.
 #' @param pus A `SpatRaster` defining the planning unit (PU) grid.
 #' @param iso3 A character string representing the ISO3 country code.
-#' @param return_urban_areas logical. Whether to return also urban areas for potential downstream analyses.
+#' @param return_urban_areas logical. Whether to also return the urban areas raster
+#'        for potential downstream analyses.
 #' @param output_path A character string specifying the output directory (optional).
-#' @param cores A number allocating the availabe cores for `terra` tools that allow
+#' @param cores A number allocating the available cores for `terra` tools that allow
 #'        multi-core processing (if available on your machine). Defaults to 4.
 #'
 #' @return A `SpatRaster` representing urban greening opportunities.
@@ -54,7 +55,6 @@ make_urban_greening_opportunities <- function(ndvi_raster,
                                               pus,
                                               iso3,
                                               return_urban_areas = FALSE,
-                                              name_out,
                                               output_path = NULL,
                                               cores = 4) {
   # Input Validation
