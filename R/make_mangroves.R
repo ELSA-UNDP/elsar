@@ -67,12 +67,18 @@ make_mangroves <- function(sf_in, # rename function name later
 
   #save if wanted
   if (!is.null(output_path)) {
-    terra::writeRaster(raster_out,
-      glue::glue("{output_path}/{name_out}_{iso3}.tif"),
-      gdal = c("COMPRESS=DEFLATE"),
-      NAflag = -9999,
-      overwrite = TRUE,
-      filetype = "COG"
+    terra::writeRaster(
+      raster_out,
+      filename = glue::glue("{output_path}/{name_out}_{iso3}.tif"),
+      filetype = "COG",
+      datatype = "FLT4S",
+      gdal = c(
+        "COMPRESS=ZSTD",
+        "PREDICTOR=3",
+        "OVERVIEWS=NONE",
+        "NUM_THREADS=ALL_CPUS"
+      ),
+      overwrite = TRUE
     )
   }
   return(raster_out)
