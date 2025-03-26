@@ -84,18 +84,18 @@ make_threatened_ecosystems_protection <- function(
   iucn_ecosysytems_intactness_area <- iucn_ecosystems %>%
     sf::st_intersection(non_intact_areas) %>%
     sf::st_make_valid() %>%
-    dplyr::group_by(id) %>%
+    dplyr::group_by(.data$id) %>%
     dplyr::summarise() %>%
     dplyr::mutate(area_intact = units::drop_units(sf::st_area(.))) %>%
     sf::st_set_geometry(NULL)
 
   # Compute total area and intactness ratio per ecosystem
   iucn_ecosysytems_total <- iucn_ecosystems %>%
-    dplyr::group_by(id) %>%
+    dplyr::group_by(.data$id) %>%
     dplyr::summarise() %>%
     dplyr::mutate(area = units::drop_units(sf::st_area(.))) %>%
     dplyr::left_join(iucn_ecosysytems_intactness_area, by = 'id') %>%
-    dplyr::mutate(threat = area_intact / area * 100)
+    dplyr::mutate(threat = .data$area_intact / .data$area * 100)
 
   # Rasterize and normalize the threat values
   cat("Calculating average intactness and normalising raster output...\n")

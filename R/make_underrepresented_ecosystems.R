@@ -78,22 +78,22 @@ make_underrepresented_ecosystems <- function(
     sf::st_filter(current_protected_areas) %>%
     sf::st_intersection(current_protected_areas) %>%
     sf::st_make_valid() %>%
-    dplyr::group_by(id) %>%
+    dplyr::group_by(.data$id) %>%
     dplyr::summarise() %>%
     dplyr::mutate(area_protected = units::drop_units(sf::st_area(.))) %>%
     sf::st_set_geometry(NULL) %>%
-    dplyr::select(id, area_protected)
+    dplyr::select("id", "area_protected")
 
   # Calculate total area and underrepresentation gap per ecosystem
   cat("Calculating representation gap from 30% protection target...\n")
   iucn_ecosysytems_total <- iucn_ecosystems %>%
-    dplyr::group_by(id) %>%
+    dplyr::group_by(.data$id) %>%
     dplyr::summarise() %>%
     dplyr::mutate(area = units::drop_units(sf::st_area(.))) %>%
     dplyr::left_join(iucn_ecosysytems_pa_area, by = 'id') %>%
     dplyr::mutate(
-      percent_protected = area_protected / area * 100,
-      target = ifelse(percent_protected < 30, 30 - percent_protected, 0)
+      percent_protected = .data$area_protected / .data$area * 100,
+      target = ifelse(.data$percent_protected < 30, 30 - .data$percent_protected, 0)
     )
 
   # Rasterize and normalize the representation gap
@@ -103,7 +103,7 @@ make_underrepresented_ecosystems <- function(
     pus = pus,
     iso3 = iso3,
     attribute = "target"
-    )
+  )
   names(underrepresented_ecosystems) <- "underrepresented_ecosystems"
 
   # Optionally write output
