@@ -15,7 +15,8 @@
 #' @param pus SpatRaster. Planning units raster used to define spatial extent and target CRS.
 #' @param boundary_layer sf object. Vector polygon used to spatially clip features (usually country boundary).
 #' @param include_minor_occurrence Logical. If FALSE, excludes features with minor occurrence (default: TRUE).
-#' @param iucn_get_prefixes Character vector of filename prefixes to include (e.g., c("T", "TF", "FM")) or NULL to include all `.gpkg` files.
+#' @param iucn_get_prefixes Character vector of filename prefixes to include (e.g., c("F1.1", "F1.2",
+#'    "SM1.2", "SM1.3")) or NULL to include all `.gpkg` files.
 #' @param output_path Character or NULL. If provided, writes the merged output to a GeoPackage.
 #'
 #' @return An `sf` object containing merged and filtered IUCN GET ecosystem features with valid geometry.
@@ -30,7 +31,7 @@
 #'   iso3 = "KEN",
 #'   boundary_layer = boundary,
 #'   pus = pus,
-#'   iucn_get_prefixes = c("T", "TF"),
+#'   iucn_get_prefixes = c("T1.2", "TF1.4"),
 #'   include_minor_occurrence = FALSE,
 #'   output_path = "outputs"
 #' )
@@ -51,7 +52,7 @@ get_iucn_ecosystems <- function(
   assertthat::assert_that(inherits(pus, "SpatRaster"))
   assertthat::assert_that(inherits(boundary_layer, "sf"))
 
-  allowed_prefixes <- c("F", "FM", "M", "MFT", "MT", "S", "SF", "SM", "T", "TF")
+  allowed_prefixes <- c( "F1.1", "F1.2", "F1.3", "F1.4", "F1.5", "F1.6", "F1.7", "F2.1", "F2.10", "F2.2", "F2.3", "F2.4", "F2.5", "F2.6", "F2.7", "F2.8", "F2.9", "F3.1", "F3.2", "F3.3", "F3.4", "F3.5", "FM1.1", "FM1.2", "FM1.3", "M1.1", "M1.10", "M1.2", "M1.3", "M1.4", "M1.5", "M1.6", "M1.7", "M1.8", "M1.9", "M2.1", "M2.2", "M2.3", "M2.4", "M2.5", "M3.1", "M3.2", "M3.3", "M3.4", "M3.5", "M3.6", "M3.7", "M4.1", "M4.2", "MFT1.1", "MFT1.2", "MFT1.3", "MT1.1", "MT1.2", "MT1.3", "MT1.4", "MT2.1", "MT2.2", "MT3.1", "S1.1", "S2.1", "SF1.1", "SF1.2", "SF2.1", "SF2.2", "SM1.1", "SM1.2", "SM1.3", "T1.1", "T1.2", "T1.3", "T1.4", "T2.1", "T2.2", "T2.3", "T2.4", "T2.5", "T2.6", "T3.1", "T3.2", "T3.3", "T3.4", "T4.1", "T4.2", "T4.3", "T4.4", "T4.5", "T5.1", "T5.2", "T5.3", "T5.4", "T5.5", "T6.1", "T6.2", "T6.3", "T6.4", "T6.5", "T7.1", "T7.2", "T7.3", "T7.4", "T7.5", "TF1.1", "TF1.2", "TF1.3", "TF1.4", "TF1.5", "TF1.6", "TF1.7" )
 
   if (!is.null(iucn_get_prefixes)) {
     invalid <- setdiff(iucn_get_prefixes, allowed_prefixes)
@@ -62,7 +63,12 @@ get_iucn_ecosystems <- function(
         "Allowed prefixes: {paste(allowed_prefixes, collapse = ', ')}."
       )
     )
-    pattern <- paste0("^(", paste(iucn_get_prefixes, collapse = "|"), ").*\\.gpkg$")
+
+    # Convert e.g. F1.1 → F1_1 to match filenames like F1_1_v2_0.gpkg
+    file_prefixes <- gsub("\\.", "_", iucn_get_prefixes)
+
+    # Create pattern to match start of filenames
+    pattern <- paste0("^(", paste(file_prefixes, collapse = "|"), ")_.*\\.gpkg$")
   } else {
     pattern <- "\\.gpkg$"
   }

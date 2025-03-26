@@ -85,14 +85,20 @@ make_planning_units <- function(boundary_proj,
   }
 
   if (!is.null(output_path)) {
-    terra::writeRaster(r1,
-    glue::glue("{output_path}/planning_units_{iso3}.tif"),
-    gdal = c("COMPRESS=ZSTD", "NUM_THREADS=4", "OVERVIEWS=NONE"),
-    NAflag = 255,
-    overwrite = TRUE,
-    filetype = "COG",
-    datatype = "INT1U"
-  )
+    terra::writeRaster(
+      r1,
+      filename = glue::glue("{output_path}/planning_units_{iso3}.tif"),
+      filetype = "COG",
+      datatype = "INT1U",
+      gdal = c(
+        "COMPRESS=ZSTD",
+        "NUM_THREADS=4",
+        "OVERVIEWS=NONE",
+        "PREDICTOR=1"
+        ),
+      NAflag = 255,
+      overwrite = TRUE,
+      )
   }
 
   return(r1)

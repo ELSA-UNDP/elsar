@@ -200,6 +200,7 @@ if (nrow(download_lulc) > 0) {
 
 # clean env
 rm(boundary_info, boundary_dat)
+gc()
 
 ##### Create feature stack #####
 # could have one master script and then extra feature generation scripts etc that are sourced + ADD visualisation option
@@ -252,6 +253,8 @@ cat("Creating Default Features")
 # init data stack with pus as first layer
 raster_out <- pus
 for (i in 1:length(dat_default)) { # for all the data that runs with make_normalised_raster()
+  gc()
+
   current_dat <- feature_list %>%
     dplyr::filter(data_name == dat_default[[i]])
 
@@ -293,9 +296,7 @@ for (i in 1:length(dat_default)) { # for all the data that runs with make_normal
     rast_norm <- make_normalised_raster(
       raster_in = current_rast,
       pus = pus,
-      iso3 = iso3,
-      # output_path = output_path,
-      # name_out = dat_default[[i]]
+      iso3 = iso3
     )
   }
 
@@ -335,7 +336,6 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
       sf_in = current_rast,
       pus = pus,
       iso3 = iso3,
-      output_path = output_path,
       name_out = dat_non_default[[j]]
     )
     names(mangrove_raster) <- c(dat_non_default[[j]]) # set layer name
@@ -348,7 +348,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
     raster_out <- c(raster_out, mangrove_raster)
   }
 
-  if (dat_non_default[[j]] == "Forest Integrity Index") { # add saving option
+  if (dat_non_default[[j]] == "Forest Integrity Index") {
     print("Forest Integrity Index")
 
     if (grepl(",", current_dat$file_name)) { # check if both flii and fsii should be used
@@ -404,6 +404,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
       figure_path = figure_path
     )
     raster_out <- c(raster_out, forest_integrity)
+
   }
 
   if (dat_non_default[[j]] == "Existing PAs") {
@@ -802,7 +803,8 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
     underrep <- make_underrepresented_ecosystems(
       iucn_get_directory = file.path(current_dat$full_path, current_dat$file_name),
       iso3 = iso3,
-      pus = pus
+      pus = pus,
+      boundary_layer = boundary_proj
     )
 
     names(underrep) <- c(dat_non_default[[j]]) # set layer name
@@ -813,6 +815,37 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
       figure_path = figure_path
     )
     raster_out <- c(raster_out, underrep)
+  }
+
+  if (dat_non_default[[j]] == "Threatened Ecosystems for Protection") {
+    print("Threatened Ecosystems for Protection")
+
+    #load data
+    threat_names <- unlist(strsplit(current_dat$file_name, ", ", fixed = TRUE))
+    filetype_names <- unlist(strsplit(current_dat$file_type, ", ", fixed = TRUE))
+
+    raster_intact <- elsar_load_data(
+      file_name = paste0(threat_names[grepl("intact|eii", threat_names)], ".", filetype_names[[2]]),
+      file_type = filetype_names[[2]], file_path = current_dat$full_path
+    )
+
+    # process data
+    threat_p <- make_threatened_ecosystems_protection(
+        iso3 = iso3,
+        pus = pus,
+        boundary_layer = boundary_proj,
+        intactness_input = raster_intact,
+        iucn_get_directory = file.path(current_dat$full_path, threat_names[grepl("iucn", threat_names)])
+      )
+
+    names(threat_p) <- c(dat_non_default[[j]]) # set layer name
+    elsar_plot_feature(
+      raster_in = threat_p,
+      pus = pus,
+      legend_title = dat_non_default[[j]],
+      figure_path = figure_path
+    )
+    raster_out <- c(raster_out, threat_p)
   }
 }
 
@@ -839,6 +872,9 @@ zones_data_incl <- zones_data %>%
 
 #### Prep zones data ####
 for (k in 1:length(zones_data_incl)) {
+
+  gc()
+
   current_zone_dat <- zones_data %>%
     dplyr::filter(data_name == zones_data_incl[[k]])
 
@@ -908,11 +944,14 @@ for (k in 1:length(zones_data_incl)) {
   if (zones_data_incl[[k]] == "IUCN Forests") {
     print("IUCN Forests")
 
-    # load data
-    raster_IUCNforests <- elsar_load_data(
-      file_name = current_zone_dat$full_name,
-      file_type = current_zone_dat$file_type, file_path = current_zone_dat$full_path
+    # process data
+    raster_iucnForest <- get_iucn_forests(
+      iucn_get_directory = file.path(current_zone_dat$full_path, current_zone_dat$file_name),
+      pus = pus,
+      iso3 = iso3,
+      boundary_layer = boundary_proj
     )
+
   }
 }
 
@@ -948,7 +987,7 @@ for (l in 1:length(zones_list)) {
       sdg_degradation_input = raster_degraded,
       agricultural_areas_input = raster_agri,
       built_areas_input = raster_urban,
-      iucn_get_forest_input = raster_IUCNforests,
+      iucn_get_forest_input = raster_iucnForest,
       hii_input = hii_raster
     )
 
@@ -994,6 +1033,33 @@ for (l in 1:length(zones_list)) {
     )
     raster_out <- c(raster_out, management_zone)
   }
+}
+
+#### add threatened
+if ("Threatened Ecosystems for Restoration" %in% dat_non_default) {
+  print("Threatened Ecosystems for Restoration (done now because it needs the restore zone)")
+
+  gc()
+
+  current_dat <- feature_list %>%
+    dplyr::filter(data_name == "Threatened Ecosystems for Restoration")
+
+  # process data
+  threat_r <- make_threatened_ecosystems_restoration(
+    iso3 = iso3,
+    pus = pus,
+    threatened_ecosystems_input = threat_p,
+    degradation_input = restoration_zone[[1]]
+  )
+
+  names(threat_r) <- c("Threatened Ecosystems for Restoration") # set layer name
+  elsar_plot_feature(
+    raster_in = threat_r,
+    pus = pus,
+    legend_title = "Threatened Ecosystems for Restoration",
+    figure_path = figure_path
+  )
+  raster_out <- c(raster_out, threat_r)
 }
 
 #### Save raster stack ####

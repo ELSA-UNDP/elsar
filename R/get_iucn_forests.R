@@ -12,8 +12,11 @@
 #' @param iso3 Character. ISO3 country code, used for naming and passed to `make_normalised_raster()`.
 #' @param boundary_layer sf object. Vector polygon used to spatially clip features (usually country boundary).
 #' @param include_minor_occurrence Logical. Whether to include polygons marked as minor occurrence (default = TRUE).
-#' @param iucn_get_prefixes Character vector of filename prefixes to include (e.g., c("T", "TF", "FM")) or NULL to include all `.gpkg` files.
+#' @param iucn_get_prefixes Character vector of filename prefixes to include all forest
+#'    classes (e.g., c("MFT1.2", "T1.1", "T1.2", "T1.3", "T1.4", "T2.1", "T2.2", "T2.3", "T2.4",
+#'    "T2.5", "T2.6", "TF1.1", "TF1.2")) or NULL to include all `.gpkg` files.
 #' @param output_path Optional character. If provided, the output raster is saved to this directory as a GeoTIFF.
+#' @param boundary_layer Boundary of the planning region.
 #'
 #' @return A normalized `SpatRaster` showing fractional IUCN forest coverage across planning units.
 #' @export
@@ -34,9 +37,8 @@ get_iucn_forests <- function(
     iucn_get_directory,
     iso3,
     pus,
-    boundary_layer = boundary_layer,
-    include_minor_occurrence = TRUE,
-    iucn_get_prefixes = "T",
+    boundary_layer,
+    iucn_get_prefixes = c("MFT1.2", "T1.1", "T1.2", "T1.3", "T1.4", "T2.1", "T2.2", "T2.3", "T2.4", "T2.5", "T2.6", "TF1.1", "TF1.2"),
     output_path = NULL
 ) {
   # Validate inputs
