@@ -84,15 +84,12 @@ make_wetlands_ramsar <- function(ramsar_in = NULL,
   }
 
   ramsar_wetlands <- ramsar_wetlands %>%
-    terra::mask(pus, maskvalues = 0) %>%
-    terra::subst(NA, 0)
+    terra::mask(pus, maskvalues = 0)
 
   if ((!is.null(wetlands_in)) & (!is.null(ramsar_in)) & return_all) {
     ramsar_wetlands <- c(
-      ramsar_wetlands, raster_ramsar %>%
-        terra::subst(NA, 0),
-      raster_wetlands %>%
-        terra::subst(NA, 0)
+      ramsar_wetlands, raster_ramsar,
+      raster_wetlands
     )
     return(ramsar_wetlands)
   } else {

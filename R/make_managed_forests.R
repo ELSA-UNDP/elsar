@@ -102,7 +102,7 @@ make_managed_forests <- function(raster_in, # ADD: option to generate productive
     terra::mask(pus, maskvalues = 0) %>% # maskvalues denotes the background value in the raster that's not data (since this should always be planning region/units is 1 and outside is 0, this is hard-coded to 0)
     rescale_raster()
 
-  dat_aligned[is.na(dat_aligned)] <- 0
+  #dat_aligned[is.na(dat_aligned)] <- 0
 
   if (!is.null(output_path)) {
     terra::writeRaster(dat_aligned,
