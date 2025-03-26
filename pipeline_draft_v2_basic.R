@@ -200,6 +200,7 @@ if (nrow(download_lulc) > 0) {
 
 # clean env
 rm(boundary_info, boundary_dat)
+gc()
 
 ##### Create feature stack #####
 # could have one master script and then extra feature generation scripts etc that are sourced + ADD visualisation option
@@ -295,9 +296,7 @@ for (i in 1:length(dat_default)) { # for all the data that runs with make_normal
     rast_norm <- make_normalised_raster(
       raster_in = current_rast,
       pus = pus,
-      iso3 = iso3,
-      # output_path = output_path,
-      # name_out = dat_default[[i]]
+      iso3 = iso3
     )
   }
 
@@ -349,7 +348,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
     raster_out <- c(raster_out, mangrove_raster)
   }
 
-  if (dat_non_default[[j]] == "Forest Integrity Index") { # add saving option
+  if (dat_non_default[[j]] == "Forest Integrity Index") {
     print("Forest Integrity Index")
 
     if (grepl(",", current_dat$file_name)) { # check if both flii and fsii should be used
