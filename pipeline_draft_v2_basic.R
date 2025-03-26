@@ -13,18 +13,24 @@ library(RPostgres)
 #################################################################################
 
 # Set local temp directory for `terra`
-# terra::terraOptions(tempdir = here::here("~/Documents/"), steps = 4, todisk = TRUE)
-# terraOptions()
-# terra::tmpFiles(remove = TRUE)
+terra::terraOptions(tempdir = here::here("~/Documents/"), steps = 4, todisk = TRUE)
+terraOptions()
+terra::tmpFiles(remove = TRUE)
 
 # Set paths for data
-sheet_path <- "C:/Users/sandr/Documents/Github/elsar"
-input_path <- "C:/Users/sandr/Documents/UNBL_work/Pipeline/input_dat"
-output_path <- "C:/Users/sandr/Documents/UNBL_work/Pipeline/output_dat"
-figure_path <- "C:/Users/sandr/Documents/UNBL_work/Pipeline/output_dat/figures"
+# sheet_path <- "C:/Users/sandr/Documents/Github/elsar"
+# input_path <- "C:/Users/sandr/Documents/UNBL_work/Pipeline/input_dat"
+# output_path <- "C:/Users/sandr/Documents/UNBL_work/Pipeline/output_dat"
+# figure_path <- "C:/Users/sandr/Documents/UNBL_work/Pipeline/output_dat/figures"
+sheet_path <- "/home/scottca/gitrepos/elsar"
+input_path <- "/home/scottca/Documents/elsar_data"
+output_path <- "/home/scottca/Documents/elsar_outputs"
+figure_path <- "/home/scottca/Documents/elsar_figures"
+
+
 
 ## Country info
-iso3 <- "NPL"
+iso3 <- "BGD"
 iso3_column <- "iso3cd" # for boundary data
 
 #################################################################################
@@ -552,22 +558,22 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
 
     if (include_kbas & include_aze) {
       kba_out <- make_kbas(
-        kba_in = kba_sf %>%
-          dplyr::filter(is.na(azestatus) | azestatus != "confirmed"),
+        kba_in = kba_sf,
         pus = pus,
-        iso3_in = iso3
+        iso3 = iso3
       )
 
       aze_raster <- make_kbas(
         kba_in = kba_sf,
         pus = pus,
-        iso3_in = iso3,
+        iso3 = iso3,
         aze_only = TRUE
       )
 
       kba_raster <- c(kba_out, aze_raster)
 
       names(kba_raster) <- c("Key Biodiversity Areas", "Alliance for Zero Extinction Sites") # set layer name
+
       elsar_plot_feature(
         raster_in = kba_raster[[1]],
         pus = pus,
@@ -585,7 +591,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
       kba_raster <- make_kbas(
         kba_in = kba_sf,
         pus = pus,
-        iso3_in = iso3,
+        iso3 = iso3,
         aze_only = TRUE
       )
 
@@ -602,7 +608,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
       kba_raster <- make_kbas(
         kba_in = kba_sf,
         pus = pus,
-        iso3_in = iso3
+        iso3 = iso3
       )
 
       names(kba_raster) <- c("Key Biodiversity Areas") # set layer name
@@ -640,7 +646,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
         wetlands_in = raster_wetlands,
         ramsar_in = sf_ramsar,
         pus = pus,
-        iso3_in = iso3,
+        iso3 = iso3,
         buffer_points = FALSE
       )
     } else if ((!(grepl(",", current_dat$file_name))) & (grepl("wetland", current_dat$file_name))) {
@@ -949,7 +955,8 @@ for (k in 1:length(zones_data_incl)) {
       iucn_get_directory = file.path(current_zone_dat$full_path, current_zone_dat$file_name),
       pus = pus,
       iso3 = iso3,
-      boundary_layer = boundary_proj
+      boundary_layer = boundary_proj,
+      include_minor_occurrence = TRUE
     )
 
   }
@@ -1065,9 +1072,16 @@ if ("Threatened Ecosystems for Restoration" %in% dat_non_default) {
 #### Save raster stack ####
 out_name <- file.path(glue::glue("{output_path}/data_stack_{iso3}.tif"))
 
-writeRaster(raster_out, out_name,
+terra::writeRaster(
+  raster_out,
+  filename = out_name,
   filetype = "COG",
   datatype = "FLT4S", # 32-bit float
-  gdal = c("COMPRESS=DEFLATE"),
+  gdal = c(
+    "COMPRESS=DEFLATE",
+    "PREDICTOR=3",
+    "OVERVIEWS=NONE",
+    "NUM_THREADS=ALL_CPUS"
+    ),
   overwrite = TRUE
 )

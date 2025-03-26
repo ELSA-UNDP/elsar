@@ -9,6 +9,7 @@ get_iucn_forests(
   iso3,
   pus,
   boundary_layer,
+  include_minor_occurrence = TRUE,
   iucn_get_prefixes = c("MFT1.2", "T1.1", "T1.2", "T1.3", "T1.4", "T2.1", "T2.2", "T2.3",
     "T2.4", "T2.5", "T2.6", "TF1.1", "TF1.2"),
   output_path = NULL
@@ -23,13 +24,13 @@ get_iucn_forests(
 
 \item{boundary_layer}{Boundary of the planning region.}
 
+\item{include_minor_occurrence}{Logical. Whether to include polygons marked as minor occurrence (default = TRUE).}
+
 \item{iucn_get_prefixes}{Character vector of filename prefixes to include all forest
 classes (e.g., c("MFT1.2", "T1.1", "T1.2", "T1.3", "T1.4", "T2.1", "T2.2", "T2.3", "T2.4",
 "T2.5", "T2.6", "TF1.1", "TF1.2")) or NULL to include all \code{.gpkg} files.}
 
 \item{output_path}{Optional character. If provided, the output raster is saved to this directory as a GeoTIFF.}
-
-\item{include_minor_occurrence}{Logical. Whether to include polygons marked as minor occurrence (default = TRUE).}
 }
 \value{
 A normalized \code{SpatRaster} showing fractional IUCN forest coverage across planning units.

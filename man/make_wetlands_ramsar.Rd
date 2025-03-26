@@ -2,39 +2,49 @@
 % Please edit documentation in R/make_wetlands_ramsar.R
 \name{make_wetlands_ramsar}
 \alias{make_wetlands_ramsar}
-\title{Function to make standardised Wetlands and Ramsar data}
+\title{Create a Standardised Raster for Wetlands and Ramsar Sites}
 \usage{
 make_wetlands_ramsar(
   ramsar_in = NULL,
   wetlands_in = NULL,
   pus,
-  iso3_in,
+  iso3,
   buffer_points = TRUE,
   area_column = "Area (ha)",
   nQuadSegs = 50,
+  wetland_threshold = 0.25,
   return_all = FALSE
 )
 }
 \arguments{
-\item{ramsar_in}{An \code{sf} file that contains the ramsar data to be put into right format}
+\item{ramsar_in}{An \code{sf} object containing Ramsar site geometries (optional).}
 
-\item{wetlands_in}{A \code{SpatRaster} file with the wetlands information}
+\item{wetlands_in}{A \code{SpatRaster} object representing global wetlands data (optional).}
 
-\item{pus}{A \code{SpatRaster} file that contains the reference spatial extent, crs etc.in form of the planning units}
+\item{pus}{A \code{SpatRaster} object containing the planning units used for resolution and extent.}
 
-\item{iso3_in}{A string of the iso3 name of the data (country name)}
+\item{iso3}{A character string with the ISO3 country code (e.g., "KEN").}
 
-\item{buffer_points}{logical. Only relevant when \code{"POINT"} or \code{"MULTIPOINT"} geometries exist in the data. If \code{TRUE}, creates a circular buffer around \code{"POINT"} data based on area information data that is then used as polygon data needed for \pkg{exactextractr} calculations.}
+\item{buffer_points}{Logical. Only relevant when "POINT" or "MULTIPOINT" geometries exist in \code{ramsar_in}.
+If \code{TRUE}, circular buffers are generated from the area attribute.}
 
-\item{area_column}{A string of the column name with the area information needed for buffer calculations.}
+\item{area_column}{A string indicating the name of the column containing site area (in hectares).
+Used when buffering point geometries.}
 
-\item{nQuadSegs}{An integer specifying the number of segments to use for buffering. Default is 50.}
+\item{nQuadSegs}{An integer specifying the number of segments used to approximate circular buffer (default: 50).}
 
-\item{return_all}{Logical. Whether to return a \code{SpatRaster} with the combined wetlands and raster layer, as well as the individual layers}
+\item{wetland_threshold}{Numeric. Threshold for binarising wetlands raster (default: 0.25).}
+
+\item{return_all}{Logical. If \code{TRUE}, returns a raster stack containing the combined wetlands+ramsar raster,
+as well as the individual normalised input layers.}
 }
 \value{
-A \code{SpatRaster} file that has been aligned and normalised
+A \code{SpatRaster} object. If \code{return_all = TRUE}, returns a raster stack with three layers:
+combined, ramsar only, and wetlands only.
 }
 \description{
-Function works with either Ramsar or Wetlands data or both.
+This function processes and combines Ramsar and global wetlands data to produce a standardised
+raster layer aligned to planning units. It supports handling of Ramsar point geometries by buffering
+them into polygons if required, and allows filtering and normalisation based on user-defined
+thresholds. Either Ramsar or Wetlands data can be provided, or both.
 }

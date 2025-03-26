@@ -38,6 +38,7 @@ get_iucn_forests <- function(
     iso3,
     pus,
     boundary_layer,
+    include_minor_occurrence = TRUE,
     iucn_get_prefixes = c("MFT1.2", "T1.1", "T1.2", "T1.3", "T1.4", "T2.1", "T2.2", "T2.3", "T2.4", "T2.5", "T2.6", "TF1.1", "TF1.2"),
     output_path = NULL
 ) {
