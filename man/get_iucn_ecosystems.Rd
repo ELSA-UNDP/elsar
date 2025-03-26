@@ -25,7 +25,8 @@ get_iucn_ecosystems(
 
 \item{include_minor_occurrence}{Logical. If FALSE, excludes features with minor occurrence (default: TRUE).}
 
-\item{iucn_get_prefixes}{Character vector of filename prefixes to include (e.g., c("T", "TF", "FM")) or NULL to include all \code{.gpkg} files.}
+\item{iucn_get_prefixes}{Character vector of filename prefixes to include (e.g., c("F1.1", "F1.2",
+"SM1.2", "SM1.3")) or NULL to include all \code{.gpkg} files.}
 
 \item{output_path}{Character or NULL. If provided, writes the merged output to a GeoPackage.}
 }
@@ -53,7 +54,7 @@ ecosystems <- get_iucn_ecosystems(
   iso3 = "KEN",
   boundary_layer = boundary,
   pus = pus,
-  iucn_get_prefixes = c("T", "TF"),
+  iucn_get_prefixes = c("T1.2", "TF1.4"),
   include_minor_occurrence = FALSE,
   output_path = "outputs"
 )
