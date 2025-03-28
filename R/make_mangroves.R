@@ -51,7 +51,7 @@ make_mangroves <- function(sf_in, # rename function name later
                            iso3,
                            name_out,
                            output_path = NULL) {
-  # re-project sf, turn into raster and rescale
+  # re-project sf, turn into raster and normalise
   if (nrow(sf_in) > 0) {
     sf_in <- sf_in %>%
       sf::st_transform(crs = sf::st_crs(pus)) %>%
@@ -59,10 +59,14 @@ make_mangroves <- function(sf_in, # rename function name later
       dplyr::summarise()
 
     raster_out <- exactextractr::coverage_fraction(pus, sf_in)[[1]] %>%
-      terra::mask(pus, maskvalues = 0) %>%
-      rescale_raster()
+      elsar::make_normalised_raster(
+        pus = pus,
+        iso3 = iso3
+        )
+
   } else {
-    raster_out <- pus
+    log_msg("No mangrove areas found. Returning an empty raster.")
+    raster_out <- terra::ifel(pus == 1, 0, NA)
   }
 
   #save if wanted

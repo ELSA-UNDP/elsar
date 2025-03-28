@@ -48,44 +48,57 @@ make_kbas <- function(
   kba <- kba_in %>%
     dplyr::filter(iso3 == iso3_filter)
 
-  if (aze_only) {
-    cat("Returning only AZE sites.\n")
-    kba <- kba %>%
-      dplyr::filter(azestatus == "confirmed")
-  } else if (!include_aze_sites) {
-    cat("Excluding AZE sites.\n")
-    kba <- kba %>%
-      dplyr::filter(is.na(azestatus) | azestatus != "confirmed")
-  } else {
-    cat("Including AZE sites.\n")
-  }
-
-  if (nrow(kba) == 0) {
+  if (nrow(kba) > 0) {
     if (aze_only) {
-      cat("No matching AZE sites found in the study region — returning empty raster.\n")
+      log_msg("Returning only AZE sites.")
+      kba <- dplyr::filter(kba, azestatus == "confirmed")
+
+      if (nrow(kba) == 0) {
+        log_msg("No matching AZE sites found in the study region: returning empty raster.")
+        kba <- terra::ifel(pus == 1, 0, NA)
+        return(kba)
+      }
+
     } else {
-      cat("No matching KBA features found in the study region — returning empty raster.\n")
-    }
-    kba <- pus
-  } else {
-    if (!include_regional_kba) {
-      cat("Excluding Regional KBAs or those with undetermined Global status.\n")
-      kba <- kba %>%
-        dplyr::filter(kba_qual %ni% c("Regional", "Global/ Regional to be determined"))
+      if (!include_aze_sites) {
+        log_msg("Excluding AZE sites.")
+        kba <- dplyr::filter(kba, is.na(azestatus) | azestatus != "confirmed")
+
+        if (nrow(kba) == 0) {
+          log_msg("After excluding AZEs, there are no KBA sites found: returning empty raster.")
+          kba <- terra::ifel(pus == 1, 0, NA)
+          return(kba)
+        }
+      } else {
+        log_msg("Including AZE sites.")
+      }
+
+      if (!include_regional_kba) {
+        log_msg("Excluding Regional KBAs or those with undetermined Global status.")
+        kba <- dplyr::filter(kba, kba_qual %ni% c("Regional", "Global/ Regional to be determined"))
+      }
+
+      if (nrow(kba) == 0) {
+        log_msg("No KBA sites founds after removing Regional KBAs and those with undetermined Global status: returning empty raster.")
+        kba <- terra::ifel(pus == 1, 0, NA)
+        return(kba)
+      }
     }
 
+    # Rasterise if features still present
     kba <- kba %>%
       sf::st_transform(crs = sf::st_crs(pus)) %>%
       sf::st_make_valid() %>%
       dplyr::summarise() %>%
       sf::st_make_valid()
 
-    cat("Rasterising and normalising features...\n")
+    log_msg("Rasterising and normalising features...")
     kba <- exactextractr::coverage_fraction(pus, kba)[[1]] %>%
-      elsar::make_normalised_raster(
-        pus = pus,
-        iso3 = iso3
-        )
+      elsar::make_normalised_raster(pus = pus, iso3 = iso3)
+
+  } else {
+    log_msg("No matching KBA features found in the study region: returning empty raster.")
+    kba <- terra::ifel(pus == 1, 0, NA)
   }
 
   if (!is.null(output_path)) {

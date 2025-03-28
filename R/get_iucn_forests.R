@@ -49,7 +49,7 @@ get_iucn_forests <- function(
   assertthat::assert_that(inherits(boundary_layer, "sf"))
 
   # Get forest ecosystems from IUCN GET (prefix "T")
-  cat("Collecting IUCN GET forest ecosystems (prefix = 'T')...\n")
+  log_msg("Collecting IUCN GET forest ecosystems (prefix = 'T').")
   iucn_forests <- elsar::get_iucn_ecosystems(
     iucn_get_directory = iucn_get_directory,
     iso3 = iso3,
@@ -62,26 +62,31 @@ get_iucn_forests <- function(
 
   # If no data returned, exit early
   if (is.null(iucn_forests)) {
-    warning("No IUCN forest ecosystems found for the specified area.")
-    return(NULL)
+    warning("No IUCN forest ecosystems found for the specified area. Returning an empty raster.")
+    iucn_forests <- terra::ifel(pus == 1, 0, NA)
+  } else {
+    # Dissolve all features into a single geometry
+    iucn_forests <- dplyr::summarise(iucn_forests)
+
+    # Compute forest coverage fraction within each planning unit
+    log_msg("Calculating coverage fractions...")
+    iucn_forests <- exactextractr::coverage_fraction(pus, iucn_forests)[[1]] %>%
+      elsar::make_normalised_raster(
+        pus = pus,
+        iso3 = iso3
+        )
   }
 
-  # Dissolve all features into a single geometry
-  iucn_forests <- dplyr::summarise(iucn_forests)
+  names(iucn_forests) <- "iucn_forests"
 
-  # Compute forest coverage fraction within each planning unit
-  cat("Calculating coverage fractions...\n")
-  forest_raster <- exactextractr::coverage_fraction(pus, iucn_forests)[[1]] |>
-    elsar::make_normalised_raster(pus = pus, iso3 = iso3)
-
-  # Optionally write raster to disk
+   # Optionally write raster to disk
   if (!is.null(output_path)) {
     assertthat::assert_that(dir.exists(output_path), msg = "'output_path' does not exist.")
     out_file <- glue::glue("{output_path}/iucn_get_forests_{iso3}.tif")
-    cat(glue::glue("Writing output to: {out_file}"), "\n")
+    log_msg(glue::glue("Writing output to: {out_file}"))
 
     terra::writeRaster(
-      forest_raster,
+      iucn_forests,
       filename = out_file,
       datatype = "FLT4S",
       filetype = "COG",
@@ -95,5 +100,5 @@ get_iucn_forests <- function(
     )
   }
 
-  return(forest_raster)
+  return(iucn_forests)
 }

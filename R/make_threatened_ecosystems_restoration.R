@@ -40,6 +40,7 @@ make_threatened_ecosystems_restoration <- function(
                           msg = "'degradation_input' must be a SpatRaster.")
 
   # Retain threat values only where degraded areas exist
+  log_msg("Finding overlap of threatened ecosystems and degraded areas...")
   threatened_ecosystems_for_restoration <- threatened_ecosystems_input * degradation_input
 
   names(threatened_ecosystems_for_restoration) <- "threatened_ecosystems_for_restoration"
@@ -47,7 +48,7 @@ make_threatened_ecosystems_restoration <- function(
   if (!is.null(output_path)) {
     assertthat::assert_that(dir.exists(output_path), msg = "'output_path' does not exist.")
     out_file <- glue::glue("{output_path}/threatened_ecosystems_for_restoration_{iso3}.tif")
-    cat(glue::glue("Writing output to: {out_file}"), "\n")
+    log_msg(glue::glue("Writing output to: {out_file}"))
 
     terra::writeRaster(
       threatened_ecosystems_for_restoration,

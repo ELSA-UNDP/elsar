@@ -16,30 +16,34 @@ make_underrepresented_ecosystems(
 )
 }
 \arguments{
-\item{iucn_get_directory}{Character. Path to the directory containing the IUCN \code{.gpkg} files.}
+\item{iucn_get_directory}{Character. Path to the directory containing the IUCN GET \code{.gpkg} files.}
 
-\item{iso3}{Character. ISO3 country code, used for layer processing and output naming.}
+\item{iso3}{Character. ISO3 country code (e.g., "KEN").}
 
-\item{pus}{SpatRaster. Planning units raster (terra object) defining resolution and extent.}
+\item{pus}{A \code{SpatRaster}. Raster of planning units (e.g., from \code{make_planning_units()}).}
 
-\item{current_protected_areas}{Optional. An \code{sf} or \code{SpatVector} of protected areas. If \code{NULL}, the function calls \code{make_protected_areas()}.}
+\item{boundary_layer}{An \code{sf} object of the national boundary used to clip ecosystems.}
 
-\item{iucn_get_prefixes}{Optional character vector. Filter to only include layers with specific IUCN ecosystem prefixes (e.g., "T", "M", etc.).}
+\item{current_protected_areas}{Optional. An \code{sf} or \code{SpatVector} of protected areas. If NULL, data is fetched using \code{make_protected_areas()}.}
 
-\item{include_minor_occurrence}{Logical. Whether to include ecosystems marked as minor occurrences (default: TRUE).}
+\item{iucn_get_prefixes}{Optional character vector. Filters \code{.gpkg} filenames by prefixes (e.g., c("T", "F")).}
 
-\item{output_path}{Optional character. If provided, saves the output raster to this directory.}
+\item{include_minor_occurrence}{Logical. Whether to include ecosystems marked as "minor" (default = TRUE).}
 
-\item{boundary_layer.}{An \code{sf} layer of the national bondary of the country; the same as used to create the planning units layer.}
+\item{output_path}{Optional character. Directory path to save the output raster.}
 }
 \value{
-A normalized \code{SpatRaster} layer representing average underrepresentation across ecosystems.
+A normalised \code{SpatRaster} layer representing the average protection gap across ecosystems.
 }
 \description{
-This function processes IUCN GET ecosystem vector layers and computes an underrepresentation
-score for each based on their representation within existing protected areas relative to a 30\%
-protection target. The final output is a normalized raster showing the average degree
-to which ecosystems are underrepresented across planning units.
+This function calculates the representation gap of ecosystems defined in the IUCN Global Ecosystem Typology (GET)
+dataset, identifying those that fall short of a 30\% protection target. The resulting raster layer indicates
+the average degree of underrepresentation across each planning unit.
+}
+\details{
+The function uses spatial overlays to calculate the proportion of each ecosystem that is currently protected,
+computes the gap toward a 30\% target, and then rasterizes this value onto the planning units. The output raster
+can be used to prioritise areas for protection of underrepresented ecosystems.
 }
 \examples{
 \dontrun{

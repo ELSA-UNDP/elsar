@@ -68,7 +68,7 @@ make_threatened_ecosystems_protection <- function(
     sf::st_make_valid()
 
   # Extract IUCN GET ecosystems from .gpkg files
-  cat("Collecting IUCN GET ecosystems...\n")
+  log_msg("Collecting IUCN GET ecosystems...")
   iucn_ecosystems <- elsar::get_iucn_ecosystems(
     iucn_get_directory = iucn_get_directory,
     iso3 = iso3,
@@ -80,7 +80,7 @@ make_threatened_ecosystems_protection <- function(
   )
 
   # Calculate intact area per ecosystem
-  cat("Calculating intactness of each IUCN GET ecosystem...\n")
+  log_msg(glue::glue("Calculating intactness of each IUCN GET ecosystem based on EII median value ({intactness_median})..."))
   iucn_ecosysytems_intactness_area <- iucn_ecosystems %>%
     sf::st_intersection(non_intact_areas) %>%
     sf::st_make_valid() %>%
@@ -98,7 +98,7 @@ make_threatened_ecosystems_protection <- function(
     dplyr::mutate(threat = .data$area_intact / .data$area * 100)
 
   # Rasterize and normalize the threat values
-  cat("Calculating average intactness and normalising raster output...\n")
+  log_msg("Calculating average intactness and normalising raster output...")
   threatened_ecosystems_for_protection <- elsar::exact_rasterise(
     features = iucn_ecosysytems_total,
     pus = pus,
@@ -111,7 +111,7 @@ make_threatened_ecosystems_protection <- function(
   if (!is.null(output_path)) {
     assertthat::assert_that(dir.exists(output_path), msg = "'output_path' does not exist.")
     out_file <- glue::glue("{output_path}/threatened_ecosystems_for_protection_{iso3}.tif")
-    cat(glue::glue("Writing output to: {out_file}"), "\n")
+    log_msg(glue::glue("Writing output to: {out_file}"))
 
     terra::writeRaster(
       threatened_ecosystems_for_protection,

@@ -1,20 +1,23 @@
 #' Create Underrepresented Ecosystems Raster Based on IUCN GET and Protection Gaps
 #'
-#' This function processes IUCN GET ecosystem vector layers and computes an underrepresentation
-#' score for each based on their representation within existing protected areas relative to a 30%
-#' protection target. The final output is a normalized raster showing the average degree
-#' to which ecosystems are underrepresented across planning units.
+#' This function calculates the representation gap of ecosystems defined in the IUCN Global Ecosystem Typology (GET)
+#' dataset, identifying those that fall short of a 30% protection target. The resulting raster layer indicates
+#' the average degree of underrepresentation across each planning unit.
 #'
-#' @param iucn_get_directory Character. Path to the directory containing the IUCN `.gpkg` files.
-#' @param iso3 Character. ISO3 country code, used for layer processing and output naming.
-#' @param pus SpatRaster. Planning units raster (terra object) defining resolution and extent.
-#' @param boundary_layer. An `sf` layer of the national bondary of the country; the same as used to create the planning units layer.
-#' @param current_protected_areas Optional. An `sf` or `SpatVector` of protected areas. If `NULL`, the function calls `make_protected_areas()`.
-#' @param iucn_get_prefixes Optional character vector. Filter to only include layers with specific IUCN ecosystem prefixes (e.g., "T", "M", etc.).
-#' @param include_minor_occurrence Logical. Whether to include ecosystems marked as minor occurrences (default: TRUE).
-#' @param output_path Optional character. If provided, saves the output raster to this directory.
+#' The function uses spatial overlays to calculate the proportion of each ecosystem that is currently protected,
+#' computes the gap toward a 30% target, and then rasterizes this value onto the planning units. The output raster
+#' can be used to prioritise areas for protection of underrepresented ecosystems.
 #'
-#' @return A normalized `SpatRaster` layer representing average underrepresentation across ecosystems.
+#' @param iucn_get_directory Character. Path to the directory containing the IUCN GET `.gpkg` files.
+#' @param iso3 Character. ISO3 country code (e.g., "KEN").
+#' @param pus A `SpatRaster`. Raster of planning units (e.g., from `make_planning_units()`).
+#' @param boundary_layer An `sf` object of the national boundary used to clip ecosystems.
+#' @param current_protected_areas Optional. An `sf` or `SpatVector` of protected areas. If NULL, data is fetched using `make_protected_areas()`.
+#' @param iucn_get_prefixes Optional character vector. Filters `.gpkg` filenames by prefixes (e.g., c("T", "F")).
+#' @param include_minor_occurrence Logical. Whether to include ecosystems marked as "minor" (default = TRUE).
+#' @param output_path Optional character. Directory path to save the output raster.
+#'
+#' @return A normalised `SpatRaster` layer representing the average protection gap across ecosystems.
 #' @export
 #'
 #' @examples
@@ -44,24 +47,14 @@ make_underrepresented_ecosystems <- function(
   assertthat::assert_that(assertthat::is.string(iso3), msg = "'iso3' must be a valid ISO3 code, e.g., 'NPL'.")
   assertthat::assert_that(inherits(boundary_layer, "sf"), msg = "'boundary_layer' must be a sf object.")
 
-  # Load or validate protected areas
-  if (is.null(current_protected_areas)) {
-    current_protected_areas <- elsar::make_protected_areas(
-      iso3 = iso3,
-      download_path = here::here(),
-      buffer_points = TRUE,
-      pus = pus,
-      return_sf = TRUE
-    )
-  } else {
+  # Load and validate protected areas
     assertthat::assert_that(
       inherits(current_protected_areas, "sf") || inherits(current_protected_areas, "SpatVector"),
       msg = "'current_protected_areas' must be an 'sf' or 'SpatVector' object."
     )
-  }
 
   # Extract IUCN GET ecosystems from .gpkg files
-  cat("Collecting IUCN GET ecosystems...\n")
+  log_msg("Collecting IUCN GET ecosystems...")
   iucn_ecosystems <- elsar::get_iucn_ecosystems(
     iucn_get_directory = iucn_get_directory,
     iso3 = iso3,
@@ -73,7 +66,7 @@ make_underrepresented_ecosystems <- function(
   )
 
   # Calculate protected area coverage per ecosystem
-  cat("Calculating protected area coverage of each IUCN GET ecosystem...\n")
+  log_msg("Calculating protected area coverage of each IUCN GET ecosystem...")
   iucn_ecosysytems_pa_area <- iucn_ecosystems %>%
     sf::st_filter(current_protected_areas) %>%
     sf::st_intersection(current_protected_areas) %>%
@@ -85,7 +78,7 @@ make_underrepresented_ecosystems <- function(
     dplyr::select("id", "area_protected")
 
   # Calculate total area and underrepresentation gap per ecosystem
-  cat("Calculating representation gap from 30% protection target...\n")
+  log_msg("Calculating representation gap from 30% protection target...")
   iucn_ecosysytems_total <- iucn_ecosystems %>%
     dplyr::group_by(.data$id) %>%
     dplyr::summarise() %>%
@@ -97,7 +90,7 @@ make_underrepresented_ecosystems <- function(
     )
 
   # Rasterize and normalize the representation gap
-  cat("Calculating average representation gap and normalising raster output...\n")
+  log_msg("Calculating average representation gap and normalising raster output...")
   underrepresented_ecosystems <- elsar::exact_rasterise(
     features = iucn_ecosysytems_total,
     pus = pus,
@@ -108,9 +101,8 @@ make_underrepresented_ecosystems <- function(
 
   # Optionally write output
   if (!is.null(output_path)) {
-    assertthat::assert_that(dir.exists(output_path), msg = "'output_path' does not exist.")
     out_file <- glue::glue("{output_path}/underrepresented_ecosystems_{iso3}.tif")
-    cat(glue::glue("Writing output to: {out_file}"), "\n")
+    log_msg(glue::glue("Writing output to: {out_file}"))
 
     terra::writeRaster(
       underrepresented_ecosystems,

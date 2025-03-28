@@ -6,7 +6,7 @@
 #' @param sf_in An `sf` object and alternative to downloading the data from the \pkg{wdpar} package. Only needed when from_wdpa is `FALSE`.
 #' @param status A vector containing which status of protected area should be included. Based on the STATUS field of the wdpa database. Default is `c("Established", "Inscribed", "Designated")`.
 #' @param pa_def A value or list of values containing which pa definition (1 = protected area; 0 = OECM (not supported yet)) to include. Default is `1`.
-#' @param designation_mab logical. If `FALSE`, excludes UNESCO MAB areas.
+#' @param include_mab_designation logical. If `FALSE`, excludes UNESCO MAB areas.
 #' @param buffer_points logical. Only relevant when `"POINT"` or `"MULTIPOINT"` geometries exist in the data. If `TRUE`, creates a circular buffer around `"POINT"` data based on area information data that is then used as polygon data needed for \pkg{exactextractr} calculations.
 #' @param area_column A string of the column name with the area information needed for buffer calculations.
 #' @param nQuadSegs An integer specifying the number of segments to use for buffering. Default is 50.
@@ -41,27 +41,33 @@
 #' }
 make_protected_areas <- function(from_wdpa = TRUE,
                                  iso3,
-                                 download_path = NULL,
+                                 input_path = NULL,
                                  sf_in,
                                  status = c("Established", "Inscribed", "Designated"),
                                  pa_def = 1,
-                                 designation_mab = FALSE,
+                                 include_mab_designation = FALSE,
                                  buffer_points = TRUE,
                                  area_column = "REP_AREA",
+                                 area_calc_crs = "ESRI:54009",
                                  nQuadSegs = 50,
-                                 return_sf = FALSE,
+                                 return_sf = TRUE,
                                  pus,
                                  output_path = NULL) {
-  # load data (either with wdpar package or locally saved: load outside and then put sf_in here)
+  # Load data from WDPA subdirectory in input_dir (either with wdpar package or locally saved: load outside and then put sf_in here)
+  wdpa_dir <- file.path(input_path, "wdpa_downloads")
+  if (!dir.exists(wdpa_dir)) dir.create(wdpa_dir)
+
   if (from_wdpa == TRUE) {
-    pa <- wdpar::wdpa_fetch(iso3,
+    log_msg("Downloading from Protected Planet using the wdpar package; any existing versions of the WPDA will be updated if a newer version is available")
+
+    protected_areas <- wdpar::wdpa_fetch(
+      iso3,
       wait = TRUE,
-      download_dir = download_path
-    ) %>%
-      sf::st_transform(sf::st_crs(pus))
+      check_version = TRUE,
+      download_dir = wdpa_dir
+    )
   } else {
-    pa <- sf_in %>%
-      sf::st_transform(sf::st_crs(pus))
+    protected_areas <- sf_in
   }
   # filter for MPAs to be included
   assertthat::assert_that(
@@ -69,48 +75,60 @@ make_protected_areas <- function(from_wdpa = TRUE,
     all(pa_def %in% c(0, 1))
   )
 
-  pa <- pa %>%
+  log_msg(glue::glue("Including {status} areas only"))
+  protected_areas <- protected_areas %>%
     dplyr::filter(
       .data$STATUS %in% status,
       .data$PA_DEF %in% pa_def
     )
 
-  if (designation_mab == FALSE) {
-    pa <- pa %>%
+  if (include_mab_designation == FALSE) {
+    log_msg("Excuding UNESCO Man and Biosphere (MAB) reserve areas")
+    protected_areas <- protected_areas %>%
       dplyr::filter(!stringr::str_detect(.data$DESIG, "MAB")) # Exclude UNESCO MAB areas
   }
 
   # exactextractr only works with polygon information; need to deal with points
-  if (("MULTIPOINT" %in% sf::st_geometry_type(pa)) || ("POINT" %in% sf::st_geometry_type(pa))) {
+  if (("MULTIPOINT" %in% sf::st_geometry_type(protected_areas)) || ("POINT" %in% sf::st_geometry_type(protected_areas))) {
     if (buffer_points) { # buffer around "POINTS" and make them into polygons
-      pa <- convert_points_polygon(wdpa_layer = pa,
-                                area_crs = sf::st_crs(pa),
-                                area_attr = area_column,
-                                nQuadSegs = nQuadSegs) %>%
+      log_msg("Creating geodesic buffers around any point locations")
+      protected_areas <- convert_points_polygon(
+        wdpa_layer = protected_areas,
+        area_crs = area_calc_crs,
+        area_attr = area_column,
+        nQuadSegs = nQuadSegs) %>%
         sf::st_transform(sf::st_crs(pus)) %>%
         dplyr::summarise() %>%
         sf::st_make_valid()
 
     } else { # only keep polygon and multipolygon information
-      pa <- pa %>%
-        sf::st_transform(sf::st_crs(pus)) %>%
+      protected_areas <- protected_areas %>%
         dplyr::filter(sf::st_is(., c("POLYGON", "MULTIPOLYGON"))) %>%
+        sf::st_transform(sf::st_crs(pus)) %>%
         dplyr::summarise() %>%
         sf::st_make_valid()
     }
-  }
+  } else {
+    protected_areas <- protected_areas %>%
+      sf::st_transform(sf::st_crs(pus)) %>%
+      dplyr::summarise() %>%
+      sf::st_make_valid()
+    }
 
   if (return_sf) {
-    return(pa)
-  } else {
+    # Optional: make `current_pas_sf` available globally for reuse
+    log_msg("Current protected areas are available as object current_protected_area_sf")
+    assign("current_protected_area_sf", protected_areas, envir = .GlobalEnv)
+  }
+
   # get pa values in pus
-  pa_raster <- exactextractr::coverage_fraction(pus, pa)[[1]] %>%
+  protected_areas_raster <- exactextractr::coverage_fraction(pus, protected_areas)[[1]] %>%
     terra::mask(pus, maskvalues = 0)
 
   # save
   if (!is.null(output_path)) {
     terra::writeRaster(
-      pa_raster,
+      protected_areas_raster,
       filename = glue::glue("{output_path}/protected_areas_{iso3}.tif"),
       filetype = "COG",
       datatype = "FLT4S",
@@ -123,7 +141,5 @@ make_protected_areas <- function(from_wdpa = TRUE,
       overwrite = TRUE
     )}
 
-  return(pa_raster)
+  return(protected_areas_raster)
   }
-
-}
