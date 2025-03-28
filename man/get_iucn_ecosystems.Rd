@@ -7,8 +7,8 @@
 get_iucn_ecosystems(
   iucn_get_directory,
   iso3,
-  boundary_layer,
   pus,
+  boundary_layer,
   include_minor_occurrence = TRUE,
   iucn_get_prefixes = NULL,
   output_path = NULL
@@ -19,13 +19,14 @@ get_iucn_ecosystems(
 
 \item{iso3}{Character. ISO3 country code used for naming the output (e.g., "KEN").}
 
-\item{boundary_layer}{sf object. Vector polygon used to spatially clip features (usually country boundary).}
-
 \item{pus}{SpatRaster. Planning units raster used to define spatial extent and target CRS.}
+
+\item{boundary_layer}{sf object. Vector polygon used to spatially clip features (usually country boundary).}
 
 \item{include_minor_occurrence}{Logical. If FALSE, excludes features with minor occurrence (default: TRUE).}
 
-\item{iucn_get_prefixes}{Character vector of filename prefixes to include (e.g., c("T", "TF", "FM")) or NULL to include all \code{.gpkg} files.}
+\item{iucn_get_prefixes}{Character vector of filename prefixes to include (e.g., c("F1.1", "F1.2",
+"SM1.2", "SM1.3")) or NULL to include all \code{.gpkg} files.}
 
 \item{output_path}{Character or NULL. If provided, writes the merged output to a GeoPackage.}
 }
@@ -53,7 +54,7 @@ ecosystems <- get_iucn_ecosystems(
   iso3 = "KEN",
   boundary_layer = boundary,
   pus = pus,
-  iucn_get_prefixes = c("T", "TF"),
+  iucn_get_prefixes = c("T1.2", "TF1.4"),
   include_minor_occurrence = FALSE,
   output_path = "outputs"
 )

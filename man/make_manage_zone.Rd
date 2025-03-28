@@ -8,6 +8,7 @@ make_manage_zone(
   iso3,
   pus,
   managed_forests_input,
+  raster_mf = NULL,
   agricultural_areas_input = NULL,
   built_areas_input = NULL,
   lulc_raster = NULL,
@@ -29,7 +30,9 @@ make_manage_zone(
 
 \item{pus}{SpatRaster. Planning units raster to which all inputs are aligned.}
 
-\item{managed_forests_input}{SpatRaster. A raster of forest classes to identify managed forests.}
+\item{managed_forests_input}{SpatRaster. A preprocssed raster of managed forest extent.}
+
+\item{raster_mf}{SpatRaster A raster of forest classes to identify managed forests.}
 
 \item{agricultural_areas_input}{SpatRaster. A binary or categorical raster representing agricultural areas.}
 

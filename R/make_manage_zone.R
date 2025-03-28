@@ -14,7 +14,8 @@
 #'
 #' @param iso3 Character. ISO3 country code (e.g., "CHL").
 #' @param pus SpatRaster. Planning units raster to which all inputs are aligned.
-#' @param managed_forests_input SpatRaster. A raster of forest classes to identify managed forests.
+#' @param managed_forests_input SpatRaster. A preprocssed raster of managed forest extent.
+#' @param raster_mf SpatRaster A raster of forest classes to identify managed forests.
 #' @param agricultural_areas_input SpatRaster. A binary or categorical raster representing agricultural areas.
 #' @param built_areas_input SpatRaster. A binary or categorical raster representing built-up/urban areas.
 #' @param lulc_raster SpatRaster or NULL. Optional raw LULC input used to extract agriculture and built-up layers if those inputs are categorical.
@@ -51,6 +52,7 @@ make_manage_zone <- function(
     iso3,
     pus,
     managed_forests_input,
+    raster_mf = NULL,
     agricultural_areas_input = NULL,
     built_areas_input = NULL,
     lulc_raster = NULL,
@@ -93,69 +95,65 @@ make_manage_zone <- function(
   }
 
   # Process agricultural areas
-  cat("Processing agricultural areas...\n")
+  log_msg("Processing agricultural areas...")
   if (!is.null(agricultural_areas_input)) {
     agricultural_areas <- agricultural_areas_input
   } else {
-    agricultural_areas <- elsar::crop_global_raster(raster_in = lulc_raster, pus = pus) %>%
-      elsar::make_normalised_raster(
-        raster_in = .,
-        pus = pus,
-        iso3 = iso3,
-        method_override = "bilinear",
-        input_raster_conditional_expression = function(x)
-          terra::ifel(x == agriculture_lulc_value, 1, 0)
-        )
-  }
+    agricultural_areas <- elsar::make_normalised_raster(
+      raster_in = lulc_raster,
+      pus = pus,
+      iso3 = iso3,
+      method_override = "mean",
+      input_raster_conditional_expression = function(x)
+        terra::ifel(x == agriculture_lulc_value, 1, 0)
+      )
+    }
 
   # Process built-up areas
-  cat("Processing built-up areas...\n")
+  log_msg("Processing built-up areas...")
   if (!is.null(built_areas_input)) {
     built_areas <- built_areas_input
   } else {
-    built_areas <- elsar::crop_global_raster(raster_in = lulc_raster, pus = pus) %>%
-      elsar::make_normalised_raster(
-        raster_in = .,
-        pus = pus,
-        iso3 = iso3,
-        method_override = "bilinear",
-        input_raster_conditional_expression = function(x)
-          terra::ifel(x == built_area_lulc_value, 1, 0)
-        )
-  }
-
-  # Normalize HFP and extract middle 60%
-  cat("Processing HII layer and extracting middle 60% quantile range...\n")
-  hii_resampled <- elsar::crop_global_raster(raster_in = hii_input, pus = pus) %>%
-    elsar::make_normalised_raster(
-      raster_in = .,
+    built_areas <- elsar::make_normalised_raster(
+      raster_in = lulc_raster,
       pus = pus,
       iso3 = iso3,
-      rescale = FALSE,
-      method_override = "bilinear"
+      method_override = "mean",
+      input_raster_conditional_expression = function(x)
+        terra::ifel(x == built_area_lulc_value, 1, 0)
       )
+    }
+
+  # Normalize HFP and extract middle 60%
+  log_msg("Processing HII layer and extracting middle 60% quantile range...")
+  hii_resampled <- elsar::make_normalised_raster(
+    raster_in = hii_input,
+    pus = pus,
+    iso3 = iso3,
+    rescale = FALSE,
+    method_override = "mean"
+    )
 
   breaks <- terra::global(hii_resampled, fun = quantile, probs = c(0.2, 0.8), na.rm = TRUE)
   hii_middle_60_pct <- terra::ifel(hii_resampled >= breaks[,1] & hii_resampled <= breaks[,2], 1, 0)
 
   # Process managed forests
-  cat("Processing managed forests...\n")
-  # Process managed forests
+  log_msg("Processing managed forests...")
+  if (!is.null(managed_forests_input)) {
+    managed_forests <- managed_forests_input[[1]]
+  } else {
   # Normalise and reclass
-  managed_forests <- elsar::crop_global_raster(raster_in = managed_forests_input, pus = pus) %>%
-    elsar::make_normalised_raster(
-      raster_in = .,
+    managed_forests <- elsar::make_managed_forests(
+      raster_in = raster_mf,
       pus = pus,
       iso3 = iso3,
-      method_override = "bilinear",
-      input_raster_conditional_expression = function(x)
-        terra::classify(x, rcl = matrix(c(
-          forest_classes, rep(1, length(forest_classes))
-          ), ncol = 2), others = 0)
-      )
+      make_productive = FALSE)
+
+  managed_forests <- managed_forests[[1]]
+  }
 
   # Main management zone: moderate HFP, OR managed forests, OR ag areas — minus built-up
-  cat("Creating the default manage zone using middle 60% of HII value, managed forests, and agricultural areas...\n")
+  log_msg("Creating the default manage zone using middle 60% of HII value, managed forests, and agricultural areas...")
   manage_zone <- terra::ifel(
     hii_middle_60_pct == 1 |
       managed_forests > forest_class_threshold |
@@ -164,11 +162,11 @@ make_manage_zone <- function(
   )
 
   # Exclude built-up areas
-  cat("Excluding built areas from the manage zone...\n")
+  log_msg("Excluding built areas from the manage zone...")
   manage_zone <- terra::ifel(built_areas > built_areas_threshold, 0, manage_zone)
 
   # Secondary zone (agriculture only)
-  cat("Creating the alternative manage zone using agricultural areas only...\n")
+  log_msg("Creating the alternative manage zone using agricultural areas only...")
   manage_zone_alt <- terra::ifel(agricultural_areas > agriculture_threshold, 1, 0)
 
   # Combine into multi-layer SpatRaster
@@ -177,7 +175,7 @@ make_manage_zone <- function(
 
   # Filter out small patches
   if (filter_patch_size) {
-    cat(glue::glue("Sieving out patch sizes smaller than {min_patch_size} planning units..."), "\n")
+    log_msg(glue::glue("Sieving out patch sizes smaller than {min_patch_size} planning units..."))
     manage_zones[[1]] <- terra::sieve(manage_zones[[1]], threshold = min_patch_size)
     manage_zones[[2]] <- terra::sieve(manage_zones[[2]], threshold = min_patch_size)
   }
@@ -185,7 +183,7 @@ make_manage_zone <- function(
   # Save to disk if needed
   if (!is.null(output_path)) {
     filename <- glue::glue("{output_path}/manage_zone_{iso3}.tif")
-    cat(glue::glue("Saving manage zone rasters to: {filename}..."), "\n")
+    log_msg(glue::glue("Saving manage zone rasters to: {filename}..."))
     terra::writeRaster(
       manage_zones,
       filename = filename,

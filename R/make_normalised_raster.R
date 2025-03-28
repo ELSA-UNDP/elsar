@@ -15,6 +15,7 @@
 #' @param fill_na `logical` If `TRUE`, fills `NA` values with 0 before masking (default: `TRUE`).
 #' @param name_out `character` The name of the output raster file (without the extension).
 #' @param output_path `character` The directory path to save the output raster (default: `NULL`, i.e., not saved).
+#' @param threads Optional method to use multi-core processing - to speed on some `terra` functions (default: `TRUE`).
 #'
 #' @details This function reprojects the input raster (`raster_in`) to match the CRS and resolution
 #' of the planning units (`pus`). The method for reprojection can be overridden using `method_override`.
@@ -73,9 +74,20 @@ make_normalised_raster <- function(raster_in,
                                    name_out,
                                    output_path = NULL,
                                    threads = TRUE) {
-  # Valid methods for terra::project
-  valid_terra_methods <- c("near", "bilinear", "cubic", "cubicspline", "lanczos", "min", "q1", "med", "q3", "max", "average", "mode", "rms")
-
+  # Valid methods for exactextractr::exact_resample
+  valid_resampling_methods <- c(
+    "mean",     # Area-weighted mean
+    "sum",      # Area-weighted sum
+    "min",      # Minimum value
+    "max",      # Maximum value
+    "mode",     # Most frequent value
+    "majority", # Same as mode (alias)
+    "minority", # Least frequent value
+    "variety",  # Number of unique values
+    "count",    # Count of raster cells
+    "stdev",    # Standard deviation
+    "coefficient_of_variation" # stdev / mean
+  )
 
   # then crop (make data a lot smaller)
   # dat_aligned <- terra::crop(raster_in, pus_reproject) %>%
@@ -88,57 +100,62 @@ make_normalised_raster <- function(raster_in,
   raster_res <- min(terra::res(raster_in))    # Minimum resolution of input raster
   pus_res <- min(terra::res(pus_temp))        # Minimum resolution of re-projected pus
 
-
   # Determine the appropriate projection method based on data type and resolution comparison
   if (!is.null(method_override)) {
-    if (!(method_override %in% valid_terra_methods)) {
-      stop("Invalid method_override. Choose one of: ", paste(valid_terra_methods, collapse = ", "))
+    if (!(method_override %in% valid_resampling_methods)) {
+      stop("Invalid method_override. Choose one of: ", paste(valid_resampling_methods, collapse = ", "))
     }
     method <- method_override  # Use the override method if provided and valid
   } else {
     # Default method selection based on data type and resolution comparison
-    method <- if (terra::is.int(raster_in)) {
-      if (raster_res >= pus_res) "near" else "mode"
-    } else {
-      if (raster_res >= pus_res) "near" else "bilinear"
+    method <- "mean"
     }
-  }
 
-  # Apply the conditional expression if provided to the input raster - for example if the input is landcover
-  # dataset that you want to reclass before doing any aggregation.
-  if (!is.null(input_raster_conditional_expression)) {
-    raster_in <- input_raster_conditional_expression(raster_in)
-  }
+  # Re-project the original raster_in to the CRS of the PUs
+  dat_aligned <- elsar::crop_global_raster(
+    raster_in = raster_in,
+    pus = pus) %>%
+    terra::project(
+      y = terra::crs(pus),
+      threads = threads
+      )
 
-  # Re-project the original raster_in to match PUs with the selected method
-  dat_aligned <- terra::project(
-    x = raster_in,
-    y = pus,
-    method = method,
-    threads = threads
-  )
-
-  # Apply the conditional expression if provided
-  if (!is.null(conditional_expression)) {
-    dat_aligned <- conditional_expression(dat_aligned)
-  }
-
-  # Fill in NA background values before masking
-  if (fill_na) {
-    dat_aligned[is.na(dat_aligned)] <- 0
-    dat_aligned <- dat_aligned  |> terra::mask(pus, maskvalues = 0) # Mask areas outside of planning units
-  }
-
-  # Invert values if required
-  if (invert) {
-    dat_aligned <- -dat_aligned
-  }
-
-  # Rescale the raster values if needed
-  if (rescaled) {
-    dat_aligned <- rescale_raster(dat_aligned)
+  if (is.null(dat_aligned) || isTRUE(is.na(suppressWarnings(terra::minmax(dat_aligned)[2]))) || terra::minmax(dat_aligned)[2] == 0) {
+    log_msg("No valid raster values found — returning empty raster.")
+    return(terra::ifel(pus == 1, 0, NA))
   } else {
-    warning("NOTE: Raster values are NOT rescaled.")
+    # Apply the conditional expression if provided to the input raster - for example if the input is landcover
+    # dataset that you want to reclass before doing any aggregation.
+    if (!is.null(input_raster_conditional_expression)) {
+      dat_aligned <- input_raster_conditional_expression(dat_aligned)
+    }
+
+    # Resample the projected raster to the resolution of the PUs using exactextractr::exact_resample and the method provided
+    dat_aligned <- exactextractr::exact_resample(x = dat_aligned, y = pus, fun = method)
+
+    # Apply the conditional expression if provided
+    if (!is.null(conditional_expression)) {
+      dat_aligned <- conditional_expression(dat_aligned)
+    }
+
+    # Fill in NA background values before masking
+    if (fill_na) {
+      dat_aligned[is.na(dat_aligned)] <- 0
+      dat_aligned <- dat_aligned  %>%
+        terra::mask(pus, maskvalues = 0) # Mask areas outside of planning units
+    }
+
+    # Invert values if required
+    if (invert) {
+      dat_aligned <- -dat_aligned
+    }
+
+    # Rescale the raster values if needed
+    if (rescaled) {
+      dat_aligned <- elsar::rescale_raster(dat_aligned)
+    } else {
+      warning("NOTE: Raster values are NOT rescaled.")
+    }
   }
 
   # Save the output file if output_path is provided

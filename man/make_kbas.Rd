@@ -2,72 +2,51 @@
 % Please edit documentation in R/make_kbas.R
 \name{make_kbas}
 \alias{make_kbas}
-\title{Function to make standardised KBA data}
+\title{Create a Standardised Raster of Key Biodiversity Areas (KBAs)}
 \usage{
 make_kbas(
   kba_in,
   pus,
-  iso3_in,
+  iso3,
+  include_aze_sites = FALSE,
   aze_only = FALSE,
-  incl_regional_kba = FALSE,
-  name_out,
+  include_regional_kba = FALSE,
   output_path = NULL
 )
 }
 \arguments{
-\item{kba_in}{An \code{sf} file that contains the data to be put into right format}
+\item{kba_in}{An \code{sf} object containing KBA vector features, including columns like \code{iso3}, \code{azestatus}, and \code{kba_qual}.}
 
-\item{pus}{A \code{SpatRaster} file that contains the reference spatial extent, crs etc.in form of the planning units}
+\item{pus}{A \code{SpatRaster} object representing planning units (reference extent and resolution).}
 
-\item{aze_only}{Logical. TBA explanation by Scott}
+\item{iso3}{A character string representing the 3-letter ISO country code (e.g., "KEN").}
 
-\item{incl_regional_kba}{Logical. Whether to include regional KBAs}
+\item{include_aze_sites}{Logical. If \code{TRUE}, includes KBAs that are also AZE sites (default is \code{FALSE}).}
 
-\item{name_out}{A string with the data name that will be used for the output \code{tif}file}
+\item{aze_only}{Logical. If \code{TRUE}, returns only confirmed AZE sites (default is \code{FALSE}).}
 
-\item{output_path}{An optional output path for the created file.}
+\item{include_regional_kba}{Logical. If \code{FALSE}, filters out KBAs marked as "Regional" or "Global/ Regional to be determined".}
 
-\item{iso3}{A string of the iso3 name of the data (country name)}
+\item{output_path}{Optional character. Directory path to save output raster. If \code{NULL}, output is not written to file.}
 }
 \value{
-A \code{SpatRaster} file that has been aligned and normalised
+A \code{SpatRaster} with normalised values showing KBA (or AZE) coverage across planning units.
 }
 \description{
-Function to make standardised KBA data
+This function processes a Key Biodiversity Areas (KBA) vector dataset and converts it into
+a normalised raster aligned with the input planning units. It allows for filtering to
+include or exclude Alliance for Zero Extinction (AZE) sites, as well as optionally excluding
+KBAs marked as "Regional". By default, it includes all KBAs except regional-only sites.
+It can also be used to return only AZE sites if \code{aze_only = TRUE}.
 }
 \examples{
 \dontrun{
-boundary_proj <- make_boundary(
-  boundary_in = boundary_dat,
-  iso3 = "IND",
-  iso3_column = "iso3cd"
-)
-
-# make planning units
-pus <- make_planning_units(
-  boundary_proj = boundary_proj,
-  pu_size = NULL,
-  pu_threshold = 8.5e5,
-  limit_to_mainland = FALSE
-)
-
-path_in <- "<yourPath>"
-ist_dat <- extract_filename_filetype(
-  data_name = "gmw",
-  file_path = path_in
-)
-
-kba_in <- load_data(
-  file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
-  file_path = path_in,
-  file_type = list_dat["filetype"][[1]],
-  file_lyr = file_layer
-)
-
 kba_raster <- make_kbas(
-  kba_in = kba_in,
-  pus = pus,
-  iso3_in = iso3
-)
+  kba_in = kba_sf,
+  pus = planning_units,
+  iso3 = "KEN",
+  aze_only = TRUE,
+  output_path = "outputs",
+ )
 }
 }

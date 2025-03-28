@@ -203,11 +203,11 @@ exact_rasterise <- function(
 
       r_stack <- c(r_stack, f_r)
 
-      cat(glue::glue("Feature {i} processed."), "\n")
+      log_msg(glue::glue("{round(100 * i / nrow(features), 1)}% complete"))
     }
 
     # Aggregate across all rasterized layers using the specified function
-    cat(glue::glue("Aggregating layers..."), "\n")
+    log_msg(glue::glue("Aggregating layers..."))
     r_stack <- terra::app(
       r_stack,
       cores = cores,
@@ -217,13 +217,13 @@ exact_rasterise <- function(
 
   } else {
     # Single feature: get coverage fraction directly.
-    cat(glue::glue("Calculating weighted coverage fraction using a single feature..."), "\n")
+    log_msg(glue::glue("Calculating weighted coverage fraction using a single feature..."))
     r_stack <- exactextractr::coverage_fraction(pus, features)[[1]]
     r_stack <- r_stack * attr_val
   }
 
   # Normalise the final result
-  cat(glue::glue("Normalising output..."), "\n")
+  log_msg(glue::glue("Normalising output..."))
   result <- elsar::make_normalised_raster(
     raster_in = r_stack,
     pus = pus,
@@ -259,18 +259,41 @@ crop_global_raster <- function(raster_in, pus) {
   assertthat::assert_that(inherits(pus, "SpatRaster"),
                           msg = "'pus' must be a SpatRaster.")
 
-  # Project extent of PUs to match raster CRS
-  pus_extent <- pus %>%
-    terra::project(terra::crs(raster_in)) %>%
-    terra::ext()
+  # Attempt to project and crop
+  tryCatch({
+    pus_extent <- pus %>%
+      terra::project(terra::crs(raster_in)) %>%
+      terra::ext()
 
-  # Crop raster to extent
-  cropped <- terra::crop(
-    raster_in,
-    pus_extent,
-    extend = TRUE)
+    cropped <- terra::crop(
+      raster_in,
+      pus_extent,
+      extend = TRUE
+    )
 
-  return(cropped)
+    return(cropped)
+  }, error = function(e) {
+    log_msg(glue::glue("Warning: crop failed — {e$message}; returning an empty raster."))
+    return(terra::ifel(pus == 1, 0, NA))  # Or NULL if you want to explicitly handle failure
+  })
 }
+
+#' Log a timestamped message to the console
+#'
+#' Utility function to print a timestamped message using `message()`, which
+#' works well with progress bars and other console output.
+#'
+#' @param msg A character string to log.
+#' @examples
+#' log_msg("Starting the process...")
+log_msg <- function(msg) {
+  timestamp <- format(Sys.time(), "%Y-%m-%d %H:%M")
+  message(glue::glue("[{timestamp}] {msg}"), appendLF = TRUE)
+  invisible(NULL)
+}
+
+
+
+
 
 
