@@ -2,13 +2,13 @@
 % Please edit documentation in R/make_managed_forests.R
 \name{make_managed_forests}
 \alias{make_managed_forests}
-\title{Create managed forests data layer}
+\title{Create Managed Forests and Productive Managed Forests Raster Layers}
 \usage{
 make_managed_forests(
   raster_in,
   pus,
   iso3,
-  manual_cats = NULL,
+  forest_classes = c(31, 32, 40, 53),
   include_disturbed_forest = FALSE,
   make_productive = FALSE,
   raster_npp = NULL,
@@ -17,49 +17,44 @@ make_managed_forests(
 )
 }
 \arguments{
-\item{raster_in}{A \code{SpatRaster} file that contains the data to be put into right format}
+\item{raster_in}{A \code{SpatRaster} representing LULC classifications.}
 
-\item{pus}{A \code{SpatRaster} file that contains the reference spatial extent, crs etc.in form of the planning units}
+\item{pus}{A \code{SpatRaster} used as a template for extent, resolution, and alignment.}
 
-\item{iso3}{A string of the iso3 name of the data (country name)}
+\item{iso3}{A 3-letter ISO country code string.}
 
-\item{manual_cats}{If file does not contain default categories (11 (not managed), 20 (disturbed forests; can be interpreted as managed), 31, 32, 40, 53 (all managed)), allows to provide a vector with the right values.}
+\item{forest_classes}{Integer vector of LULC class codes representing managed forests (default = c(31, 32, 40, 53)).}
 
-\item{include_disturbed_forest}{logical. Whether or not to include disturbed forests as managed forests (default is FALSE).}
+\item{include_disturbed_forest}{Logical. If TRUE, includes disturbed forest class (code 20) in \code{forest_classes}.}
 
-\item{make_productive}{Logical. Also make the Productive Managed Forests layer.}
+\item{make_productive}{Logical. If TRUE, also generates a productive managed forest raster.}
 
-\item{raster_npp}{A \code{SpatRaster} file containing the NPP information needed to calculate the Productive Managed Forests layer. Needed if make_productive = TRUE}
+\item{raster_npp}{A \code{SpatRaster} of NPP data used for generating the productive forest layer. Required if \code{make_productive = TRUE}.}
 
-\item{name_out}{A string with the data name that will be used for the output \code{tif}file}
+\item{name_out}{Character. Name stem for output file(s) (optional, not currently used).}
 
-\item{output_path}{An optional output path for the created file.}
+\item{output_path}{Optional character. Directory to save output raster(s) if provided.}
 }
 \value{
-A \code{SpatRaster} file of managed forests that has been aligned and normalised
+A \code{SpatRaster} with either one layer (managed forests) or two layers (managed forests and productive managed forests).
 }
 \description{
-Create managed forests data layer
+This function generates a standardised raster of managed forests, optionally including disturbed forests
+and a separate layer for productive managed forests (based on NPP data). The input raster should contain
+LULC classification values which are reclassified according to defined managed forest class codes.
+}
+\details{
+If \code{make_productive = TRUE}, the function multiplies the managed forest raster by a normalised raster of
+Net Primary Productivity (NPP) to generate a layer representing productive managed forests.
 }
 \examples{
 \dontrun{
-boundary_proj <- make_boundary(
-  boundary_in = boundary_dat,
-  iso3 = "NPL",
-  iso3_column = "iso3cd",
-  do_project = TRUE
-)
-
-pus <- make_planning_units(
-  boundary_proj = boundary_proj,
-  pu_size = NULL,
-  pu_threshold = 8.5e5,
-  limit_to_mainland = FALSE
-)
-
 managed_forests <- make_managed_forests(
-  raster_in = forests_in,
-  pus = pus
+  raster_in = forest_lulc,
+  pus = planning_units,
+  iso3 = "NPL",
+  make_productive = TRUE,
+  raster_npp = npp_raster
 )
 }
 }

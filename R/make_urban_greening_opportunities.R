@@ -1,136 +1,121 @@
 #' Create Urban Greening Opportunities Raster
 #'
-#' This function generates an urban greening opportunities raster by integrating NDVI,
-#' land-use classifications (LULC), and extreme heat exposure from GHS data.
-#' The process involves normalizing NDVI, extracting urban areas from LULC,
-#' rasterizing extreme heat exposure, and combining these layers to identify potential
-#' areas for greening interventions.
+#' This function generates an urban greening opportunities raster by integrating NDVI (Normalized
+#' Difference Vegetation Index), land use/land cover (LULC) classification, and urban heat intensity
+#' from SDEI/GHS data. The process includes normalizing NDVI, identifying urban areas from LULC,
+#' rasterizing urban heat exposure, and combining all layers to map priority areas for urban greening.
 #'
-#' @param ndvi_raster A `SpatRaster` representing the NDVI data.
-#' @param lulc_raster A `SpatRaster` of the land use/land cover (LULC) classification.
-#' @param sdei_statistics A `sf` object representing GHS boundaries and SDEI extreme
-#'      urban heat data.
-#' @param pus A `SpatRaster` defining the planning unit (PU) grid.
-#' @param iso3 A character string representing the ISO3 country code.
-#' @param return_urban_areas logical. Whether to also return the urban areas raster
-#'        for potential downstream analyses.
-#' @param output_path A character string specifying the output directory (optional).
-#' @param cores A number allocating the available cores for `terra` tools that allow
-#'        multi-core processing (if available on your machine). Defaults to 4.
+#' @param ndvi_raster A `SpatRaster` representing NDVI data (vegetation greenness).
+#' @param lulc_raster A `SpatRaster` representing land use/land cover (LULC) classes.
+#' @param sdei_statistics An `sf` object of urban heat exposure statistics (e.g., WBGT).
+#' @param pus A `SpatRaster` defining planning units (PUs) to align outputs to.
+#' @param iso3 ISO3 country code used for filtering the urban heat data.
+#' @param return_urban_areas Logical. If TRUE, also returns the raster of binary urban areas.
+#' @param output_path Optional. A directory path to write the resulting raster(s).
+#' @param cores Integer. Number of CPU cores to use in multi-threaded operations (if supported). Default = 4.
 #'
-#' @return A `SpatRaster` representing urban greening opportunities.
+#' @return A `SpatRaster` of normalized urban greening opportunities. If `return_urban_areas = TRUE`,
+#'         a raster stack is returned with both greening opportunities and urban extent.
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' ndvi_raster <- elsar::elsar_load_data(
-#'   file_path = ".",
-#'   file_name = "mod13q1_2022_ndvi_wgs84.tif",
-#'   file_type = "tiff"
-#'   )
+#' ndvi <- elsar::elsar_load_data(file_path = ".", file_name = "ndvi.tif", file_type = "tiff")
+#' lulc <- elsar::elsar_load_data(file_path = ".", file_name = "lulc.tif", file_type = "tiff")
+#' sdei <- sf::read_sf("path_to_sdei_data.gpkg")
 #'
-#' lulc_raster <- elsar::elsar_load_data(
-#'   file_path = ".",
-#'   file_name = "esri_10m_lulc_2023_NPL.tif",
-#'   file_type = "tiff"
-#'   )
-#'
-#' sdei_statistics <- sf::read_sf(
-#'   "~/sdei-high-res-daily-uhe-1983-2016-shp/wbgtmax30_join.gpkg"
-#' )
-#'
-#' urban_green_opportunities <- make_urban_greening_opportunities(
+#' result <- make_urban_greening_opportunities(
 #'   ndvi_raster = ndvi,
 #'   lulc_raster = lulc,
-#'   sdei_statistics = sdei_statistics,
+#'   sdei_statistics = sdei,
 #'   pus = planning_units,
-#'   iso3 = "NPL",
+#'   iso3 = "NPL"
 #' )
-#'
-#' terra::plot(urban_green_opportunities)
 #' }
-make_urban_greening_opportunities <- function(ndvi_raster,
-                                              lulc_raster,
-                                              sdei_statistics,
-                                              pus,
-                                              iso3,
-                                              return_urban_areas = FALSE,
-                                              output_path = NULL,
-                                              cores = 4) {
-  # Input Validation
-  assertthat::assert_that(
-    inherits(ndvi_raster, "SpatRaster"),
-    msg = "ndvi_raster must be a SpatRaster object"
-  )
-  assertthat::assert_that(
-    inherits(lulc_raster, "SpatRaster"),
-    msg = "lulc_raster must be a SpatRaster object"
-  )
-  assertthat::assert_that(
-    inherits(sdei_statistics, "sf"),
-    msg = "sdei_stats_file must be a sf object"
-  )
+make_urban_greening_opportunities <- function(
+    ndvi_raster,
+    lulc_raster,
+    sdei_statistics,
+    pus,
+    iso3,
+    return_urban_areas = FALSE,
+    output_path = NULL,
+    cores = 4
+) {
+  # Validate inputs
+  assertthat::assert_that(inherits(ndvi_raster, "SpatRaster"), msg = "ndvi_raster must be a SpatRaster object.")
+  assertthat::assert_that(inherits(lulc_raster, "SpatRaster"), msg = "lulc_raster must be a SpatRaster object.")
+  assertthat::assert_that(inherits(sdei_statistics, "sf"), msg = "sdei_statistics must be an sf object.")
 
-  # Normalizing NDVI
-  print("Normalizing NDVI raster and and inverting values...")
+  # Normalize NDVI — remove water (NDVI < 0), invert to reflect greening potential
+  log_msg("Normalizing NDVI raster, removing negative values, and inverting...")
   rev_ndvi <- make_normalised_raster(
     raster_in = ndvi_raster,
     pus = pus,
     iso3 = iso3,
     invert = TRUE,
-    conditional_expression = function(x) {
-      terra::ifel(x < 0, NA, 1 - x)
-    },
+    conditional_expression = function(x) terra::ifel(x < 0, NA, 1 - x)
   )
 
-  # Extracting Urban Areas from LULC - Converts inputs to float type to allow for
-  # output to be non-binary
-  print("Extracting urban areas from LULC raster...")
+  # Identify urban areas from LULC raster (value 7 for urban)
+  log_msg("Extracting urban areas from LULC raster...")
   urban_areas <- make_normalised_raster(
     raster_in = lulc_raster,
     pus = pus,
     iso3 = iso3,
-    method_override = "bilinear", # Use bilinear so that values are continuous 0-1.
+    method_override = "mean",
     input_raster_conditional_expression = function(x) terra::ifel(x == 7, 1, 0)
   )
 
-  # Loading and Subsetting Global Human Settlement (GHS) Data
-  # NOTE: This works for now, per the methods used before, but it needs to be revisited ASAP
-  print("Reading, spatially filtering GHS and SDEI statistics, and rasterising data...")
+  # Rasterize extreme heat exposure from SDEI statistics for urban areas
+  log_msg("Processing SDEI urban heat exposure statistics...")
 
-  # Get PU boundary for spatial subsetting of global layer
+  # Get spatial extent of PUs for subsetting SDEI
   pu_proj <- terra::as.polygons(pus) %>%
     sf::st_as_sf() %>%
-    dplyr::filter(layer == 1) %>%
-    sf::st_transform(sf::st_crs(sdei_statistics)) %>% # Re-project to match sdei_statistics
+    dplyr::filter(`Planning Units` == 1) %>%
+    sf::st_transform(sf::st_crs(sdei_statistics)) %>%
     sf::st_make_valid() %>%
     terra::vect()
 
+  # Filter and intersect with PUs
   urban_extreme_heat <- sdei_statistics %>%
     dplyr::filter(CTR_MN_ISO == iso3) %>%
     terra::vect() %>%
     terra::intersect(y = pu_proj) %>%
-    sf::st_as_sf() %>%
-    sf::st_transform(crs = sf::st_crs(pus)) %>% # Re-project back to PU crs
-    dplyr::group_by(ID_HDC_G0) %>%
-    dplyr::summarise(avg_intens = mean(avg_intens)) %>%
-    dplyr::filter(!is.na(avg_intens)) %>%
-    elsar::exact_rasterise(
-      attribute = "avg_intens",
-      pus = pus,
-      fun = mean,
-      iso3 = iso3
-    ) %>%
-    elsar::rescale_raster()
+    sf::st_as_sf()
 
-  # Combining and Normalizing Urban Greening Opportunities
-  print("Combining layers and normalising urban greening opportunities layer...")
+  # Handle potential missing or malformed data
+  if (!"ID_HDC_G0" %in% names(urban_extreme_heat)) {
+    log_msg("No urban extreme heat values to rasterise: returning empty raster.")
+    urban_extreme_heat <- terra::ifel(pus == 1, 0, NA)
+  } else {
+    urban_extreme_heat <- urban_extreme_heat %>%
+      dplyr::group_by(ID_HDC_G0) %>%
+      dplyr::summarise(avg_intens = mean(avg_intens, na.rm = TRUE)) %>%
+      dplyr::filter(!is.na(avg_intens))
+
+    if (nrow(urban_extreme_heat) == 0) {
+      log_msg("No urban extreme heat `avg_intense` values to rasterise: returning empty raster.")
+      urban_extreme_heat <- terra::ifel(pus == 1, 0, NA)
+    } else {
+      urban_extreme_heat <- elsar::exact_rasterise(
+        attribute = "avg_intens",
+        features = urban_extreme_heat,
+        pus = pus,
+        iso3 = iso3,
+        fun = mean
+      ) %>%
+        elsar::rescale_raster()
+    }
+  }
+
+  # Combine layers and re-normalize
+  log_msg("Combining NDVI, heat, and urban layers to generate urban greening opportunities...")
   urban_greening_opportunities <- ((rev_ndvi + urban_extreme_heat) / 2 * urban_areas) %>%
-    elsar::rescale_raster()
+    elsar::make_normalised_raster(pus = pus, iso3 = iso3)
 
-#  names(urban_greening_opportunities) <- "urban_greening_opportunities"
-
-  # Writing Output
+  # Optionally write to file
   if (!is.null(output_path)) {
     output_file <- glue::glue("{output_path}/urban_greening_opportunities_{iso3}.tif")
 
@@ -147,14 +132,13 @@ make_urban_greening_opportunities <- function(ndvi_raster,
       ),
       overwrite = TRUE
     )
-
-    print(glue::glue("Urban greening opportunities raster created and saved to: {output_file}"))
+    log_msg(glue::glue("Urban greening raster saved to: {output_file}"))
   }
 
+  # Optionally return the urban areas raster
   if (return_urban_areas) {
-    combined_urban <- c(urban_greening_opportunities, urban_areas)
-    return(combined_urban)
-  } else{
-  return(urban_greening_opportunities)
+    return(c(urban_greening_opportunities, urban_areas))
+  } else {
+    return(urban_greening_opportunities)
   }
 }

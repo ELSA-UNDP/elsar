@@ -87,7 +87,7 @@ get_iucn_ecosystems <- function(
   pus_bbox_wgs <- sf::st_transform(pus_bbox, crs = "EPSG:4326") %>%
     terra::vect()
 
-  cat("Reading, reprojecting, and intersecting IUCN GET ecosystem layers...\n")
+  log_msg("Reading, reprojecting, and intersecting IUCN GET ecosystem layers...")
   iucn_list <- lapply(all_files, function(file) {
     v <- terra::vect(file, extent = pus_bbox_wgs)
     if (NROW(v) == 0) return(NULL)
@@ -108,7 +108,7 @@ get_iucn_ecosystems <- function(
   iucn_list <- Filter(NROW, iucn_list)
 
   if (length(iucn_list) == 0) {
-    cat("No intersecting features found in any file.\n")
+    log_msg("No intersecting features found in any file.")
     return(NULL)
   }
 
@@ -140,7 +140,7 @@ get_iucn_ecosystems <- function(
   if (!is.null(output_path)) {
     dir.create(output_path, showWarnings = FALSE, recursive = TRUE)
     out_file <- file.path(output_path, glue::glue("iucn_ecosystems_{iso3}.gpkg"))
-    cat(glue::glue("Saving merged vector layer to: {out_file}\n"))
+    log_msg(glue::glue("Saving merged vector layer to: {out_file}"))
     sf::st_write(iucn_ecosystems, out_file, delete_dsn = TRUE, quiet = TRUE)
   }
 

@@ -7,7 +7,7 @@
 make_protect_zone(
   iso3,
   pus,
-  current_protected_areas = NULL,
+  current_protected_areas,
   agricultural_areas_input = NULL,
   built_areas_input = NULL,
   lulc_raster = NULL,
@@ -29,7 +29,7 @@ make_protect_zone(
 
 \item{pus}{A \code{SpatRaster} defining the planning units.}
 
-\item{current_protected_areas}{NULL or a \code{sf} or \code{SpatVector} object of current protected areas.
+\item{current_protected_areas}{a \code{sf} or \code{SpatVector} object of current protected areas.
 If NULL, \code{elsar::make_protected_areas()} will be used.}
 
 \item{agricultural_areas_input}{A \code{SpatRaster} representing binary or probabilistic agricultural areas (optional).}

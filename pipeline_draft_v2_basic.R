@@ -10,25 +10,31 @@ library(here)
 library(RPostgres)
 "%ni%" <- Negate("%in%")
 
-#################################################################################
-
+############################################################################### #
+# Set run-time parameters ####
 # Set local temp directory for `terra`
-# terra::terraOptions(tempdir = here::here("~/Documents/"), steps = 4, todisk = TRUE)
-# terraOptions()
-# terra::tmpFiles(remove = TRUE)
+terra::terraOptions(tempdir = here::here("~/Documents/"), steps = 4, todisk = TRUE)
+terraOptions()
+terra::tmpFiles(remove = TRUE)
 
-# Set paths for data
-sheet_path <- "C:/Users/sandr/Documents/Github/elsar"
-input_path <- "C:/Users/sandr/Documents/UNBL_work/Pipeline/input_dat"
-output_path <- "C:/Users/sandr/Documents/UNBL_work/Pipeline/output_dat"
-figure_path <- "C:/Users/sandr/Documents/UNBL_work/Pipeline/output_dat/figures"
+## Set paths for data ####
+# sheet_path <- "C:/Users/sandr/Documents/Github/elsar"
+# input_path <- "C:/Users/sandr/Documents/UNBL_work/Pipeline/input_dat"
+# output_path <- "C:/Users/sandr/Documents/UNBL_work/Pipeline/output_dat"
+# figure_path <- "C:/Users/sandr/Documents/UNBL_work/Pipeline/output_dat/figures"
+sheet_path <- "/home/scottca/gitrepos/elsar"
+input_path <- "/home/scottca/Documents/elsar_data"
+output_path <- "/home/scottca/Documents/elsar_outputs"
+figure_path <- "/home/scottca/Documents/elsar_figures"
 
-## Country info
-iso3 <- "NPL"
+
+
+## Country info ####
+iso3 <- "AND"
 iso3_column <- "iso3cd" # for boundary data
 
-#################################################################################
-# Load data file
+############################################################################### #
+# Load data file ####
 data_info <- read_delim(file.path(sheet_path, "input_data.csv"),
   delim = ";", escape_double = FALSE,
   trim_ws = TRUE
@@ -71,14 +77,15 @@ if (nrow(data_info %>%
   postgres_dict <- NULL
 }
 
-# Create data
+# Create data ####
 ## PUs
 if (as.logical(as.integer(data_info %>%
   dplyr::filter(group == "pus") %>%
   dplyr::pull(include)))) {
-  message("Creating Planning Units")
 
-  ### Load data
+  log_msg("Creating Planning Units")
+
+  ## Load data ####
   boundary_info <- data_info %>%
     dplyr::filter(group == "boundary")
 
@@ -92,7 +99,7 @@ if (as.logical(as.integer(data_info %>%
     file_lyr = (if (boundary_info$file_type != "postgres") boundary_info$layer else NULL)
   )
 
-  ### Create boundary
+  # Create boundary ####
   if (as.logical(as.integer(data_info %>%
     dplyr::filter(group == "boundary") %>%
     dplyr::pull(include)))) {
@@ -105,7 +112,7 @@ if (as.logical(as.integer(data_info %>%
     boundary_proj <- boundary_dat
   }
 
-  ### Create PUs
+  # Create PUs ####
   defaults_pu <- data_info %>%
     dplyr::filter(group == "pus") %>%
     dplyr::pull(default_parameters) # get whether to use default values or not
@@ -166,20 +173,20 @@ download_lulc <- data_info %>%
 if (nrow(download_lulc) > 0) {
   # search input data folder for lulc data
   all_dat <- list.files(input_path)
-  lulc_there <- all_dat[grepl("lulc", all_dat)]
+  lulc_there <- all_dat[grepl("lulc", all_dat) & grepl(iso3, all_dat, ignore.case = TRUE)]
 
   if (rlang::is_empty(lulc_there)) {
-    cat("No LULC data available in input_path.")
+    log_msg(glue::glue("No LULC data available in input_path for {iso3}."))
     # {
-    answer <- readline("Do you need to download country-specific LULC data? This is only needed once. (yes/no): ")
-    answer <- tolower(trimws(answer)) # to streamline if someone says "Yes" or similar
+    answer <- readline("Do you need to download country-specific LULC data? This is only needed once. Type to override or press Enter to confirm [default = yes] (yes/no): ")
+    if (tolower(trimws(answer)) == "") answer <- "yes" # to streamline if someone says "Yes" or similar
 
     if (answer == "yes") { # go through pre-saved options that we need to list down here. Will add to this
-      cat("You need access to the unbl_misc gee repository. Please do this before trying to download the data. ")
-      cat("Make sure you have a working internet connection.")
+      message("You need access to the unbl_misc gee repository. Please do this before trying to download the data. ")
+      message("Make sure you have a working internet connection.")
       # {
-      answer2 <- readline("Do you have access to the unbl-misc gee repository and a working internet connection? (yes/no): ")
-      answer2 <- tolower(trimws(answer2)) # to streamline if someone says "Yes" or similar
+      answer2 <- readline("Do you have access to the unbl-misc gee repository and a working internet connection? Type to override or press Enter to confirm [default = yes] (yes/no): ")
+      if (tolower(trimws(answer2)) == "") answer2 <- "yes" # to streamline if someone says "Yes" or similar
       if (answer2 == "yes") {
         lulc <- elsar_download_esri_lulc_data(
           boundary = boundary_proj,
@@ -187,12 +194,12 @@ if (nrow(download_lulc) > 0) {
           output_dir = input_path
         )
       } else {
-        cat("You can't download the data without access to the gee repository.")
+        message("You can't download the data without access to the gee repository.")
       }
 
       # }
     } else {
-      cat("You either need to change the path of the data to where to LULC data is saved or change what data you want to process. LULC data is needed for some of the data selected in the spreadsheet.")
+      message("You either need to change the path of the data to where to LULC data is saved or change what data you want to process. LULC data is needed for some of the data selected in the spreadsheet.")
     }
     # }
   }
@@ -248,7 +255,7 @@ if (("Alliance for Zero Extinction Sites") %in% dat_non_default & ("Key Biodiver
 
 
 #### Prep data using default methods ####
-cat("Creating Default Features")
+log_msg("Creating Default Features...")
 
 # init data stack with pus as first layer
 raster_out <- pus
@@ -289,7 +296,7 @@ for (i in 1:length(dat_default)) { # for all the data that runs with make_normal
         conditional_expression = function(r) 100 - r # based on % (so: 100% - r)
       )
     } else {
-      cat("Your data might not have a pre-saved option yet. Please enter your processing options manually.")
+      message("Your data might not have a pre-saved option yet. Please enter your processing options manually.")
       next # jump to else if to enter options manually. Not tested yet!!!
     }
   } else { # everything default
@@ -311,14 +318,15 @@ for (i in 1:length(dat_default)) { # for all the data that runs with make_normal
   raster_out <- c(raster_out, rast_norm)
 }
 
-#### Prep data using non-default methods ####
-cat("Creating Non-Default Features")
+# Prep data using non-default methods ####
+log_msg("Creating Non-Default Features...")
 
 for (j in 1:length(dat_non_default)) { # for all the data that runs with non-default functions
 
   current_dat <- feature_list %>%
     dplyr::filter(data_name == dat_non_default[[j]])
 
+## Mangroves ####
   if (dat_non_default[[j]] == "Mangroves") {
     print("Mangroves")
 
@@ -330,7 +338,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
     )
 
     if (nrow(current_rast) == 0) {
-      cat("No mangroves in the planning region.")
+      message("No mangroves in the planning region.")
     }
     mangrove_raster <- make_mangroves(
       sf_in = current_rast,
@@ -348,6 +356,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
     raster_out <- c(raster_out, mangrove_raster)
   }
 
+  # Forest Integrity Index ####
   if (dat_non_default[[j]] == "Forest Integrity Index") {
     print("Forest Integrity Index")
 
@@ -404,63 +413,111 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
       figure_path = figure_path
     )
     raster_out <- c(raster_out, forest_integrity)
+}
 
-  }
 
+# Protected Area ####
   if (dat_non_default[[j]] == "Existing PAs") {
     print("Existing PAs")
 
     if (current_dat$default_parameters != 1) {
-      answer <- readline("Do you want to download current protected areas from wdpar package? (yes/no): ")
-      answer <- tolower(trimws(answer)) # to streamline if someone says "Yes" or similar
+      message("You are using non-default Protected Area parameters")
+      ## Non-Default Protected Area Parameters ####
+      answer <- readline("Do you want to download current protected areas from Protected Planet using the wdpar package? Type to override or press Enter [default = yes]: ")
+      if (tolower(trimws(answer)) == "") answer <- "yes"
+
+      status <- readline("Included WDPA statuses [default = c('Designated', 'Inscribed', 'Established')]. Type to override or press Enter: ")
+      if (trimws(status) == "") status <- "c('Designated', 'Inscribed', 'Established')"
+
+      designation_mab <- readline("Include UNESCO MAB areas (TRUE/FALSE) [default = FALSE]? Type to override or press Enter: ")
+      if (trimws(designation_mab) == "") designation_mab <- "FALSE"
+
+      buffer_points <- readline("Buffer POINT geometries (TRUE/FALSE) [default = TRUE]? Type to override or press Enter: ")
+      if (trimws(buffer_points) == "") buffer_points <- "TRUE"
+
+      area_column <- readline("Attribute for points with reported area (e.g. REP_AREA) [default = REP_AREA]: ")
+      if (trimws(area_column) == "") area_column <- "REP_AREA"
+
+      nQuadSegs <- readline("Number of segments for geodesic buffering (e.g. 50) [default = 50]: ")
+      if (trimws(nQuadSegs) == "") nQuadSegs <- "50"
 
       if (answer == "yes") {
-        from_wdpa <- TRUE
-        download_path <- output_path
-        sf_in <- NULL
+        current_pas <- make_protected_areas(
+          from_wdpa = TRUE,
+          iso3 = iso3,
+          input_path = input_path,
+          status = eval(parse(text = status)),
+          pa_def = 1,
+          include_mab_designation = as.logical(designation_mab),
+          buffer_points = as.logical(buffer_points),
+          area_column = area_column,
+          nQuadSegs = as.integer(nQuadSegs),
+          pus = pus,
+          output_path = output_path
+        )
       } else {
-        # load data
+        if (is.na(current_dat$full_name) | is.null(current_dat$full_name)) {
+          stop("No protected areas provided and download declined. Please update `input_data.csv` or allow download from Protected Planet.")
+        } else {
+          sf_in <- elsar_load_data(
+            file_name = current_dat$full_name,
+            file_type = current_dat$file_type,
+            file_path = current_dat$full_path
+          )
+
+          if (nrow(sf_in) == 0) {
+            stop("Provided protected area file contains no features. Please update the file or allow download from Protected Planet.")
+          }
+
+          current_pas <- make_protected_areas(
+            from_wdpa = FALSE,
+            iso3 = iso3,
+            sf_in = sf_in,
+            input_path = NULL,
+            status = eval(parse(text = status)),
+            pa_def = 1,
+            include_mab_designation = as.logical(designation_mab),
+            buffer_points = as.logical(buffer_points),
+            area_column = area_column,
+            nQuadSegs = as.integer(nQuadSegs),
+            pus = pus,
+            output_path = output_path
+          )
+        }
+      }
+    } else {
+      ## Default Protected Area Parameters ####
+      if (is.na(current_dat$full_name) | is.null(current_dat$full_name)) {
+        message("No existing Protected Area file provided. Downloading current WDPA data from Protected Planet and using default parameters...")
+
+        current_pas <- make_protected_areas(
+          from_wdpa = TRUE,
+          iso3 = iso3,
+          sf_in = NULL,
+          input_path = input_path,
+          buffer_points = TRUE,
+          pus = pus,
+          output_path = output_path
+        )
+      } else {
         sf_in <- elsar_load_data(
           file_name = current_dat$full_name,
-          file_type = current_dat$file_type, file_path = current_dat$full_path
+          file_type = current_dat$file_type,
+          file_path = current_dat$full_path
         )
 
-        from_wdpa <- FALSE
-        download_path <- NULL
+        current_pas <- make_protected_areas(
+          from_wdpa = FALSE,
+          iso3 = iso3,
+          sf_in = sf_in,
+          input_path = NULL,
+          buffer_points = TRUE,
+          pus = pus,
+          output_path = output_path
+        )
       }
-
-      {
-        status <- readline(prompt = "Included wdpa database status as a list (e.g. c('Established', 'Inscribed', 'Designated')): ")
-        # pa_def <- readline(prompt = "Enter PA category (1: PA; 0: OECM): ") #Not supported yet
-        designation_mab <- readline(prompt = "Include UNESCO MAB areas (TRUE/FALSE): ")
-        buffer_points <- readline(prompt = "Create circular buffer around POINT geometries (TRUE/FALSE): ")
-        area_column <- readline(prompt = "Column name for buffer calculations (e.g. REP_AREA): ")
-        nQuadSegs <- readline(prompt = "Number of segments to use for buffering (e.g. 50): ")
-      }
-
-      current_pas <- make_protected_areas(
-        from_wdpa = from_wdpa,
-        sf_in = sf_in,
-        iso3 = iso3,
-        download_path = download_path,
-        status = eval(parse(text = status)),
-        pa_def = 1,
-        designation_mab = as.logical(designation_mab),
-        buffer_points = as.logical(buffer_points),
-        area_column = area_column,
-        nQuadSegs = as.integer(nQuadSegs),
-        pus = pus,
-        output_path = output_path
-      )
-    } else {
-      current_pas <- make_protected_areas(
-        iso3 = iso3,
-        download_path = output_path,
-        buffer_points = TRUE,
-        pus = pus#,
-        #output_path = output_path
-      )
     }
+
     names(current_pas) <- c(dat_non_default[[j]]) # set layer name
     elsar_plot_feature(
       raster_in = current_pas,
@@ -471,6 +528,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
     raster_out <- c(raster_out, current_pas)
   }
 
+  # Managed Forests ####
   if (dat_non_default[[j]] == "Managed Forests") {
     print("Managed Forests")
 
@@ -496,7 +554,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
       managed_forests <- make_managed_forests(
         raster_in = raster_mf,
         pus = pus,
-        include_disturbed_forest = TRUE, # includes categories > 11
+        include_disturbed_forest = TRUE, # includes categories 20
         make_productive = include_productive,
         raster_npp = npp_in
       )
@@ -540,8 +598,9 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
     }
   }
 
+  # Key Biodiversity Areas | Alliance for Zero Extinction Sites ####
   if (dat_non_default[[j]] == "Key Biodiversity Areas" | dat_non_default[[j]] == "Alliance for Zero Extinction Sites") {
-    print("Key Biodiversity Areas")
+    print("Key Biodiversity Areas | Alliance for Zero Extinction Sites")
 
     # load data
     kba_sf <- elsar_load_data(
@@ -552,22 +611,22 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
 
     if (include_kbas & include_aze) {
       kba_out <- make_kbas(
-        kba_in = kba_sf %>%
-          dplyr::filter(is.na(azestatus) | azestatus != "confirmed"),
+        kba_in = kba_sf,
         pus = pus,
-        iso3_in = iso3
+        iso3 = iso3
       )
 
       aze_raster <- make_kbas(
         kba_in = kba_sf,
         pus = pus,
-        iso3_in = iso3,
+        iso3 = iso3,
         aze_only = TRUE
       )
 
       kba_raster <- c(kba_out, aze_raster)
 
       names(kba_raster) <- c("Key Biodiversity Areas", "Alliance for Zero Extinction Sites") # set layer name
+
       elsar_plot_feature(
         raster_in = kba_raster[[1]],
         pus = pus,
@@ -585,7 +644,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
       kba_raster <- make_kbas(
         kba_in = kba_sf,
         pus = pus,
-        iso3_in = iso3,
+        iso3 = iso3,
         aze_only = TRUE
       )
 
@@ -598,11 +657,11 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
       )
       raster_out <- c(raster_out, kba_raster)
     } else if (include_kbas & !include_aze) {
-      cat("KBAs include Alliance for Zero Extinction Sites.")
+      log_msg("KBAs include Alliance for Zero Extinction Sites.")
       kba_raster <- make_kbas(
         kba_in = kba_sf,
         pus = pus,
-        iso3_in = iso3
+        iso3 = iso3
       )
 
       names(kba_raster) <- c("Key Biodiversity Areas") # set layer name
@@ -616,6 +675,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
     }
   }
 
+  # Wetlands and Ramsar ####
   if (dat_non_default[[j]] == "Wetlands and Ramsar") { # add saving option
     print("Wetlands and Ramsar")
 
@@ -640,7 +700,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
         wetlands_in = raster_wetlands,
         ramsar_in = sf_ramsar,
         pus = pus,
-        iso3_in = iso3,
+        iso3 = iso3,
         buffer_points = FALSE
       )
     } else if ((!(grepl(",", current_dat$file_name))) & (grepl("wetland", current_dat$file_name))) {
@@ -682,6 +742,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
     )
     raster_out <- c(raster_out, wetlands_ramsar)
   }
+  # Urban Greening Opportunities ####
   if (dat_non_default[[j]] == "Urban Greening Opportunities") {
     print("Urban Greening Opportunities")
 
@@ -741,7 +802,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
 
     raster_out <- c(raster_out, urban_out)
   }
-
+  # Flood Abatement Opportunities ####
   if (dat_non_default[[j]] == "Flood Abatement Opportunities") {
     print("Flood Abatement Opportunities")
 
@@ -776,7 +837,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
     )
     raster_out <- c(raster_out, flood_abate)
   }
-
+  # Indigenous Managed Lands ####
   if (dat_non_default[[j]] == "Indigenous Managed Lands") {
     print("Indigenous Managed Lands")
 
@@ -802,6 +863,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
     # process data
     underrep <- make_underrepresented_ecosystems(
       iucn_get_directory = file.path(current_dat$full_path, current_dat$file_name),
+      current_protected_areas = current_protected_area_sf,
       iso3 = iso3,
       pus = pus,
       boundary_layer = boundary_proj
@@ -850,6 +912,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
 }
 
 #### Create zones ####
+log_msg("Creating zones...")
 ### Which zones to include
 zones_list <- data_info %>%
   dplyr::filter(
@@ -870,7 +933,7 @@ zones_data_incl <- zones_data %>%
   dplyr::select("data_name") %>%
   dplyr::pull()
 
-#### Prep zones data ####
+# Prep zones data ####
 for (k in 1:length(zones_data_incl)) {
 
   gc()
@@ -878,6 +941,7 @@ for (k in 1:length(zones_data_incl)) {
   current_zone_dat <- zones_data %>%
     dplyr::filter(data_name == zones_data_incl[[k]])
 
+## Managed Forests ####
   if (zones_data_incl[[k]] == "Managed Forests") {
     print("Managed Forests")
 
@@ -885,10 +949,11 @@ for (k in 1:length(zones_data_incl)) {
     if ("Managed Forests" %in% dat_non_default) {
       raster_mf <- managed_forests[[1]]
     } else {
-      cat("Please include Managed Forests in the generated features in input spreadsheet.")
+      log_msg("Please include Managed Forests in the generated features in input spreadsheet.")
     }
   }
 
+## Urban Areas ####
   if (zones_data_incl[[k]] == "Urban Areas") {
     print("Urban Areas")
 
@@ -902,6 +967,7 @@ for (k in 1:length(zones_data_incl)) {
     }
   }
 
+## Agriculture Areas ####
   if (zones_data_incl[[k]] == "Agriculture Areas") {
     print("Agriculture Areas")
 
@@ -916,11 +982,12 @@ for (k in 1:length(zones_data_incl)) {
       raster_in = raster_agri_in,
       pus = pus,
       iso3 = iso3,
-      method_override = "bilinear",
+      method_override = "mean",
       input_raster_conditional_expression = function(x) terra::ifel(x == 4, 1, 0)
     )
   }
 
+## Degraded Areas ####
   if (zones_data_incl[[k]] == "Degraded Areas") {
     print("Degraded Areas")
 
@@ -931,6 +998,7 @@ for (k in 1:length(zones_data_incl)) {
     )
   }
 
+## Human Industrial Footprint ####
   if (zones_data_incl[[k]] == "Human Industrial Footprint") {
     print("Human Industrial Footprint")
 
@@ -941,6 +1009,7 @@ for (k in 1:length(zones_data_incl)) {
     )
   }
 
+## IUCN Forests ####
   if (zones_data_incl[[k]] == "IUCN Forests") {
     print("IUCN Forests")
 
@@ -949,22 +1018,24 @@ for (k in 1:length(zones_data_incl)) {
       iucn_get_directory = file.path(current_zone_dat$full_path, current_zone_dat$file_name),
       pus = pus,
       iso3 = iso3,
-      boundary_layer = boundary_proj
+      boundary_layer = boundary_proj,
+      include_minor_occurrence = TRUE
     )
 
   }
 }
 
-#### Prep zones ####
+# Prep zones ####
+## Protection Zone ####
 for (l in 1:length(zones_list)) {
   if (zones_list[[l]] == "Protection Zone") {
     print("Protection Zone")
 
     protection_zone <- make_protect_zone(
       hii_input = raster_hii,
+      current_protected_areas = current_protected_area_sf,
       agricultural_areas_input = raster_agri,
       built_areas_input = raster_urban,
-      # hii_threshold = 17,
       pus = pus,
       iso3 = iso3
     )
@@ -978,6 +1049,7 @@ for (l in 1:length(zones_list)) {
     raster_out <- c(raster_out, protection_zone)
   }
 
+## Restoration Zone ####
   if (zones_list[[l]] == "Restoration Zone") {
     print("Restoration Zone")
 
@@ -988,7 +1060,7 @@ for (l in 1:length(zones_list)) {
       agricultural_areas_input = raster_agri,
       built_areas_input = raster_urban,
       iucn_get_forest_input = raster_iucnForest,
-      hii_input = hii_raster
+      hii_input = raster_hii
     )
 
     elsar_plot_feature(
@@ -1006,6 +1078,7 @@ for (l in 1:length(zones_list)) {
     raster_out <- c(raster_out, restoration_zone)
   }
 
+## Management Zone ####
   if (zones_list[[l]] == "Management Zone") {
     print("Management Zone")
 
@@ -1014,7 +1087,6 @@ for (l in 1:length(zones_list)) {
       agricultural_areas_input = raster_agri,
       built_areas_input = raster_urban,
       managed_forests_input = raster_mf,
-      #     hii_threshold = 10,
       pus = pus,
       iso3 = iso3
     )
@@ -1037,7 +1109,7 @@ for (l in 1:length(zones_list)) {
 
 #### add threatened
 if ("Threatened Ecosystems for Restoration" %in% dat_non_default) {
-  print("Threatened Ecosystems for Restoration (done now because it needs the restore zone)")
+  log_msg("Threatened Ecosystems for Restoration (created last because it makes use of the Restore Zone (V1))")
 
   gc()
 
@@ -1062,12 +1134,21 @@ if ("Threatened Ecosystems for Restoration" %in% dat_non_default) {
   raster_out <- c(raster_out, threat_r)
 }
 
-#### Save raster stack ####
+# Save raster stack ####
 out_name <- file.path(glue::glue("{output_path}/data_stack_{iso3}.tif"))
 
-writeRaster(raster_out, out_name,
+log_msg(glue::glue("Datastack saved as a multiband geotiff to: {out_name}"))
+
+terra::writeRaster(
+  raster_out,
+  filename = out_name,
   filetype = "COG",
   datatype = "FLT4S", # 32-bit float
-  gdal = c("COMPRESS=DEFLATE"),
+  gdal = c(
+    "COMPRESS=ZSTD",
+    "PREDICTOR=3",
+    "OVERVIEWS=NONE",
+    "NUM_THREADS=ALL_CPUS"
+    ),
   overwrite = TRUE
-)
+  )

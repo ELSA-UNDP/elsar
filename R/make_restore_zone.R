@@ -29,7 +29,6 @@
 #' @param filter_patch_size Logical. Whether to remove small isolated patches (default: TRUE).
 #' @param min_patch_size Integer. Minimum number of connected pixels to retain (default: 10).
 #' @param output_path Character or NULL. Directory to save output rasters. If NULL, outputs are returned but not saved (default: NULL).
-#' @param threads Logical. Whether to use multithreading where possible (default: TRUE).
 #'
 #' @return A `SpatRaster` with two layers:
 #' - `restore_zone_v1`: Degraded areas based on SDG, LULC, and HII thresholds
@@ -82,8 +81,7 @@ make_restore_zone <- function(
     built_area_lulc_value = 7,
     filter_patch_size = TRUE,
     min_patch_size = 10,
-    output_path = NULL,
-    threads = TRUE
+    output_path = NULL
 ) {
   # Input validation
   assertthat::assert_that(assertthat::is.string(iso3))
@@ -99,61 +97,56 @@ make_restore_zone <- function(
   )
 
   # SDG degradation layer
-  cat("Processing SDG degradation layer...\n")
-  sdg_degraded_areas <- elsar::crop_global_raster(raster_in = sdg_degradation_input, pus = pus) %>%
-    elsar::make_normalised_raster(
-      raster_in = .,
-      pus = pus,
-      iso3 = iso3,
-      method = "bilinear",
-      input_raster_conditional_expression = function(x) terra::ifel(x == -1, 1, 0),
-      threads = threads
-      )
+  log_msg("Processing SDG degradation layer...")
+  sdg_degraded_areas <- elsar::make_normalised_raster(
+    raster_in = sdg_degradation_input,
+    pus = pus,
+    iso3 = iso3,
+    method = "mean",
+    input_raster_conditional_expression = function(x) terra::ifel(x == -1, 1, 0)
+    )
 
   # Agricultural areas
-  cat("Processing agricultural areas...\n")
+  log_msg("Processing agricultural areas...")
   if (!is.null(agricultural_areas_input)) {
-    cat("Using previously saved agricultural areas raster...\n")
+    log_msg("Using previously saved agricultural areas raster...")
     agricultural_areas <- agricultural_areas_input
   } else {
     assert_that(!is.null(lulc_raster), msg = "When 'agricultural_areas_input' is NULL, 'lulc_raster' must be provided.")
-    cat("Extracting agricultural areas from LULC raster...\n")
-    agricultural_areas <- elsar::crop_global_raster(raster_in = lulc_raster,pus = pus) %>%
-      elsar::make_normalised_raster(
-        raster_in = .,
-        pus = pus,
-        iso3 = iso3,
-        method_override = "bilinear",
-        input_raster_conditional_expression = function(x) terra::ifel(x == agriculture_lulc_value, 1, 0)
-        )
-  }
+    log_msg("Extracting agricultural areas from LULC raster...")
+    agricultural_areas <- elsar::make_normalised_raster(
+      raster_in = lulc_raster,
+      pus = pus,
+      iso3 = iso3,
+      method_override = "mean",
+      input_raster_conditional_expression = function(x) terra::ifel(x == agriculture_lulc_value, 1, 0)
+      )
+    }
 
   # Built-up areas
-  cat("Processing built-up areas...\n")
+  log_msg("Processing built-up areas...")
   if (!is.null(built_areas_input)) {
     built_areas <- built_areas_input
   } else {
     assert_that(!is.null(lulc_raster), msg = "When 'built_areas_input' is NULL, 'lulc_raster' must be provided.")
-    built_areas <- elsar::crop_global_raster(raster_in = lulc_raster, pus = pus) %>%
-      elsar::make_normalised_raster(
-        raster_in = .,
-        pus = pus,
-        iso3 = iso3,
-        method_override = "bilinear",
-        input_raster_conditional_expression = function(x) terra::ifel(x == built_area_lulc_value, 1, 0)
-        )
-  }
-
-  # Human Industrial Footprint Index (HII) layer
-  cat("Processing HII layer...\n")
-  hii_resampled <- elsar::crop_global_raster(raster_in = hii_input, pus = pus) %>%
-    elsar::make_normalised_raster(
-      raster_in = .,
+    built_areas <- elsar::make_normalised_raster(
+      raster_in = lulc_raster,
       pus = pus,
       iso3 = iso3,
-      rescale = FALSE,
-      method_override = "bilinear"
+      method_override = "mean",
+      input_raster_conditional_expression = function(x) terra::ifel(x == built_area_lulc_value, 1, 0)
       )
+    }
+
+  # Human Industrial Footprint Index (HII) layer
+  log_msg("Processing HII layer...")
+  hii_resampled <- elsar::make_normalised_raster(
+    raster_in = hii_input,
+    pus = pus,
+    iso3 = iso3,
+    rescale = FALSE,
+    method_override = "mean"
+    )
 
   # Helper function to save rasters
   save_raster <- function(raster, filename, datatype = "FLT4S") {
@@ -171,7 +164,7 @@ make_restore_zone <- function(
       ),
       overwrite = TRUE
     )
-    cat(glue::glue("Saved: {filename}."), "\n")
+    log_msg(glue::glue("Saved: {filename}."))
   }
 
   # Optional output of intermediate layers

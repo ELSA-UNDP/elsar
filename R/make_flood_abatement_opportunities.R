@@ -36,7 +36,7 @@ make_flood_abatement_opportunities <- function(
     threads = TRUE) {
 
   # Normalize NDVI
-  cat("Normalizing NDVI raster and removing values below 0...\n")
+  log_msg("Normalizing NDVI raster and removing negative (e.g., water) values...")
   ndvi <- elsar::make_normalised_raster(
     raster_in = ndvi_raster,
     pus = pus,
@@ -45,12 +45,12 @@ make_flood_abatement_opportunities <- function(
   )
 
   # Normalize Global Flood Database
-  cat("Normalizing Global Flood Database...\n")
+  log_msg("Normalizing Global Flood Database...")
   gfd_risk <- elsar::make_normalised_raster(
     raster_in = gfd_raster,
     pus = pus,
     iso3 = iso3,
-    method_override = "bilinear"
+    method_override = "mean"
   )
 
   # Calculate flood abatement opportunities
@@ -77,7 +77,7 @@ make_flood_abatement_opportunities <- function(
       overwrite = TRUE
     )
 
-    print(glue::glue("Flood abatement opportunities raster created and saved to: {output_file}"))
+    log_msg(glue::glue("Flood abatement opportunities raster created and saved to: {output_file}"))
   }
 
   return(flood_abatement_opportunities)

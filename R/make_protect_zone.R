@@ -10,7 +10,7 @@
 #'
 #' @param iso3 ISO3 country code (e.g., "NPL").
 #' @param pus A `SpatRaster` defining the planning units.
-#' @param current_protected_areas NULL or a `sf` or `SpatVector` object of current protected areas.
+#' @param current_protected_areas a `sf` or `SpatVector` object of current protected areas.
 #'        If NULL, `elsar::make_protected_areas()` will be used.
 #' @param agricultural_areas_input A `SpatRaster` representing binary or probabilistic agricultural areas (optional).
 #' @param built_areas_input A `SpatRaster` representing binary or probabilistic built-up areas (optional).
@@ -47,7 +47,7 @@
 make_protect_zone <- function(
     iso3,
     pus,
-    current_protected_areas = NULL,
+    current_protected_areas,
     agricultural_areas_input = NULL,
     built_areas_input = NULL,
     lulc_raster = NULL,
@@ -64,70 +64,62 @@ make_protect_zone <- function(
     output_path = NULL
 ) {
   # Validate protected areas input or load default
-  if (is.null(current_protected_areas)) {
-    current_protected_areas <- elsar::make_protected_areas(
-      iso3 = iso3,
-      download_path = here::here(),
-      buffer_points = TRUE,
-      pus = pus,
-      return_sf = TRUE
-    )
-  } else {
-    assertthat::assert_that(
+  assertthat::assert_that(
       inherits(current_protected_areas, "sf") || inherits(current_protected_areas, "SpatVector"),
-      msg = "'current_protected_areas' must be an 'sf' or 'SpatVector' object."
-    )
-  }
+      msg = "'current_protected_areas' must be an 'sf' or 'SpatVector' object.")
+
+  if (nrow(current_protected_areas) > 1){
+    current_protected_areas <- current_protected_areas %>%
+      dplyr::summarise() %>%
+      sf::st_make_valid()
+    }
 
   # Process agriculture
-  cat("Processing agricultural areas...\n")
+  log_msg("Processing agricultural areas...")
   if (!is.null(agricultural_areas_input)) {
     agricultural_areas <- agricultural_areas_input
   } else {
     assertthat::assert_that(!is.null(lulc_raster), msg = "If 'agricultural_areas_input' is NULL, 'lulc_raster' must be provided.")
-    agricultural_areas <- elsar::crop_global_raster(raster_in = lulc_raster, pus = pus) %>%
-      elsar::make_normalised_raster(
-        raster_in = .,
-        pus = pus,
-        iso3 = iso3,
-        method_override = "bilinear",
-        input_raster_conditional_expression = function(x)
-          terra::ifel(x == agriculture_lulc_value, 1, 0)
-        )
-  }
+    agricultural_areas <- elsar::make_normalised_raster(
+      raster_in = lulc_raster,
+      pus = pus,
+      iso3 = iso3,
+      method_override = "mean",
+      input_raster_conditional_expression = function(x)
+        terra::ifel(x == agriculture_lulc_value, 1, 0)
+      )
+    }
 
   # Process built-up areas
-  cat("Processing built-up areas...\n")
+  log_msg("Processing built-up areas...")
   if (!is.null(built_areas_input)) {
     built_areas <- built_areas_input
   } else {
     assertthat::assert_that(!is.null(lulc_raster), msg = "If 'built_areas_input' is NULL, 'lulc_raster' must be provided.")
-    built_areas <-  elsar::crop_global_raster(raster_in = lulc_raster, pus = pus) %>%
-      elsar::make_normalised_raster(
-        raster_in = .,
-        pus = pus,
-        iso3 = iso3,
-        method_override = "bilinear",
-        input_raster_conditional_expression = function(x)
-          terra::ifel(x == built_area_lulc_value, 1, 0)
-        )
-  }
-
-  # Normalize HII
-  cat("Processing HII raster...\n")
-  hii_resampled <- elsar::crop_global_raster(raster_in = hii_input, pus = pus) %>%
-    elsar::make_normalised_raster(
-      raster_in = .,
+    built_areas <-  elsar::make_normalised_raster(
+      raster_in = lulc_raster,
       pus = pus,
       iso3 = iso3,
-      rescale = FALSE,
-      method_override = "bilinear"
+      method_override = "mean",
+      input_raster_conditional_expression = function(x)
+        terra::ifel(x == built_area_lulc_value, 1, 0)
       )
+    }
+
+  # Normalize HII
+  log_msg("Processing HII raster...")
+  hii_resampled <- elsar::make_normalised_raster(
+    raster_in = hii_input,
+    pus = pus,
+    iso3 = iso3,
+    rescale = FALSE,
+    method_override = "mean"
+    )
 
   # Determine threshold from fixed value or quantile
   if (!is.null(hii_threshold)) {
     breaks <- hii_threshold
-    message(glue::glue("Using fixed HII threshold: {breaks}"))
+    log_msg(glue::glue("Using fixed HII threshold: {breaks}"))
   } else {
     breaks <- exactextractr::exact_extract(
       x = hii_resampled,
@@ -135,15 +127,15 @@ make_protect_zone <- function(
       fun = "quantile",
       quantiles = hii_quantile
     )
-    cat(glue::glue("HII threshold calculated from quantile {hii_quantile}: {breaks}\n"))
+    log_msg(glue::glue("HII threshold calculated from quantile {hii_quantile}: {breaks}"))
   }
 
   # Base zone: where HII is low
-  cat("Creating initial protect zone based on HII values...\n")
+  log_msg("Creating initial protect zone based on HII values...")
   protect_zone <- terra::ifel(hii_resampled < breaks, 1, 0)
 
   # Exclude agriculture and built-up areas
-  cat("Removing built and agricultural areas...\n")
+  log_msg("Removing built and agricultural areas...")
   if (!is.null(built_areas) && is.null(agricultural_areas)) {
     protect_zone <- terra::ifel(built_areas > built_areas_threshold, 0, protect_zone)
   } else if (is.null(built_areas) && !is.null(agricultural_areas)) {
@@ -151,12 +143,12 @@ make_protect_zone <- function(
   } else if (!is.null(built_areas) && !is.null(agricultural_areas)) {
     protect_zone <- terra::ifel(built_areas > built_areas_threshold | agricultural_areas > agriculture_threshold, 0, protect_zone)
   } else {
-    cat("No building or agricultural area found - Protection zone based on HII only.\n")
+    log_msg("No building or agricultural area found - Protection zone based on HII only.")
   }
 
   # Optionally filter out small patches
   if (filter_patch_size) {
-    cat(glue::glue("Sieving out patch sizes smaller than {min_patch_size} planning units..."), "\n")
+    log_msg(glue::glue("Sieving out patch sizes smaller than {min_patch_size} planning units..."))
     protect_zone <- terra::sieve(protect_zone, threshold = min_patch_size)
   }
 
@@ -170,7 +162,7 @@ make_protect_zone <- function(
   # Save to disk if needed
   if (!is.null(output_path)) {
     filename <- glue::glue("{output_path}/protect_zone_{iso3}.tif")
-    cat(glue::glue("Saving protection zone raster to: {filename}\n"))
+    log_msg(glue::glue("Saving protection zone raster to: {filename}"))
     terra::writeRaster(
       protect_zone,
       filename = filename,

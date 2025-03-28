@@ -175,7 +175,7 @@ img_pos <- c(img_xmin, img_xmax, img_ymin, img_ymax)
 
 If we are interested in the distribution, we can also plot the distribution on the plots. For this, we need to create two separate plots that we then put together: 
 
-```{r, fig.width = 8, fig.height = 6}
+```{r eval=FALSE, fig.height=6, fig.width=8, include=FALSE}
 plot_out <- elsar_plot_static_raster_c(
   raster_in = wadOut, type = "ggplot_raster",
   background = wad_subset,
@@ -215,7 +215,7 @@ plot_dist <- elsar_plot_distribution(
 
 We can also transform the data into categories and plot the main plot and the inset that way.
 
-```{r, fig.width = 8, fig.height = 6}
+```{r eval=FALSE, fig.height=6, fig.width=8, include=FALSE}
 plot_cat <- elsar_plot_static_raster_d(
   raster_in = wadOut, type = "ggplot_raster",
   categorical = FALSE,

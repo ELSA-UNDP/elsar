@@ -21,8 +21,7 @@ make_restore_zone(
   built_area_lulc_value = 7,
   filter_patch_size = TRUE,
   min_patch_size = 10,
-  output_path = NULL,
-  threads = TRUE
+  output_path = NULL
 )
 }
 \arguments{
@@ -59,8 +58,6 @@ make_restore_zone(
 \item{min_patch_size}{Integer. Minimum number of connected pixels to retain (default: 10).}
 
 \item{output_path}{Character or NULL. Directory to save output rasters. If NULL, outputs are returned but not saved (default: NULL).}
-
-\item{threads}{Logical. Whether to use multithreading where possible (default: TRUE).}
 }
 \value{
 A \code{SpatRaster} with two layers:
