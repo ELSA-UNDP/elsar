@@ -12,9 +12,13 @@
 #' @param include_aze_sites Logical. If `TRUE`, includes KBAs that are also AZE sites (default is `FALSE`).
 #' @param aze_only Logical. If `TRUE`, returns only confirmed AZE sites (default is `FALSE`).
 #' @param include_regional_kba Logical. If `FALSE`, filters out KBAs marked as "Regional" or "Global/ Regional to be determined".
-#' @param output_path Optional character. Directory path to save output raster. If `NULL`, output is not written to file.
+#' @param buffer_points Logical. If `TRUE`, circular buffers are generated around point geometries using the `area_column` attribute (default is `TRUE`).
+#' @param area_column A string indicating the name of the column containing site area (in hectares), used when buffering point geometries.
+#' @param nQuadSegs An integer specifying the number of segments used to approximate circular buffers (default: 50).
+#' @param output_path Optional character. Directory path to save the output raster. If `NULL`, output is not written to file.
 #'
-#' @return A `SpatRaster` with normalised values showing KBA (or AZE) coverage across planning units.
+#' @return A `SpatRaster` object with normalised values representing KBA (or AZE) coverage across planning units.
+#' If `output_path` is provided, the raster is also written to disk.
 #' @export
 #'
 #' @examples
@@ -24,8 +28,8 @@
 #'   pus = planning_units,
 #'   iso3 = "KEN",
 #'   aze_only = TRUE,
-#'   output_path = "outputs",
-#'  )
+#'   output_path = "outputs"
+#' )
 #' }
 make_kbas <- function(
     kba_in,
@@ -34,6 +38,9 @@ make_kbas <- function(
     include_aze_sites = FALSE,
     aze_only = FALSE,
     include_regional_kba = FALSE,
+    buffer_points = TRUE,
+    area_column = "gisarea",
+    nQuadSegs = 50,
     output_path = NULL
 ) {
   # Validate inputs
@@ -56,12 +63,10 @@ make_kbas <- function(
       if (nrow(kba) == 0) {
         log_msg("No matching AZE sites found in the study region: returning empty raster.")
         kba <- terra::ifel(pus == 1, 0, NA)
-        return(kba)
       }
-
     } else {
       if (!include_aze_sites) {
-        log_msg("Excluding AZE sites.")
+        log_msg("Excluding AZE sites from KBA.")
         kba <- dplyr::filter(kba, is.na(azestatus) | azestatus != "confirmed")
 
         if (nrow(kba) == 0) {
@@ -70,7 +75,7 @@ make_kbas <- function(
           return(kba)
         }
       } else {
-        log_msg("Including AZE sites.")
+        log_msg("Including AZE sites in KBAs.")
       }
 
       if (!include_regional_kba) {
@@ -79,23 +84,65 @@ make_kbas <- function(
       }
 
       if (nrow(kba) == 0) {
-        log_msg("No KBA sites founds after removing Regional KBAs and those with undetermined Global status: returning empty raster.")
+        log_msg("No sites founds after removing Regional sites and those with undetermined Global status: returning empty raster.")
         kba <- terra::ifel(pus == 1, 0, NA)
-        return(kba)
       }
     }
 
-    # Rasterise if features still present
-    kba <- kba %>%
-      sf::st_transform(crs = sf::st_crs(pus)) %>%
-      sf::st_make_valid() %>%
-      dplyr::summarise() %>%
-      sf::st_make_valid()
+    if (inherits(kba, "SpatRaster")) {
+      return(kba)
+    } else {
+      # exactextractr only works with polygon information; need to deal with points
+      if (("MULTIPOINT" %in% sf::st_geometry_type(kba)) || ("POINT" %in% sf::st_geometry_type(kba))) {
+        if (buffer_points) {
+          # Buffer around "POINTS" and make them into polygons
+          kba <- convert_points_polygon(
+            sf_layer = kba,
+            area_crs = sf::st_crs(pus),
+            area_attr = area_column,
+            nQuadSegs = nQuadSegs,
+            area_multiplier = 1e4,
+            append_original_polygons = TRUE
+          ) %>%
+            sf::st_transform(sf::st_crs(pus)) %>%
+            dplyr::summarise() %>%
+            sf::st_make_valid()
 
-    log_msg("Rasterising and normalising features...")
-    kba <- exactextractr::coverage_fraction(pus, kba)[[1]] %>%
-      elsar::make_normalised_raster(pus = pus, iso3 = iso3)
+          log_msg("Rasterising and normalising sites...")
+          kba <- exactextractr::coverage_fraction(pus, kba)[[1]] %>%
+            elsar::make_normalised_raster(pus = pus, iso3 = iso3)
 
+        } else {
+          # Only keep polygon and multipolygon information
+          if (nrow(kba %>% dplyr::filter(sf::st_is(., c("POLYGON", "MULTIPOLYGON")))) > 0) {
+            kba <- kba %>%
+              sf::st_transform(sf::st_crs(pus)) %>%
+              dplyr::filter(sf::st_is(., c("POLYGON", "MULTIPOLYGON"))) %>%
+              dplyr::summarise() %>%
+              sf::st_make_valid()
+
+            log_msg("Rasterising and normalising sites...")
+            kba <- exactextractr::coverage_fraction(pus, kba)[[1]] %>%
+              elsar::make_normalised_raster(pus = pus, iso3 = iso3)
+
+          } else {
+            log_msg("Only 'POINT' or 'MULTIPOINT' geometry type sites found in the planning region and 'buffer_points' is set to false.")
+            log_msg("Returning an empty raster.")
+
+            kba <- terra::ifel(pus == 1, 0, NA)
+          }
+        }
+      } else {
+        kba <- kba %>%
+          sf::st_transform(sf::st_crs(pus)) %>%
+          dplyr::summarise() %>%
+          sf::st_make_valid()
+
+        log_msg("Rasterising and normalising sites...")
+        kba <- exactextractr::coverage_fraction(pus, kba)[[1]] %>%
+          elsar::make_normalised_raster(pus = pus, iso3 = iso3)
+      }
+    }
   } else {
     log_msg("No matching KBA features found in the study region: returning empty raster.")
     kba <- terra::ifel(pus == 1, 0, NA)
@@ -112,7 +159,7 @@ make_kbas <- function(
     }
 
     terra::writeRaster(
-      kba_out,
+      kba,
       filename = glue::glue("{output_path}/{name_out}_{iso3}.tif"),
       datatype = "FLT4S",
       filetype = "COG",

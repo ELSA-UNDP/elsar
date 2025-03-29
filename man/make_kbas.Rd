@@ -11,6 +11,9 @@ make_kbas(
   include_aze_sites = FALSE,
   aze_only = FALSE,
   include_regional_kba = FALSE,
+  buffer_points = TRUE,
+  area_column = "gisarea",
+  nQuadSegs = 50,
   output_path = NULL
 )
 }
@@ -27,10 +30,17 @@ make_kbas(
 
 \item{include_regional_kba}{Logical. If \code{FALSE}, filters out KBAs marked as "Regional" or "Global/ Regional to be determined".}
 
-\item{output_path}{Optional character. Directory path to save output raster. If \code{NULL}, output is not written to file.}
+\item{buffer_points}{Logical. If \code{TRUE}, circular buffers are generated around point geometries using the \code{area_column} attribute (default is \code{TRUE}).}
+
+\item{area_column}{A string indicating the name of the column containing site area (in hectares), used when buffering point geometries.}
+
+\item{nQuadSegs}{An integer specifying the number of segments used to approximate circular buffers (default: 50).}
+
+\item{output_path}{Optional character. Directory path to save the output raster. If \code{NULL}, output is not written to file.}
 }
 \value{
-A \code{SpatRaster} with normalised values showing KBA (or AZE) coverage across planning units.
+A \code{SpatRaster} object with normalised values representing KBA (or AZE) coverage across planning units.
+If \code{output_path} is provided, the raster is also written to disk.
 }
 \description{
 This function processes a Key Biodiversity Areas (KBA) vector dataset and converts it into
@@ -46,7 +56,7 @@ kba_raster <- make_kbas(
   pus = planning_units,
   iso3 = "KEN",
   aze_only = TRUE,
-  output_path = "outputs",
- )
+  output_path = "outputs"
+)
 }
 }

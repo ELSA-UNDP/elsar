@@ -13,7 +13,6 @@ make_manage_zone(
   built_areas_input = NULL,
   lulc_raster = NULL,
   hii_input = NULL,
-  hii_threshold = 10,
   agriculture_lulc_value = 5,
   built_area_lulc_value = 7,
   forest_classes = c(20, 31, 32, 40, 53),
@@ -41,8 +40,6 @@ make_manage_zone(
 \item{lulc_raster}{SpatRaster or NULL. Optional raw LULC input used to extract agriculture and built-up layers if those inputs are categorical.}
 
 \item{hii_input}{SpatRaster. Human Footprint Index raster.}
-
-\item{hii_threshold}{Numeric. Threshold to define "middle" HFP range. If 0.2–0.8 quantiles are desired, this is ignored.}
 
 \item{agriculture_lulc_value}{Integer. LULC value for agriculture (default = 4).}
 

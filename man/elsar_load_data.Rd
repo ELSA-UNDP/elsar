@@ -46,7 +46,8 @@ Load different types of data
 }
 \examples{
 \dontrun{
-load_tif <- elsar_load_data(
+load_tif <-
+elsar_load_data(
   file_name = "pu_nepal_450m.tif", file_path = localPath,
   file_type = "tif"
 )

@@ -121,7 +121,7 @@ make_normalised_raster <- function(raster_in,
       )
 
   if (is.null(dat_aligned) || isTRUE(is.na(suppressWarnings(terra::minmax(dat_aligned)[2]))) || terra::minmax(dat_aligned)[2] == 0) {
-    log_msg("No valid raster values found — returning empty raster.")
+    log_msg("No valid raster values found: returning empty raster.")
     return(terra::ifel(pus == 1, 0, NA))
   } else {
     # Apply the conditional expression if provided to the input raster - for example if the input is landcover
