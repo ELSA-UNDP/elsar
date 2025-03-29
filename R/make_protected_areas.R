@@ -2,13 +2,14 @@
 #'
 #' @param from_wdpa logical. If `TRUE`, downloads data from the \pkg{wdpar} package. For more information on the data or package, please consult the [online package documentation](https://prioritizr.github.io/wdpar/).
 #' @param iso3 A string of the iso3 name of the data (country name)
-#' @param download_path A path that the wdpa data is saved to.
+#' @param input_path A path that the wdpa data is saved to.
 #' @param sf_in An `sf` object and alternative to downloading the data from the \pkg{wdpar} package. Only needed when from_wdpa is `FALSE`.
 #' @param status A vector containing which status of protected area should be included. Based on the STATUS field of the wdpa database. Default is `c("Established", "Inscribed", "Designated")`.
 #' @param pa_def A value or list of values containing which pa definition (1 = protected area; 0 = OECM (not supported yet)) to include. Default is `1`.
 #' @param include_mab_designation logical. If `FALSE`, excludes UNESCO MAB areas.
 #' @param buffer_points logical. Only relevant when `"POINT"` or `"MULTIPOINT"` geometries exist in the data. If `TRUE`, creates a circular buffer around `"POINT"` data based on area information data that is then used as polygon data needed for \pkg{exactextractr} calculations.
 #' @param area_column A string of the column name with the area information needed for buffer calculations.
+#' @param area_calc_crs Character. CRS used for buffering operation (default: `"ESRI:54009"` = World Mollweide).
 #' @param nQuadSegs An integer specifying the number of segments to use for buffering. Default is 50.
 #' @param return_sf logical. Allows to return `sf`object if needed. Default is FALSE.
 #' @param pus A raster file that contains the reference spatial extent, crs etc.in form of the planning units.
@@ -93,7 +94,7 @@ make_protected_areas <- function(from_wdpa = TRUE,
     if (buffer_points) { # buffer around "POINTS" and make them into polygons
       log_msg("Creating geodesic buffers around any point locations")
       protected_areas <- convert_points_polygon(
-        wdpa_layer = protected_areas,
+        sf_layer = protected_areas,
         area_crs = area_calc_crs,
         area_attr = area_column,
         nQuadSegs = nQuadSegs) %>%

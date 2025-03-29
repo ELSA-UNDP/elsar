@@ -26,6 +26,8 @@ make_protected_areas(
 
 \item{iso3}{A string of the iso3 name of the data (country name)}
 
+\item{input_path}{A path that the wdpa data is saved to.}
+
 \item{sf_in}{An \code{sf} object and alternative to downloading the data from the \pkg{wdpar} package. Only needed when from_wdpa is \code{FALSE}.}
 
 \item{status}{A vector containing which status of protected area should be included. Based on the STATUS field of the wdpa database. Default is \code{c("Established", "Inscribed", "Designated")}.}
@@ -38,6 +40,8 @@ make_protected_areas(
 
 \item{area_column}{A string of the column name with the area information needed for buffer calculations.}
 
+\item{area_calc_crs}{Character. CRS used for buffering operation (default: \code{"ESRI:54009"} = World Mollweide).}
+
 \item{nQuadSegs}{An integer specifying the number of segments to use for buffering. Default is 50.}
 
 \item{return_sf}{logical. Allows to return \code{sf}object if needed. Default is FALSE.}
@@ -45,8 +49,6 @@ make_protected_areas(
 \item{pus}{A raster file that contains the reference spatial extent, crs etc.in form of the planning units.}
 
 \item{output_path}{An optional output path for the created file.}
-
-\item{download_path}{A path that the wdpa data is saved to.}
 }
 \value{
 A \code{SpatRaster}file that has been aligned to the planning units

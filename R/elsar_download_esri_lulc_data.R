@@ -119,7 +119,7 @@ elsar_download_esri_lulc_data <- function(
       log_msg(glue::glue("Folder '{folder_name}' does not exist. Creating it in Google Drive..."))
       googledrive::drive_mkdir(folder_name)
     } else {
-      log_msg(glue::glue("Folder '{folder_name}' already exists."))
+      log_msg(glue::glue("Folder '{folder_name}' already exists in Google Drive."))
     }
   }
 
@@ -131,11 +131,11 @@ elsar_download_esri_lulc_data <- function(
                             grepl("\\.tif$", files$name), ]
 
   if (nrow(existing_files) > 0) {
-    log_msg("Existing files found on Google Drive. Downloading instead of exporting from GEE...")
+    log_msg(glue::glue("Existing files for {iso3} found on Google Drive. Downloading instead of exporting from GEE..."))
   } else {
-    log_msg(
-      "No existing files found. Proceeding with GEE export.\nChecking for existing export tasks that are still running..."
-    )
+
+    log_msg(glue::glue("No existing exported files found for {iso3} on Google Drive."))
+    log_msg("Checking for existing export tasks that are still running before proceeding with GEE export...")
 
     # List all current Earth Engine tasks
     tasks <- ee$batch$Task$list()
@@ -151,7 +151,7 @@ elsar_download_esri_lulc_data <- function(
         glue::glue(
           "Existing export task '{file_name}' is still running. Waiting instead of starting a new one."))
     } else {
-      log_msg("No running tasks found. Proceeding with new export.")
+      log_msg("No similar running tasks found. Proceeding with new GEE export.")
 
       start_date <- ee$Date(glue::glue("{YEAR}-01-01"))
       end_date <- ee$Date(glue::glue("{YEAR}-12-31"))
@@ -183,7 +183,7 @@ elsar_download_esri_lulc_data <- function(
       }
 
       if (difftime(Sys.time(), start_time, units = "mins") > 5) {
-        stop("Timeout: No files available after 5 minutes, so this process is stopping gracefully...\nThis is NOT unexpected as GEE exports can take time. Try running again later...\nYou can also check the status of exports via the GEE web console.")
+        stop("Timeout: No files available after 5 minutes, so this process is stopping gracefully...\nThis is NOT unexpected as GEE exports can take time. Generally, the larger the area to export, the longer is will take; try running again later...\nYou can also check the status of exports via the GEE web console.")
       }
 
       log_msg("File not yet available, waiting 30 seconds before re-trying...")
@@ -227,7 +227,9 @@ elsar_download_esri_lulc_data <- function(
         gdal = c(
           "COMPRESS=ZSTD",
           "NUM_THREADS=ALL_CPUS",
-          "BIGTIFF=IF_SAFER"
+          "BIGTIFF=IF_SAFER",
+          "PREDICTOR=1",
+          "OVERVIEWS=NONE"
         ),
         NAflag = 255,
         overwrite = TRUE
@@ -244,7 +246,9 @@ elsar_download_esri_lulc_data <- function(
         gdal = c(
           "COMPRESS=ZSTD",
           "NUM_THREADS=ALL_CPUS",
-          "BIGTIFF=IF_SAFER"
+          "BIGTIFF=IF_SAFER",
+          "PREDICTOR=1",
+          "OVERVIEWS=NONE"
         ),
         NAflag = 255,
         overwrite = TRUE

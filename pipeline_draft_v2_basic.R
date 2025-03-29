@@ -254,7 +254,7 @@ if (("Alliance for Zero Extinction Sites") %in% dat_non_default & ("Key Biodiver
 }
 
 
-#### Prep data using default methods ####
+# Prep data using default methods ####
 log_msg("Creating Default Features...")
 
 # init data stack with pus as first layer
@@ -414,7 +414,6 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
     )
     raster_out <- c(raster_out, forest_integrity)
 }
-
 
 # Protected Area ####
   if (dat_non_default[[j]] == "Existing PAs") {
@@ -742,6 +741,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
     )
     raster_out <- c(raster_out, wetlands_ramsar)
   }
+
   # Urban Greening Opportunities ####
   if (dat_non_default[[j]] == "Urban Greening Opportunities") {
     print("Urban Greening Opportunities")
@@ -802,6 +802,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
 
     raster_out <- c(raster_out, urban_out)
   }
+
   # Flood Abatement Opportunities ####
   if (dat_non_default[[j]] == "Flood Abatement Opportunities") {
     print("Flood Abatement Opportunities")
@@ -837,6 +838,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
     )
     raster_out <- c(raster_out, flood_abate)
   }
+
   # Indigenous Managed Lands ####
   if (dat_non_default[[j]] == "Indigenous Managed Lands") {
     print("Indigenous Managed Lands")
@@ -967,7 +969,7 @@ for (k in 1:length(zones_data_incl)) {
     }
   }
 
-## Agriculture Areas ####
+# ## Agriculture Areas ####
   if (zones_data_incl[[k]] == "Agriculture Areas") {
     print("Agriculture Areas")
 

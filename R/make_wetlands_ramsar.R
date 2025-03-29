@@ -52,7 +52,7 @@ make_wetlands_ramsar <- function(
         if (buffer_points) {
           # buffer around "POINTS" and make them into polygons
           ramsar <- convert_points_polygon(
-            wdpa_layer = ramsar,
+            sf_layer = ramsar,
             area_crs = sf::st_crs(pus),
             area_attr = area_column,
             nQuadSegs = nQuadSegs,
