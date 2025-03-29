@@ -20,7 +20,6 @@
 #' @param built_areas_input SpatRaster. A binary or categorical raster representing built-up/urban areas.
 #' @param lulc_raster SpatRaster or NULL. Optional raw LULC input used to extract agriculture and built-up layers if those inputs are categorical.
 #' @param hii_input SpatRaster. Human Footprint Index raster.
-#' @param hii_threshold Numeric. Threshold to define "middle" HFP range. If 0.2–0.8 quantiles are desired, this is ignored.
 #' @param agriculture_lulc_value Integer. LULC value for agriculture (default = 4).
 #' @param built_area_lulc_value Integer. LULC value for built-up areas (default = 5).
 #' @param forest_classes Integer vector. LULC values representing managed forests (default = c(20, 31, 32, 40, 53)).
@@ -57,7 +56,6 @@ make_manage_zone <- function(
     built_areas_input = NULL,
     lulc_raster = NULL,
     hii_input = NULL,
-    hii_threshold = 10,
     agriculture_lulc_value = 5,
     built_area_lulc_value = 7,
     forest_classes = c(20, 31, 32, 40, 53),
@@ -140,7 +138,7 @@ make_manage_zone <- function(
   # Process managed forests
   log_msg("Processing managed forests...")
   if (!is.null(managed_forests_input)) {
-    managed_forests <- managed_forests_input[[1]]
+    managed_forests <- managed_forests_input
   } else {
   # Normalise and reclass
     managed_forests <- elsar::make_managed_forests(
@@ -159,15 +157,19 @@ make_manage_zone <- function(
       managed_forests > forest_class_threshold |
       agricultural_areas > agriculture_threshold,
     1, 0
-  )
+  ) %>% make_normalised_raster(
+    pus = pus,
+    iso3 = iso3)
 
   # Exclude built-up areas
   log_msg("Excluding built areas from the manage zone...")
-  manage_zone <- terra::ifel(built_areas > built_areas_threshold, 0, manage_zone)
+  manage_zone <- terra::ifel(built_areas > built_areas_threshold, 0, manage_zone) %>%
+    make_normalised_raster(pus = pus, iso3 = iso3)
 
   # Secondary zone (agriculture only)
   log_msg("Creating the alternative manage zone using agricultural areas only...")
-  manage_zone_alt <- terra::ifel(agricultural_areas > agriculture_threshold, 1, 0)
+  manage_zone_alt <- terra::ifel(agricultural_areas > agriculture_threshold, 1, 0) %>%
+    make_normalised_raster(pus = pus, iso3 = iso3)
 
   # Combine into multi-layer SpatRaster
   manage_zones <- c(manage_zone, manage_zone_alt)

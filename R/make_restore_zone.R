@@ -185,13 +185,21 @@ make_restore_zone <- function(
       sdg_degraded_areas > sdg_threshold |
       hii_resampled >= hii_threshold,
     1, 0
-  )
+  ) %>%
+    make_normalised_raster(
+      pus = pus,
+      iso3 = iso3
+      )
 
   # Create Restore Zone v2 (the alternative Restore Zone) as only degraded forest areas
   restore_zone_alt <- terra::ifel(
     restore_zone == 1 & iucn_get_forest_input > iucn_get_forest_threshold,
     1, 0
-  )
+  ) %>%
+    make_normalised_raster(
+      pus = pus,
+      iso3 = iso3
+    )
 
   # Combine outputs
   restore_zones <- c(restore_zone, restore_zone_alt)

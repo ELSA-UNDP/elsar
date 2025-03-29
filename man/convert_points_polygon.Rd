@@ -5,30 +5,44 @@
 \title{Convert Points to Buffered Polygons Based on Area}
 \usage{
 convert_points_polygon(
-  wdpa_layer,
+  sf_layer,
   area_attr = "REP_AREA",
   area_crs = "ESRI:54009",
   nQuadSegs = 50,
-  append_sf = TRUE,
+  append_original_polygons = TRUE,
   area_multiplier = 1e+06
 )
 }
 \arguments{
-\item{wdpa_layer}{An \code{sf} object with point or multipoint geometries and an area field.}
+\item{sf_layer}{An \code{sf} object containing geometries, including points or multipoints and an area column.}
 
-\item{area_attr}{Name of the area attribute column (default = "REP_AREA").}
+\item{area_attr}{Character. Name of the attribute column that contains site area (default: \code{"REP_AREA"}).}
 
-\item{area_crs}{CRS to use for buffering (default = 'ESRI:54009' = World Mollweide).}
+\item{area_crs}{Character. CRS used for buffering operation (default: \code{"ESRI:54009"} = World Mollweide).}
 
-\item{nQuadSegs}{Number of segments per circle quadrant used in buffering (default = 50).}
+\item{nQuadSegs}{Integer. Number of segments per circle quadrant for buffering (default: \code{50}).}
 
-\item{append_sf}{Logical. If TRUE, append buffered geometries to existing polygons (default = TRUE).}
+\item{append_original_polygons}{Logical. If \code{TRUE}, appends original polygons to buffered features (default: \code{TRUE}).}
 
-\item{area_multiplier}{Numeric. Scaling multiplier for area units (e.g., 1e6 for km^2).}
+\item{area_multiplier}{Numeric. Multiplier applied to the area attribute to convert units (e.g., \code{1e4} for hectares to m²).}
 }
 \value{
-An \code{sf} object with polygons for both original and buffered geometries.
+An \code{sf} object containing polygon features (either buffered points, original polygons, or both).
+If no valid features are found, returns \code{NULL}.
 }
 \description{
-Converts point geometries to circular polygon buffers based on an area attribute.
+This function converts POINT or MULTIPOINT geometries into circular polygons using the specified area attribute
+to calculate a radius (assuming the area is in hectares or another square unit). The buffer is created in a projected
+CRS (default: Mollweide, EPSG:54009) and then transformed back to the input CRS. Optionally, original polygon features
+can be retained and combined with the buffered features.
+}
+\examples{
+\dontrun{
+buffered <- convert_points_polygon(
+  sf_layer = my_kba_layer,
+  area_attr = "gisarea",
+  area_crs = "ESRI:54009",
+  append_original_polygons = TRUE
+)
+}
 }

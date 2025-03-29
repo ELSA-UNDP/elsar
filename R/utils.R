@@ -23,67 +23,97 @@ rescale_raster <- function(
 
 #' Convert Points to Buffered Polygons Based on Area
 #'
-#' Converts point geometries to circular polygon buffers based on an area attribute.
+#' This function converts POINT or MULTIPOINT geometries into circular polygons using the specified area attribute
+#' to calculate a radius (assuming the area is in hectares or another square unit). The buffer is created in a projected
+#' CRS (default: Mollweide, EPSG:54009) and then transformed back to the input CRS. Optionally, original polygon features
+#' can be retained and combined with the buffered features.
 #'
-#' @param wdpa_layer An `sf` object with point or multipoint geometries and an area field.
-#' @param area_attr Name of the area attribute column (default = "REP_AREA").
-#' @param area_crs CRS to use for buffering (default = 'ESRI:54009' = World Mollweide).
-#' @param nQuadSegs Number of segments per circle quadrant used in buffering (default = 50).
-#' @param append_sf Logical. If TRUE, append buffered geometries to existing polygons (default = TRUE).
-#' @param area_multiplier Numeric. Scaling multiplier for area units (e.g., 1e6 for km^2).
+#' @param sf_layer An `sf` object containing geometries, including points or multipoints and an area column.
+#' @param area_attr Character. Name of the attribute column that contains site area (default: `"REP_AREA"`).
+#' @param area_crs Character. CRS used for buffering operation (default: `"ESRI:54009"` = World Mollweide).
+#' @param nQuadSegs Integer. Number of segments per circle quadrant for buffering (default: `50`).
+#' @param append_original_polygons Logical. If `TRUE`, appends original polygons to buffered features (default: `TRUE`).
+#' @param area_multiplier Numeric. Multiplier applied to the area attribute to convert units (e.g., `1e4` for hectares to m²).
 #'
-#' @return An `sf` object with polygons for both original and buffered geometries.
+#' @return An `sf` object containing polygon features (either buffered points, original polygons, or both).
+#' If no valid features are found, returns `NULL`.
 #' @export
+#'
+#' @examples
+#' \dontrun{
+#' buffered <- convert_points_polygon(
+#'   sf_layer = my_kba_layer,
+#'   area_attr = "gisarea",
+#'   area_crs = "ESRI:54009",
+#'   append_original_polygons = TRUE
+#' )
+#' }
 convert_points_polygon <- function(
-    wdpa_layer,
+    sf_layer,
     area_attr = "REP_AREA",
     area_crs = "ESRI:54009",
     nQuadSegs = 50,
-    append_sf = TRUE,
+    append_original_polygons = TRUE,
     area_multiplier = 1e6) {
 
-  if (!inherits(wdpa_layer, "sf")) {
-    stop("wdpa_layer must be an sf object.")
+  # Basic input checks
+  if (!inherits(sf_layer, "sf")) {
+    stop("sf_layer must be an sf object.")
   }
 
-  if (!area_attr %in% names(wdpa_layer)) {
-    stop(paste("The area attribute", area_attr, "does not exist in wdpa_layer."))
+  if (!area_attr %in% names(sf_layer)) {
+    stop(paste("The area attribute", area_attr, "does not exist in the input sf_layer."))
   }
 
   if (!is.numeric(nQuadSegs) || nQuadSegs <= 0) {
     stop("nQuadSegs must be a positive integer.")
   }
 
-  points_with_area <- wdpa_layer %>%
+  # Filter for points with area values
+  points_with_area <- sf_layer %>%
     dplyr::filter(!!rlang::sym(area_attr) > 0 &
                     sf::st_geometry_type(.) %in% c("POINT", "MULTIPOINT"))
 
+  # Create circular buffers for valid point features
   if (nrow(points_with_area) == 0) {
     warning("No point geometries with area attributes found.")
-    return(NULL)
+  } else {
+    points_transformed <- sf::st_transform(points_with_area, crs = area_crs)
+
+    points_buffered <- sf::st_buffer(
+      points_transformed,
+      dist = sqrt((as.numeric(sf::st_drop_geometry(points_with_area)[[area_attr]]) * area_multiplier) / pi),
+      nQuadSegs = nQuadSegs
+    )
+
+    # Reproject back to original CRS
+    points_buffered <- sf::st_transform(points_buffered, crs = sf::st_crs(sf_layer))
   }
 
-  points_transformed <- sf::st_transform(points_with_area, crs = area_crs)
-
-  points_buffered <- sf::st_buffer(
-    points_transformed,
-    dist = sqrt((as.numeric(sf::st_drop_geometry(points_with_area)[[area_attr]]) * area_multiplier) / pi),
-    nQuadSegs = nQuadSegs
-  )
-
-  points_buffered <- sf::st_transform(points_buffered, crs = sf::st_crs(wdpa_layer))
-
-  if (append_sf) {
-    polygons_with_area <- wdpa_layer %>%
+  # Append original polygons if requested
+  if (append_original_polygons) {
+    polygons_with_area <- sf_layer %>%
       dplyr::filter(!!rlang::sym(area_attr) > 0 &
                       !(sf::st_geometry_type(.) %in% c("POINT", "MULTIPOINT")))
 
-    polygon_sf <- rbind(polygons_with_area, points_buffered)
-    return(polygon_sf)
+    if (nrow(polygons_with_area) == 0 && exists("points_buffered", inherits = FALSE)) {
+      return(points_buffered)
+    } else if (nrow(polygons_with_area) > 0 && exists("points_buffered", inherits = FALSE)) {
+      return(rbind(polygons_with_area, points_buffered))
+    } else if (nrow(polygons_with_area) > 0 && !exists("points_buffered", inherits = FALSE)) {
+      return(polygons_with_area)
+    } else {
+      return(NULL)
+    }
   } else {
-    return(points_buffered)
+    if (exists("points_buffered", inherits = FALSE)) {
+      return(points_buffered)
+    } else {
+      return(NULL)
+    }
   }
 }
+
 
 #' Extract Filename and Filetype from Directory
 #'
@@ -273,7 +303,7 @@ crop_global_raster <- function(raster_in, pus) {
 
     return(cropped)
   }, error = function(e) {
-    log_msg(glue::glue("Warning: crop failed — {e$message}; returning an empty raster."))
+    log_msg(glue::glue("Warning: crop failed: {e$message}; returning an empty raster."))
     return(terra::ifel(pus == 1, 0, NA))  # Or NULL if you want to explicitly handle failure
   })
 }
