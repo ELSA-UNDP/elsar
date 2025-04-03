@@ -108,11 +108,11 @@
 <span class="r-in"><span>                           pu_size <span class="op">=</span> <span class="cn">NULL</span>,</span></span>
 <span class="r-in"><span>                           pu_threshold <span class="op">=</span> <span class="fl">8.5e5</span>,</span></span>
 <span class="r-in"><span>                           limit_to_mainland <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "The current number of planning units is: 3743382"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "The current number of planning units is: 2396805"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "The current number of planning units is: 1665187"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "The current number of planning units is: 1223941"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "The current number of planning units is: 741036"</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> [2025-04-03 04:44] The current number of planning units is: 3743382</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> [2025-04-03 04:44] The current number of planning units is: 2396805</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> [2025-04-03 04:44] The current number of planning units is: 1665187</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> [2025-04-03 04:44] The current number of planning units is: 1223941</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> [2025-04-03 04:44] The current number of planning units is: 741036</span>
 <span class="r-in"><span><span class="va">wad_dat</span> <span class="op">&lt;-</span> <span class="fu"><a href="wad_subset.html">get_wad_data</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">wadOut</span> <span class="op">&lt;-</span> <span class="fu"><a href="make_normalised_raster.html">make_normalised_raster</a></span><span class="op">(</span>raster_in <span class="op">=</span> <span class="va">wad_dat</span>,</span></span>
@@ -129,17 +129,19 @@
 <span class="r-in"><span>legend_title <span class="op">=</span> <span class="st">"WAD"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Plotting input data that is continuous and will be split into categories.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Adding background layer.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Extend based on ratio.</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in hist.default(raster_df[[data_layer]], breaks = seq(min(raster_df[[data_layer]]),     max(raster_df[[data_layer]]), length.out = number_categories +         1), plot = FALSE):</span> 'x' must be numeric</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">plot_wad_cat</span> <span class="op">&lt;-</span> <span class="va">plot_cat</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'plot_cat' not found</span>
 <span class="r-in"><span><span class="va">raster_df_cat</span> <span class="op">&lt;-</span> <span class="va">plot_cat</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'plot_cat' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">plot_dist_cat</span> <span class="op">&lt;-</span> <span class="fu">elsar_plot_distribution</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  raster_df <span class="op">=</span> <span class="va">raster_df_cat</span>,</span></span>
 <span class="r-in"><span>  categorical <span class="op">=</span> <span class="cn">TRUE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'raster_df_cat' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="op">(</span><span class="va">plot_wad_cat_inset</span> <span class="op">&lt;-</span> <span class="fu">patchwork</span><span class="fu">::</span><span class="fu"><a href="https://patchwork.data-imaginist.com/reference/wrap_plots.html" class="external-link">wrap_plots</a></span><span class="op">(</span><span class="op">(</span><span class="va">plot_wad_cat</span> <span class="op">+</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="elsar_plot_optics.html">elsar_plot_optics</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span></span>
@@ -158,7 +160,7 @@
 <span class="r-in"><span>    top <span class="op">=</span> <span class="fl">0.4</span>, <span class="co"># needs to be changed depending on plot dimensions</span></span></span>
 <span class="r-in"><span>    align_to <span class="op">=</span> <span class="st">"plot"</span></span></span>
 <span class="r-in"><span>  <span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-plt img"><img src="elsar_plot_distribution-1.png" alt="" width="700" height="433"></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'plot_wad_cat' not found</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

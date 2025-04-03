@@ -85,13 +85,13 @@
           <code><a href="make_managed_forests.html">make_managed_forests()</a></code>
 
         </dt>
-        <dd>Create managed forests data layer</dd>
+        <dd>Create Managed Forests and Productive Managed Forests Raster Layers</dd>
       </dl><dl><dt>
 
           <code><a href="make_mangroves.html">make_mangroves()</a></code>
 
         </dt>
-        <dd>Function to extract general vector data</dd>
+        <dd>Function to make standardised mangroves data</dd>
       </dl><dl><dt>
 
           <code><a href="make_normalised_raster.html">make_normalised_raster()</a></code>
@@ -104,6 +104,60 @@
 
         </dt>
         <dd>Function to create existing protected area raster file.</dd>
+      </dl><dl><dt>
+
+          <code><a href="make_flood_abatement_opportunities.html">make_flood_abatement_opportunities()</a></code>
+
+        </dt>
+        <dd>Create a Flood Abatement Opportunities Raster</dd>
+      </dl><dl><dt>
+
+          <code><a href="make_indigenous_managed_lands.html">make_indigenous_managed_lands()</a></code>
+
+        </dt>
+        <dd>Create Indigenous Managed Lands Raster (LANDMark + ICCA)</dd>
+      </dl><dl><dt>
+
+          <code><a href="make_kbas.html">make_kbas()</a></code>
+
+        </dt>
+        <dd>Create a Standardised Raster of Key Biodiversity Areas (KBAs)</dd>
+      </dl><dl><dt>
+
+          <code><a href="make_threatened_ecosystems_protection.html">make_threatened_ecosystems_protection()</a></code>
+
+        </dt>
+        <dd>Create Threatened Ecosystems (for Protection) Raster Based on IUCN GET and Ecological Intactness</dd>
+      </dl><dl><dt>
+
+          <code><a href="make_threatened_ecosystems_restoration.html">make_threatened_ecosystems_restoration()</a></code>
+
+        </dt>
+        <dd>Create Threatened Ecosystems (for Restoration) Raster Based on Intactness and Degradation</dd>
+      </dl><dl><dt>
+
+          <code><a href="make_underrepresented_ecosystems.html">make_underrepresented_ecosystems()</a></code>
+
+        </dt>
+        <dd>Create Underrepresented Ecosystems Raster Based on IUCN GET and Protection Gaps</dd>
+      </dl><dl><dt>
+
+          <code><a href="make_urban_greening_opportunities.html">make_urban_greening_opportunities()</a></code>
+
+        </dt>
+        <dd>Create Urban Greening Opportunities Raster</dd>
+      </dl><dl><dt>
+
+          <code><a href="make_wetlands_ramsar.html">make_wetlands_ramsar()</a></code>
+
+        </dt>
+        <dd>Create a Standardised Raster for Wetlands and Ramsar Sites</dd>
+      </dl><dl><dt>
+
+          <code><a href="make_degraded_areas.html">make_degraded_areas()</a></code>
+
+        </dt>
+        <dd>Create degraded areas layer for restoration planning</dd>
       </dl></div><div class="section level2">
       <h2 id="set-up-elsa-analysis">Set up ELSA analysis<a class="anchor" aria-label="anchor" href="#set-up-elsa-analysis"></a></h2>
 
@@ -117,10 +171,22 @@
 
       <dl><dt>
 
-          <code><a href="make_protection_zone.html">make_protection_zone()</a></code>
+          <code><a href="make_protect_zone.html">make_protect_zone()</a></code>
 
         </dt>
-        <dd>Function to create protection zone for ELSA analysis</dd>
+        <dd>Generate Protect Zone Raster for ELSA Analysis</dd>
+      </dl><dl><dt>
+
+          <code><a href="make_restore_zone.html">make_restore_zone()</a></code>
+
+        </dt>
+        <dd>Generate a Degraded Areas Layer for Restoration Planning</dd>
+      </dl><dl><dt>
+
+          <code><a href="make_manage_zone.html">make_manage_zone()</a></code>
+
+        </dt>
+        <dd>Generate Sustainable Management Zones for ELSA Analysis</dd>
       </dl></div><div class="section level2">
       <h2 id="post-hoc-analysis-for-elsa-framework">Post-hoc analysis for ELSA framework<a class="anchor" aria-label="anchor" href="#post-hoc-analysis-for-elsa-framework"></a></h2>
 
@@ -206,7 +272,7 @@
           <code><a href="elsar_load_data.html">elsar_load_data()</a></code>
 
         </dt>
-        <dd>Load different types of data</dd>
+        <dd>Load spatial or raster data from local files or Postgres</dd>
       </dl><dl><dt>
 
           <code><a href="make_custom_projection.html">make_custom_projection()</a></code>
@@ -219,6 +285,30 @@
 
         </dt>
         <dd>Create a PostgreSQL Connection Configuration as a Dictionary</dd>
+      </dl><dl><dt>
+
+          <code><a href="get_iucn_ecosystems.html">get_iucn_ecosystems()</a></code>
+
+        </dt>
+        <dd>Extract IUCN GET Ecosystems Vector Layers</dd>
+      </dl><dl><dt>
+
+          <code><a href="get_iucn_forests.html">get_iucn_forests()</a></code>
+
+        </dt>
+        <dd>Extract and Rasterise IUCN GET Forest Ecosystems</dd>
+      </dl><dl><dt>
+
+          <code><a href="elsar_download_esri_lulc_data.html">elsar_download_esri_lulc_data()</a></code>
+
+        </dt>
+        <dd>Download and Process ESRI 10m LULC Data from Google Earth Engine</dd>
+      </dl><dl><dt>
+
+          <code><a href="log_msg.html">log_msg()</a></code>
+
+        </dt>
+        <dd>Log a timestamped message to the console</dd>
       </dl></div><div class="section level2">
       <h2 id="utilities">Utilities<a class="anchor" aria-label="anchor" href="#utilities"></a></h2>
 
@@ -235,31 +325,37 @@
           <code><a href="convert_points_polygon.html">convert_points_polygon()</a></code>
 
         </dt>
-        <dd>Create Buffered Polygons from Point Geometries</dd>
+        <dd>Convert Points to Buffered Polygons Based on Area</dd>
       </dl><dl><dt>
 
           <code><a href="extract_filename_filetype.html">extract_filename_filetype()</a></code>
 
         </dt>
-        <dd>Extract the file name and file type of data in the local path</dd>
+        <dd>Extract Filename and Filetype from Directory</dd>
       </dl><dl><dt>
 
           <code><a href="rescale_raster.html">rescale_raster()</a></code>
 
         </dt>
-        <dd>Rescale rasters to between 0 and 1</dd>
+        <dd>Rescale Raster to 0–1 Range</dd>
       </dl><dl><dt>
 
           <code><a href="exact_rasterise.html">exact_rasterise()</a></code>
 
         </dt>
-        <dd>Efficient Rasterization of polygon features with Coverage Fraction, based on some attribute</dd>
+        <dd>Efficient Attribute-Weighted Rasterization Using Coverage Fraction</dd>
       </dl><dl><dt>
 
           <code><a href="get_coverage.html">get_coverage()</a></code>
 
         </dt>
-        <dd>Calculate country areal coverage (as a percentage) of an input binary layer, likely representing a zone.</dd>
+        <dd>Calculate Areal Coverage of a Zone Relative to Planning Units</dd>
+      </dl><dl><dt>
+
+          <code><a href="crop_global_raster.html">crop_global_raster()</a></code>
+
+        </dt>
+        <dd>Crop a Global Raster to the Extent of Planning Units</dd>
       </dl></div><div class="section level2">
       <h2 id="plotting-function">Plotting function<a class="anchor" aria-label="anchor" href="#plotting-function"></a></h2>
 
@@ -289,6 +385,12 @@
 
         </dt>
         <dd>Function to create a static plot from raster data with discrete data</dd>
+      </dl><dl><dt>
+
+          <code><a href="elsar_plot_feature.html">elsar_plot_feature()</a></code>
+
+        </dt>
+        <dd>Create a map of individual features</dd>
       </dl></div><div class="section level2">
       <h2 id="utilities-plotting">Utilities plotting<a class="anchor" aria-label="anchor" href="#utilities-plotting"></a></h2>
 

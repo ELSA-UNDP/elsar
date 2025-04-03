@@ -45,15 +45,16 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">make_protected_areas</span><span class="op">(</span></span>
 <span>  from_wdpa <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  <span class="va">iso3</span>,</span>
-<span>  download_path <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  input_path <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">sf_in</span>,</span>
 <span>  status <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Established"</span>, <span class="st">"Inscribed"</span>, <span class="st">"Designated"</span><span class="op">)</span>,</span>
 <span>  pa_def <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  designation_mab <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  include_mab_designation <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  buffer_points <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  area_column <span class="op">=</span> <span class="st">"REP_AREA"</span>,</span>
+<span>  area_calc_crs <span class="op">=</span> <span class="st">"ESRI:54009"</span>,</span>
 <span>  nQuadSegs <span class="op">=</span> <span class="fl">50</span>,</span>
-<span>  return_sf <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  return_sf <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  <span class="va">pus</span>,</span>
 <span>  output_path <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -71,7 +72,7 @@
 <dd><p>A string of the iso3 name of the data (country name)</p></dd>
 
 
-<dt id="arg-download-path">download_path<a class="anchor" aria-label="anchor" href="#arg-download-path"></a></dt>
+<dt id="arg-input-path">input_path<a class="anchor" aria-label="anchor" href="#arg-input-path"></a></dt>
 <dd><p>A path that the wdpa data is saved to.</p></dd>
 
 
@@ -87,7 +88,7 @@
 <dd><p>A value or list of values containing which pa definition (1 = protected area; 0 = OECM (not supported yet)) to include. Default is <code>1</code>.</p></dd>
 
 
-<dt id="arg-designation-mab">designation_mab<a class="anchor" aria-label="anchor" href="#arg-designation-mab"></a></dt>
+<dt id="arg-include-mab-designation">include_mab_designation<a class="anchor" aria-label="anchor" href="#arg-include-mab-designation"></a></dt>
 <dd><p>logical. If <code>FALSE</code>, excludes UNESCO MAB areas.</p></dd>
 
 
@@ -97,6 +98,10 @@
 
 <dt id="arg-area-column">area_column<a class="anchor" aria-label="anchor" href="#arg-area-column"></a></dt>
 <dd><p>A string of the column name with the area information needed for buffer calculations.</p></dd>
+
+
+<dt id="arg-area-calc-crs">area_calc_crs<a class="anchor" aria-label="anchor" href="#arg-area-calc-crs"></a></dt>
+<dd><p>Character. CRS used for buffering operation (default: <code>"ESRI:54009"</code> = World Mollweide).</p></dd>
 
 
 <dt id="arg-nquadsegs">nQuadSegs<a class="anchor" aria-label="anchor" href="#arg-nquadsegs"></a></dt>
@@ -117,7 +122,7 @@
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A <code>raster</code>file that has been aligned to the planning units</p>
+    <p>A <code>SpatRaster</code>file that has been aligned to the planning units</p>
     </div>
 
     <div class="section level2">
