@@ -2,7 +2,7 @@
 % Please edit documentation in R/make_mangroves.R
 \name{make_mangroves}
 \alias{make_mangroves}
-\title{Function to extract general vector data}
+\title{Function to make standardised mangroves data}
 \usage{
 make_mangroves(sf_in, pus, iso3, name_out, output_path = NULL)
 }

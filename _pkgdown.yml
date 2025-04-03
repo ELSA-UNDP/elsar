@@ -23,11 +23,22 @@ reference:
   - make_mangroves
   - make_normalised_raster
   - make_protected_areas
+  - make_flood_abatement_opportunities
+  - make_indigenous_managed_lands
+  - make_kbas
+  - make_threatened_ecosystems_protection
+  - make_threatened_ecosystems_restoration
+  - make_underrepresented_ecosystems
+  - make_urban_greening_opportunities
+  - make_wetlands_ramsar
+  - make_degraded_areas
 
 - title: Set up ELSA analysis
   desc: Functions to help formulate a conservation problem for an ELSA analysis
 - contents:
-  - make_protection_zone
+  - make_protect_zone
+  - make_restore_zone
+  - make_manage_zone
 
 - title: Post-hoc analysis for ELSA framework
   desc: Functions to help formulate a conservation problem for an ELSA analysis
@@ -52,6 +63,10 @@ reference:
   - elsar_load_data
   - make_custom_projection
   - make_postgres_connection
+  - get_iucn_ecosystems
+  - get_iucn_forests
+  - elsar_download_esri_lulc_data
+  - log_msg
 
 - title: Utilities
 - contents:
@@ -60,6 +75,7 @@ reference:
   - rescale_raster
   - exact_rasterise
   - get_coverage
+  - crop_global_raster
 
 - title: Plotting function
   desc: Functions to plot input and output data of an ELSA workflow
@@ -67,6 +83,7 @@ reference:
   - elsar_plot_distribution
   - elsar_plot_static_raster_c
   - elsar_plot_static_raster_d
+  - elsar_plot_feature
 
 - title: Utilities plotting
   desc:

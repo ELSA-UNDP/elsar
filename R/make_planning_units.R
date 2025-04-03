@@ -17,12 +17,14 @@
 #'   boundary_in = boundary_dat,
 #'   iso3 = "NPL",
 #'   iso3_column = "iso3cd"
-#' )
+#'   )
 #'
-#' pus <- make_planning_units(boundary_proj = boundary_proj,
-#'                            pu_size = NULL,
-#'                            pu_threshold = 8.5e5,
-#'                            limit_to_mainland = FALSE)
+#' pus <- make_planning_units(
+#'   boundary_proj = boundary_proj,
+#'   pu_size = NULL,
+#'   pu_threshold = 8.5e5,
+#'   limit_to_mainland = FALSE
+#'   )
 make_planning_units <- function(boundary_proj,
                                 pu_size = NULL,
                                 pu_threshold = 8.5e5,
@@ -60,7 +62,7 @@ make_planning_units <- function(boundary_proj,
       )
 
       pu_sum <- terra::global(r1, sum, na.rm = TRUE) # calculate the # of PUs to check if we're below the given threshold yet
-      print(paste0("The current number of planning units is: ", as.integer(pu_sum)))
+      log_msg(glue::glue("The current number of planning units is: {as.integer(pu_sum)}"))
     }
   } else {
     rasterMask <- terra::rast( # create a raster with the current PU size, the new crs and the spatial extent of the data
@@ -78,19 +80,27 @@ make_planning_units <- function(boundary_proj,
     pu_sum <- terra::global(r1, sum, na.rm = TRUE)
 
     if (pu_sum > pu_threshold) {
-      message(paste0("Your current number of planning units (", pu_sum, ") is above our recommended threshold of ", pu_threshold, ". Consider increasing the input pu_size."))
+      log_msg(glue::glue("Your current number of planning units ({pu_sum}) is above our recommended threshold of {pu_threshold}. Consider increasing the input pu_size."))
     }
   }
 
+  names(r1) <- "Planning Units"
+
   if (!is.null(output_path)) {
-    terra::writeRaster(r1,
-    glue::glue("{output_path}/planning_units_{iso3}.tif"),
-    gdal = c("COMPRESS=ZSTD", "NUM_THREADS=4", "OVERVIEWS=NONE"),
-    NAflag = 255,
-    overwrite = TRUE,
-    filetype = "COG",
-    datatype = "INT1U"
-  )
+    terra::writeRaster(
+      r1,
+      filename = glue::glue("{output_path}/planning_units_{iso3}.tif"),
+      filetype = "COG",
+      datatype = "INT1U",
+      gdal = c(
+        "COMPRESS=ZSTD",
+        "NUM_THREADS=4",
+        "OVERVIEWS=NONE",
+        "PREDICTOR=1"
+        ),
+      NAflag = 255,
+      overwrite = TRUE,
+      )
   }
 
   return(r1)

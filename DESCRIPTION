@@ -24,7 +24,6 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Suggests:
     DBI,
-    here,
     kableExtra,
     knitr,
     patchwork,
@@ -47,9 +46,12 @@ Imports:
     ggplot2,
     ggridges,
     ggspatial,
+    googledrive,
     glue,
+    here,
     magrittr,
     plyr,
+    reticulate,
     rlang,
     sf,
     stats,

@@ -2,86 +2,80 @@
 % Please edit documentation in R/elsar_load_data.R
 \name{elsar_load_data}
 \alias{elsar_load_data}
-\title{Load different types of data}
+\title{Load spatial or raster data from local files or Postgres}
 \usage{
 elsar_load_data(
-  file_name,
+  file_name = NULL,
   file_path = NULL,
   file_lyr = NULL,
   file_type,
-  wkt_filter = FALSE,
-  bb_extend = NULL,
+  wkt_filter = NULL,
   db_info = NULL,
+  drop3d = TRUE,
   pg_connection = NULL,
-  iso3_column = "iso3cd",
+  iso3_column = "iso3",
   iso3
 )
 }
 \arguments{
-\item{file_name}{character of the file name. Needs to contain the file type ending (e.g. \code{.tif}) if loading from a local source.}
+\item{file_name}{Character or vector. File name(s) with extension, or \code{NULL} to load all files of the type (e.g., all \code{.shp} files in folder).}
 
-\item{file_path}{path where local file is stored. Needs to be \code{NULL} when using postgres.}
+\item{file_path}{Character. Path to the local folder or file. Required for local sources.}
 
-\item{file_lyr}{optional. Layer information of data.}
+\item{file_lyr}{Character. Optional. Specific layer name within a multi-layer file (e.g., a layer in a GPKG or GDB).}
 
-\item{file_type}{character of file type. Current options are: "postgres", "shp", "gpkg", "geojson", "tif", "tiff", "grd", "gri", "nc", "hdf"}
+\item{file_type}{Character. One of: \code{"postgres"}, \code{"shp"}, \code{"gpkg"}, \code{"geojson"}, \code{"gdb"}, \code{"tif"}, \code{"tiff"}, \code{"grd"}, \code{"gri"}, \code{"nc"}, \code{"hdf"}.}
 
-\item{wkt_filter}{character; WKT representation of a spatial filter that is used to bound loaded data}
+\item{wkt_filter}{Character. Optional WKT geometry used to spatially filter the data (e.g., a bounding box).}
 
-\item{bb_extend}{\code{SpatRaster} used as bounding box when wkt_filter = TRUE, e.g. planning units}
+\item{db_info}{Named list. Required for Postgres if \code{pg_connection} is not supplied. Must contain: \code{host}, \code{dbname}, \code{port}, \code{user}, \code{password}.}
 
-\item{db_info}{list in the style of a dictionary. Only needed when file_type = "postgres". Needs to have the following structure and information: postgres_dict <- c(host = "\if{html}{\out{<yourhost>}}", dbname ="\if{html}{\out{<yourdbname>}}", port = \if{html}{\out{<portNumber>}}, user = "\if{html}{\out{<yourusername>}}", password = "\if{html}{\out{<yourpassword>}}")}
+\item{drop3d}{Logical. Whether to drop Z or M dimensions (3D/4D) to keep only XY (2D). Default is \code{TRUE}.}
 
-\item{pg_connection}{Either a list in the style of a dictionary or a connection string. Only needed when \code{file_type = "postgres"}.}
+\item{pg_connection}{Named list. Alternative to \code{db_info}, passed directly to \code{RPostgres::dbConnect}.}
 
-\item{iso3_column}{Only relevant when \code{file_type} "postgres" is selected. A string of the name of where iso3 information can be found in a dataset.}
+\item{iso3_column}{Character. Column name to filter by ISO3 country code. Default is \code{"iso3"}.}
 
-\item{iso3}{The iso3 country code (character) of the country of interest.}
+\item{iso3}{Character. ISO3 code (e.g., \code{"NPL"}) to filter the vector data.}
 }
 \value{
-The loaded data either as a \code{SpatRaster} or \code{sf} object
+An \code{sf} object (for vector formats) or a \code{terra::SpatRaster} (for raster formats).
 }
 \description{
-Load different types of data
+Loads spatial (\code{sf}) or raster (\code{SpatRaster}) data from various sources:
+\itemize{
+\item Local files: Shapefiles, GeoPackages, GeoJSON, TIFFs, GRDs, NetCDF, etc.
+\item PostGIS databases via direct query
+}
+}
+\details{
+Vector data can be automatically filtered by an ISO3 country code and/or a WKT geometry.
+For shapefiles and multi-layer files (e.g. GeoPackage or file geodatabases), this function merges
+multiple layers or files and ensures consistent column alignment.
 }
 \examples{
 \dontrun{
-load_tif <- elsar_load_data(
-  file_name = "pu_nepal_450m.tif", file_path = localPath,
+# Load a single GeoTIFF
+load_raster <- elsar_load_data(
+  "layer.tif",
+  "/data",
   file_type = "tif"
-)
+  )
 
-load_geojson <- elsar_load_data(
-  file_name = "nepal.geojson", file_path = localPath,
-  file_type = "geojson"
-)
+# Load and merge all shapefiles in a folder
+merged_shps <- elsar_load_data(
+  file_name = NULL,
+  file_path = "/data/shapes",
+  file_type = "shp"
+  )
 
-postgres_dict <- c(
-  host = "yourhost",
-  dbname = "yourdbname",
-  port = portNumber,
-  user = "yourusername",
-  password = "yourpassword"
-)
-
-load_postgres <- elsar_load_data(
-  file_name = "bnda_simplified",
+# Load and filter a PostGIS table
+load_pg <- elsar_load_data(
+  file_name = "boundaries",
   file_type = "postgres",
-  db_info = postgres_dict,
-  iso3_column = "iso3cd",
-  iso3 = "NPL"
-)
-
-pg_conn <- make_postgres_connection(
-  dbname = "yourdatabase",
-  user = "yourusername",
-  password = "yourpassword"
-)
-
-load_postgres <- elsar_load_data(
-  file_name = "bnda_simplified",
-  file_type = "postgres",
-  pg_connection = pg_conn,
+  pg_connection = list(
+    host = "localhost", dbname = "gis", port = 5432, user = "user", password = "pass"
+  ),
   iso3_column = "iso3cd",
   iso3 = "NPL"
 )

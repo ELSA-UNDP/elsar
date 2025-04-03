@@ -1,153 +1,65 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/404.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/articles/data-info.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/articles/elsaFunctions.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/articles/elsaR.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/articles/index.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/authors.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/index.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/LICENSE.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/boundary_dat.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/calc_feat_rep.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/convert_points_polygon.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/current_pas_sf.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/elsaFunctions-package.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/elsar-package.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/elsar_continuous_to_categorical.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/elsar_extend.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/elsar_load_data.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/elsar_plot_background.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/elsar_plot_background_c.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/elsar_plot_background_d.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/elsar_plot_distribution.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/elsar_plot_extra_data.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/elsar_plot_optics.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/elsar_plot_static_raster_c.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/elsar_plot_static_raster_d.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/elsa_plot_output_map.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/elsa_plot_representation.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/exact_rasterise.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/extract_filename_filetype.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/get_all_features.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/get_coverage.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/get_elsa_coverage.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/get_elsa_min_lockin_target.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/get_elsa_target.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/index.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/load_data.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/make_boundary.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/make_custom_projection.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/make_forest_integrity.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/make_managed_forests.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/make_mangroves.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/make_normalised_raster.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/make_planning_units.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/make_postgres_connection.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/make_protected_areas.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/make_protection_zone.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/pipe.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/rescale_raster.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/wad_data.html</loc>
-  </url>
-  <url>
-    <loc>https://elsa-undp.github.io/elsar/reference/wad_subset.html</loc>
-  </url>
+<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>https://elsa-undp.github.io/elsar/404.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/LICENSE.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/articles/data-info.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/articles/elsaR.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/articles/index.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/authors.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/index.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/boundary_dat.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/calc_feat_rep.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/convert_points_polygon.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/crop_global_raster.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/current_pas_sf.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/elsa_plot_output_map.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/elsa_plot_representation.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/elsar-package.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/elsar_continuous_to_categorical.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/elsar_download_esri_lulc_data.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/elsar_extend.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/elsar_load_data.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/elsar_plot_background_c.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/elsar_plot_background_d.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/elsar_plot_distribution.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/elsar_plot_extra_data.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/elsar_plot_feature.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/elsar_plot_optics.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/elsar_plot_static_raster_c.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/elsar_plot_static_raster_d.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/exact_rasterise.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/extract_filename_filetype.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/get_all_features.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/get_coverage.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/get_elsa_coverage.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/get_elsa_min_lockin_target.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/get_elsa_target.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/get_iucn_ecosystems.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/get_iucn_forests.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/index.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/log_msg.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/make_boundary.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/make_custom_projection.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/make_degraded_areas.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/make_flood_abatement_opportunities.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/make_forest_integrity.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/make_indigenous_managed_lands.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/make_kbas.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/make_manage_zone.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/make_managed_forests.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/make_mangroves.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/make_normalised_raster.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/make_planning_units.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/make_postgres_connection.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/make_protect_zone.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/make_protected_areas.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/make_restore_zone.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/make_threatened_ecosystems_protection.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/make_threatened_ecosystems_restoration.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/make_underrepresented_ecosystems.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/make_urban_greening_opportunities.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/make_wetlands_ramsar.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/pipe.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/rescale_raster.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/wad_subset.html</loc></url>
 </urlset>
+

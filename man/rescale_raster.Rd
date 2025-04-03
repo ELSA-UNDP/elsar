@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{rescale_raster}
 \alias{rescale_raster}
-\title{Rescale rasters to between 0 and 1}
+\title{Rescale Raster to 0–1 Range}
 \usage{
 rescale_raster(
   raster_in,
@@ -13,24 +13,19 @@ rescale_raster(
 )
 }
 \arguments{
-\item{raster_in}{Input raster}
+\item{raster_in}{Input \code{SpatRaster} to be rescaled.}
 
-\item{raster_in_min}{Min value of raster}
+\item{raster_in_min}{Optional numeric. Minimum value of input raster. If NULL, will be calculated.}
 
-\item{raster_in_max}{Max value of raster}
+\item{raster_in_max}{Optional numeric. Maximum value of input raster. If NULL, will be calculated.}
 
-\item{new_min}{0}
+\item{new_min}{Numeric. New minimum of rescaled raster (default = 0).}
 
-\item{new_max}{1}
+\item{new_max}{Numeric. New maximum of rescaled raster (default = 1).}
 }
 \value{
-\code{raster} file that is normalised from 0 to 1
+A \code{SpatRaster} with values rescaled to the specified range.
 }
 \description{
-Rescale rasters to between 0 and 1
-}
-\examples{
-\dontrun{
-raster_rescaled <- rescale_raster(dat_aligned)
-}
+This function rescales values in a raster to a range between 0 and 1.
 }
