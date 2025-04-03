@@ -61,6 +61,7 @@ elsar_load_data <- function(
     iso3_column = "iso3",
     iso3) {
 
+  # Helper function to filter by iso3 code and spatial extent when reading data
   filter_sf <- function(file_path, iso3, iso3_column, layer_name = NULL, drop3d = TRUE, wkt_filter = NULL) {
     if (is.null(layer_name)) {
       layer_info <- sf::st_layers(file_path)
@@ -224,7 +225,8 @@ elsar_load_data <- function(
         # Load a specific vector layer
         if (!is.null(file_lyr)) {
           loaded_data <- filter_sf(
-            file_path = f,
+            file_path = to_load,
+            layer_name = file_lyr,
             iso3 = iso3,
             iso3_column = iso3_column,
             drop3d = drop3d,

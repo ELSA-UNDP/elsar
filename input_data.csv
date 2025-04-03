@@ -15,7 +15,7 @@ feature;Evolutionary Distinct Endangered Species (EDGE) ;threatened_evo_history;
 feature;Existing PAs;NA;NA;NA;1;;0;1;;
 feature;Flood Abatement Opportunities;gfd_flood_database, mod13q1_2022_ndvi_wgs84, trop-subtrop_wetlandv3_2016_cifor_cog;tif;NA;1;;0;1;;
 feature;Forest Integrity Index;flii_earth-001_cog, global_fsii_2023;tif;NA;1;;0;1;;
-feature;Indigenous Managed Lands;?;?;NA;0;;0;1;;
+feature;Indigenous Managed Lands;icca_registry.gdb, Indigenous_comm_lands_v202411;gdb, shp;NA;1;;0;1;;
 feature;Intact Wilderness Area;eii_2023;tif;NA;1;;1;1;;
 feature;Irrecoverable Carbon;Irrecoverable_C_Total_2018;tif;NA;1;;1;1;;
 feature;Invasive species threat;panela_invthreat_wgs;tif;NA;1;;1;1;;
