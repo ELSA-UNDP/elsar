@@ -314,6 +314,8 @@ crop_global_raster <- function(raster_in, pus) {
 #' works well with progress bars and other console output.
 #'
 #' @param msg A character string to log.
+#' @export
+#'
 #' @examples
 #' log_msg("Starting the process...")
 log_msg <- function(msg) {
