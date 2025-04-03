@@ -30,7 +30,7 @@ figure_path <- "/home/scottca/Documents/elsar_figures"
 
 
 ## Country info ####
-iso3 <- "AND"
+iso3 <- "GNB"
 iso3_column <- "iso3cd" # for boundary data
 
 ############################################################################### #
@@ -333,8 +333,7 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
     current_rast <- elsar_load_data(
       file_name = current_dat$full_name,
       file_type = current_dat$file_type, file_path = current_dat$full_path,
-      wkt_filter = TRUE,
-      bb_extend = pus
+      wkt_filter = pus
     )
 
     if (nrow(current_rast) == 0) {
@@ -461,7 +460,8 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
           sf_in <- elsar_load_data(
             file_name = current_dat$full_name,
             file_type = current_dat$file_type,
-            file_path = current_dat$full_path
+            file_path = current_dat$full_path,
+            iso3 = iso3
           )
 
           if (nrow(sf_in) == 0) {
@@ -605,7 +605,8 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
     kba_sf <- elsar_load_data(
       file_name = current_dat$full_name,
       file_type = current_dat$file_type, file_path = current_dat$full_path,
-      file_lyr = (if (current_dat$layer != "NA") current_dat$layer else NULL)
+      file_lyr = (if (current_dat$layer != "NA") current_dat$layer else NULL),
+      iso3 = iso3
     )
 
     if (include_kbas & include_aze) {
@@ -685,13 +686,15 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
       # load data
       raster_wetlands <- elsar_load_data(
         file_name = paste0(dat_names[grepl("wetland", dat_names)], ".", filetype_names[[1]]),
-        file_type = filetype_names[[1]], file_path = current_dat$full_path
+        file_type = filetype_names[[1]], file_path = current_dat$full_path,
+        iso3 = iso3
       )
 
       sf_ramsar <- elsar_load_data(
         file_name = paste0(dat_names[grepl("ramsar", dat_names)], ".", filetype_names[[2]]),
         file_type = filetype_names[[2]], file_path = current_dat$full_path,
-        file_lyr = (if (current_dat$layer != "NA") current_dat$layer else NULL)
+        file_lyr = (if (current_dat$layer != "NA") current_dat$layer else NULL),
+        iso3 = iso3
       )
 
       # wetlands and ramsar
@@ -706,7 +709,8 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
       # load data
       raster_wetlands <- elsar_load_data(
         file_name = paste0(named_files[["wetland"]], ".", filetype_names[[1]]),
-        file_type = filetype_names[[1]], file_path = current_dat$full_path
+        file_type = filetype_names[[1]], file_path = current_dat$full_path,
+        iso3 = iso3
       )
 
       # wetlands and ramsar
@@ -721,7 +725,8 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
       sf_ramsar <- elsar_load_data(
         file_name = paste0(named_files[["ramsar"]], ".", filetype_names[[2]]),
         file_type = filetype_names[[2]], file_path = current_dat$full_path,
-        file_lyr = (if (current_dat$layer != "NA") current_dat$layer else NULL)
+        file_lyr = (if (current_dat$layer != "NA") current_dat$layer else NULL),
+        iso3 = iso3
       )
 
       # wetlands and ramsar
@@ -843,20 +848,41 @@ for (j in 1:length(dat_non_default)) { # for all the data that runs with non-def
   if (dat_non_default[[j]] == "Indigenous Managed Lands") {
     print("Indigenous Managed Lands")
 
-    # load data
+    # Load data
+    file_names <- unlist(strsplit(current_dat$file_name, ", ", fixed = TRUE))
+    filetype_names <- unlist(strsplit(current_dat$file_type, ", ", fixed = TRUE))
 
+    landmark_sf <- elsar::elsar_load_data(
+      file_path = file.path(current_dat$full_path, file_names[2]),
+      file_type = filetype_names[2],
+      iso3 = iso3,
+      iso3_column = 'ISO_Code'
+    )
+
+    icca_sf <- elsar::elsar_load_data(
+      file_path = current_dat$full_path,
+      file_name = file_names[1],
+      file_type = filetype_names[1],
+      iso3 = iso3
+    )
 
     # process data
+    indigenous_managed_lands <- make_indigenous_managed_lands(
+      iso3 = iso3,
+      pus = pus,
+      sf_landmark = landmark_sf,
+      sf_icca = icca_sf
+      )
 
+    names(indigenous_managed_lands) <- c(dat_non_default[[j]]) # set layer name
 
-    names(indigenous_lands) <- c(dat_non_default[[j]]) # set layer name
     elsar_plot_feature(
-      raster_in = indigenous_lands,
+      raster_in = indigenous_managed_lands,
       pus = pus,
       legend_title = dat_non_default[[j]],
       figure_path = figure_path
     )
-    raster_out <- c(raster_out, indigenous_lands)
+    raster_out <- c(raster_out, indigenous_managed_lands)
   }
 
   if (dat_non_default[[j]] == "Underepresented Ecosystems") {
