@@ -2,42 +2,47 @@
 % Please edit documentation in R/utils.R
 \name{convert_points_polygon}
 \alias{convert_points_polygon}
-\title{Create Buffered Polygons from Point Geometries}
+\title{Convert Points to Buffered Polygons Based on Area}
 \usage{
 convert_points_polygon(
-  wdpa_layer,
+  sf_layer,
   area_attr = "REP_AREA",
   area_crs = "ESRI:54009",
   nQuadSegs = 50,
-  append_sf = TRUE
+  append_original_polygons = TRUE,
+  area_multiplier = 1e+06
 )
 }
 \arguments{
-\item{wdpa_layer}{An \code{sf} object containing point geometries and the area attribute.}
+\item{sf_layer}{An \code{sf} object containing geometries, including points or multipoints and an area column.}
 
-\item{area_attr}{A character string specifying the name of the area attribute. Default is 'REP_AREA'.}
+\item{area_attr}{Character. Name of the attribute column that contains site area (default: \code{"REP_AREA"}).}
 
-\item{area_crs}{A character string specifying the coordinate reference system for area calculations. Default is 'ESRI:54009' (World Mollweide projection).}
+\item{area_crs}{Character. CRS used for buffering operation (default: \code{"ESRI:54009"} = World Mollweide).}
 
-\item{nQuadSegs}{An integer specifying the number of segments to use for buffering. Default is 50.}
+\item{nQuadSegs}{Integer. Number of segments per circle quadrant for buffering (default: \code{50}).}
 
-\item{append_sf}{logical. If \code{TRUE}, returns the initial wdpa_layer with polygons instead of points. If \code{FALSE}, will only returned the points with buffers.}
+\item{append_original_polygons}{Logical. If \code{TRUE}, appends original polygons to buffered features (default: \code{TRUE}).}
+
+\item{area_multiplier}{Numeric. Multiplier applied to the area attribute to convert units (e.g., \code{1e4} for hectares to m²).}
 }
 \value{
-An \code{sf} object with buffered polygon geometries.
+An \code{sf} object containing polygon features (either buffered points, original polygons, or both).
+If no valid features are found, returns \code{NULL}.
 }
 \description{
-This function creates polygon buffers around point geometries within a given spatial layer.
-It uses the specified area attribute to determine the size of each buffer and transforms
-geometries into a specified coordinate reference system for accurate area calculations.
+This function converts POINT or MULTIPOINT geometries into circular polygons using the specified area attribute
+to calculate a radius (assuming the area is in hectares or another square unit). The buffer is created in a projected
+CRS (default: Mollweide, EPSG:54009) and then transformed back to the input CRS. Optionally, original polygon features
+can be retained and combined with the buffered features.
 }
 \examples{
 \dontrun{
- pa <- wdpar::wdpa_fetch("NPL",
-  wait = TRUE,
-  download_dir = here::here()
+buffered <- convert_points_polygon(
+  sf_layer = my_kba_layer,
+  area_attr = "gisarea",
+  area_crs = "ESRI:54009",
+  append_original_polygons = TRUE
 )
-buffered_polygons <- convert_points_polygon(wdpa_layer = pa,
-      area_crs = sf::st_crs(pa))
-      }
+}
 }

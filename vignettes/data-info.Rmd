@@ -2,7 +2,7 @@
 title: "Processing global data in R"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{data-info2}
+  %\VignetteIndexEntry{Processing global data in R}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

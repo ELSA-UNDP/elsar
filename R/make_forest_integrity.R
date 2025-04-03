@@ -64,32 +64,30 @@ make_forest_integrity <- function(raster_flii = NULL,
   ))
 
   if ((terra::global(fsii, sum, na.rm=TRUE)[[1]]) == 0) {
-    message("Fsii only contains 0s for the study area.
-            Forest integrity will be caluclated using flii only.")
+    log_msg("FSII only contains 0s for the study area. Forest integrity will be calculated using FLII only.")
 
     raster_rescaled <- rescale_raster(flii)
 
   } else if ((terra::global(flii, sum, na.rm=TRUE)[[1]]) == 0) {
 
-    message("Flii only contains 0s for the study area.
-            Forest integrity will be caluclated using fsii only.")
+    log_msg("FLII only contains 0s for the study area. Forest integrity will be calculated using FSII only.")
 
     raster_rescaled <- rescale_raster(fsii)
 
   } else if (((terra::global(fsii, sum, na.rm=TRUE)[[1]]) > 0) & ((terra::global(fsii, sum, na.rm=TRUE)[[1]]) > 0)) {
-    message("Forest integrity will be caluclated using flii and fsii.")
+    log_msg("Forest integrity will be caluclated using FLII and FSII")
 
     # get mean of fsii and flii and rescale
     fi <- terra::mean(fsii + flii)
     raster_rescaled <- rescale_raster(fi)
 
   } else {
-    message("Both of your input data files only contain 0 values. Please check your input data.")
+    log_msg("Both of your input data files only contain 0 values. Please check your input data.")
   }
 
   } else if (is.null(raster_flii) & !is.null(raster_fsii)) {
 
-    message("Only fsii data provided. Forest integrity will be caluclated using fsii only.")
+    log_msg("Only fsii data provided. Forest integrity will be caluclated using fsii only.")
 
     raster_rescaled <- make_normalised_raster(
       raster_in = raster_fsii,
@@ -97,7 +95,7 @@ make_forest_integrity <- function(raster_flii = NULL,
     )
 
   } else if (!is.null(raster_flii) & is.null(raster_fsii)) {
-    message("Only flii data provided. Forest integrity will be caluclated using flii only.")
+    log_msg("Only flii data provided. Forest integrity will be caluclated using flii only.")
 
     raster_rescaled <- make_normalised_raster(
       raster_in = raster_flii,
@@ -107,12 +105,18 @@ make_forest_integrity <- function(raster_flii = NULL,
   }
 
   if (!is.null(output_path)) {
-    terra::writeRaster(raster_rescaled,
-      glue::glue("{output_path}/forest_integrity_{iso3}.tif"),
-      gdal = c("COMPRESS=DEFLATE"),
-      NAflag = -9999,
-      overwrite = TRUE,
-      filetype = "COG"
+    terra::writeRaster(
+      raster_rescaled,
+      filename = glue::glue("{output_path}/forest_integrity_{iso3}.tif"),
+      filetype = "COG",
+      datatype = "FLT4S",
+      gdal = c(
+        "COMPRESS=ZSTD",
+        "PREDICTOR=3",
+        "OVERVIEWS=NONE",
+        "NUM_THREADS=ALL_CPUS"
+      ),
+      overwrite = TRUE
     )
   }
 

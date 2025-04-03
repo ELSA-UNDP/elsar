@@ -1,6 +1,6 @@
 Package: elsar
 Title: Functions and Tools For Creating ELSA Tier 1 Data Stacks
-Version: 0.0.2
+Version: 0.0.3
 Authors@R: 
     c(
     person(
@@ -24,10 +24,10 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Suggests:
     DBI,
-    here,
     kableExtra,
     knitr,
     patchwork,
+    png,
     prioritizr,
     readr,
     rmarkdown,
@@ -46,14 +46,20 @@ Imports:
     ggplot2,
     ggridges,
     ggspatial,
+    googledrive,
     glue,
+    here,
     magrittr,
     plyr,
+    reticulate,
     rlang,
     sf,
     stats,
     stringr,
     terra,
+    tibble,
+    tidyr,
+    tidyterra,
     units
 Config/testthat/edition: 3
 LazyData: true

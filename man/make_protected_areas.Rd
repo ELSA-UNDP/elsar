@@ -7,15 +7,16 @@
 make_protected_areas(
   from_wdpa = TRUE,
   iso3,
-  download_path = NULL,
+  input_path = NULL,
   sf_in,
   status = c("Established", "Inscribed", "Designated"),
   pa_def = 1,
-  designation_mab = FALSE,
+  include_mab_designation = FALSE,
   buffer_points = TRUE,
   area_column = "REP_AREA",
+  area_calc_crs = "ESRI:54009",
   nQuadSegs = 50,
-  return_sf = FALSE,
+  return_sf = TRUE,
   pus,
   output_path = NULL
 )
@@ -25,7 +26,7 @@ make_protected_areas(
 
 \item{iso3}{A string of the iso3 name of the data (country name)}
 
-\item{download_path}{A path that the wdpa data is saved to.}
+\item{input_path}{A path that the wdpa data is saved to.}
 
 \item{sf_in}{An \code{sf} object and alternative to downloading the data from the \pkg{wdpar} package. Only needed when from_wdpa is \code{FALSE}.}
 
@@ -33,11 +34,13 @@ make_protected_areas(
 
 \item{pa_def}{A value or list of values containing which pa definition (1 = protected area; 0 = OECM (not supported yet)) to include. Default is \code{1}.}
 
-\item{designation_mab}{logical. If \code{FALSE}, excludes UNESCO MAB areas.}
+\item{include_mab_designation}{logical. If \code{FALSE}, excludes UNESCO MAB areas.}
 
 \item{buffer_points}{logical. Only relevant when \code{"POINT"} or \code{"MULTIPOINT"} geometries exist in the data. If \code{TRUE}, creates a circular buffer around \code{"POINT"} data based on area information data that is then used as polygon data needed for \pkg{exactextractr} calculations.}
 
 \item{area_column}{A string of the column name with the area information needed for buffer calculations.}
+
+\item{area_calc_crs}{Character. CRS used for buffering operation (default: \code{"ESRI:54009"} = World Mollweide).}
 
 \item{nQuadSegs}{An integer specifying the number of segments to use for buffering. Default is 50.}
 
@@ -48,7 +51,7 @@ make_protected_areas(
 \item{output_path}{An optional output path for the created file.}
 }
 \value{
-A \code{raster}file that has been aligned to the planning units
+A \code{SpatRaster}file that has been aligned to the planning units
 }
 \description{
 Function to create existing protected area raster file.

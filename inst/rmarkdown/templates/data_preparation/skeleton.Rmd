@@ -1,0 +1,382 @@
+---
+title: "Data preparation R Notebook template for using the elsar package"
+author: "Your Name"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+# **Introduction**
+This R Notebook builds and processes feature layers for spatial analysis. It sets up libraries for geospatial processing, data manipulation, and visualization, all while creating a record of exactly how layers were created.
+
+```{r setup, include=FALSE}
+# Load required libraries
+remotes::install_github("ELSA-UNDP/elsar") # Install latest version
+library(elsar)
+library(sf)
+library(dplyr)
+library(exactextractr)
+library(terra)
+library(tidyterra)
+library(here)
+library(ggplot2)
+
+# Set local temp directory for `terra`
+terra::terraOptions(tempdir = here::here("~/Documents/"), steps = 4, todisk = TRUE)
+terraOptions()
+terra::tmpFiles(remove = TRUE)
+
+```
+
+```{r }
+national_data <- "national_data.gpkg"
+iso3 <- 'COL'
+```
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+plot(cars)
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
+```{r include=FALSE}
+# Base Layers ####
+wkt <- rast("data_orig/per_planning_units_1km.tif") |> crs()
+national_boundary <- read_sf(national_data, layer = "per_boundary") |> 
+  st_transform(wkt)
+pu <- rast("data_proj/planning_units_col_bezos.tif")
+```
+
+# Feature Layers ####
+## Bosque 2022 ####
+```{r}
+forest2022 <- elsar_load_data(
+  file_path = "data_orig/28_Superficie_de_bosque_húmedo_amazónico",
+  file_name = "Bosque_No_Bosque_2022.tif",
+  file_type = "tif") |> 
+  make_normalised_raster(
+    raster_in = forest2022,
+    pus = pu,
+    conditional_expression = function(r) ifel(r == 5, 1, 0)
+    )
+
+writeRaster(
+  forest2022,
+  filetype = "COG",
+  datatype = "FLT4S",
+  NAflag = -9999,
+  filename = "data_proj/forest2022_per_bezos.tif",
+  gdal = c("COMPRESS=ZSTD", "NUM_THREADS=4", "OVERVIEWS=NONE", "PREDICTOR=3"),
+  overwrite = T
+)
+
+ggplot() +
+  geom_spatraster(data = forest2022) +
+  scale_fill_viridis_c(name = "", na.value = NA)
+```
+
+# Zones Restrictions ####
+```{r}
+urban <- elsar_load_data(
+  file_path = ".",
+  file_name = "national_data.gpkg",
+  file_lyr = "CLAS_SUELO_PLANES_OUN", 
+  file_type = "gpkg"
+) |>
+  st_make_valid() |>
+  summarise() %>% 
+  exactextractr::coverage_fraction(pu, y = .) %>%
+  .[[1]] * pu
+
+agriculture <- elsar_load_data(
+  file_path = "data_proj",
+  file_name = "agri_land_per_bezos.tif",
+  file_type = "tif"
+)
+
+hii <- elsar_load_data(
+  file_path = "data_orig",
+  file_name = "HF_Peru_SDG15_2021_30m.tif",
+  file_type = "tif"
+) |> 
+  make_normalised_raster(
+    pus = pu,
+    method_override = "average",
+    rescaled = FALSE
+  )
+```
+
+## Protect Zone ####
+# NOT agr >0.5, NOT urban >0.5, NOT HFP > 3 
+```{r}
+protect_zone <- ifel(agriculture > 0.5 | urban > 0.5, 0, ifel(hii <= 3, 1, 0))
+
+writeRaster(
+  protect_zone,
+  filetype = "COG",
+  datatype = "INT1U",
+  NAflag = 255,
+  filename = "data_proj/protect_zone_per_bezos.tif",
+  gdal = c("COMPRESS=ZSTD", "NUM_THREADS=4", "OVERVIEWS=NONE"),
+  overwrite = T
+)
+
+ggplot()+
+  geom_spatraster(data = protect_zone) +
+  scale_fill_viridis_c(name = "", na.value = NA)
+```
+
+## Manage Zone ####
+# NOT Urban >0.3, NOT HFP < 3, NOT HFP>10
+```{r}
+manage_zone <- ifel(urban <= 0.3 & (hii >= 3 & hii <= 10), 1, 0)
+
+writeRaster(
+  manage_zone,
+  filetype = "COG",
+  datatype = "INT1U",
+  NAflag = 255,
+  filename = "data_proj/manage_zone_per_bezos.tif",
+  gdal = c("COMPRESS=ZSTD", "NUM_THREADS=4", "OVERVIEWS=NONE"),
+  overwrite = T
+)
+
+ggplot()+
+  geom_spatraster(data = manage_zone) +
+  scale_fill_viridis_c(name = "", na.value = NA)
+```
+
+## Restore Zone / Degraded Areas ####
+```{r}
+degraded_areas <- elsar_load_data(
+  file_path = "data_orig/07_Zonas_degradadas",
+  file_name = "Zonas_degradadas.tif",
+  file_type = "tif",
+  iso3 = iso3
+)
+
+degraded_areas <- make_normalised_raster(
+  degraded_areas,
+  pus = pu,
+  conditional_expression = function(r) ifel(is.na(r) | r %in% c(1,3,17), 0, 1), # Data shows types of degradation >>> convert to binary (degraded/not-degraded)
+  method_override = "max"
+)
+
+writeRaster(
+  degraded_areas,
+  filetype = "COG",
+  datatype = "INT1U",
+  NAflag = 255,
+  filename = "data_proj/degraded_2022_per_bezos.tif",
+  gdal = c("COMPRESS=ZSTD", "NUM_THREADS=4", "OVERVIEWS=NONE"),
+  overwrite = T
+)
+
+ggplot()+
+  geom_spatraster(data = degraded_areas) +
+  scale_fill_viridis_c(name = "", na.value = NA)
+```
+
+# Lock-ins #### 
+## PAs ####
+
+```{r}
+pa <- elsar_load_data(
+  file_path = ".",
+  file_name = national_data,
+  file_lyr = "ANPNacionalDefinitivas",
+  file_type = "gpkg"
+) |> 
+  st_make_valid() |>  
+  summarise() %>% 
+  exactextractr::coverage_fraction(pu, y = .) %>%
+  .[[1]] * pu
+
+writeRaster(
+  pa_all,
+  filetype = "COG",
+  datatype = "FLT4S",
+  NAflag = -9999,
+  filename = "data_proj/protected_areas_all_col_bezos.tif",
+  gdal = c(
+    "COMPRESS=ZSTD", "NUM_THREADS=4", "OVERVIEWS=NONE", "PREDICTOR=3"),
+  overwrite = T
+)
+
+ggplot()+
+  geom_spatraster(data = pa_all) +
+  scale_fill_viridis_c(name = "", na.value = NA)
+```
+
+## OMEC ####
+```{r}
+omec <- elsar_load_data(
+  file_path = ".",
+  file_name = national_data,
+  file_lyr = "OMEC",
+  file_type = "gpkg"
+) %>% 
+  st_make_valid() %>% 
+  summarise() %>% 
+  exactextractr::coverage_fraction(pu, y = .) %>%
+  .[[1]] * pu
+
+writeRaster(
+  omec,
+  filetype = "COG",
+  datatype = "FLT4S",
+  NAflag = -9999,
+  filename = "data_proj/omec_col_bezos.tif",
+  gdal = c(
+    "COMPRESS=ZSTD", "NUM_THREADS=4", "OVERVIEWS=NONE", "PREDICTOR=3"),
+  overwrite = T
+)
+
+ggplot()+
+  geom_spatraster(data = omec) +
+  scale_fill_viridis_c(name = "", na.value = NA)
+```
+
+## Protected Areas+OECM ####
+```{r}
+pa <- elsar_load_data(
+  file_path = ".",
+  file_name = national_data,
+  file_lyr = "ANPNacionalDefinitivas",
+  file_type = "gpkg"
+)
+
+omec <- elsar_load_data(
+  file_path = ".",
+  file_name = national_data,
+  file_lyr = "OMEC",
+  file_type = "gpkg"
+)
+
+paoemc <- bind_rows(pa, regional_conservation, private_conservation, omec) |>
+  st_make_valid() |>
+  summarise() %>% 
+  exactextractr::coverage_fraction(pu, y = .) %>%
+  .[[1]] * pu
+
+writeRaster(
+  paoemc,
+  filetype = "COG",
+  datatype = "FLT4S",
+  NAflag = -9999,
+  filename = "data_proj/pa-oecm_col_bezos.tif",
+  gdal = c(
+    "COMPRESS=ZSTD", "NUM_THREADS=4", "OVERVIEWS=NONE", "PREDICTOR=3"),
+  overwrite = T
+)
+
+ggplot() +
+  geom_spatraster(data = paoemc) +
+  scale_fill_viridis_c(name = "", na.value = NA)
+```
+
+## Degraded Areas inside PAs ####
+```{r}
+writeRaster(
+  degraded_pa,
+  filetype = "COG",
+  datatype = "FLT4S",
+  NAflag = -9999,
+  filename = "data_proj/degraded_pa_col_bezos.tif",
+  gdal = c(
+    "COMPRESS=ZSTD", "NUM_THREADS=4", "OVERVIEWS=NONE", "PREDICTOR=3"),
+  overwrite = T
+)
+
+ggplot() +
+  geom_spatraster(data = degraded_pa) +
+  scale_fill_viridis_c(name = "", na.value = NA)
+```
+## Potential OECMS ####
+```{r}
+writeRaster(
+  potential_oecms,
+  filetype = "COG",
+  datatype = "FLT4S",
+  NAflag = -9999,
+  filename = "data_proj/potential_oecms_col_bezos.tif",
+  gdal = c(
+    "COMPRESS=ZSTD", "NUM_THREADS=4", "OVERVIEWS=NONE", "PREDICTOR=3"),
+  overwrite = T
+)
+
+ggplot()+
+  geom_spatraster(data = potential_oecms) +
+  scale_fill_viridis_c(name = "", na.value = NA)
+```
+# Zones ####
+## Human Industrial Footprint ####
+```{r}
+hii <- elsar_load_data(
+  file_path = "data_orig",
+  file_name = "HF_Peru_SDG15_2021_30m.tif",
+  file_type = "tif"
+)
+
+hii <- make_normalised_raster(
+  raster_in = hii,
+  pus = pu,
+  invert = TRUE,
+  method_override = "average"
+  )
+
+writeRaster(
+  hii,
+  filetype = "COG",
+  datatype = "FLT4S",
+  NAflag = -9999,
+  filename = "data_proj/hfp_per_bezos.tif",
+  gdal = c(
+    "COMPRESS=ZSTD", "NUM_THREADS=4", "OVERVIEWS=NONE", "PREDICTOR=3"),
+  overwrite = T
+)
+
+ggplot() +
+  geom_spatraster(data = hii) +
+  scale_fill_viridis_c(name = "", na.value = NA)
+```
+
+## Agriculture land ####
+```{r}
+agri_land <- elsar_load_data(
+  file_path = ".",
+  file_name = "national_data.gpkg",
+  file_type = "gpkg",
+  file_lyr = "SAN_OFICIAL_03_02_21"
+  ) |>
+  st_make_valid() |>
+  summarise() %>% 
+  exactextractr::coverage_fraction(pu, y = .) %>%
+  .[[1]] * pu
+
+agri_land <- make_normalised_raster(
+  raster_in = agri_land,
+  pus = pu
+  )
+
+writeRaster(
+  agri_land,
+  filetype = "COG",
+  datatype = "FLT4S",
+  NAflag = -9999,
+  filename = "data_proj/agri_land_per_bezos.tif",
+  gdal = c(
+    "COMPRESS=ZSTD", "NUM_THREADS=4", "OVERVIEWS=NONE", "PREDICTOR=3"),
+  overwrite = T
+)
+
+ggplot() +
+  geom_spatraster(data = agri_land) +
+  scale_fill_viridis_c(name = "", na.value = NA)
+```
