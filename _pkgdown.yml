@@ -18,20 +18,20 @@ reference:
   desc: Functions to prepare the global datasets for the ELSA workflow
 - contents:
   - get_all_features
+  - make_degraded_areas
+  - make_flood_abatement_opportunities
   - make_forest_integrity
+  - make_indigenous_managed_lands
+  - make_kbas
   - make_managed_forests
   - make_mangroves
   - make_normalised_raster
   - make_protected_areas
-  - make_flood_abatement_opportunities
-  - make_indigenous_managed_lands
-  - make_kbas
   - make_threatened_ecosystems_protection
   - make_threatened_ecosystems_restoration
   - make_underrepresented_ecosystems
   - make_urban_greening_opportunities
   - make_wetlands_ramsar
-  - make_degraded_areas
 
 - title: Set up ELSA analysis
   desc: Functions to help formulate a conservation problem for an ELSA analysis
@@ -61,29 +61,31 @@ reference:
 - title: Helper Functions
 - contents:
   - elsar_load_data
-  - make_custom_projection
-  - make_postgres_connection
+  - elsar_download_esri_lulc_data
+  - filter_sf
+  - get_file_type
   - get_iucn_ecosystems
   - get_iucn_forests
-  - elsar_download_esri_lulc_data
   - log_msg
+  - make_custom_projection
+  - make_postgres_connection
 
 - title: Utilities
 - contents:
   - convert_points_polygon
+  - crop_global_raster
   - extract_filename_filetype
-  - rescale_raster
   - exact_rasterise
   - get_coverage
-  - crop_global_raster
+  - rescale_raster
 
 - title: Plotting function
   desc: Functions to plot input and output data of an ELSA workflow
 - contents:
   - elsar_plot_distribution
+  - elsar_plot_feature
   - elsar_plot_static_raster_c
   - elsar_plot_static_raster_d
-  - elsar_plot_feature
 
 - title: Utilities plotting
   desc:

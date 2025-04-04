@@ -8,76 +8,75 @@ elsar_load_data(
   file_name = NULL,
   file_path = NULL,
   file_lyr = NULL,
-  file_type,
   wkt_filter = NULL,
   db_info = NULL,
-  drop3d = TRUE,
   pg_connection = NULL,
-  iso3_column = "iso3",
-  iso3
+  drop3d = TRUE,
+  iso3_column = NULL,
+  iso3 = NULL
 )
 }
 \arguments{
-\item{file_name}{Character or vector. File name(s) with extension, or \code{NULL} to load all files of the type (e.g., all \code{.shp} files in folder).}
+\item{file_name}{Character or NULL. File name with extension. Use NULL to load all files of a type in a folder.}
 
-\item{file_path}{Character. Path to the local folder or file. Required for local sources.}
+\item{file_path}{Character. Folder or file path.}
 
-\item{file_lyr}{Character. Optional. Specific layer name within a multi-layer file (e.g., a layer in a GPKG or GDB).}
+\item{file_lyr}{Character. Optional. Layer name for multi-layer files (e.g., GeoPackage or GDB).}
 
-\item{file_type}{Character. One of: \code{"postgres"}, \code{"shp"}, \code{"gpkg"}, \code{"geojson"}, \code{"gdb"}, \code{"tif"}, \code{"tiff"}, \code{"grd"}, \code{"gri"}, \code{"nc"}, \code{"hdf"}.}
+\item{wkt_filter}{\code{sf}, \code{SpatRaster}, or \code{SpatVector}, from which WKT geometry can be derived to spatially filter vector data when reading in.}
 
-\item{wkt_filter}{Character. Optional WKT geometry used to spatially filter the data (e.g., a bounding box).}
+\item{db_info}{Named list. For Postgres: host, dbname, port, user, password.}
 
-\item{db_info}{Named list. Required for Postgres if \code{pg_connection} is not supplied. Must contain: \code{host}, \code{dbname}, \code{port}, \code{user}, \code{password}.}
+\item{pg_connection}{Named list. Alternative to db_info for Postgres.}
 
-\item{drop3d}{Logical. Whether to drop Z or M dimensions (3D/4D) to keep only XY (2D). Default is \code{TRUE}.}
+\item{drop3d}{Logical. Drop Z/M dimensions if TRUE. Default is TRUE.}
 
-\item{pg_connection}{Named list. Alternative to \code{db_info}, passed directly to \code{RPostgres::dbConnect}.}
+\item{iso3_column}{Character. Column name to filter by ISO3 code.}
 
-\item{iso3_column}{Character. Column name to filter by ISO3 country code. Default is \code{"iso3"}.}
-
-\item{iso3}{Character. ISO3 code (e.g., \code{"NPL"}) to filter the vector data.}
+\item{iso3}{Character. ISO3 code to filter vector data.}
 }
 \value{
-An \code{sf} object (for vector formats) or a \code{terra::SpatRaster} (for raster formats).
+An sf object or SpatRaster depending on the file type.
 }
 \description{
-Loads spatial (\code{sf}) or raster (\code{SpatRaster}) data from various sources:
-\itemize{
-\item Local files: Shapefiles, GeoPackages, GeoJSON, TIFFs, GRDs, NetCDF, etc.
-\item PostGIS databases via direct query
-}
-}
-\details{
-Vector data can be automatically filtered by an ISO3 country code and/or a WKT geometry.
-For shapefiles and multi-layer files (e.g. GeoPackage or file geodatabases), this function merges
-multiple layers or files and ensures consistent column alignment.
+Automatically detects file type and loads spatial (\code{sf}) or raster (\code{SpatRaster}) data.
+Supports local files (e.g., shapefiles, GeoPackages, TIFFs) and PostGIS tables.
 }
 \examples{
 \dontrun{
-# Load a single GeoTIFF
-load_raster <- elsar_load_data(
-  "layer.tif",
-  "/data",
-  file_type = "tif"
+# Load a single raster
+r <- elsar_load_data(
+  file_name = "lulc.tif",
+  file_path = "data"
   )
 
-# Load and merge all shapefiles in a folder
-merged_shps <- elsar_load_data(
+# Load shapefile with ISO3 filter
+shp <- elsar_load_data(
+  file_name = "admin.shp",
+  file_path = "data",
+  iso3 = "KEN",
+  iso3_column = "ISO3"
+  )
+
+# Load all shapefiles in a folder
+shp_all <- elsar_load_data(
   file_name = NULL,
-  file_path = "/data/shapes",
-  file_type = "shp"
+  file_path = "data/shapes"
   )
 
-# Load and filter a PostGIS table
-load_pg <- elsar_load_data(
-  file_name = "boundaries",
-  file_type = "postgres",
+# Load PostGIS table
+pg <- elsar_load_data(
+  file_name = "postgres",
+  file_lyr = "admin",
+  iso3 = "KEN",
+  iso3_column = "iso3",
   pg_connection = list(
-    host = "localhost", dbname = "gis", port = 5432, user = "user", password = "pass"
-  ),
-  iso3_column = "iso3cd",
-  iso3 = "NPL"
-)
+      host = "localhost",
+      dbname = "gis",
+      port = 5432,
+      user = "me",
+      password = "pass"
+      )
+   )
 }
 }

@@ -29,9 +29,11 @@ Wrapper function to get a raster file with all wanted features
 \dontrun{
 feature_list <- c("fml", "cropsuit", "fi")
 
-all_feats <- get_all_features(feature_list = feature_list,
-                              path_in = "<yourpath>",
-                              pus = pus,
-                              iso3 = "NPL")
+all_feats <- get_all_features(
+  feature_list = feature_list,
+  path_in = "<yourpath>",
+  pus = pus,
+  iso3 = "NPL"
+  )
 }
 }

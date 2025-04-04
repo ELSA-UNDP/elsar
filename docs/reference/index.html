@@ -76,10 +76,34 @@
         <dd>Wrapper function to get a raster file with all wanted features</dd>
       </dl><dl><dt>
 
+          <code><a href="make_degraded_areas.html">make_degraded_areas()</a></code>
+
+        </dt>
+        <dd>Create degraded areas layer for restoration planning</dd>
+      </dl><dl><dt>
+
+          <code><a href="make_flood_abatement_opportunities.html">make_flood_abatement_opportunities()</a></code>
+
+        </dt>
+        <dd>Create a Flood Abatement Opportunities Raster</dd>
+      </dl><dl><dt>
+
           <code><a href="make_forest_integrity.html">make_forest_integrity()</a></code>
 
         </dt>
         <dd>Create the forest integrity index using flii and fsii data</dd>
+      </dl><dl><dt>
+
+          <code><a href="make_indigenous_managed_lands.html">make_indigenous_managed_lands()</a></code>
+
+        </dt>
+        <dd>Create Indigenous Managed Lands Raster (LANDMark + ICCA)</dd>
+      </dl><dl><dt>
+
+          <code><a href="make_kbas.html">make_kbas()</a></code>
+
+        </dt>
+        <dd>Create a Standardised Raster of Key Biodiversity Areas (KBAs)</dd>
       </dl><dl><dt>
 
           <code><a href="make_managed_forests.html">make_managed_forests()</a></code>
@@ -104,24 +128,6 @@
 
         </dt>
         <dd>Function to create existing protected area raster file.</dd>
-      </dl><dl><dt>
-
-          <code><a href="make_flood_abatement_opportunities.html">make_flood_abatement_opportunities()</a></code>
-
-        </dt>
-        <dd>Create a Flood Abatement Opportunities Raster</dd>
-      </dl><dl><dt>
-
-          <code><a href="make_indigenous_managed_lands.html">make_indigenous_managed_lands()</a></code>
-
-        </dt>
-        <dd>Create Indigenous Managed Lands Raster (LANDMark + ICCA)</dd>
-      </dl><dl><dt>
-
-          <code><a href="make_kbas.html">make_kbas()</a></code>
-
-        </dt>
-        <dd>Create a Standardised Raster of Key Biodiversity Areas (KBAs)</dd>
       </dl><dl><dt>
 
           <code><a href="make_threatened_ecosystems_protection.html">make_threatened_ecosystems_protection()</a></code>
@@ -152,12 +158,6 @@
 
         </dt>
         <dd>Create a Standardised Raster for Wetlands and Ramsar Sites</dd>
-      </dl><dl><dt>
-
-          <code><a href="make_degraded_areas.html">make_degraded_areas()</a></code>
-
-        </dt>
-        <dd>Create degraded areas layer for restoration planning</dd>
       </dl></div><div class="section level2">
       <h2 id="set-up-elsa-analysis">Set up ELSA analysis<a class="anchor" aria-label="anchor" href="#set-up-elsa-analysis"></a></h2>
 
@@ -275,16 +275,22 @@
         <dd>Load spatial or raster data from local files or Postgres</dd>
       </dl><dl><dt>
 
-          <code><a href="make_custom_projection.html">make_custom_projection()</a></code>
+          <code><a href="elsar_download_esri_lulc_data.html">elsar_download_esri_lulc_data()</a></code>
 
         </dt>
-        <dd>Create a custom projection based on the planning region</dd>
+        <dd>Download and Process ESRI 10m LULC Data from Google Earth Engine</dd>
       </dl><dl><dt>
 
-          <code><a href="make_postgres_connection.html">make_postgres_connection()</a></code>
+          <code><a href="filter_sf.html">filter_sf()</a></code>
 
         </dt>
-        <dd>Create a PostgreSQL Connection Configuration as a Dictionary</dd>
+        <dd>Load and optionally filter a single vector layer</dd>
+      </dl><dl><dt>
+
+          <code><a href="get_file_type.html">get_file_type()</a></code>
+
+        </dt>
+        <dd>Infer file type from file path or directory</dd>
       </dl><dl><dt>
 
           <code><a href="get_iucn_ecosystems.html">get_iucn_ecosystems()</a></code>
@@ -299,16 +305,22 @@
         <dd>Extract and Rasterise IUCN GET Forest Ecosystems</dd>
       </dl><dl><dt>
 
-          <code><a href="elsar_download_esri_lulc_data.html">elsar_download_esri_lulc_data()</a></code>
-
-        </dt>
-        <dd>Download and Process ESRI 10m LULC Data from Google Earth Engine</dd>
-      </dl><dl><dt>
-
           <code><a href="log_msg.html">log_msg()</a></code>
 
         </dt>
         <dd>Log a timestamped message to the console</dd>
+      </dl><dl><dt>
+
+          <code><a href="make_custom_projection.html">make_custom_projection()</a></code>
+
+        </dt>
+        <dd>Create a custom projection based on the planning region</dd>
+      </dl><dl><dt>
+
+          <code><a href="make_postgres_connection.html">make_postgres_connection()</a></code>
+
+        </dt>
+        <dd>Create a PostgreSQL Connection Configuration as a Dictionary</dd>
       </dl></div><div class="section level2">
       <h2 id="utilities">Utilities<a class="anchor" aria-label="anchor" href="#utilities"></a></h2>
 
@@ -328,16 +340,16 @@
         <dd>Convert Points to Buffered Polygons Based on Area</dd>
       </dl><dl><dt>
 
+          <code><a href="crop_global_raster.html">crop_global_raster()</a></code>
+
+        </dt>
+        <dd>Crop a Global Raster to the Extent of Planning Units</dd>
+      </dl><dl><dt>
+
           <code><a href="extract_filename_filetype.html">extract_filename_filetype()</a></code>
 
         </dt>
         <dd>Extract Filename and Filetype from Directory</dd>
-      </dl><dl><dt>
-
-          <code><a href="rescale_raster.html">rescale_raster()</a></code>
-
-        </dt>
-        <dd>Rescale Raster to 0–1 Range</dd>
       </dl><dl><dt>
 
           <code><a href="exact_rasterise.html">exact_rasterise()</a></code>
@@ -352,10 +364,10 @@
         <dd>Calculate Areal Coverage of a Zone Relative to Planning Units</dd>
       </dl><dl><dt>
 
-          <code><a href="crop_global_raster.html">crop_global_raster()</a></code>
+          <code><a href="rescale_raster.html">rescale_raster()</a></code>
 
         </dt>
-        <dd>Crop a Global Raster to the Extent of Planning Units</dd>
+        <dd>Rescale Raster to 0–1 Range</dd>
       </dl></div><div class="section level2">
       <h2 id="plotting-function">Plotting function<a class="anchor" aria-label="anchor" href="#plotting-function"></a></h2>
 
@@ -375,6 +387,12 @@
         <dd>Function to create basic histogram with categorical data</dd>
       </dl><dl><dt>
 
+          <code><a href="elsar_plot_feature.html">elsar_plot_feature()</a></code>
+
+        </dt>
+        <dd>Create a map of individual features</dd>
+      </dl><dl><dt>
+
           <code><a href="elsar_plot_static_raster_c.html">elsar_plot_static_raster_c()</a></code>
 
         </dt>
@@ -385,12 +403,6 @@
 
         </dt>
         <dd>Function to create a static plot from raster data with discrete data</dd>
-      </dl><dl><dt>
-
-          <code><a href="elsar_plot_feature.html">elsar_plot_feature()</a></code>
-
-        </dt>
-        <dd>Create a map of individual features</dd>
       </dl></div><div class="section level2">
       <h2 id="utilities-plotting">Utilities plotting<a class="anchor" aria-label="anchor" href="#utilities-plotting"></a></h2>
 

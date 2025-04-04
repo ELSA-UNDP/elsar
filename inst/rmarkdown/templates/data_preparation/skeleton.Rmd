@@ -47,8 +47,8 @@ The preview shows you a rendered HTML copy of the contents of the editor. Conseq
 
 ```{r include=FALSE}
 # Base Layers ####
-wkt <- rast("data_orig/per_planning_units_1km.tif") |> crs()
-national_boundary <- read_sf(national_data, layer = "per_boundary") |> 
+wkt <- rast("data_orig/per_planning_units_1km.tif") %>% crs()
+national_boundary <- read_sf(national_data, layer = "per_boundary") %>% 
   st_transform(wkt)
 pu <- rast("data_proj/planning_units_col_bezos.tif")
 ```
@@ -58,8 +58,8 @@ pu <- rast("data_proj/planning_units_col_bezos.tif")
 ```{r}
 forest2022 <- elsar_load_data(
   file_path = "data_orig/28_Superficie_de_bosque_húmedo_amazónico",
-  file_name = "Bosque_No_Bosque_2022.tif",
-  file_type = "tif") |> 
+  file_name = "Bosque_No_Bosque_2022.tif"
+  ) %>% 
   make_normalised_raster(
     raster_in = forest2022,
     pus = pu,
@@ -86,10 +86,9 @@ ggplot() +
 urban <- elsar_load_data(
   file_path = ".",
   file_name = "national_data.gpkg",
-  file_lyr = "CLAS_SUELO_PLANES_OUN", 
-  file_type = "gpkg"
-) |>
-  st_make_valid() |>
+  file_lyr = "CLAS_SUELO_PLANES_OUN"
+  ) %>%
+  st_make_valid() %>%
   summarise() %>% 
   exactextractr::coverage_fraction(pu, y = .) %>%
   .[[1]] * pu
@@ -97,14 +96,12 @@ urban <- elsar_load_data(
 agriculture <- elsar_load_data(
   file_path = "data_proj",
   file_name = "agri_land_per_bezos.tif",
-  file_type = "tif"
-)
+  )
 
 hii <- elsar_load_data(
   file_path = "data_orig",
-  file_name = "HF_Peru_SDG15_2021_30m.tif",
-  file_type = "tif"
-) |> 
+  file_name = "HF_Peru_SDG15_2021_30m.tif"
+  ) %>% 
   make_normalised_raster(
     pus = pu,
     method_override = "average",
@@ -157,9 +154,8 @@ ggplot()+
 degraded_areas <- elsar_load_data(
   file_path = "data_orig/07_Zonas_degradadas",
   file_name = "Zonas_degradadas.tif",
-  file_type = "tif",
   iso3 = iso3
-)
+  )
 
 degraded_areas <- make_normalised_raster(
   degraded_areas,
@@ -190,10 +186,9 @@ ggplot()+
 pa <- elsar_load_data(
   file_path = ".",
   file_name = national_data,
-  file_lyr = "ANPNacionalDefinitivas",
-  file_type = "gpkg"
-) |> 
-  st_make_valid() |>  
+  file_lyr = "ANPNacionalDefinitivas"
+  ) %>% 
+  st_make_valid() %>%  
   summarise() %>% 
   exactextractr::coverage_fraction(pu, y = .) %>%
   .[[1]] * pu
@@ -219,9 +214,8 @@ ggplot()+
 omec <- elsar_load_data(
   file_path = ".",
   file_name = national_data,
-  file_lyr = "OMEC",
-  file_type = "gpkg"
-) %>% 
+  file_lyr = "OMEC"
+  ) %>% 
   st_make_valid() %>% 
   summarise() %>% 
   exactextractr::coverage_fraction(pu, y = .) %>%
@@ -248,19 +242,17 @@ ggplot()+
 pa <- elsar_load_data(
   file_path = ".",
   file_name = national_data,
-  file_lyr = "ANPNacionalDefinitivas",
-  file_type = "gpkg"
-)
+  file_lyr = "ANPNacionalDefinitivas"
+  )
 
 omec <- elsar_load_data(
   file_path = ".",
   file_name = national_data,
-  file_lyr = "OMEC",
-  file_type = "gpkg"
-)
+  file_lyr = "OMEC"
+  )
 
-paoemc <- bind_rows(pa, regional_conservation, private_conservation, omec) |>
-  st_make_valid() |>
+paoemc <- bind_rows(pa, regional_conservation, private_conservation, omec) %>%
+  st_make_valid() %>%
   summarise() %>% 
   exactextractr::coverage_fraction(pu, y = .) %>%
   .[[1]] * pu
@@ -320,9 +312,8 @@ ggplot()+
 ```{r}
 hii <- elsar_load_data(
   file_path = "data_orig",
-  file_name = "HF_Peru_SDG15_2021_30m.tif",
-  file_type = "tif"
-)
+  file_name = "HF_Peru_SDG15_2021_30m.tif"
+  )
 
 hii <- make_normalised_raster(
   raster_in = hii,
@@ -352,10 +343,9 @@ ggplot() +
 agri_land <- elsar_load_data(
   file_path = ".",
   file_name = "national_data.gpkg",
-  file_type = "gpkg",
   file_lyr = "SAN_OFICIAL_03_02_21"
-  ) |>
-  st_make_valid() |>
+  ) %>%
+  st_make_valid() %>%
   summarise() %>% 
   exactextractr::coverage_fraction(pu, y = .) %>%
   .[[1]] * pu

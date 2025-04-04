@@ -59,7 +59,7 @@
 #'   pus = my_pus,
 #'   iso3 = "USA",
 #'   input_raster_conditional_expression = function(r) ifel(r %in% c(1:4, 7, 9), 1, 0)
-#' )
+#'   )
 #' }
 #'
 make_normalised_raster <- function(raster_in,
