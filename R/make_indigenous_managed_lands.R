@@ -99,18 +99,26 @@ make_indigenous_managed_lands <- function(
     icca <- sf::st_sfc(crs = sf::st_crs(pus))  # empty geometry
   }
 
-  # Combine LANDMark and ICCA into a single feature collection
-  indigenous_managed_lands <- sf::st_sf(geometry = c(landmark, icca)) %>%
-    sf::st_make_valid() %>%
-    dplyr::filter(!sf::st_is_empty(.)) %>%
-    dplyr::summarise()  # dissolve to one multipolygon
+  if ((inherits(landmark, "sf") && nrow(landmark) > 0) ||
+      (inherits(icca, "sf") && nrow(icca) > 0)) {
 
-  # Calculate fractional overlap with planning units
-  indigenous_managed_lands <- exactextractr::coverage_fraction(pus, indigenous_managed_lands)[[1]] %>%
-    elsar::make_normalised_raster(
-      pus = pus,
-      iso3 = iso3
-    )
+    # Combine LANDMark and ICCA into a single feature collection
+    indigenous_managed_lands <- sf::st_sf(geometry = c(landmark, icca)) %>%
+      sf::st_make_valid() %>%
+      dplyr::filter(!sf::st_is_empty(.)) %>%
+      dplyr::summarise()
+
+    # Calculate fractional overlap with planning units
+    indigenous_managed_lands <- exactextractr::coverage_fraction(pus, indigenous_managed_lands)[[1]] %>%
+      elsar::make_normalised_raster(
+        pus = pus,
+        iso3 = iso3
+      )
+
+  } else {
+    log_msg("No matching LANDMark or ICCA Registry features found in the study region: returning empty raster.")
+    indigenous_managed_lands <- terra::ifel(pus == 1, 0, NA)
+  }
 
   # Save to disk if path provided
   if (!is.null(output_path)) {

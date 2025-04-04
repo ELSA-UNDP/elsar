@@ -55,6 +55,7 @@
 <span>  area_calc_crs <span class="op">=</span> <span class="st">"ESRI:54009"</span>,</span>
 <span>  nQuadSegs <span class="op">=</span> <span class="fl">50</span>,</span>
 <span>  return_sf <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  force_update <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  <span class="va">pus</span>,</span>
 <span>  output_path <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -112,6 +113,10 @@
 <dd><p>logical. Allows to return <code>sf</code>object if needed. Default is FALSE.</p></dd>
 
 
+<dt id="arg-force-update">force_update<a class="anchor" aria-label="anchor" href="#arg-force-update"></a></dt>
+<dd><p>logical. Force downloading an update to the WDPA is a newer version is available. Default is FALSE.</p></dd>
+
+
 <dt id="arg-pus">pus<a class="anchor" aria-label="anchor" href="#arg-pus"></a></dt>
 <dd><p>A raster file that contains the reference spatial extent, crs etc.in form of the planning units.</p></dd>
 
@@ -145,7 +150,8 @@
 <span class="r-in"><span>  iso3 <span class="op">=</span> <span class="st">"NPL"</span>,</span></span>
 <span class="r-in"><span>  download_path <span class="op">=</span> <span class="fu">here</span><span class="fu">::</span><span class="fu"><a href="https://here.r-lib.org//reference/here.html" class="external-link">here</a></span><span class="op">(</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>  buffer_points <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
-<span class="r-in"><span>  pus <span class="op">=</span> <span class="va">pus</span></span></span>
+<span class="r-in"><span>  pus <span class="op">=</span> <span class="va">pus</span>,</span></span>
+<span class="r-in"><span>  force_update <span class="op">=</span> <span class="cn">TRUE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
