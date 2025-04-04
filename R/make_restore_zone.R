@@ -129,6 +129,7 @@ make_restore_zone <- function(
     built_areas <- built_areas_input
   } else {
     assert_that(!is.null(lulc_raster), msg = "When 'built_areas_input' is NULL, 'lulc_raster' must be provided.")
+    log_msg("Extracting built areas from LULC raster...")
     built_areas <- elsar::make_normalised_raster(
       raster_in = lulc_raster,
       pus = pus,

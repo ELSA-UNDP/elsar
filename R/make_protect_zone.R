@@ -80,6 +80,7 @@ make_protect_zone <- function(
     agricultural_areas <- agricultural_areas_input
   } else {
     assertthat::assert_that(!is.null(lulc_raster), msg = "If 'agricultural_areas_input' is NULL, 'lulc_raster' must be provided.")
+    log_msg("Extracting agricultural areas from LULC raster...")
     agricultural_areas <- elsar::make_normalised_raster(
       raster_in = lulc_raster,
       pus = pus,
@@ -96,6 +97,7 @@ make_protect_zone <- function(
     built_areas <- built_areas_input
   } else {
     assertthat::assert_that(!is.null(lulc_raster), msg = "If 'built_areas_input' is NULL, 'lulc_raster' must be provided.")
+    log_msg("Extracting built areas from LULC raster...")
     built_areas <-  elsar::make_normalised_raster(
       raster_in = lulc_raster,
       pus = pus,
