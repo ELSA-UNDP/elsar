@@ -14,10 +14,12 @@
 #' \dontrun{
 #' feature_list <- c("fml", "cropsuit", "fi")
 #'
-#' all_feats <- get_all_features(feature_list = feature_list,
-#'                               path_in = "<yourpath>",
-#'                               pus = pus,
-#'                               iso3 = "NPL")
+#' all_feats <- get_all_features(
+#'   feature_list = feature_list,
+#'   path_in = "<yourpath>",
+#'   pus = pus,
+#'   iso3 = "NPL"
+#'   )
 #' }
 get_all_features <- function (
     feature_list, # needs lyr info added in somewhere
@@ -38,8 +40,7 @@ get_all_features <- function (
       file_path = path_in)
 
     raster_fml <- elsar_load_data(
-      file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
-      file_type = list_dat["filetype"][[1]],
+      file_name = list_dat["filename"][[1]],
       file_path = path_in
       )
 
@@ -63,8 +64,7 @@ get_all_features <- function (
       )
 
     raster_cropsuit <- elsar_load_data(
-      file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
-      file_type = list_dat["filetype"][[1]],
+      file_name = list_dat["filename"][[1]],
       file_path = path_in
       )
 
@@ -87,8 +87,7 @@ get_all_features <- function (
                                           file_path = path_in)
 
     raster_dr <- elsar_load_data(
-      file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
-      file_type = list_dat["filetype"][[1]],
+      file_name = list_dat["filename"][[1]],
       file_path = path_in
       )
 
@@ -112,8 +111,7 @@ get_all_features <- function (
       )
 
     raster_flii <- elsar_load_data(
-      file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
-      file_type = list_dat["filetype"][[1]],
+      file_name = list_dat["filename"][[1]],
       file_path = path_in
       )
 
@@ -123,8 +121,7 @@ get_all_features <- function (
       )
 
     raster_fsii <- elsar_load_data(
-      file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
-      file_type = list_dat["filetype"][[1]],
+      file_name = list_dat["filename"][[1]],
       file_path = path_in
       )
 
@@ -147,8 +144,7 @@ get_all_features <- function (
       )
 
     raster_soc <- elsar_load_data(
-      file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
-      file_type = list_dat["filetype"][[1]],
+      file_name = list_dat["filename"][[1]],
       file_path = path_in
       )
 
@@ -172,8 +168,7 @@ get_all_features <- function (
       )
 
     raster_wad <- elsar_load_data(
-      file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
-      file_type = list_dat["filetype"][[1]],
+      file_name = list_dat["filename"][[1]],
       file_path = path_in
       )
 

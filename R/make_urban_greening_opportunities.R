@@ -20,8 +20,16 @@
 #'
 #' @examples
 #' \dontrun{
-#' ndvi <- elsar::elsar_load_data(file_path = ".", file_name = "ndvi.tif", file_type = "tiff")
-#' lulc <- elsar::elsar_load_data(file_path = ".", file_name = "lulc.tif", file_type = "tiff")
+#' ndvi <- elsar::elsar_load_data(
+#'   file_path = ".",
+#'   file_name = "ndvi.tif"
+#'   )
+#'
+#' lulc <- elsar::elsar_load_data(
+#'   file_path = ".",
+#'   file_name = "lulc.tif",
+#'   )
+#'
 #' sdei <- sf::read_sf("path_to_sdei_data.gpkg")
 #'
 #' result <- make_urban_greening_opportunities(

@@ -324,6 +324,115 @@ log_msg <- function(msg) {
   invisible(NULL)
 }
 
+#' Infer file type from file path or directory
+#'
+#' This utility function takes a path (to a file or folder) and returns the detected geospatial file type,
+#' such as `"shp"`, `"gpkg"`, `"tif"`, etc. It checks extensions for files and scans directory contents
+#' for recognizable formats (e.g., `.shp`, `.gdb`).
+#'
+#' @param path Character. A file path or directory path to inspect.
+#'
+#' @return A character string indicating the file type (e.g., `"shp"`, `"gpkg"`, `"tif"`).
+#' @export
+#'
+#' @examples
+#' get_file_type("data/boundaries.shp")     # returns "shp"
+#' get_file_type("data/vector_layers.gpkg") # returns "gpkg"
+#' get_file_type("data/rasters")            # scans folder for known formats
+get_file_type <- function(path) {
+  if (dir.exists(path)) {
+    # Check if path itself is a .gdb folder
+    if (grepl("\\.gdb$", path)) return("gdb")
+
+    # If path is a folder, scan inside it
+    files <- list.files(path, full.names = TRUE)
+    if (any(grepl("\\.shp$", files))) return("shp")
+
+    stop("Cannot determine file type from folder contents.")
+  }
+
+  # Otherwise, infer from file extension
+  ext <- tolower(tools::file_ext(path))
+  known_types <- c("shp", "gpkg", "geojson", "gdb", "tif", "tiff", "grd", "gri", "nc", "hdf")
+  if (ext %in% known_types) return(ext)
+
+  stop(glue::glue("Unsupported file extension: {ext}"))
+}
+
+#' Load and optionally filter a single vector layer
+#'
+#' This utility function wraps `sf::st_read()` to load a vector dataset (e.g., from GPKG, GDB, or SHP).
+#' It supports optional filtering by ISO3 country code and/or a spatial filter in WKT format.
+#' It automatically selects the first available layer if `layer_name` is not provided and the file type supports layers.
+#'
+#' @param file_path Character. Full file path to the vector dataset.
+#' @param iso3 Character or NULL. ISO3 country code used for attribute filtering.
+#' @param iso3_column Character or NULL. Column in the dataset to match `iso3`.
+#' @param layer_name Character or NULL. Optional. Specific layer name for multi-layer formats.
+#' @param drop3d Logical. If TRUE, drops Z and M dimensions from geometries.
+#' @param wkt_filter Character or NULL. Optional WKT string used for spatial filtering.
+#' @param file_type Character or NULL. File type used to determine if layer name inference is required.
+#'
+#' @return An `sf` object with valid geometry, or `NULL` on failure.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' filter_sf("data/layers.gpkg", iso3 = "KEN", iso3_column = "ISO3")
+#' filter_sf("data/boundary.shp", wkt_filter = "POLYGON((...))")
+#' }
+filter_sf <- function(file_path,
+                      iso3 = NULL,
+                      iso3_column = NULL,
+                      layer_name = NULL,
+                      drop3d = TRUE,
+                      wkt_filter = NULL,
+                      file_type = NULL) {
+
+  # If no layer name provided and the format supports layers, pick the first one
+  if (is.null(layer_name)) {
+    layer_info <- sf::st_layers(file_path)
+    layer_name <- layer_info$name[1]
+  }
+
+  # Build SQL query for attribute filtering if needed
+  query <- if (!is.null(iso3) && !is.null(iso3_column) && !is.null(layer_name)) {
+    log_msg(glue::glue("Building SQL query to filter layer {layer_name} by ISO3 code..."))
+    glue::glue("SELECT * FROM \"{layer_name}\" WHERE \"{iso3_column}\" = '{iso3}'")
+  } else NULL
+
+  if(!is.null(wkt_filter) && is.null(query)){
+  log_msg(glue::glue("Applying a spatial filter to the input data..."))
+  }
+
+  # Dynamically build st_read() call
+  dat <- tryCatch({
+    args <- list(dsn = file_path, quiet = TRUE)
+    if (!is.null(layer_name)) args$layer <- layer_name
+    if (!is.null(query)) args$query <- query
+    if (!is.null(wkt_filter)) args$wkt_filter <- wkt_filter
+    do.call(sf::st_read, args)
+  }, error = function(e) {
+    message("Failed to read layer: ", layer_name, " in file: ", file_path, "\nError: ", e$message)
+    return(NULL)
+  })
+
+  # Drop Z/M geometry dimensions if requested
+  if (!is.null(dat) && drop3d) {
+    log_msg("Dropping 3D geometries (if present)...")
+    dat <- sf::st_zm(dat, drop = TRUE, what = "ZM")
+  }
+
+  # Ensure geometry is valid
+  if (!is.null(dat)) {
+    log_msg("Repairing any geometry errors...")
+    dat <- sf::st_make_valid(dat)
+  }
+
+  return(dat)
+}
+
+
 
 
 

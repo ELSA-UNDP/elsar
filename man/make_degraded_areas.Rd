@@ -44,5 +44,13 @@ agriculture, built-up areas, human influence index (HII), and productivity decli
 The output is a raster identifying degraded areas according to set thresholds.
 }
 \examples{
-restore_zone <- make_degraded_areas("CHL", pu, sdg_degradation_input, hii_input, agriculture_input, built_areas_input, output_path = "./output")
+restore_zone <- make_degraded_areas(
+  "CHL",
+  pu,
+  sdg_degradation_input,
+  hii_input,
+  agriculture_input,
+  built_areas_input,
+  output_path = "./output"
+  )
 }
