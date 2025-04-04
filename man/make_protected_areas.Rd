@@ -17,6 +17,7 @@ make_protected_areas(
   area_calc_crs = "ESRI:54009",
   nQuadSegs = 50,
   return_sf = TRUE,
+  force_update = FALSE,
   pus,
   output_path = NULL
 )
@@ -45,6 +46,8 @@ make_protected_areas(
 \item{nQuadSegs}{An integer specifying the number of segments to use for buffering. Default is 50.}
 
 \item{return_sf}{logical. Allows to return \code{sf}object if needed. Default is FALSE.}
+
+\item{force_update}{logical. Force downloading an update to the WDPA is a newer version is available. Default is FALSE.}
 
 \item{pus}{A raster file that contains the reference spatial extent, crs etc.in form of the planning units.}
 
@@ -75,7 +78,8 @@ current_pas <- make_protected_areas(
   iso3 = "NPL",
   download_path = here::here(),
   buffer_points = TRUE,
-  pus = pus
+  pus = pus,
+  force_update = TRUE
 )
 }
 }

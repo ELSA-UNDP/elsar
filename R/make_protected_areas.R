@@ -12,6 +12,7 @@
 #' @param area_calc_crs Character. CRS used for buffering operation (default: `"ESRI:54009"` = World Mollweide).
 #' @param nQuadSegs An integer specifying the number of segments to use for buffering. Default is 50.
 #' @param return_sf logical. Allows to return `sf`object if needed. Default is FALSE.
+#' @param force_update logical. Force downloading an update to the WDPA is a newer version is available. Default is FALSE.
 #' @param pus A raster file that contains the reference spatial extent, crs etc.in form of the planning units.
 #' @param output_path An optional output path for the created file.
 #'
@@ -37,7 +38,8 @@
 #'   iso3 = "NPL",
 #'   download_path = here::here(),
 #'   buffer_points = TRUE,
-#'   pus = pus
+#'   pus = pus,
+#'   force_update = TRUE
 #' )
 #' }
 make_protected_areas <- function(from_wdpa = TRUE,
@@ -52,6 +54,7 @@ make_protected_areas <- function(from_wdpa = TRUE,
                                  area_calc_crs = "ESRI:54009",
                                  nQuadSegs = 50,
                                  return_sf = TRUE,
+                                 force_update = FALSE,
                                  pus,
                                  output_path = NULL) {
   # Load data from WDPA subdirectory in input_dir (either with wdpar package or locally saved: load outside and then put sf_in here)
@@ -59,12 +62,13 @@ make_protected_areas <- function(from_wdpa = TRUE,
   if (!dir.exists(wdpa_dir)) dir.create(wdpa_dir)
 
   if (from_wdpa == TRUE) {
-    log_msg("Downloading from Protected Planet using the wdpar package; any existing versions of the WPDA will be updated if a newer version is available")
+    log_msg("Downloading from Protected Planet using the wdpar package; any existing versions of the WPDA will be updated if a newer version is available if you set `force_update = TRUE`")
 
     protected_areas <- wdpar::wdpa_fetch(
       iso3,
       wait = TRUE,
       check_version = TRUE,
+      force_download = force_update,
       download_dir = wdpa_dir
     )
   } else {
@@ -76,7 +80,8 @@ make_protected_areas <- function(from_wdpa = TRUE,
     all(pa_def %in% c(0, 1))
   )
 
-  log_msg(glue::glue("Including {status} areas only"))
+  log_msg(glue::glue("Including {glue::glue_collapse(status, sep = ', ', last = ' and ')} areas only"))
+
   protected_areas <- protected_areas %>%
     dplyr::filter(
       .data$STATUS %in% status,
