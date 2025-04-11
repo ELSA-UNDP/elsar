@@ -107,7 +107,7 @@ make_urban_greening_opportunities <- function(
       log_msg("No urban extreme heat `avg_intense` values to rasterise: returning empty raster.")
       urban_extreme_heat <- terra::ifel(pus == 1, 0, NA)
     } else {
-      urban_extreme_heat <- elsar::exact_rasterise(
+      urban_extreme_heat <- exact_rasterise(
         attribute = "avg_intens",
         features = urban_extreme_heat,
         pus = pus,
