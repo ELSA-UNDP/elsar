@@ -35,7 +35,7 @@ rescale_raster <- function(
 #' @param append_original_polygons Logical. If `TRUE`, appends original polygons to buffered features (default: `TRUE`).
 #' @param area_multiplier Numeric. Multiplier applied to the area attribute to convert units (e.g., `1e4` for hectares to m²).
 #'
-#' @return An `sf` object containing polygon features (either buffered points, original polygons, or both).
+#' @return An `sf` object containing polygon features (either buffered points, original polygons, or both). The `sf` object can be empty.
 #' If no valid features are found, returns `NULL`.
 #' @export
 #'
@@ -103,13 +103,15 @@ convert_points_polygon <- function(
     } else if (nrow(polygons_with_area) > 0 && !exists("points_buffered", inherits = FALSE)) {
       return(polygons_with_area)
     } else {
-      return(NULL)
+      warning("No valid point or polygon features found with area attributes. Returning an empty sf object.")
+      return(sf_layer[0, ])
     }
   } else {
     if (exists("points_buffered", inherits = FALSE)) {
       return(points_buffered)
     } else {
-      return(NULL)
+      warning("No point features matched the criteria. Returning an empty sf object.")
+      return(sf_layer[0, ])
     }
   }
 }
