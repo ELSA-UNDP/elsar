@@ -12,7 +12,7 @@
 #' @param method_override `character` Optional method for `terra::project()`, overriding the default (default: `NULL`).
 #' @param input_raster_conditional_expression `function` Optional method to apply a function to the raster before resampling to the PU layer (default: `NULL`).
 #' @param conditional_expression `function` Optional method to apply a function to the raster after resampling to the PU layer (default: `NULL`).
-#' @param fill_na `logical` If `TRUE`, fills `NA` values with 0 before masking (default: `TRUE`).
+#' @param fill_na `numeric` or `NA` The fill value to use to fill in `NA` values before masking (default: 0).
 #' @param name_out `character` The name of the output raster file (without the extension).
 #' @param output_path `character` The directory path to save the output raster (default: `NULL`, i.e., not saved).
 #' @param threads Optional method to use multi-core processing - to speed on some `terra` functions (default: `TRUE`).
@@ -70,7 +70,7 @@ make_normalised_raster <- function(raster_in,
                                    method_override = NULL,
                                    input_raster_conditional_expression = NULL,
                                    conditional_expression = NULL,
-                                   fill_na = TRUE,
+                                   fill_na = 0,
                                    name_out,
                                    output_path = NULL,
                                    threads = TRUE) {
@@ -139,8 +139,8 @@ make_normalised_raster <- function(raster_in,
     }
 
     # Fill in NA background values before masking
-    if (fill_na) {
-      dat_aligned[is.na(dat_aligned)] <- 0
+    if (!is.null(fill_na)) {
+      dat_aligned[is.na(dat_aligned)] <- fill_na
       dat_aligned <- dat_aligned  %>%
         terra::mask(pus, maskvalues = 0) # Mask areas outside of planning units
     }

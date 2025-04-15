@@ -164,7 +164,7 @@ elsar_download_esri_lulc_data <- function(
         fileNamePrefix = file_name,
         scale = 10,
         region = ee_bounding_box$getInfo()[["coordinates"]],
-        maxPixels = 1e13,
+        maxPixels = reticulate::r_to_py(1e13), #1e13, #changed to int64 here
         fileFormat = "GeoTIFF"
       )
       task$start()
