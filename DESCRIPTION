@@ -40,6 +40,7 @@ Depends:
     R (>= 3.5.0)
 Imports: 
     assertthat,
+    bit64,
     dplyr,
     exactextractr,
     ggnewscale,

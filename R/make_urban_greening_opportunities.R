@@ -75,6 +75,8 @@ make_urban_greening_opportunities <- function(
     input_raster_conditional_expression = function(x) terra::ifel(x == 7, 1, 0)
   )
 
+  names(urban_areas) <- "built_areas"
+
   # Rasterize extreme heat exposure from SDEI statistics for urban areas
   log_msg("Processing SDEI urban heat exposure statistics...")
 
@@ -107,7 +109,7 @@ make_urban_greening_opportunities <- function(
       log_msg("No urban extreme heat `avg_intense` values to rasterise: returning empty raster.")
       urban_extreme_heat <- terra::ifel(pus == 1, 0, NA)
     } else {
-      urban_extreme_heat <- elsar::exact_rasterise(
+      urban_extreme_heat <- exact_rasterise(
         attribute = "avg_intens",
         features = urban_extreme_heat,
         pus = pus,
@@ -122,6 +124,8 @@ make_urban_greening_opportunities <- function(
   log_msg("Combining NDVI, heat, and urban layers to generate urban greening opportunities...")
   urban_greening_opportunities <- ((rev_ndvi + urban_extreme_heat) / 2 * urban_areas) %>%
     elsar::make_normalised_raster(pus = pus, iso3 = iso3)
+
+  names(urban_greening_opportunities) <- "urban_greening_opportunities"
 
   # Optionally write to file
   if (!is.null(output_path)) {

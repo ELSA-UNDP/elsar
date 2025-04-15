@@ -251,7 +251,7 @@ exact_rasterise <- function(
     # Single feature: get coverage fraction directly.
     log_msg(glue::glue("Calculating weighted coverage fraction using a single feature..."))
     r_stack <- exactextractr::coverage_fraction(pus, features)[[1]]
-    r_stack <- r_stack * attr_val
+    r_stack <- r_stack * dplyr::pull(features, attribute)
   }
 
   # Normalise the final result
