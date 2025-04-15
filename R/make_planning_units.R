@@ -1,12 +1,12 @@
 #' Function to create planning units and custom projection
 #'
-#' This function creates planning units for a spatial prioritisation problem in a raster format. It also creates a custom projection (`wkt` file) centred on the planning region based on the Mollweide projection.
+#' This function creates planning units for a spatial prioritisation problem in a raster format.
 #'
 #' @param boundary_proj A `sf`object representing the boundary of the planning region in the preferred projection. Preferably generated with [make_boundary()]
 #' @param pu_size A way to define a custom planning unit size. Can be NULL to use default settings that generate planning units as small as possible whilst still being computationally efficient.
 #' @param pu_threshold An integer value that gives a maximum number of PUs. The default (`8.5e5`) is set based on `prioritizr` processing time, network transfer time and solver time.
-#' @param limit_to_mainland A logical that determines whether planning units should only be created for mainland area (`FALSE`; default) or not (`TRUE`)
-#' @param iso3 The iso3 country code (character) of the country of interest.
+#' @param limit_to_mainland A logical that determines whether planning units should only be created for mainland area (`FALSE`; default) or not (`TRUE`).
+#' @param iso3 The `ISO3` country code (character) of the country of interest.
 #' @param output_path An optional output path for the created file.
 #'
 #' @return A raster (`.tif`) file with the planning unit information for the chosen planning region.
@@ -16,14 +16,15 @@
 #' boundary_proj <- make_boundary(
 #'   boundary_in = boundary_dat,
 #'   iso3 = "NPL",
-#'   iso3_column = "iso3cd",
-#'   do_project = TRUE
-#' )
+#'   iso3_column = "iso3cd"
+#'   )
 #'
-#' pus <- make_planning_units(boundary_proj = boundary_proj,
-#'                            pu_size = NULL,
-#'                            pu_threshold = 8.5e5,
-#'                            limit_to_mainland = FALSE)
+#' pus <- make_planning_units(
+#'   boundary_proj = boundary_proj,
+#'   pu_size = NULL,
+#'   pu_threshold = 8.5e5,
+#'   limit_to_mainland = FALSE
+#'   )
 make_planning_units <- function(boundary_proj,
                                 pu_size = NULL,
                                 pu_threshold = 8.5e5,
@@ -61,7 +62,7 @@ make_planning_units <- function(boundary_proj,
       )
 
       pu_sum <- terra::global(r1, sum, na.rm = TRUE) # calculate the # of PUs to check if we're below the given threshold yet
-      print(paste0("The current number of planning units is: ", as.integer(pu_sum)))
+      log_msg(glue::glue("The current number of planning units is: {as.integer(pu_sum)}"))
     }
   } else {
     rasterMask <- terra::rast( # create a raster with the current PU size, the new crs and the spatial extent of the data
@@ -79,19 +80,27 @@ make_planning_units <- function(boundary_proj,
     pu_sum <- terra::global(r1, sum, na.rm = TRUE)
 
     if (pu_sum > pu_threshold) {
-      message(paste0("Your current number of planning units (", pu_sum, ") is above our recommended threshold of ", pu_threshold, ". Consider increasing the input pu_size."))
+      log_msg(glue::glue("Your current number of planning units ({pu_sum}) is above our recommended threshold of {pu_threshold}. Consider increasing the input pu_size."))
     }
   }
 
+  names(r1) <- "Planning Units"
+
   if (!is.null(output_path)) {
-     terra::writeRaster(r1,
-    glue::glue("{output_path}/planning_units_{iso3}.tif"),
-    gdal = c("COMPRESS=DEFLATE", "OVERVIEWS=NONE"),
-    NAflag = -9999,
-    overwrite = TRUE,
-    filetype = "COG" # ,
-    # datatype = "INT1U"
-  )
+    terra::writeRaster(
+      r1,
+      filename = glue::glue("{output_path}/planning_units_{iso3}.tif"),
+      filetype = "COG",
+      datatype = "INT1U",
+      gdal = c(
+        "COMPRESS=ZSTD",
+        "NUM_THREADS=4",
+        "OVERVIEWS=NONE",
+        "PREDICTOR=1"
+        ),
+      NAflag = 255,
+      overwrite = TRUE,
+      )
   }
 
   return(r1)

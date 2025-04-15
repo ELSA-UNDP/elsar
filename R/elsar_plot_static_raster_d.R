@@ -23,8 +23,7 @@
 #' boundary_proj <- make_boundary(
 #'   boundary_in = boundary_dat,
 #'   iso3 = "NPL",
-#'   iso3_column = "iso3cd",
-#'   do_project = TRUE
+#'   iso3_column = "iso3cd"
 #' )
 #'
 #' pus <- make_planning_units(
@@ -93,7 +92,8 @@ elsar_plot_static_raster_d <- function(raster_in,
 
     raster_cat <- elsar_continuous_to_categorical(
       raster_in = raster_in,
-      data_layer = data_layer, number_categories = number_categories
+      data_layer = data_layer,
+      number_categories = number_categories
     )
 
     # hist_breaks <- raster_cat[[2]] #currently not needed, but might be needed later

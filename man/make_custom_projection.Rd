@@ -7,8 +7,8 @@
 make_custom_projection(
   boundary,
   output_path = NULL,
-  iso3_column = "iso_sov1",
-  iso3
+  iso3_column = "iso3cd",
+  iso3 = NULL
 )
 }
 \arguments{

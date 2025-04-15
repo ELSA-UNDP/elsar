@@ -18,13 +18,13 @@
 #' wkt <- make_custom_projection(boundary = boundary, iso3 = "NPL")
 make_custom_projection <- function(boundary,
                                    output_path = NULL,
-                                   iso3_column = "iso_sov1",
-                                   iso3) {
+                                   iso3_column = "iso3cd",
+                                   iso3 = NULL) {
   xmid <- mean(c(sf::st_bbox(boundary)$xmin, sf::st_bbox(boundary)$xmax))
   ymid <- mean(c(sf::st_bbox(boundary)$ymin, sf::st_bbox(boundary)$ymax))
 
   # Create WKT projection string
-  wkt <- glue::glue('PROJCS["Mollweide_Custom_{iso3}",GEOGCS["GCS_unknown",
+  wkt <- glue::glue('PROJCS["Mollweide_{iso3}",GEOGCS["GCS_unknown",
                   DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,
                   AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],
                   PRIMEM["Greenwich",0],UNIT["Degree",0.0174532925199433]],
@@ -35,7 +35,7 @@ make_custom_projection <- function(boundary,
   # note: for marine it's not this straight forward if EEZ goes across date line
 
   if (!is.null(output_path)) {
-    writeLines(wkt, glue::glue("{output_path}/{tolower(iso3)}_proj.wkt")) # save wkt
+    writeLines(wkt, glue::glue("{output_path}/Mollweide_{toupper(iso3)}.wkt")) # save wkt
   }
 
   return(wkt)

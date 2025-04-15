@@ -20,10 +20,13 @@
 #'   port = 5432,
 #'   user = 'myuser',
 #'   password = 'mypassword'
-#' )
+#'   )
 #'
 #' # Use the connection dictionary in other functions
-#' load_data(file_name = 'mytable', file_type = 'postgres', db_info = connection_dict)
+#' elsar_load_data(
+#'   file_name = 'postgres',
+#'   db_info = connection_dict
+#'   )
 #' }
 make_postgres_connection <- function(host = "localhost",
                                      dbname,
