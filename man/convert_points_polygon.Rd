@@ -27,7 +27,7 @@ convert_points_polygon(
 \item{area_multiplier}{Numeric. Multiplier applied to the area attribute to convert units (e.g., \code{1e4} for hectares to m²).}
 }
 \value{
-An \code{sf} object containing polygon features (either buffered points, original polygons, or both).
+An \code{sf} object containing polygon features (either buffered points, original polygons, or both). The \code{sf} object can be empty.
 If no valid features are found, returns \code{NULL}.
 }
 \description{

@@ -14,30 +14,30 @@ make_indigenous_managed_lands(
 )
 }
 \arguments{
-\item{sf_landmark}{sf or NULL. Indigenous and community lands from the LANDMark dataset. Must be subset to the target country.}
+\item{sf_landmark}{sf or NULL. LANDMark Indigenous lands dataset, subset to the country of interest.}
 
-\item{sf_icca}{sf or NULL. ICCA Registry features. Must be subset to the target country.}
+\item{sf_icca}{sf or NULL. ICCA Registry dataset, subset to the country of interest.}
 
-\item{iso3}{Character. ISO3 country code used for output naming.}
+\item{iso3}{Character. ISO3 country code for naming.}
 
-\item{pus}{SpatRaster. Raster of planning units for alignment and coverage calculations.}
+\item{pus}{SpatRaster. Planning unit raster for alignment and coverage calculations.}
 
-\item{buffer_points}{Logical. Whether to buffer POINT/MULTIPOINT geometries to create polygon representations. Default is TRUE.}
+\item{buffer_points}{Logical. Buffer POINT/MULTIPOINT geometries into polygons (default = TRUE).}
 
-\item{output_path}{Character or NULL. Directory to save the final raster as a Cloud Optimized GeoTIFF (COG). If NULL, the file is not written to disk.}
+\item{output_path}{Character or NULL. If provided, saves output raster as a COG to this directory.}
 }
 \value{
 A binary \code{SpatRaster} where:
 \itemize{
-\item \code{1} = area is considered Indigenous-managed (based on coverage)
-\item \code{0} = area is not Indigenous-managed
+\item \code{1} = likely Indigenous-managed
+\item \code{0} = not Indigenous-managed
 }
 }
 \description{
 This function identifies Indigenous- and community-managed lands using two datasets:
-the LANDMark dataset and the ICCA Registry. It buffers point geometries (if required),
-combines them, calculates their fractional coverage over a planning unit raster,
-applies a threshold, and returns a binary raster indicating likely Indigenous management presence.
+the LANDMark dataset and the ICCA Registry. It buffers point geometries if required,
+merges both sources, calculates fractional coverage over planning units, applies a threshold,
+and returns a binary raster indicating areas likely under Indigenous management.
 }
 \examples{
 \dontrun{

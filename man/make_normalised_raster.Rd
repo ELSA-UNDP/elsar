@@ -13,7 +13,7 @@ make_normalised_raster(
   method_override = NULL,
   input_raster_conditional_expression = NULL,
   conditional_expression = NULL,
-  fill_na = TRUE,
+  fill_na = 0,
   name_out,
   output_path = NULL,
   threads = TRUE
@@ -36,7 +36,7 @@ make_normalised_raster(
 
 \item{conditional_expression}{\code{function} Optional method to apply a function to the raster after resampling to the PU layer (default: \code{NULL}).}
 
-\item{fill_na}{\code{logical} If \code{TRUE}, fills \code{NA} values with 0 before masking (default: \code{TRUE}).}
+\item{fill_na}{\code{numeric} or \code{NA} The fill value to use to fill in \code{NA} values before masking (default: 0).}
 
 \item{name_out}{\code{character} The name of the output raster file (without the extension).}
 

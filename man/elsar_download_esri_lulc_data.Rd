@@ -10,7 +10,8 @@ elsar_download_esri_lulc_data(
   output_dir = here::here(),
   lulc_data_source = "projects/sat-io/open-datasets/landcover/ESRI_Global-LULC_10m_TS",
   gee_project = "unbl-misc",
-  googledrive_folder = "gee_exports"
+  googledrive_folder = "gee_exports",
+  wait_time = 5
 )
 }
 \arguments{
@@ -27,6 +28,9 @@ Defaults to the ESRI 10m LULC dataset.}
 \item{gee_project}{A string specifying the GEE cloud project; default to \code{unbl-misc}. You must be a member of the project.}
 
 \item{googledrive_folder}{A string specifying the folder in Google Drive that GEE exports will go to, or where files will be searched for. Default to \code{gee_exports}. This folder will be created if if does not exist.}
+
+\item{wait_time}{A integer indicating the amount of time to wait for GEE exports to finish before the function stops gracefully.
+Defaults to 5 (minutes).}
 }
 \value{
 A Cloud-Optimized GeoTIFF file stored in the specified output directory.

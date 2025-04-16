@@ -13,6 +13,8 @@
 #'                         Defaults to the ESRI 10m LULC dataset.
 #' @param gee_project A string specifying the GEE cloud project; default to `unbl-misc`. You must be a member of the project.
 #' @param googledrive_folder A string specifying the folder in Google Drive that GEE exports will go to, or where files will be searched for. Default to `gee_exports`. This folder will be created if if does not exist.
+#' @param wait_time A integer indicating the amount of time to wait for GEE exports to finish before the function stops gracefully.
+#'                  Defaults to 5 (minutes).
 #'
 #' @return A Cloud-Optimized GeoTIFF file stored in the specified output directory.
 #' @export
@@ -29,7 +31,8 @@ elsar_download_esri_lulc_data <- function(
     output_dir = here::here(),
     lulc_data_source = "projects/sat-io/open-datasets/landcover/ESRI_Global-LULC_10m_TS",
     gee_project = "unbl-misc",
-    googledrive_folder = 'gee_exports') {
+    googledrive_folder = 'gee_exports',
+    wait_time = 5) {
 
   if (!requireNamespace("googledrive", quietly = TRUE)) {
     stop("Package 'googledrive' is required but not installed.")
@@ -40,6 +43,10 @@ elsar_download_esri_lulc_data <- function(
   }
 
   assertthat::assert_that(inherits(boundary_layer, "sf"), msg = "boundary_layer must be an sf object")
+  assertthat::assert_that(
+    is.numeric(wait_time) && length(wait_time) == 1 && wait_time %% 1 == 0,
+    msg = "wait_time must be a single whole number (integer or numeric)"
+  )
 
   temp_dir <- file.path(Sys.getenv("HOME"), glue::glue("{googledrive_folder}_{Sys.getpid()}"))
   dir.create(temp_dir, showWarnings = FALSE)
@@ -182,7 +189,7 @@ elsar_download_esri_lulc_data <- function(
         break
       }
 
-      if (difftime(Sys.time(), start_time, units = "mins") > 5) {
+      if (difftime(Sys.time(), start_time, units = "mins") > wait_time) {
         stop("Timeout: No files available after 5 minutes, so this process is stopping gracefully...\nThis is NOT unexpected as GEE exports can take time. Generally, the larger the area to export, the longer is will take; try running again later...\nYou can also check the status of exports via the GEE web console.")
       }
 
