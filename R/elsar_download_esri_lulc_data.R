@@ -190,7 +190,12 @@ elsar_download_esri_lulc_data <- function(
       }
 
       if (difftime(Sys.time(), start_time, units = "mins") > wait_time) {
-        stop("Timeout: No files available after 5 minutes, so this process is stopping gracefully...\nThis is NOT unexpected as GEE exports can take time. Generally, the larger the area to export, the longer is will take; try running again later...\nYou can also check the status of exports via the GEE web console.")
+        stop(glue::glue(
+          "Timeout: No files are yet available for download after {as.integer(wait_time)} minutes, so this process is stopping gracefully...\n",
+          "This is NOT unexpected as GEE exports can take time. Generally, the larger the area to export, the longer it will take.\n",
+          "You can check the status of exports via the GEE web console.\n",
+          "Please try running again later...")
+          )
       }
 
       log_msg("File not yet available, waiting 30 seconds before re-trying...")
