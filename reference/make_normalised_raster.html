@@ -57,7 +57,7 @@ raster to a specified output path.</p>
 <span>  method_override <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  input_raster_conditional_expression <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  conditional_expression <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  fill_na <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  fill_na <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  <span class="va">name_out</span>,</span>
 <span>  output_path <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  threads <span class="op">=</span> <span class="cn">TRUE</span></span>
@@ -101,7 +101,7 @@ raster to a specified output path.</p>
 
 
 <dt id="arg-fill-na">fill_na<a class="anchor" aria-label="anchor" href="#arg-fill-na"></a></dt>
-<dd><p><code>logical</code> If <code>TRUE</code>, fills <code>NA</code> values with 0 before masking (default: <code>TRUE</code>).</p></dd>
+<dd><p><code>numeric</code> or <code>NA</code> The fill value to use to fill in <code>NA</code> values before masking (default: 0).</p></dd>
 
 
 <dt id="arg-name-out">name_out<a class="anchor" aria-label="anchor" href="#arg-name-out"></a></dt>
