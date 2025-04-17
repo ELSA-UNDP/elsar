@@ -87,14 +87,17 @@ get_iucn_ecosystems <- function(
   pus_bbox_wgs <- sf::st_transform(pus_bbox, crs = "EPSG:4326") %>%
     terra::vect()
 
+  # Conditionally split boundary
+  pus_bbox_wgs <- conditionally_subdivide_bbox(bbox_sf = pus_bbox_wgs)
+
   log_msg("Reading, reprojecting, and intersecting IUCN GET ecosystem layers...")
   iucn_list <- lapply(all_files, function(file) {
     v <- terra::vect(file, extent = pus_bbox_wgs)
     if (NROW(v) == 0) return(NULL)
+      v <- terra::intersect(v, terra::project(terra::vect(boundary_layer), terra::crs(v)))
+      # Reproject if needed
 
-    # Intersect and reproject
-    v <- terra::intersect(v, terra::project(terra::vect(boundary_layer), terra::crs(v)))
-    if (terra::crs(v) != terra::crs(pus)) {
+      if (terra::crs(v) != terra::crs(pus)) {
       v <- terra::project(v, terra::crs(pus))
     }
 
@@ -102,8 +105,12 @@ get_iucn_ecosystems <- function(
     layer_id <- gsub("_", ".", gsub("_v.*$", "", tools::file_path_sans_ext(basename(file))))
     v$id <- layer_id
 
+    log_msg(glue::glue("Intersection with IUCN GET features with ID {layer_id} completed."))
+
     return(v)
   })
+
+  log_msg(glue::glue("Finished intersecting IUCN GET features in {iso3}. Checking for any NULL features..."))
 
   iucn_list <- Filter(NROW, iucn_list)
 
