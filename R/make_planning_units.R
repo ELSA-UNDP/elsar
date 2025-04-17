@@ -61,7 +61,7 @@ make_planning_units <- function(boundary_proj,
   }
 
   if (is.null(pu_size)) {
-    log_msg(glue::glue("pu_size not provided: estimating size to target ≤ {pu_threshold} PUs (allowing {round(pu_tolerance * 100, 0)}% tolerance)."))
+    log_msg(glue::glue("pu_size not provided: estimating size to target <= {pu_threshold} PUs (allowing {round(pu_tolerance * 100, 0)}% tolerance)."))
 
     # Estimate starting size from area
     area_km2 <- units::drop_units(sf::st_area(boundary_proj)) / 1e6
