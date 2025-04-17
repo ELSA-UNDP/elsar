@@ -80,8 +80,12 @@
 <span class="r-in"><span>  pu_threshold <span class="op">=</span> <span class="fl">8.5e5</span>,</span></span>
 <span class="r-in"><span>  limit_to_mainland <span class="op">=</span> <span class="cn">FALSE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> [2025-04-16 23:18] With a resolution of 450 m, the current number of planning units is: 741036</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> [2025-04-16 23:18] Created a planning unit layer with 741036 PUs and a resolution of 450 m.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> [2025-04-17 08:03] pu_size not provided: estimating size to target ≤ 850000 PUs (allowing 5% tolerance).</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> [2025-04-17 08:03] Iteration 1: 741036 PUs at resolution 450 m</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> [2025-04-17 08:03] Iteration 2: 830662 PUs at resolution 425 m</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> [2025-04-17 08:03] Iteration 3: 937494 PUs at resolution 400 m</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> [2025-04-17 08:03] Exceeded soft threshold (892500); using best previous result.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> [2025-04-17 08:03] Final PU layer: 830662 PUs at 425 m resolution.</span>
 <span class="r-in"><span><span class="va">wad_dat</span> <span class="op">&lt;-</span> <span class="fu"><a href="wad_subset.html">get_wad_data</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">wadOut</span> <span class="op">&lt;-</span> <span class="fu"><a href="make_normalised_raster.html">make_normalised_raster</a></span><span class="op">(</span></span></span>
