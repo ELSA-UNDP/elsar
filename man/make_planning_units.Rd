@@ -2,47 +2,52 @@
 % Please edit documentation in R/make_planning_units.R
 \name{make_planning_units}
 \alias{make_planning_units}
-\title{Function to create planning units and custom projection}
+\title{Create a Planning Units Raster}
 \usage{
 make_planning_units(
   boundary_proj,
   pu_size = NULL,
   pu_threshold = 850000,
+  pu_tolerance = 0.05,
   limit_to_mainland = FALSE,
   iso3,
   output_path = NULL
 )
 }
 \arguments{
-\item{boundary_proj}{A \code{sf}object representing the boundary of the planning region in the preferred projection. Preferably generated with \code{\link[=make_boundary]{make_boundary()}}}
+\item{boundary_proj}{A projected \code{sf} object representing the boundary of the planning region.
+Must be in a projected CRS with linear units (typically meters). Use \code{\link[=make_boundary]{make_boundary()}} to generate this.}
 
-\item{pu_size}{A way to define a custom planning unit size. Can be NULL to use default settings that generate planning units as small as possible whilst still being computationally efficient.}
+\item{pu_size}{Optional numeric. Length in meters of each square planning unit. If \code{NULL}, the function
+estimates a size that keeps the total number of PUs under \code{pu_threshold}.}
 
-\item{pu_threshold}{An integer value that gives a maximum number of PUs. The default (\code{8.5e5}) is set based on \code{prioritizr} processing time, network transfer time and solver time.}
+\item{pu_threshold}{Numeric. Maximum number of planning units allowed (default is 850,000).
+A soft threshold of \code{pu_threshold * (1 + pu_tolerance)} is used during optimization.}
 
-\item{limit_to_mainland}{A logical that determines whether planning units should only be created for mainland area (\code{FALSE}; default) or not (\code{TRUE}).}
+\item{pu_tolerance}{Numeric. Fractional tolerance (default is \code{0.05}, or 5\%) above \code{pu_threshold} allowed
+when estimating PU size automatically.}
 
-\item{iso3}{The \code{ISO3} country code (character) of the country of interest.}
+\item{limit_to_mainland}{Logical. Reserved for future use. If \code{TRUE}, limits planning units to mainland regions only.}
 
-\item{output_path}{An optional output path for the created file.}
+\item{iso3}{Character. ISO3 country code used to name the output raster (e.g., "KEN", "BRA").}
+
+\item{output_path}{Optional character. Directory path to save the resulting raster. If \code{NULL}, the raster is not saved.}
 }
 \value{
-A raster (\code{.tif}) file with the planning unit information for the chosen planning region.
+A single-layer \code{SpatRaster} object from the \code{terra} package. All non-zero cells represent valid planning units.
 }
 \description{
-This function creates planning units for a spatial prioritisation problem in a raster format.
+Generates a planning units (PUs) raster for spatial prioritization using a user-defined boundary.
+If \code{pu_size} is not provided, the function automatically estimates an appropriate resolution (in meters)
+that keeps the number of planning units under the specified threshold (\code{pu_threshold}), while allowing a configurable
+tolerance (default 5\%). The finest resolution meeting this constraint is selected using adaptive increments
+and clean rounding steps. The result can optionally be saved as a Cloud Optimized GeoTIFF (.tif).
 }
 \examples{
-boundary_proj <- make_boundary(
-  boundary_in = boundary_dat,
-  iso3 = "NPL",
-  iso3_column = "iso3cd"
-  )
+# Automatically estimate PU size to stay under 850,000 PUs
+boundary_proj <- make_boundary(boundary_in = boundary_data, iso3 = "ZMB", iso3_column = "iso3cd")
+pu_raster <- make_planning_units(boundary_proj, iso3 = "ZMB")
 
-pus <- make_planning_units(
-  boundary_proj = boundary_proj,
-  pu_size = NULL,
-  pu_threshold = 8.5e5,
-  limit_to_mainland = FALSE
-  )
+# Use a fixed PU size (e.g., 250 meters)
+pu_raster <- make_planning_units(boundary_proj, pu_size = 250, iso3 = "ZMB")
 }
