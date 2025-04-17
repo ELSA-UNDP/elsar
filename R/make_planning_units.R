@@ -41,7 +41,9 @@ make_planning_units <- function(boundary_proj,
 
   # Clean rounding of PU sizes
   round_clean <- function(x) {
-    if (x < 250) {
+    if (x < 50 ) {
+      plyr::round_any(x, 5, ceiling)
+    } else if (x < 250) {
       plyr::round_any(x, 25, ceiling)
     } else if (x < 800) {
       plyr::round_any(x, 50, ceiling)
@@ -52,6 +54,7 @@ make_planning_units <- function(boundary_proj,
 
   # Adaptive increment based on PU size
   get_increment <- function(size) {
+    if (size < 50) return(10)
     if (size < 500) return(25)
     if (size < 800) return(50)
     return(100)
@@ -67,7 +70,7 @@ make_planning_units <- function(boundary_proj,
 
     iter <- 0
     max_iter <- 30
-    min_pu_size <- 50
+    min_pu_size <- 10
 
     best_r1 <- NULL
     best_pu_sum <- Inf
