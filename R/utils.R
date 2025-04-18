@@ -462,7 +462,7 @@ filter_sf <- function(file_path,
 #' @export
 split_bbox_into_tiles <- function(bbox_sf, ncols = 2, nrows = 2) {
   # Get bounding box coordinates
-  bbox <- st_bbox(bbox_sf)
+  bbox <- sf::st_bbox(bbox_sf)
 
   # Define breaks along x (longitude) and y (latitude) axes
   x_breaks <- seq(bbox["xmin"], bbox["xmax"], length.out = ncols + 1)
@@ -480,14 +480,14 @@ split_bbox_into_tiles <- function(bbox_sf, ncols = 2, nrows = 2) {
         c(x_breaks[i],     y_breaks[j+1]),
         c(x_breaks[i],     y_breaks[j])  # Close polygon
       )
-      tile <- st_polygon(list(coords))
+      tile <- sf::st_polygon(list(coords))
       tiles <- append(tiles, list(tile))
     }
   }
 
   # Combine tiles into an sf object with matching CRS, ensuring validity
-  st_sf(geometry = st_sfc(tiles, crs = st_crs(bbox_sf))) |>
-    st_make_valid()
+  sf::st_sf(geometry = sf::st_sfc(tiles, crs = sf::st_crs(bbox_sf))) |>
+    sf::st_make_valid()
 }
 
 #' Conditionally Subdivide Bounding Box into Grid Tiles Based on Geographic Extent
@@ -521,7 +521,7 @@ split_bbox_into_tiles <- function(bbox_sf, ncols = 2, nrows = 2) {
 conditionally_subdivide_bbox <- function(bbox_sf,
                                          degree_threshold = 10,
                                          tile_size_deg = 5) {
-  bbox <- st_bbox(bbox_sf)
+  bbox <- sf::st_bbox(bbox_sf)
 
   # Calculate longitude and latitude spans
   lon_span <- bbox["xmax"] - bbox["xmin"]
