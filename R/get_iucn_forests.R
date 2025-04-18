@@ -15,6 +15,7 @@
 #' @param iucn_get_prefixes Character vector of filename prefixes to include all forest
 #'    classes (e.g., c("MFT1.2", "T1.1", "T1.2", "T1.3", "T1.4", "T2.1", "T2.2", "T2.3", "T2.4",
 #'    "T2.5", "T2.6", "TF1.1", "TF1.2")) or NULL to include all `.gpkg` files.
+#' @param excluded_prefixes Optional character vector of ecosystem layer IDs to exclude (e.g., intensive land-use like `"T7.1"`). Passed through to `get_iucn_ecosystems()`.
 #' @param output_path Optional character. If provided, the output raster is saved to this directory as a GeoTIFF.
 #' @param boundary_layer Boundary of the planning region.
 #'
@@ -29,6 +30,8 @@
 #'   iucn_get_directory = "data/iucn_layers",
 #'   pus = pus,
 #'   iso3 = "KEN",
+#'   boundary_layer = boundary,
+#'   excluded_prefixes = c("T7.1", "T7.2"),
 #'   output_path = "outputs"
 #' )
 #' }
@@ -40,6 +43,7 @@ get_iucn_forests <- function(
     boundary_layer,
     include_minor_occurrence = TRUE,
     iucn_get_prefixes = c("MFT1.2", "T1.1", "T1.2", "T1.3", "T1.4", "T2.1", "T2.2", "T2.3", "T2.4", "T2.5", "T2.6", "TF1.1", "TF1.2"),
+    excluded_prefixes,
     output_path = NULL
 ) {
   # Validate inputs
@@ -56,6 +60,7 @@ get_iucn_forests <- function(
     boundary_layer = boundary_layer,
     pus = pus,
     iucn_get_prefixes = iucn_get_prefixes,
+    excluded_prefixes = excluded_prefixes,
     include_minor_occurrence = include_minor_occurrence,
     output_path = NULL  # Don't write intermediate vector layer here
   )

@@ -12,6 +12,7 @@ get_iucn_forests(
   include_minor_occurrence = TRUE,
   iucn_get_prefixes = c("MFT1.2", "T1.1", "T1.2", "T1.3", "T1.4", "T2.1", "T2.2", "T2.3",
     "T2.4", "T2.5", "T2.6", "TF1.1", "TF1.2"),
+  excluded_prefixes,
   output_path = NULL
 )
 }
@@ -29,6 +30,8 @@ get_iucn_forests(
 \item{iucn_get_prefixes}{Character vector of filename prefixes to include all forest
 classes (e.g., c("MFT1.2", "T1.1", "T1.2", "T1.3", "T1.4", "T2.1", "T2.2", "T2.3", "T2.4",
 "T2.5", "T2.6", "TF1.1", "TF1.2")) or NULL to include all \code{.gpkg} files.}
+
+\item{excluded_prefixes}{Optional character vector of ecosystem layer IDs to exclude (e.g., intensive land-use like \code{"T7.1"}). Passed through to \code{get_iucn_ecosystems()}.}
 
 \item{output_path}{Optional character. If provided, the output raster is saved to this directory as a GeoTIFF.}
 }
@@ -51,6 +54,8 @@ forest_layer <- get_iucn_forests(
   iucn_get_directory = "data/iucn_layers",
   pus = pus,
   iso3 = "KEN",
+  boundary_layer = boundary,
+  excluded_prefixes = c("T7.1", "T7.2"),
   output_path = "outputs"
 )
 }

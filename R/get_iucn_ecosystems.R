@@ -1,42 +1,42 @@
-#' Extract IUCN GET Ecosystems Vector Layers
+#' Extract and Filter IUCN GET Ecosystem Vector Layers
 #'
-#' This function reads and merges `.gpkg` vector files representing IUCN GET ecosystems
-#' from a specified directory. It optionally filters files based on filename prefixes
-#' (e.g., "T", "TF", "FM"), restricts features to those intersecting a country boundary,
-#' reprojects them to match a planning units raster (`pus`), and removes ecosystems
-#' marked as `minor occurrence` if desired.
+#' This function reads, intersects, reprojects, and merges `.gpkg` vector files representing IUCN Global Ecosystem Typology (GET) layers from a specified directory.
+#' It allows filtering by filename prefixes (e.g., "T1.2", "TF1.4"), excludes specific ecosystem types (e.g., intensive land-use biomes), and optionally removes features
+#' with `minor occurrence` flags. The resulting layer is cropped to a country boundary and reprojected to match a planning units raster.
 #'
-#' The layer ID (e.g., "F1.1") is derived from the source filename and added to each feature
-#' for tracking. If `output_path` is provided, the final merged and filtered layer is saved
-#' as a GeoPackage.
+#' The ecosystem layer ID (e.g., "F1.1") is extracted from the source filename and added to each feature as the `id` column for tracking.
 #'
-#' @param iucn_get_directory Character. Directory containing IUCN GET `.gpkg` files.
-#' @param iso3 Character. ISO3 country code used for naming the output (e.g., "KEN").
-#' @param pus SpatRaster. Planning units raster used to define spatial extent and target CRS.
-#' @param boundary_layer sf object. Vector polygon used to spatially clip features (usually country boundary).
-#' @param include_minor_occurrence Logical. If FALSE, excludes features with minor occurrence (default: TRUE).
-#' @param iucn_get_prefixes Character vector of filename prefixes to include (e.g., c("F1.1", "F1.2",
-#'    "SM1.2", "SM1.3")) or NULL to include all `.gpkg` files.
-#' @param output_path Character or NULL. If provided, writes the merged output to a GeoPackage.
+#' If `output_path` is specified, the final filtered and valid `sf` object is saved as a GeoPackage.
 #'
-#' @return An `sf` object containing merged and filtered IUCN GET ecosystem features with valid geometry.
+#' @param iucn_get_directory Character. Path to the directory containing IUCN GET `.gpkg` files.
+#' @param iso3 Character. ISO3 country code (used for logging and naming the output file).
+#' @param pus A `SpatRaster` object. Used for defining spatial extent and target CRS.
+#' @param boundary_layer An `sf` polygon layer (typically a country boundary) used to spatially crop features.
+#' @param include_minor_occurrence Logical. If `FALSE`, filters out ecosystems marked as minor occurrence (default is `TRUE`).
+#' @param iucn_get_prefixes Optional character vector of GET ecosystem IDs to include (e.g., `c("F1.1", "TF1.2")`). If `NULL`, all layers are included.
+#' @param excluded_prefixes Optional character vector of ecosystem prefixes to exclude (e.g., `c("T7.1", "T7.2")` for intensive land-use biomes). Default exclude all T7 classes.
+#' @param output_path Character or `NULL`. If specified, writes the resulting `sf` object as a GeoPackage to this directory.
+#'
+#' @return An `sf` object of the merged, reprojected, valid IUCN GET ecosystem features intersecting the target boundary.
 #' @export
 #'
 #' @examples
 #' \dontrun{
+#' # Define inputs
 #' pus <- terra::rast("data/pus_raster.tif")
 #' boundary <- sf::st_read("data/country_boundary.gpkg")
+#'
+#' # Get all layers except intensive land-use (T7) and minor occurrences
 #' ecosystems <- get_iucn_ecosystems(
 #'   iucn_get_directory = "data/iucn_layers",
 #'   iso3 = "KEN",
 #'   boundary_layer = boundary,
 #'   pus = pus,
-#'   iucn_get_prefixes = c("T1.2", "TF1.4"),
 #'   include_minor_occurrence = FALSE,
+#'   excluded_prefixes = c("T7.1", "T7.2", "T7.3", "T7.4", "T7.5"),
 #'   output_path = "outputs"
 #' )
 #' }
-
 get_iucn_ecosystems <- function(
     iucn_get_directory,
     iso3,
@@ -44,6 +44,7 @@ get_iucn_ecosystems <- function(
     boundary_layer,
     include_minor_occurrence = TRUE,
     iucn_get_prefixes = NULL,
+    excluded_prefixes = c("T7.1", "T7.2", "T7.3", "T7.4", "T7.5"), # All T7* Intensive land-use biomes
     output_path = NULL
 ) {
   # Validate inputs
@@ -73,7 +74,22 @@ get_iucn_ecosystems <- function(
     pattern <- "\\.gpkg$"
   }
 
+  # Convert excluded prefixes to match filenames
+  excluded_file_prefixes <- gsub("\\.", "_", excluded_prefixes)
+
+  # List all matching files and filter out excluded prefixes
   all_files <- list.files(iucn_get_directory, pattern = pattern, full.names = TRUE)
+
+  # Identify excluded matches (for logging)
+  excluded_matches <- all_files[grepl(paste0("^(", paste(excluded_file_prefixes, collapse = "|"), ")_"),
+                                      basename(all_files))]
+  if (length(excluded_matches) > 0) {
+    log_msg(glue::glue("Excluding {length(excluded_matches)} IUCN layers based on excluded_prefixes: {paste(excluded_prefixes, collapse = ', ')}"))
+  }
+
+  # Apply exclusion filter
+  all_files <- all_files[!basename(all_files) %>%
+                           grepl(paste0("^(", paste(excluded_file_prefixes, collapse = "|"), ")_"), .)]
 
   assertthat::assert_that(
     length(all_files) > 0,
@@ -93,24 +109,31 @@ get_iucn_ecosystems <- function(
   log_msg("Reading, reprojecting, and intersecting IUCN GET ecosystem layers...")
   iucn_list <- lapply(all_files, function(file) {
     v <- terra::vect(file, extent = pus_bbox_wgs)
-    if (NROW(v) == 0) return(NULL)
-      v <- terra::intersect(v, terra::project(terra::vect(boundary_layer), terra::crs(v)))
-      # Reproject if needed
-
-      if (terra::crs(v) != terra::crs(pus)) {
-      v <- terra::project(v, terra::crs(pus))
-    }
+    if (NROW(v) == 0)
+      return(NULL)
 
     # Safely derive layer ID from filename
     layer_id <- gsub("_", ".", gsub("_v.*$", "", tools::file_path_sans_ext(basename(file))))
     v$id <- layer_id
 
-    log_msg(glue::glue("Intersection with IUCN GET features with ID {layer_id} completed."))
+    log_msg(glue::glue(
+      "Intersecting {iso3} boundary with IUCN GET {layer_id} features..."
+    ))
+
+    v <- terra::intersect(v, terra::project(terra::vect(boundary_layer), terra::crs(v)))
+    # Reproject if needed
+    if (terra::crs(v) != terra::crs(pus)) {
+      v <- terra::project(v, terra::crs(pus))
+    }
+
+    log_msg(glue::glue(
+      "Intersection with IUCN GET {layer_id} features completed."
+    ))
 
     return(v)
   })
 
-  log_msg(glue::glue("Finished intersecting IUCN GET features in {iso3}. Checking for any NULL features..."))
+  log_msg(glue::glue("Finished intersecting all IUCN GET features in {iso3}. Checking for any NULL features..."))
 
   iucn_list <- Filter(NROW, iucn_list)
 
@@ -135,10 +158,12 @@ get_iucn_ecosystems <- function(
 
   # Optionally filter out minor occurrence
   if (!include_minor_occurrence) {
+    log_msg("Removing minor occurence polygons...")
     iucn_ecosystems <- dplyr::filter(iucn_ecosystems, occurrence != 1)
   }
 
   # Ensure valid geometry and select output fields
+  log_msg("Checking and repairing geometries...")
   iucn_ecosystems <- sf::st_as_sf(iucn_ecosystems) %>%
     sf::st_make_valid() %>%
     dplyr::select(id, occurrence)
