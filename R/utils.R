@@ -276,6 +276,7 @@ exact_rasterise <- function(
 #'
 #' @param raster_in SpatRaster. A large input raster (e.g., global dataset).
 #' @param pus SpatRaster. Planning units raster used to define the target extent.
+#' @param threads Optional method to use multi-core processing - to speed on some `terra` functions (default: `TRUE`).
 #'
 #' @return A cropped SpatRaster with the same CRS as `raster_in` and extent matching the reprojected `pus`.
 #' @export
@@ -285,7 +286,7 @@ exact_rasterise <- function(
 #' cropped <- crop_global_raster(global_raster, pus) |>
 #'   elsar::make_normalised_raster(pus = pus, iso3 = "KEN")
 #' }
-crop_global_raster <- function(raster_in, pus) {
+crop_global_raster <- function(raster_in, pus, threads = TRUE) {
   assertthat::assert_that(inherits(raster_in, "SpatRaster"),
                           msg = "'raster_in' must be a SpatRaster.")
   assertthat::assert_that(inherits(pus, "SpatRaster"),
@@ -294,7 +295,10 @@ crop_global_raster <- function(raster_in, pus) {
   # Attempt to project and crop
   tryCatch({
     pus_extent <- pus %>%
-      terra::project(terra::crs(raster_in)) %>%
+      terra::project(
+        terra::crs(raster_in),
+        threads = threads
+        ) %>%
       terra::ext()
 
     cropped <- terra::crop(
