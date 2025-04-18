@@ -55,7 +55,7 @@ make_underrepresented_ecosystems <- function(
 
   # Extract IUCN GET ecosystems from .gpkg files
   log_msg("Collecting IUCN GET ecosystems...")
-  iucn_ecosystems <- elsar::get_iucn_ecosystems(
+  iucn_ecosystems <- get_iucn_ecosystems(
     iucn_get_directory = iucn_get_directory,
     iso3 = iso3,
     boundary_layer = boundary_layer,
@@ -67,15 +67,46 @@ make_underrepresented_ecosystems <- function(
 
   # Calculate protected area coverage per ecosystem
   log_msg("Calculating protected area coverage of each IUCN GET ecosystem...")
-  iucn_ecosysytems_pa_area <- iucn_ecosystems %>%
-    sf::st_filter(current_protected_areas) %>%
-    sf::st_intersection(current_protected_areas) %>%
-    sf::st_make_valid() %>%
-    dplyr::group_by(.data$id) %>%
-    dplyr::summarise() %>%
-    dplyr::mutate(area_protected = units::drop_units(sf::st_area(.))) %>%
-    sf::st_set_geometry(NULL) %>%
-    dplyr::select("id", "area_protected")
+
+  iucn_ecosysytems_pa_area <- vector("list", length = nrow(current_protected_areas))
+
+  for (i in seq_len(nrow(current_protected_areas))) {
+    pa <- current_protected_areas[i, ]
+
+    # Only filter ecosystem features within PA bbox
+    iucn_crop <- sf::st_filter(iucn_ecosystems, pa)
+
+    if (nrow(iucn_crop) > 0) {
+      intersected_area <- tryCatch({
+        sf::st_intersection(iucn_crop, pa) %>%
+          sf::st_make_valid() %>%
+          dplyr::mutate(area_protected = units::drop_units(sf::st_area(.))) %>%
+          sf::st_set_geometry(NULL) %>%
+          dplyr::select(id, area_protected)
+      }, error = function(e) NULL)
+
+      iucn_ecosysytems_pa_area[[i]] <- intersected_area
+    }
+
+    if (i %% 10 == 0 || i == nrow(current_protected_areas)) {
+      log_msg(glue::glue("Processed {i} of {nrow(current_protected_areas)} protected areas ({round(i / nrow(current_protected_areas) * 100)}%)"))
+    }
+  }
+
+  # Bind all the results together and summarise per ecosystem
+  iucn_ecosysytems_pa_area <- dplyr::bind_rows(Filter(Negate(is.null), iucn_ecosysytems_pa_area)) %>%
+    dplyr::group_by(id) %>%
+    dplyr::summarise(area_protected = sum(area_protected, na.rm = TRUE))
+
+  # iucn_ecosysytems_pa_area <- iucn_ecosystems %>%
+  #   sf::st_filter(current_protected_areas) %>%
+  #   sf::st_intersection(current_protected_areas) %>%
+  #   sf::st_make_valid() %>%
+  #   dplyr::group_by(.data$id) %>%
+  #   dplyr::summarise() %>%
+  #   dplyr::mutate(area_protected = units::drop_units(sf::st_area(.))) %>%
+  #   sf::st_set_geometry(NULL) %>%
+  #   dplyr::select("id", "area_protected")
 
   # Calculate total area and underrepresentation gap per ecosystem
   log_msg("Calculating representation gap from 30% protection target...")

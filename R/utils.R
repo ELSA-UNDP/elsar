@@ -533,7 +533,7 @@ conditionally_subdivide_bbox <- function(bbox_sf,
     nrows <- ceiling(lat_span / tile_size_deg)
 
     # Optional message for logging context (you can remove iso3 if undefined)
-    message(glue::glue("Input spans a large area ({round(lon_span, 1)} degrees longitude by {round(lat_span, 1)} degrees latitude) - subdividing into ~{tile_size_deg} degree tiles (grid: {ncols} x {nrows})"))
+    log_msg(glue::glue("Input spans a large area ({round(lon_span, 1)} degrees longitude by {round(lat_span, 1)} degrees latitude) - subdividing into ~{tile_size_deg} degree tiles (grid: {ncols} x {nrows})"))
 
     # Create grid tiles
     tiles <- split_bbox_into_tiles(bbox_sf, ncols = ncols, nrows = nrows)
