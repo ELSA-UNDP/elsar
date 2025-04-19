@@ -2,7 +2,7 @@
 % Please edit documentation in R/make_normalised_raster.R
 \name{make_normalised_raster}
 \alias{make_normalised_raster}
-\title{Create a Normalized Raster Aligned with and masked by Planning Units}
+\title{Create a Normalised Raster Aligned with and masked by Planning Units}
 \usage{
 make_normalised_raster(
   raster_in,

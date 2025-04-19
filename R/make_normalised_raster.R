@@ -1,4 +1,4 @@
-#' Create a Normalized Raster Aligned with and masked by Planning Units
+#' Create a Normalised Raster Aligned with and masked by Planning Units
 #'
 #' This function takes an input raster, aligns it with specified planning units (PUs),
 #' optionally inverts, rescales, applies conditional expressions, and saves the processed
@@ -89,82 +89,55 @@ make_normalised_raster <- function(raster_in,
     "coefficient_of_variation" # stdev / mean
   )
 
-  # then crop (make data a lot smaller)
-  # dat_aligned <- terra::crop(raster_in, pus_reproject) %>%
-  #  terra::subst(., NA, 0)
-
-  # Temporarily reproject pus to the CRS of raster_in for resolution comparison
-  pus_temp <- terra::project(pus, terra::crs(raster_in), threads = threads)
-
-  # Calculate resolutions of both rasters in the same CRS
-  raster_res <- min(terra::res(raster_in))    # Minimum resolution of input raster
-  pus_res <- min(terra::res(pus_temp))        # Minimum resolution of re-projected pus
-
-  # Determine the appropriate projection method based on data type and resolution comparison
   if (!is.null(method_override)) {
     if (!(method_override %in% valid_resampling_methods)) {
       stop("Invalid method_override. Choose one of: ", paste(valid_resampling_methods, collapse = ", "))
     }
-    method <- method_override  # Use the override method if provided and valid
+    method <- method_override
   } else {
-    # Default method selection based on data type and resolution comparison
     method <- "mean"
-    }
+  }
 
-  # Re-project the original raster_in to the CRS of the PUs
-  dat_aligned <- elsar::crop_global_raster(
-    raster_in = raster_in,
-    pus = pus) %>%
-    terra::project(
-      y = terra::crs(pus),
-      threads = threads
-      )
+  # Crop before reprojection if a conditional expression is to be applied to the raw input
+  if (!is.null(input_raster_conditional_expression)) {
+    cropped <- elsar::crop_global_raster(raster_in, pus)
+    raster_in <- input_raster_conditional_expression(cropped)
+  }
+
+  # Reproject and align raster to match PUs
+  dat_aligned <- terra::project(raster_in, y = pus, threads = threads)
 
   if (is.null(dat_aligned) || isTRUE(is.na(suppressWarnings(terra::minmax(dat_aligned)[2]))) || terra::minmax(dat_aligned)[2] == 0) {
     log_msg("No valid raster values found: returning empty raster.")
     return(terra::ifel(pus == 1, 0, NA))
-  } else {
-    # Apply the conditional expression if provided to the input raster - for example if the input is landcover
-    # dataset that you want to reclass before doing any aggregation.
-    if (!is.null(input_raster_conditional_expression)) {
-      dat_aligned <- input_raster_conditional_expression(dat_aligned)
-    }
-
-    # Resample the projected raster to the resolution of the PUs using exactextractr::exact_resample and the method provided
-    dat_aligned <- exactextractr::exact_resample(x = dat_aligned, y = pus, fun = method)
-
-    # Apply the conditional expression if provided
-    if (!is.null(conditional_expression)) {
-      dat_aligned <- conditional_expression(dat_aligned)
-    }
-
-    # Fill in NA background values before masking
-    if (!is.null(fill_na)) {
-      dat_aligned[is.na(dat_aligned)] <- fill_na
-      dat_aligned <- dat_aligned  %>%
-        terra::mask(pus, maskvalues = 0) # Mask areas outside of planning units
-    }
-
-    # Invert values if required
-    if (invert) {
-      dat_aligned <- -dat_aligned
-    }
-
-    # Rescale the raster values if needed
-    if (rescaled) {
-      dat_aligned <- elsar::rescale_raster(dat_aligned)
-    } else {
-      warning("NOTE: Raster values are NOT rescaled.")
-    }
   }
 
-  # Save the output file if output_path is provided
-  if (!is.null(output_path)) {
-    # Determine the appropriate data type and NoData value for saving the raster
-    data_type <- if (terra::is.int(dat_aligned)) "INT1S" else "FLT4S"  # Adjust data type
-    na_value <- if (terra::is.int(dat_aligned)) 255 else -9999         # Adjust NoData value
+  # Resample using exactextractr to match PU resolution
+  dat_aligned <- exactextractr::exact_resample(x = dat_aligned, y = pus, fun = method)
 
-    # Dynamically set GDAL options while avoiding NULL values
+  if (!is.null(conditional_expression)) {
+    dat_aligned <- conditional_expression(dat_aligned)
+  }
+
+  if (!is.null(fill_na)) {
+    dat_aligned[is.na(dat_aligned)] <- fill_na
+    dat_aligned <- terra::mask(dat_aligned, pus, maskvalues = 0)
+  }
+
+  if (invert) {
+    dat_aligned <- -dat_aligned
+  }
+
+  if (rescaled) {
+    dat_aligned <- elsar::rescale_raster(dat_aligned)
+  } else {
+    warning("NOTE: Raster values are NOT rescaled.")
+  }
+
+  if (!is.null(output_path)) {
+    data_type <- if (terra::is.int(dat_aligned)) "INT1S" else "FLT4S"
+    na_value <- if (terra::is.int(dat_aligned)) 255 else -9999
+
     gdal_options <- c(
       "COMPRESS=ZSTD",
       "NUM_THREADS=ALL_CPUS",
@@ -172,10 +145,8 @@ make_normalised_raster <- function(raster_in,
       if (data_type == "INT1S") "PREDICTOR=2" else if (data_type == "FLT4S") "PREDICTOR=3"
     )
 
-    # Remove NULL values (in case no PREDICTOR was added)
     gdal_options <- gdal_options[!is.na(gdal_options)]
 
-    # Write the raster with the determined settings
     terra::writeRaster(
       dat_aligned,
       glue::glue("{output_path}/{name_out}_{iso3}.tif"),
