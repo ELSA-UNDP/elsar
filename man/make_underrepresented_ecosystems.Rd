@@ -5,18 +5,18 @@
 \title{Create Underrepresented Ecosystems Raster Based on IUCN GET and Protection Gaps}
 \usage{
 make_underrepresented_ecosystems(
-  iucn_get_directory,
+  iucn_get_sf,
   iso3,
   pus,
-  boundary_layer = boundary_layer,
-  current_protected_areas = NULL,
+  boundary_layer,
+  current_protected_areas,
   iucn_get_prefixes = NULL,
   include_minor_occurrence = TRUE,
   output_path = NULL
 )
 }
 \arguments{
-\item{iucn_get_directory}{Character. Path to the directory containing the IUCN GET \code{.gpkg} files.}
+\item{iucn_get_sf}{sf object. IUCN GET polygons already loaded and clipped to the analysis area.}
 
 \item{iso3}{Character. ISO3 country code (e.g., "KEN").}
 
@@ -24,16 +24,16 @@ make_underrepresented_ecosystems(
 
 \item{boundary_layer}{An \code{sf} object of the national boundary used to clip ecosystems.}
 
-\item{current_protected_areas}{Optional. An \code{sf} or \code{SpatVector} of protected areas. If NULL, data is fetched using \code{make_protected_areas()}.}
+\item{current_protected_areas}{An \code{sf} or \code{SpatVector} object representing protected areas.}
 
-\item{iucn_get_prefixes}{Optional character vector. Filters \code{.gpkg} filenames by prefixes (e.g., c("T", "F")).}
+\item{iucn_get_prefixes}{Optional character vector. Filters the \code{sf} input by prefix (e.g., c("T", "F")).}
 
 \item{include_minor_occurrence}{Logical. Whether to include ecosystems marked as "minor" (default = TRUE).}
 
 \item{output_path}{Optional character. Directory path to save the output raster.}
 }
 \value{
-A normalised \code{SpatRaster} layer representing the average protection gap across ecosystems.
+A normalized \code{SpatRaster} layer representing the average protection gap across ecosystems.
 }
 \description{
 This function calculates the representation gap of ecosystems defined in the IUCN Global Ecosystem Typology (GET)
@@ -48,8 +48,9 @@ can be used to prioritise areas for protection of underrepresented ecosystems.
 \examples{
 \dontrun{
 underrep <- make_underrepresented_ecosystems(
-  iucn_get_directory = "data/iucn_layers",
+  iucn_get_sf = iucn_data,
   boundary_layer = boundary_layer,
+  current_protected_areas = protected_areas,
   iso3 = "KEN",
   pus = planning_units,
   output_path = "outputs"

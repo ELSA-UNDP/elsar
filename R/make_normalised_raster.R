@@ -100,7 +100,7 @@ make_normalised_raster <- function(raster_in,
 
   # Crop before reprojection if a conditional expression is to be applied to the raw input
   if (!is.null(input_raster_conditional_expression)) {
-    cropped <- elsar::crop_global_raster(raster_in, pus)
+    cropped <- crop_global_raster(raster_in, pus)
     raster_in <- input_raster_conditional_expression(cropped)
   }
 
