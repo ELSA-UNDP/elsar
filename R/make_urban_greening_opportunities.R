@@ -72,6 +72,7 @@ make_urban_greening_opportunities <- function(
     pus = pus,
     iso3 = iso3,
     method_override = "mean",
+    crop_global_input = FALSE,
     input_raster_conditional_expression = function(x) terra::ifel(x == 7, 1, 0)
   )
 

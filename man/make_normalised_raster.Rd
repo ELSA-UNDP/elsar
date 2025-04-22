@@ -11,6 +11,7 @@ make_normalised_raster(
   invert = FALSE,
   rescaled = TRUE,
   method_override = NULL,
+  crop_global_input = TRUE,
   input_raster_conditional_expression = NULL,
   conditional_expression = NULL,
   fill_na = 0,
@@ -31,6 +32,8 @@ make_normalised_raster(
 \item{rescaled}{\code{logical} If \code{TRUE}, rescales the raster using \code{rescale_raster()} (default: \code{TRUE}).}
 
 \item{method_override}{\code{character} Optional method for \code{terra::project()}, overriding the default (default: \code{NULL}).}
+
+\item{crop_global_input}{\code{logical} If true the input (large global) raster is cropped to the PU extent before applying an \code{input_raster_conditional_expression}, to reduce the are of processing (default: \code{TRUE}).}
 
 \item{input_raster_conditional_expression}{\code{function} Optional method to apply a function to the raster before resampling to the PU layer (default: \code{NULL}).}
 
@@ -90,6 +93,7 @@ raster_out <- make_normalised_raster(
   raster_in = land_cover_raster,
   pus = my_pus,
   iso3 = "USA",
+  crop_global_input = FALSE # ESRI LULC rasters are already cropped to the PU extent when exported from GEE
   input_raster_conditional_expression = function(r) ifel(r \%in\% c(1:4, 7, 9), 1, 0)
   )
 }

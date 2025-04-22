@@ -294,7 +294,7 @@ crop_global_raster <- function(raster_in, pus, threads = TRUE) {
 
   # Attempt to project and crop
   tryCatch({
-    log_msg("Projecting PUs to match input raster, and cropping input raster to PUs' extent")
+    log_msg("Projecting PUs to match global input raster...")
     pus_extent <- pus %>%
       terra::project(
         terra::crs(raster_in),

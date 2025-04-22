@@ -10,6 +10,7 @@
 #' @param invert `logical` If `TRUE`, inverts the raster values (default: `FALSE`).
 #' @param rescaled `logical` If `TRUE`, rescales the raster using `rescale_raster()` (default: `TRUE`).
 #' @param method_override `character` Optional method for `terra::project()`, overriding the default (default: `NULL`).
+#' @param crop_global_input  `logical` If true the input (large global) raster is cropped to the PU extent before applying an `input_raster_conditional_expression`, to reduce the are of processing (default: `TRUE`).
 #' @param input_raster_conditional_expression `function` Optional method to apply a function to the raster before resampling to the PU layer (default: `NULL`).
 #' @param conditional_expression `function` Optional method to apply a function to the raster after resampling to the PU layer (default: `NULL`).
 #' @param fill_na `numeric` or `NA` The fill value to use to fill in `NA` values before masking (default: 0).
@@ -58,6 +59,7 @@
 #'   raster_in = land_cover_raster,
 #'   pus = my_pus,
 #'   iso3 = "USA",
+#'   crop_global_input = FALSE # ESRI LULC rasters are already cropped to the PU extent when exported from GEE
 #'   input_raster_conditional_expression = function(r) ifel(r %in% c(1:4, 7, 9), 1, 0)
 #'   )
 #' }
@@ -68,6 +70,7 @@ make_normalised_raster <- function(raster_in,
                                    invert = FALSE,
                                    rescaled = TRUE,
                                    method_override = NULL,
+                                   crop_global_input = TRUE,
                                    input_raster_conditional_expression = NULL,
                                    conditional_expression = NULL,
                                    fill_na = 0,
@@ -98,10 +101,17 @@ make_normalised_raster <- function(raster_in,
     method <- "mean"
   }
 
-  # Crop before reprojection if a conditional expression is to be applied to the raw input
+  # Crop before reprojection if a conditional expression is to be applied and the raw input is a large global raster
   if (!is.null(input_raster_conditional_expression)) {
-    cropped <- crop_global_raster(raster_in, pus)
-    raster_in <- input_raster_conditional_expression(cropped)
+    if (crop_global_input) {
+      log_msg("Cropping input raster before applying conditional expression...")
+      cropped <- crop_global_raster(raster_in, pus)
+      log_msg("Applying conditional expression to cropped input raster...")
+      raster_in <- input_raster_conditional_expression(cropped)
+    } else {
+      log_msg("Applying conditional expression to input raster...")
+      raster_in <- input_raster_conditional_expression(raster_in)
+    }
   }
 
   # Reproject and align raster to match PUs
