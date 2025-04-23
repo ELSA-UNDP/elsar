@@ -8,6 +8,7 @@
 <url><loc>https://elsa-undp.github.io/elsar/index.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/reference/boundary_dat.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/reference/calc_feat_rep.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/conditionally_subdivide_bbox.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/reference/convert_points_polygon.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/reference/crop_global_raster.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/reference/current_pas_sf.html</loc></url>
@@ -62,6 +63,7 @@
 <url><loc>https://elsa-undp.github.io/elsar/reference/make_wetlands_ramsar.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/reference/pipe.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/reference/rescale_raster.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/split_bbox_into_tiles.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/reference/wad_subset.html</loc></url>
 </urlset>
 
