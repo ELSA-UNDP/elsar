@@ -456,6 +456,7 @@ filter_sf <- function(file_path,
 #'
 #' @return An `sf` object consisting of rectangular polygons covering the bounding box of the input.
 #'         Each polygon represents a tile in the grid. All geometries are valid.
+#' @export
 #'
 #' @examples
 #' \dontrun{
@@ -465,7 +466,6 @@ filter_sf <- function(file_path,
 #'   plot(st_geometry(tiles), add = TRUE, border = "red")
 #' }
 #'
-#' @export
 split_bbox_into_tiles <- function(bbox_sf, ncols = 2, nrows = 2) {
   # Get bounding box coordinates
   bbox <- sf::st_bbox(bbox_sf)
@@ -515,6 +515,8 @@ split_bbox_into_tiles <- function(bbox_sf, ncols = 2, nrows = 2) {
 #'   - A grid of tiles (rectangular polygons) if subdivision is triggered, or
 #'   - The original input `bbox_sf` unchanged.
 #'
+#' @export
+#'
 #' @examples
 #' \dontrun{
 #'   world <- sf::st_read(system.file("shape/nc.shp", package = "sf"))
@@ -522,8 +524,6 @@ split_bbox_into_tiles <- function(bbox_sf, ncols = 2, nrows = 2) {
 #'   plot(st_geometry(world))
 #'   plot(st_geometry(tiles), add = TRUE, border = "red")
 #' }
-#'
-#' @export
 conditionally_subdivide_bbox <- function(bbox_sf,
                                          degree_threshold = 10,
                                          tile_size_deg = 5) {

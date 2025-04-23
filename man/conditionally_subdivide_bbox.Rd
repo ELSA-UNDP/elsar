@@ -38,5 +38,4 @@ from spatial indexing.
   plot(st_geometry(world))
   plot(st_geometry(tiles), add = TRUE, border = "red")
 }
-
 }
