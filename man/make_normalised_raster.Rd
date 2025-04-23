@@ -31,24 +31,31 @@ make_normalised_raster(
 
 \item{rescaled}{\code{logical} If \code{TRUE}, rescales the raster using \code{rescale_raster()} (default: \code{TRUE}).}
 
-\item{method_override}{\code{character} Optional method for \code{terra::project()}, overriding the default (default: \code{NULL}).}
+\item{method_override}{\code{character} Optional method for \code{terra::project()}, overriding
+the default (default: \code{NULL}).}
 
-\item{crop_global_input}{\code{logical} If true the input (large global) raster is cropped to the PU extent before applying an \code{input_raster_conditional_expression}, to reduce the are of processing (default: \code{TRUE}).}
+\item{crop_global_input}{\code{logical} If true the input (large global) raster is cropped
+to the PU extent before applying an \code{input_raster_conditional_expression}, to reduce
+the are of processing (default: \code{TRUE}).}
 
-\item{input_raster_conditional_expression}{\code{function} Optional method to apply a function to the raster before resampling to the PU layer (default: \code{NULL}).}
+\item{input_raster_conditional_expression}{\code{function} Optional method to apply a
+function to the raster before resampling to the PU layer (default: \code{NULL}).}
 
-\item{conditional_expression}{\code{function} Optional method to apply a function to the raster after resampling to the PU layer (default: \code{NULL}).}
+\item{conditional_expression}{\code{function} Optional method to apply a function to the
+raster after resampling to the PU layer (default: \code{NULL}).}
 
-\item{fill_na}{\code{numeric} or \code{NA} The fill value to use to fill in \code{NA} values before masking (default: 0).}
+\item{fill_na}{\code{numeric} or \code{NA} The fill value to use to fill in \code{NA} values before
+masking (default: 0).}
 
 \item{name_out}{\code{character} The name of the output raster file (without the extension).}
 
 \item{output_path}{\code{character} The directory path to save the output raster (default: \code{NULL}, i.e., not saved).}
 
-\item{threads}{Optional method to use multi-core processing - to speed on some \code{terra} functions (default: \code{TRUE}).}
+\item{threads}{Optional method to use multi-core processing - to speed on some \code{terra}
+functions (default: \code{TRUE}).}
 }
 \value{
-Returns a \link{SpatRaster} object that has been reprojected and processed.
+Returns a \code{SpatRaster} object that has been reprojected and processed.
 If \code{output_path} is specified, saves the raster as a COG (Cloud Optimized GeoTIFF).
 }
 \description{
@@ -93,13 +100,13 @@ raster_out <- make_normalised_raster(
   raster_in = land_cover_raster,
   pus = my_pus,
   iso3 = "USA",
-  crop_global_input = FALSE # ESRI LULC rasters are already cropped to the PU extent when exported from GEE
+  crop_global_input = FALSE # ESRI LULC rasters are already export from at the PU extent
   input_raster_conditional_expression = function(r) ifel(r \%in\% c(1:4, 7, 9), 1, 0)
   )
 
-# For high resolution rasters (10m Sentinel based LULC for example) that cover a large area, it may be more
-  efficient and much faster to pre-create binary class rasters (e.g., built areas, agricaulture areas)
-  using tools like gdal_calc.
+# For high resolution rasters (10m Sentinel based LULC for example) that cover a large
+  area, it may be more efficient and much faster to pre-create binary class rasters
+  (e.g., built areas, agriculture areas) using tools like gdal_calc or GEE.
 
 built_areas_raster <- terra::rast("built_areas_brazil.tif")
 

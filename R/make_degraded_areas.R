@@ -48,8 +48,8 @@ make_degraded_areas <- function(country_iso,
     sdg_degradation_input,
     terra::project(pu, y = crs(sdg_degradation_input), method = "near"),
     method = "near"
-  ) |>
-    terra::project(y = pu, method = "near") |>
+  ) %>%
+    terra::project(y = pu, method = "near") %>%
     terra::resample(y = pu, method = "near") * terra::subst(pu, 0, NA)
 
   # Identify degraded areas based on SDG degradation: -1 means degraded, 0 otherwise
@@ -60,8 +60,8 @@ make_degraded_areas <- function(country_iso,
     agriculture_input,
     terra::project(pu, y = terra::crs(agriculture_input), method = "near"),
     method = "bilinear"
-  ) |>
-    terra::project(y = pu, method = "near") |>
+  ) %>%
+    terra::project(y = pu, method = "near") %>%
     terra::resample(y = pu, method = "bilinear") * terra::subst(pu, 0, NA)
 
   # Save the agriculture layer if output_path is provided
@@ -81,8 +81,8 @@ make_degraded_areas <- function(country_iso,
     built_areas_input,
     terra::project(pu, y = terra::crs(built_areas_input), method = "near"),
     method = "bilinear"
-  ) |>
-    terra::project(y = pu, method = "near") |>
+  ) %<%
+    terra::project(y = pu, method = "near") %>%
     terra::resample(y = pu, method = "bilinear") * terra::subst(pu, 0, NA)
 
   # Save the built-up areas layer if output_path is provided
@@ -103,8 +103,8 @@ make_degraded_areas <- function(country_iso,
     hii_input,
     terra::project(pu, y = terra::crs(hii_input), method = "near"),
     method = "near"
-  ) |>
-    terra::project(y = pu, method = "near") |>
+  ) %>%
+    terra::project(y = pu, method = "near") %>%
     terra::resample(y = pu, method = "near") * terra::subst(pu, 0, NA)
 
   # Save the HII layer if output_path is provided

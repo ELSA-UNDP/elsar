@@ -9,14 +9,21 @@
 #' @param iso3 `character` ISO3 country code used for naming the output file.
 #' @param invert `logical` If `TRUE`, inverts the raster values (default: `FALSE`).
 #' @param rescaled `logical` If `TRUE`, rescales the raster using `rescale_raster()` (default: `TRUE`).
-#' @param method_override `character` Optional method for `terra::project()`, overriding the default (default: `NULL`).
-#' @param crop_global_input  `logical` If true the input (large global) raster is cropped to the PU extent before applying an `input_raster_conditional_expression`, to reduce the are of processing (default: `TRUE`).
-#' @param input_raster_conditional_expression `function` Optional method to apply a function to the raster before resampling to the PU layer (default: `NULL`).
-#' @param conditional_expression `function` Optional method to apply a function to the raster after resampling to the PU layer (default: `NULL`).
-#' @param fill_na `numeric` or `NA` The fill value to use to fill in `NA` values before masking (default: 0).
+#' @param method_override `character` Optional method for `terra::project()`, overriding
+#'        the default (default: `NULL`).
+#' @param crop_global_input  `logical` If true the input (large global) raster is cropped
+#'        to the PU extent before applying an `input_raster_conditional_expression`, to reduce
+#'        the are of processing (default: `TRUE`).
+#' @param input_raster_conditional_expression `function` Optional method to apply a
+#'        function to the raster before resampling to the PU layer (default: `NULL`).
+#' @param conditional_expression `function` Optional method to apply a function to the
+#'        raster after resampling to the PU layer (default: `NULL`).
+#' @param fill_na `numeric` or `NA` The fill value to use to fill in `NA` values before
+#'        masking (default: 0).
 #' @param name_out `character` The name of the output raster file (without the extension).
 #' @param output_path `character` The directory path to save the output raster (default: `NULL`, i.e., not saved).
-#' @param threads Optional method to use multi-core processing - to speed on some `terra` functions (default: `TRUE`).
+#' @param threads Optional method to use multi-core processing - to speed on some `terra`
+#'        functions (default: `TRUE`).
 #'
 #' @details This function reprojects the input raster (`raster_in`) to match the CRS and resolution
 #' of the planning units (`pus`). The method for reprojection can be overridden using `method_override`.
@@ -24,7 +31,7 @@
 #' `input_raster_conditional_expression` can also make processing times significantly longer
 #' for high resolution input rasters.The function can optionally rescale (0-1) and invert the raster values.
 #'
-#' @return Returns a [SpatRaster] object that has been reprojected and processed.
+#' @return Returns a `SpatRaster` object that has been reprojected and processed.
 #' If `output_path` is specified, saves the raster as a COG (Cloud Optimized GeoTIFF).
 #'
 #' @export
@@ -59,13 +66,13 @@
 #'   raster_in = land_cover_raster,
 #'   pus = my_pus,
 #'   iso3 = "USA",
-#'   crop_global_input = FALSE # ESRI LULC rasters are already cropped to the PU extent when exported from GEE
+#'   crop_global_input = FALSE # ESRI LULC rasters are already export from at the PU extent
 #'   input_raster_conditional_expression = function(r) ifel(r %in% c(1:4, 7, 9), 1, 0)
 #'   )
 #'
-#' # For high resolution rasters (10m Sentinel based LULC for example) that cover a large area, it may be more
-#'   efficient and much faster to pre-create binary class rasters (e.g., built areas, agricaulture areas)
-#'   using tools like gdal_calc.
+#' # For high resolution rasters (10m Sentinel based LULC for example) that cover a large
+#'   area, it may be more efficient and much faster to pre-create binary class rasters
+#'   (e.g., built areas, agriculture areas) using tools like gdal_calc or GEE.
 #'
 #' built_areas_raster <- terra::rast("built_areas_brazil.tif")
 #'

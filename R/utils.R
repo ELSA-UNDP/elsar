@@ -492,7 +492,7 @@ split_bbox_into_tiles <- function(bbox_sf, ncols = 2, nrows = 2) {
   }
 
   # Combine tiles into an sf object with matching CRS, ensuring validity
-  sf::st_sf(geometry = sf::st_sfc(tiles, crs = sf::st_crs(bbox_sf))) |>
+  sf::st_sf(geometry = sf::st_sfc(tiles, crs = sf::st_crs(bbox_sf))) %>%
     sf::st_make_valid()
 }
 
