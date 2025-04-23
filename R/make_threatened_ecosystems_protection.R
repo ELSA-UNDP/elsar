@@ -1,22 +1,20 @@
-#' Create Threatened Ecosystems (for Protection) Raster Based on IUCN GET and Ecological
-#'  Intactness
+#' Create Threatened Ecosystems (for Protection) Raster
 #'
-#' This function identifies ecosystems that are ecologically threatened by evaluating
-#' the proportion of intact area for each IUCN GET ecosystem type. It compares the
-#' intactness within each ecosystem against the national median ecological integrity
-#' value, and generates a raster layer representing ecosystem-level threat based on
-#' under-intactness.
+#' This function identifies threatened ecosystems by comparing ecological integrity (EII)
+#' values against a national median. For each IUCN GET ecosystem, it calculates the area
+#' of intact land (above the median) and expresses the ratio of intact to total area as a
+#' threat score. These scores are then rasterized and returned as a continuous raster.
 #'
-#' @param iso3 Character. ISO3 country code (e.g., "KEN") used for naming and processing.
-#' @param pus SpatRaster. Planning units raster used for resolution and extent.
-#' @param boundary_layer sf object. National boundary used for subsetting intactness.
-#' @param intactness_input SpatRaster. Raster of ecological integrity values.
-#' @param iucn_get_directory Character. Directory containing IUCN GET `.gpkg` files.
-#' @param iucn_get_prefixes Optional character vector of prefixes (e.g., "T", "M", etc.) to include.
-#' @param include_minor_occurrence Logical. Whether to include ecosystems marked as minor (default: TRUE).
-#' @param output_path Character or NULL. Optional output directory to save the resulting raster.
+#' @param iso3 Character. ISO3 country code (e.g., `"KEN"`) used for naming and processing.
+#' @param pus SpatRaster. Planning units raster used for alignment and resolution.
+#' @param boundary_layer sf. National boundary used for calculating the national median.
+#' @param intactness_input SpatRaster. Ecological integrity raster.
+#' @param iucn_get_sf sf. IUCN GET polygons already subset to the country.
+#' @param iucn_get_prefixes Optional character vector. Ecosystem type prefixes to include (e.g., `"T"`, `"M"`).
+#' @param include_minor_occurrence Logical. If FALSE, filters out ecosystems marked as minor (occurrence == 1).
+#' @param output_path Character or NULL. Directory to write the output raster if desired.
 #'
-#' @return A normalized SpatRaster showing per-pixel average ecosystem threat due to low intactness.
+#' @return A normalized SpatRaster layer with ecosystem threat scores (0–100).
 #' @export
 #'
 #' @examples
@@ -26,62 +24,58 @@
 #'   pus = planning_units,
 #'   boundary_layer = sf::st_read("data/boundary.gpkg"),
 #'   intactness_input = rast("data/intactness.tif"),
-#'   iucn_get_directory = "data/iucn_layers",
+#'   iucn_get_sf = iucn_get_sf,
 #'   output_path = "outputs"
 #' )
 #' }
 make_threatened_ecosystems_protection <- function(
     iso3,
     pus,
-    boundary_layer = boundary_layer,
-    intactness_input = NULL,
-    iucn_get_directory,
+    boundary_layer,
+    intactness_input,
+    iucn_get_sf,
     iucn_get_prefixes = NULL,
     include_minor_occurrence = TRUE,
     output_path = NULL
 ) {
-  assertthat::assert_that(assertthat::is.string(iucn_get_directory))
-  assertthat::assert_that(dir.exists(iucn_get_directory))
+  # Input checks
   assertthat::assert_that(inherits(pus, "SpatRaster"))
   assertthat::assert_that(assertthat::is.string(iso3))
   assertthat::assert_that(inherits(boundary_layer, "sf"))
+  assertthat::assert_that(inherits(iucn_get_sf, "sf"))
 
-  # Resample intactness raster to planning units
+  # Filter IUCN GET polygons if needed
+  if (!is.null(iucn_get_prefixes)) {
+    iucn_get_sf <- dplyr::filter(iucn_get_sf, prefix %in% iucn_get_prefixes)
+  }
+  if (!include_minor_occurrence) {
+    iucn_get_sf <- dplyr::filter(iucn_get_sf, occurrence != 1)
+  }
+
+  # Resample ecological integrity raster to match planning units
   intactness_resampled <- elsar::make_normalised_raster(
     raster_in = intactness_input,
     pus = pus,
     iso3 = iso3
   )
 
-  # Calculate national median intactness
+  # National median ecological integrity
   intactness_median <- exactextractr::exact_extract(
     intactness_resampled,
     boundary_layer,
     fun = "median"
   )
 
-  # Generate binary intact mask (1 = intact)
+  # Mask of intact areas (1 = intact)
   non_intact_areas <- terra::ifel(intactness_resampled < intactness_median, 0, 1) %>%
     terra::as.polygons(na.rm = TRUE) %>%
     sf::st_as_sf() %>%
     dplyr::filter(.[[1]] == 1) %>%
     sf::st_make_valid()
 
-  # Extract IUCN GET ecosystems from .gpkg files
-  log_msg("Collecting IUCN GET ecosystems...")
-  iucn_ecosystems <- elsar::get_iucn_ecosystems(
-    iucn_get_directory = iucn_get_directory,
-    iso3 = iso3,
-    boundary_layer = boundary_layer,
-    pus = pus,
-    iucn_get_prefixes = iucn_get_prefixes,
-    include_minor_occurrence = include_minor_occurrence,
-    output_path = NULL
-  )
-
-  # Calculate intact area per ecosystem
+  # Area of intact overlap for each ecosystem
   log_msg(glue::glue("Calculating intactness of each IUCN GET ecosystem based on EII median value ({intactness_median})..."))
-  iucn_ecosysytems_intactness_area <- iucn_ecosystems %>%
+  ecosystems_intact_area <- iucn_get_sf %>%
     sf::st_intersection(non_intact_areas) %>%
     sf::st_make_valid() %>%
     dplyr::group_by(.data$id) %>%
@@ -89,32 +83,31 @@ make_threatened_ecosystems_protection <- function(
     dplyr::mutate(area_intact = units::drop_units(sf::st_area(.))) %>%
     sf::st_set_geometry(NULL)
 
-  # Compute total area and intactness ratio per ecosystem
-  iucn_ecosysytems_total <- iucn_ecosystems %>%
+  # Total area and threat calculation per ecosystem
+  ecosystems_total <- iucn_get_sf %>%
     dplyr::group_by(.data$id) %>%
     dplyr::summarise() %>%
     dplyr::mutate(area = units::drop_units(sf::st_area(.))) %>%
-    dplyr::left_join(iucn_ecosysytems_intactness_area, by = 'id') %>%
+    dplyr::left_join(ecosystems_intact_area, by = "id") %>%
     dplyr::mutate(threat = .data$area_intact / .data$area * 100)
 
-  # Rasterize and normalize the threat values
+  # Rasterize threat scores
   log_msg("Calculating average intactness and normalising raster output...")
-  threatened_ecosystems_for_protection <- elsar::exact_rasterise(
-    features = iucn_ecosysytems_total,
+  threat_raster <- elsar::exact_rasterise(
+    features = ecosystems_total,
     pus = pus,
     iso3 = iso3,
     attribute = "threat"
   )
+  names(threat_raster) <- "threatened_ecosystems_for_protection"
 
-  names(threatened_ecosystems_for_protection) <- "threatened_ecosystems_for_protection"
-
+  # Optional write to file
   if (!is.null(output_path)) {
     assertthat::assert_that(dir.exists(output_path), msg = "'output_path' does not exist.")
     out_file <- glue::glue("{output_path}/threatened_ecosystems_for_protection_{iso3}.tif")
     log_msg(glue::glue("Writing output to: {out_file}"))
-
     terra::writeRaster(
-      threatened_ecosystems_for_protection,
+      threat_raster,
       filename = out_file,
       datatype = "FLT4S",
       filetype = "COG",
@@ -128,5 +121,5 @@ make_threatened_ecosystems_protection <- function(
     )
   }
 
-  return(threatened_ecosystems_for_protection)
+  return(threat_raster)
 }

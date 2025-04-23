@@ -4,12 +4,14 @@
 \alias{crop_global_raster}
 \title{Crop a Global Raster to the Extent of Planning Units}
 \usage{
-crop_global_raster(raster_in, pus)
+crop_global_raster(raster_in, pus, threads = TRUE)
 }
 \arguments{
 \item{raster_in}{SpatRaster. A large input raster (e.g., global dataset).}
 
 \item{pus}{SpatRaster. Planning units raster used to define the target extent.}
+
+\item{threads}{Optional method to use multi-core processing - to speed on some \code{terra} functions (default: \code{TRUE}).}
 }
 \value{
 A cropped SpatRaster with the same CRS as \code{raster_in} and extent matching the reprojected \code{pus}.

@@ -2,12 +2,12 @@
 % Please edit documentation in R/make_protected_areas.R
 \name{make_protected_areas}
 \alias{make_protected_areas}
-\title{Function to create existing protected area raster file.}
+\title{Create a Raster of Existing Protected Areas Aligned to Planning Units}
 \usage{
 make_protected_areas(
   from_wdpa = TRUE,
   iso3,
-  input_path = NULL,
+  download_path = NULL,
   sf_in,
   status = c("Established", "Inscribed", "Designated"),
   pa_def = 1,
@@ -23,58 +23,56 @@ make_protected_areas(
 )
 }
 \arguments{
-\item{from_wdpa}{logical. If \code{TRUE}, downloads data from the \pkg{wdpar} package. For more information on the data or package, please consult the \href{https://prioritizr.github.io/wdpar/}{online package documentation}.}
+\item{from_wdpa}{Logical. If \code{TRUE}, downloads protected area data using the \pkg{wdpar} package. If \code{FALSE}, uses \code{sf_in}.}
 
-\item{iso3}{A string of the iso3 name of the data (country name)}
+\item{iso3}{Character. ISO3 code for the country of interest.}
 
-\item{input_path}{A path that the wdpa data is saved to.}
+\item{download_path}{Character. Path where WDPA data will be saved or loaded from.}
 
-\item{sf_in}{An \code{sf} object and alternative to downloading the data from the \pkg{wdpar} package. Only needed when from_wdpa is \code{FALSE}.}
+\item{sf_in}{An \code{sf} object containing protected area geometries. Used only if \code{from_wdpa = FALSE}.}
 
-\item{status}{A vector containing which status of protected area should be included. Based on the STATUS field of the wdpa database. Default is \code{c("Established", "Inscribed", "Designated")}.}
+\item{status}{Character vector. Which \code{STATUS} values to include from the WDPA data. Default is \code{c("Established", "Inscribed", "Designated")}.}
 
-\item{pa_def}{A value or list of values containing which pa definition (1 = protected area; 0 = OECM (not supported yet)) to include. Default is \code{1}.}
+\item{pa_def}{Integer or vector of integers. Values for the \code{PA_DEF} column (1 = Protected Area; 0 = OECM). Only 1 is currently supported. Default is \code{1}.}
 
-\item{include_mab_designation}{logical. If \code{FALSE}, excludes UNESCO MAB areas.}
+\item{include_mab_designation}{Logical. If \code{FALSE}, excludes Man and Biosphere (MAB) reserves.}
 
-\item{buffer_points}{logical. Only relevant when \code{"POINT"} or \code{"MULTIPOINT"} geometries exist in the data. If \code{TRUE}, creates a circular buffer around \code{"POINT"} data based on area information data that is then used as polygon data needed for \pkg{exactextractr} calculations.}
+\item{buffer_points}{Logical. If \code{TRUE}, creates geodesic buffers around \code{POINT} and \code{MULTIPOINT} features using area attributes.}
 
-\item{area_column}{A string of the column name with the area information needed for buffer calculations.}
+\item{area_column}{Character. Column name indicating the area (used for buffering). Default is \code{"REP_AREA"}.}
 
-\item{area_calc_crs}{Character. CRS used for buffering operation (default: \code{"ESRI:54009"} = World Mollweide).}
+\item{area_calc_crs}{Character. CRS to use for buffering operations. Default is \code{"ESRI:54009"} (World Mollweide).}
 
-\item{nQuadSegs}{An integer specifying the number of segments to use for buffering. Default is 50.}
+\item{nQuadSegs}{Integer. Number of segments per quarter circle for buffers. Default is \code{50}.}
 
-\item{return_sf}{logical. Allows to return \code{sf}object if needed. Default is FALSE.}
+\item{return_sf}{Logical. If \code{TRUE}, assigns the dissolved individual polygons to \code{current_protected_area_sf} in the global environment for reuse. Default is \code{TRUE}.}
 
-\item{force_update}{logical. Force downloading an update to the WDPA is a newer version is available. Default is FALSE.}
+\item{force_update}{Logical. If \code{TRUE}, forces re-download of WDPA data. Default is \code{FALSE}.}
 
-\item{pus}{A raster file that contains the reference spatial extent, crs etc.in form of the planning units.}
+\item{pus}{A \code{SpatRaster} of planning units to which the protected areas will be aligned.}
 
-\item{output_path}{An optional output path for the created file.}
+\item{output_path}{Optional. File path where the resulting raster should be saved.}
 }
 \value{
-A \code{SpatRaster}file that has been aligned to the planning units
+A \code{SpatRaster} representing the fractional coverage of protected areas in each planning unit.
 }
 \description{
-Function to create existing protected area raster file.
+This function generates a raster of protected areas for a given country, aligned to the planning units (\code{pus}). It optionally downloads the latest protected area data from the \href{https://www.protectedplanet.net/}{Protected Planet} database via the \pkg{wdpar} package or uses an input \code{sf} object. All geometries are reprojected, dissolved to avoid double-counting overlaps, and converted to individual polygons to improve spatial intersection performance. The raster output represents the fractional area of each planning unit covered by protected areas.
 }
 \examples{
 \dontrun{
 boundary_proj <- make_boundary(
-  boundary_in = boundary_dat,
-  iso3 = "NPL",
-  iso3_column = "iso3cd"
-)
+ boundary_in = boundary_dat,
+ iso3 = "NPL",
+ iso3_column = "iso3cd"
+ )
 
 pus <- make_planning_units(
-  boundary_proj = boundary_proj,
-  pu_size = NULL,
-  pu_threshold = 8.5e5,
-  limit_to_mainland = FALSE
-)
+ boundary_proj = boundary_proj,
+ pu_size = NULL
+ )
 
-current_pas <- make_protected_areas(
+pa_raster <- make_protected_areas(
   iso3 = "NPL",
   download_path = here::here(),
   buffer_points = TRUE,

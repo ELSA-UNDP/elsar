@@ -2,7 +2,7 @@
 % Please edit documentation in R/get_iucn_ecosystems.R
 \name{get_iucn_ecosystems}
 \alias{get_iucn_ecosystems}
-\title{Extract IUCN GET Ecosystems Vector Layers}
+\title{Extract and Filter IUCN GET Ecosystem Vector Layers}
 \usage{
 get_iucn_ecosystems(
   iucn_get_directory,
@@ -11,51 +11,54 @@ get_iucn_ecosystems(
   boundary_layer,
   include_minor_occurrence = TRUE,
   iucn_get_prefixes = NULL,
+  excluded_prefixes = c("T7.1", "T7.2", "T7.3", "T7.4", "T7.5"),
   output_path = NULL
 )
 }
 \arguments{
-\item{iucn_get_directory}{Character. Directory containing IUCN GET \code{.gpkg} files.}
+\item{iucn_get_directory}{Character. Path to the directory containing IUCN GET \code{.gpkg} files.}
 
-\item{iso3}{Character. ISO3 country code used for naming the output (e.g., "KEN").}
+\item{iso3}{Character. ISO3 country code (used for logging and naming the output file).}
 
-\item{pus}{SpatRaster. Planning units raster used to define spatial extent and target CRS.}
+\item{pus}{A \code{SpatRaster} object. Used for defining spatial extent and target CRS.}
 
-\item{boundary_layer}{sf object. Vector polygon used to spatially clip features (usually country boundary).}
+\item{boundary_layer}{An \code{sf} polygon layer (typically a country boundary) used to spatially crop features.}
 
-\item{include_minor_occurrence}{Logical. If FALSE, excludes features with minor occurrence (default: TRUE).}
+\item{include_minor_occurrence}{Logical. If \code{FALSE}, filters out ecosystems marked as minor occurrence (default is \code{TRUE}).}
 
-\item{iucn_get_prefixes}{Character vector of filename prefixes to include (e.g., c("F1.1", "F1.2",
-"SM1.2", "SM1.3")) or NULL to include all \code{.gpkg} files.}
+\item{iucn_get_prefixes}{Optional character vector of GET ecosystem IDs to include (e.g., \code{c("F1.1", "TF1.2")}). If \code{NULL}, all layers are included.}
 
-\item{output_path}{Character or NULL. If provided, writes the merged output to a GeoPackage.}
+\item{excluded_prefixes}{Optional character vector of ecosystem prefixes to exclude (e.g., \code{c("T7.1", "T7.2")} for intensive land-use biomes). Default exclude all T7 classes.}
+
+\item{output_path}{Character or \code{NULL}. If specified, writes the resulting \code{sf} object as a GeoPackage to this directory.}
 }
 \value{
-An \code{sf} object containing merged and filtered IUCN GET ecosystem features with valid geometry.
+An \code{sf} object of the merged, reprojected, valid IUCN GET ecosystem features intersecting the target boundary.
 }
 \description{
-This function reads and merges \code{.gpkg} vector files representing IUCN GET ecosystems
-from a specified directory. It optionally filters files based on filename prefixes
-(e.g., "T", "TF", "FM"), restricts features to those intersecting a country boundary,
-reprojects them to match a planning units raster (\code{pus}), and removes ecosystems
-marked as \verb{minor occurrence} if desired.
+This function reads, intersects, reprojects, and merges \code{.gpkg} vector files representing IUCN Global Ecosystem Typology (GET) layers from a specified directory.
+It allows filtering by filename prefixes (e.g., "T1.2", "TF1.4"), excludes specific ecosystem types (e.g., intensive land-use biomes), and optionally removes features
+with \verb{minor occurrence} flags. The resulting layer is cropped to a country boundary and reprojected to match a planning units raster.
 }
 \details{
-The layer ID (e.g., "F1.1") is derived from the source filename and added to each feature
-for tracking. If \code{output_path} is provided, the final merged and filtered layer is saved
-as a GeoPackage.
+The ecosystem layer ID (e.g., "F1.1") is extracted from the source filename and added to each feature as the \code{id} column for tracking.
+
+If \code{output_path} is specified, the final filtered and valid \code{sf} object is saved as a GeoPackage.
 }
 \examples{
 \dontrun{
+# Define inputs
 pus <- terra::rast("data/pus_raster.tif")
 boundary <- sf::st_read("data/country_boundary.gpkg")
+
+# Get all layers except intensive land-use (T7) and minor occurrences
 ecosystems <- get_iucn_ecosystems(
   iucn_get_directory = "data/iucn_layers",
   iso3 = "KEN",
   boundary_layer = boundary,
   pus = pus,
-  iucn_get_prefixes = c("T1.2", "TF1.4"),
   include_minor_occurrence = FALSE,
+  excluded_prefixes = c("T7.1", "T7.2", "T7.3", "T7.4", "T7.5"),
   output_path = "outputs"
 )
 }

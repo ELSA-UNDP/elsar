@@ -276,6 +276,7 @@ exact_rasterise <- function(
 #'
 #' @param raster_in SpatRaster. A large input raster (e.g., global dataset).
 #' @param pus SpatRaster. Planning units raster used to define the target extent.
+#' @param threads Optional method to use multi-core processing - to speed on some `terra` functions (default: `TRUE`).
 #'
 #' @return A cropped SpatRaster with the same CRS as `raster_in` and extent matching the reprojected `pus`.
 #' @export
@@ -285,7 +286,7 @@ exact_rasterise <- function(
 #' cropped <- crop_global_raster(global_raster, pus) |>
 #'   elsar::make_normalised_raster(pus = pus, iso3 = "KEN")
 #' }
-crop_global_raster <- function(raster_in, pus) {
+crop_global_raster <- function(raster_in, pus, threads = TRUE) {
   assertthat::assert_that(inherits(raster_in, "SpatRaster"),
                           msg = "'raster_in' must be a SpatRaster.")
   assertthat::assert_that(inherits(pus, "SpatRaster"),
@@ -293,10 +294,15 @@ crop_global_raster <- function(raster_in, pus) {
 
   # Attempt to project and crop
   tryCatch({
+    log_msg("Projecting PUs to match global input raster...")
     pus_extent <- pus %>%
-      terra::project(terra::crs(raster_in)) %>%
+      terra::project(
+        terra::crs(raster_in),
+        threads = threads
+        ) %>%
       terra::ext()
 
+    log_msg("Cropping raster to PU layer...")
     cropped <- terra::crop(
       raster_in,
       pus_extent,
@@ -432,6 +438,116 @@ filter_sf <- function(file_path,
   }
 
   return(dat)
+}
+
+#' Split a Bounding Box into a Regular Grid of Polygon Tiles
+#'
+#' Given an input `sf` object, this function extracts its bounding box and
+#' divides it into a regular grid of rectangular polygon tiles using a specified
+#' number of columns and rows.
+#'
+#' This is useful for spatially chunking large geometries to speed up
+#' operations like intersection or cropping, especially when used with spatial
+#' indexing.
+#'
+#' @param bbox_sf An `sf` object. Only the bounding box is used; geometries inside are ignored.
+#' @param ncols Integer. Number of columns to split the bounding box into. Default is 2.
+#' @param nrows Integer. Number of rows to split the bounding box into. Default is 2.
+#'
+#' @return An `sf` object consisting of rectangular polygons covering the bounding box of the input.
+#'         Each polygon represents a tile in the grid. All geometries are valid.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#'   world <- sf::st_read(system.file("shape/nc.shp", package = "sf"))
+#'   tiles <- split_bbox_into_tiles(world, ncols = 3, nrows = 3)
+#'   plot(st_geometry(world))
+#'   plot(st_geometry(tiles), add = TRUE, border = "red")
+#' }
+#'
+split_bbox_into_tiles <- function(bbox_sf, ncols = 2, nrows = 2) {
+  # Get bounding box coordinates
+  bbox <- sf::st_bbox(bbox_sf)
+
+  # Define breaks along x (longitude) and y (latitude) axes
+  x_breaks <- seq(bbox["xmin"], bbox["xmax"], length.out = ncols + 1)
+  y_breaks <- seq(bbox["ymin"], bbox["ymax"], length.out = nrows + 1)
+
+  tiles <- list()
+
+  # Loop over grid positions to build each rectangle
+  for (i in seq_len(ncols)) {
+    for (j in seq_len(nrows)) {
+      coords <- rbind(
+        c(x_breaks[i],     y_breaks[j]),
+        c(x_breaks[i+1],   y_breaks[j]),
+        c(x_breaks[i+1],   y_breaks[j+1]),
+        c(x_breaks[i],     y_breaks[j+1]),
+        c(x_breaks[i],     y_breaks[j])  # Close polygon
+      )
+      tile <- sf::st_polygon(list(coords))
+      tiles <- append(tiles, list(tile))
+    }
+  }
+
+  # Combine tiles into an sf object with matching CRS, ensuring validity
+  sf::st_sf(geometry = sf::st_sfc(tiles, crs = sf::st_crs(bbox_sf))) %>%
+    sf::st_make_valid()
+}
+
+#' Conditionally Subdivide Bounding Box into Grid Tiles Based on Geographic Extent
+#'
+#' This function checks whether the geographic extent of an `sf` object's bounding box
+#' exceeds a specified threshold in degrees (longitude or latitude). If so, it splits
+#' the bounding box into a regular grid of rectangular tiles of approximately `tile_size_deg`
+#' degrees in size. If not, it simply returns the original input.
+#'
+#' This is useful to improve performance when running spatial operations (e.g., `intersect`)
+#' on large countries or regions by breaking the work into spatial chunks that benefit
+#' from spatial indexing.
+#'
+#' @param bbox_sf An `sf` object. Only the bounding box is used for subdivision logic.
+#' @param degree_threshold Numeric. Threshold in degrees of lat/lon span at which to trigger subdivision. Default is 10.
+#' @param tile_size_deg Numeric. Approximate tile width/height in degrees. Default is 5.
+#'
+#' @return An `sf` object. Either:
+#'   - A grid of tiles (rectangular polygons) if subdivision is triggered, or
+#'   - The original input `bbox_sf` unchanged.
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#'   world <- sf::st_read(system.file("shape/nc.shp", package = "sf"))
+#'   tiles <- conditionally_subdivide_bbox(world)
+#'   plot(st_geometry(world))
+#'   plot(st_geometry(tiles), add = TRUE, border = "red")
+#' }
+conditionally_subdivide_bbox <- function(bbox_sf,
+                                         degree_threshold = 10,
+                                         tile_size_deg = 5) {
+  bbox <- sf::st_bbox(bbox_sf)
+
+  # Calculate longitude and latitude spans
+  lon_span <- bbox["xmax"] - bbox["xmin"]
+  lat_span <- bbox["ymax"] - bbox["ymin"]
+
+  # Trigger subdivision only if extent exceeds the threshold
+  if (lon_span > degree_threshold || lat_span > degree_threshold) {
+    ncols <- ceiling(lon_span / tile_size_deg)
+    nrows <- ceiling(lat_span / tile_size_deg)
+
+    # Optional message for logging context (you can remove iso3 if undefined)
+    log_msg(glue::glue("Input spans a large area ({round(lon_span, 1)} degrees longitude by {round(lat_span, 1)} degrees latitude) - subdividing into ~{tile_size_deg} degree tiles (grid: {ncols} x {nrows})"))
+
+    # Create grid tiles
+    tiles <- split_bbox_into_tiles(bbox_sf, ncols = ncols, nrows = nrows)
+    return(tiles)
+  } else {
+    # Return original as a single tile
+    return(bbox_sf)
+  }
 }
 
 

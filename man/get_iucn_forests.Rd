@@ -2,55 +2,57 @@
 % Please edit documentation in R/get_iucn_forests.R
 \name{get_iucn_forests}
 \alias{get_iucn_forests}
-\title{Extract and Rasterise IUCN GET Forest Ecosystems}
+\title{Extract and Rasterise IUCN Forest Ecosystems from Preloaded Layer}
 \usage{
 get_iucn_forests(
-  iucn_get_directory,
+  iucn_get_sf,
   iso3,
   pus,
   boundary_layer,
   include_minor_occurrence = TRUE,
   iucn_get_prefixes = c("MFT1.2", "T1.1", "T1.2", "T1.3", "T1.4", "T2.1", "T2.2", "T2.3",
     "T2.4", "T2.5", "T2.6", "TF1.1", "TF1.2"),
+  excluded_prefixes = NULL,
   output_path = NULL
 )
 }
 \arguments{
-\item{iucn_get_directory}{Character. Path to the directory containing the IUCN \code{.gpkg} files.}
+\item{iucn_get_sf}{sf object. IUCN GET polygons already loaded and pre-clipped to the boundary.}
 
 \item{iso3}{Character. ISO3 country code, used for naming and passed to \code{make_normalised_raster()}.}
 
-\item{pus}{SpatRaster. The planning units raster (terra object) over which to compute forest coverage.}
+\item{pus}{SpatRaster. Planning units raster over which forest coverage is computed.}
 
-\item{boundary_layer}{Boundary of the planning region.}
+\item{boundary_layer}{sf object. Used to spatially clip features if necessary.}
 
-\item{include_minor_occurrence}{Logical. Whether to include polygons marked as minor occurrence (default = TRUE).}
+\item{include_minor_occurrence}{Logical. If FALSE, removes minor occurrence ecosystems.}
 
-\item{iucn_get_prefixes}{Character vector of filename prefixes to include all forest
-classes (e.g., c("MFT1.2", "T1.1", "T1.2", "T1.3", "T1.4", "T2.1", "T2.2", "T2.3", "T2.4",
-"T2.5", "T2.6", "TF1.1", "TF1.2")) or NULL to include all \code{.gpkg} files.}
+\item{iucn_get_prefixes}{Character vector of layer prefixes to retain (default is forest-related).}
 
-\item{output_path}{Optional character. If provided, the output raster is saved to this directory as a GeoTIFF.}
+\item{excluded_prefixes}{Optional character vector of prefixes to exclude (e.g., \code{"T7.1"}).}
+
+\item{output_path}{Optional character. Output directory to save raster.}
 }
 \value{
-A normalized \code{SpatRaster} showing fractional IUCN forest coverage across planning units.
+A normalized \code{SpatRaster} showing fractional IUCN forest coverage across PUs.
 }
 \description{
-This function extracts forest ecosystem vector layers from IUCN GET \code{.gpkg} files
-(those starting with \code{"T"}), merges and dissolves them, and calculates the proportional
-coverage of forests across each planning unit using \code{exactextractr}. The result is then
-normalized to a 0–1 scale using \code{elsar::make_normalised_raster()}.
+This function filters IUCN GET polygons (already loaded as \code{sf}) to include only forest
+ecosystems, merges them, and calculates proportional coverage across each planning unit.
+The result is normalized to a 0–1 scale using \code{elsar::make_normalised_raster()}.
 }
 \details{
 Optionally, the result can be written to a Cloud-Optimized GeoTIFF file.
 }
 \examples{
 \dontrun{
-pus <- terra::rast("data/pus.tif")
-forest_layer <- get_iucn_forests(
-  iucn_get_directory = "data/iucn_layers",
+iucn_data <- get_iucn_ecosystems(...)
+forest_layer <- get_iucn_forests_from_layer(
+  iucn_get_sf = iucn_data,
   pus = pus,
   iso3 = "KEN",
+  boundary_layer = boundary,
+  excluded_prefixes = c("T7.1", "T7.2"),
   output_path = "outputs"
 )
 }

@@ -2,46 +2,44 @@
 % Please edit documentation in R/make_threatened_ecosystems_protection.R
 \name{make_threatened_ecosystems_protection}
 \alias{make_threatened_ecosystems_protection}
-\title{Create Threatened Ecosystems (for Protection) Raster Based on IUCN GET and Ecological
-Intactness}
+\title{Create Threatened Ecosystems (for Protection) Raster}
 \usage{
 make_threatened_ecosystems_protection(
   iso3,
   pus,
-  boundary_layer = boundary_layer,
-  intactness_input = NULL,
-  iucn_get_directory,
+  boundary_layer,
+  intactness_input,
+  iucn_get_sf,
   iucn_get_prefixes = NULL,
   include_minor_occurrence = TRUE,
   output_path = NULL
 )
 }
 \arguments{
-\item{iso3}{Character. ISO3 country code (e.g., "KEN") used for naming and processing.}
+\item{iso3}{Character. ISO3 country code (e.g., \code{"KEN"}) used for naming and processing.}
 
-\item{pus}{SpatRaster. Planning units raster used for resolution and extent.}
+\item{pus}{SpatRaster. Planning units raster used for alignment and resolution.}
 
-\item{boundary_layer}{sf object. National boundary used for subsetting intactness.}
+\item{boundary_layer}{sf. National boundary used for calculating the national median.}
 
-\item{intactness_input}{SpatRaster. Raster of ecological integrity values.}
+\item{intactness_input}{SpatRaster. Ecological integrity raster.}
 
-\item{iucn_get_directory}{Character. Directory containing IUCN GET \code{.gpkg} files.}
+\item{iucn_get_sf}{sf. IUCN GET polygons already subset to the country.}
 
-\item{iucn_get_prefixes}{Optional character vector of prefixes (e.g., "T", "M", etc.) to include.}
+\item{iucn_get_prefixes}{Optional character vector. Ecosystem type prefixes to include (e.g., \code{"T"}, \code{"M"}).}
 
-\item{include_minor_occurrence}{Logical. Whether to include ecosystems marked as minor (default: TRUE).}
+\item{include_minor_occurrence}{Logical. If FALSE, filters out ecosystems marked as minor (occurrence == 1).}
 
-\item{output_path}{Character or NULL. Optional output directory to save the resulting raster.}
+\item{output_path}{Character or NULL. Directory to write the output raster if desired.}
 }
 \value{
-A normalized SpatRaster showing per-pixel average ecosystem threat due to low intactness.
+A normalized SpatRaster layer with ecosystem threat scores (0–100).
 }
 \description{
-This function identifies ecosystems that are ecologically threatened by evaluating
-the proportion of intact area for each IUCN GET ecosystem type. It compares the
-intactness within each ecosystem against the national median ecological integrity
-value, and generates a raster layer representing ecosystem-level threat based on
-under-intactness.
+This function identifies threatened ecosystems by comparing ecological integrity (EII)
+values against a national median. For each IUCN GET ecosystem, it calculates the area
+of intact land (above the median) and expresses the ratio of intact to total area as a
+threat score. These scores are then rasterized and returned as a continuous raster.
 }
 \examples{
 \dontrun{
@@ -50,7 +48,7 @@ threatened <- make_threatened_ecosystems_protection(
   pus = planning_units,
   boundary_layer = sf::st_read("data/boundary.gpkg"),
   intactness_input = rast("data/intactness.tif"),
-  iucn_get_directory = "data/iucn_layers",
+  iucn_get_sf = iucn_get_sf,
   output_path = "outputs"
 )
 }
