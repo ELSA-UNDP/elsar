@@ -59,9 +59,9 @@ raster to a specified output path.
 \details{
 This function reprojects the input raster (\code{raster_in}) to match the CRS and resolution
 of the planning units (\code{pus}). The method for reprojection can be overridden using \code{method_override}.
-If \code{input_raster_conditional_expression} is provided, it is applied before any reprojection. The function can
-optionally rescale (0-1) and invert the raster values. It can also make processing times
-significantly longer for high resolution input rasters.
+If \code{input_raster_conditional_expression} is provided, it is applied before any reprojection. Applying a
+\code{input_raster_conditional_expression} can also make processing times significantly longer
+for high resolution input rasters.The function can optionally rescale (0-1) and invert the raster values.
 }
 \examples{
 \dontrun{
@@ -95,6 +95,18 @@ raster_out <- make_normalised_raster(
   iso3 = "USA",
   crop_global_input = FALSE # ESRI LULC rasters are already cropped to the PU extent when exported from GEE
   input_raster_conditional_expression = function(r) ifel(r \%in\% c(1:4, 7, 9), 1, 0)
+  )
+
+# For high resolution rasters (10m Sentinel based LULC for example) that cover a large area, it may be more
+  efficient and much faster to pre-create binary class rasters (e.g., built areas, agricaulture areas)
+  using tools like gdal_calc.
+
+built_areas_raster <- terra::rast("built_areas_brazil.tif")
+
+urban_areas <- make_normalised_raster(
+  raster_in = built_areas_raster,
+  pus = my_pus,
+  iso3 = "BRA"
   )
 }
 

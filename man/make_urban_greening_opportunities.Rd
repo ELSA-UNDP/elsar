@@ -6,7 +6,8 @@
 \usage{
 make_urban_greening_opportunities(
   ndvi_raster,
-  lulc_raster,
+  lulc_raster = NULL,
+  built_areas_raster = NULL,
   sdei_statistics,
   pus,
   iso3,
@@ -16,52 +17,46 @@ make_urban_greening_opportunities(
 )
 }
 \arguments{
-\item{ndvi_raster}{A \code{SpatRaster} representing NDVI data (vegetation greenness).}
+\item{ndvi_raster}{A \code{SpatRaster} representing NDVI values.}
 
-\item{lulc_raster}{A \code{SpatRaster} representing land use/land cover (LULC) classes.}
+\item{lulc_raster}{Optional. A \code{SpatRaster} representing land use/land cover (LULC) classes.
+Required if \code{built_areas_raster} is not provided.}
 
-\item{sdei_statistics}{An \code{sf} object of urban heat exposure statistics (e.g., WBGT).}
+\item{built_areas_raster}{Optional. A \code{SpatRaster} representing pre-classified binary built areas
+(1 = built, 0 = non-built). Skips internal classification from \code{lulc_raster}.
+Required if \code{lulc_raster} is not provided.}
 
-\item{pus}{A \code{SpatRaster} defining planning units (PUs) to align outputs to.}
+\item{sdei_statistics}{An \code{sf} object with urban heat exposure data (e.g., WBGT statistics).}
 
-\item{iso3}{ISO3 country code used for filtering the urban heat data.}
+\item{pus}{A \code{SpatRaster} defining the planning units.}
 
-\item{return_urban_areas}{Logical. If TRUE, also returns the raster of binary urban areas.}
+\item{iso3}{Character. ISO3 country code used to subset \code{sdei_statistics}.}
 
-\item{output_path}{Optional. A directory path to write the resulting raster(s).}
+\item{return_urban_areas}{Logical. If \code{TRUE}, returns a two-layer stack with both greening opportunities
+and binary urban extent.}
 
-\item{cores}{Integer. Number of CPU cores to use in multi-threaded operations (if supported). Default = 4.}
+\item{output_path}{Optional. Directory to save the resulting raster(s).}
+
+\item{cores}{Integer. Number of CPU cores to use (for future expansion, currently unused).}
 }
 \value{
-A \code{SpatRaster} of normalized urban greening opportunities. If \code{return_urban_areas = TRUE},
-a raster stack is returned with both greening opportunities and urban extent.
+A normalized \code{SpatRaster} showing per-PU urban greening potential.
+If \code{return_urban_areas = TRUE}, returns a raster stack including built areas.
 }
 \description{
 This function generates an urban greening opportunities raster by integrating NDVI (Normalized
-Difference Vegetation Index), land use/land cover (LULC) classification, and urban heat intensity
-from SDEI/GHS data. The process includes normalizing NDVI, identifying urban areas from LULC,
-rasterizing urban heat exposure, and combining all layers to map priority areas for urban greening.
+Difference Vegetation Index), land use/land cover (LULC) classification or a pre-computed built areas raster,
+and urban heat intensity from SDEI/GHS data. The output identifies urban pixels with high heat exposure
+and low greenness for targeted greening interventions.
 }
 \examples{
 \dontrun{
-ndvi <- elsar::elsar_load_data(
-  file_path = ".",
-  file_name = "ndvi.tif"
-  )
-
-lulc <- elsar::elsar_load_data(
-  file_path = ".",
-  file_name = "lulc.tif",
-  )
-
-sdei <- sf::read_sf("path_to_sdei_data.gpkg")
-
 result <- make_urban_greening_opportunities(
   ndvi_raster = ndvi,
-  lulc_raster = lulc,
+  built_areas_raster = built_binary,
   sdei_statistics = sdei,
   pus = planning_units,
-  iso3 = "NPL"
+  iso3 = "BRA"
 )
 }
 }
