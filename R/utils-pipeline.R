@@ -26,13 +26,13 @@ get_binary_layers <- function(raster_stack) {
 
   # Subset only if binary layers were found
   if (any(binary_mask, na.rm = TRUE)) {
-    binary_layers <- raster_stack[[which(binary_mask)]]
-    int_layers <- raster_stack[[which(!binary_mask)]]
+    int_layers <- raster_stack[[which(binary_mask)]]
+    float_layers <- raster_stack[[which(!binary_mask)]]
   } else {
     warning("No binary layers found.")
-    binary_layers <- NULL
-    int_layers <- raster_stack
+    int_layers <- NULL
+    float_layers <- raster_stack
   }
 
-  return(list(binary_layers, int_layers))
+  return(list(int_layers, float_layers))
 }
