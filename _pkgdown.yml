@@ -99,6 +99,11 @@ reference:
   - elsar_plot_extra_data
   - elsar_plot_optics
 
+- title: Utilities pipeline
+  desc:
+- contents:
+  - get_binary_layers
+
 - title: Datasets
 - contents:
   - boundary_dat
