@@ -18,11 +18,16 @@
 get_binary_layers <- function(raster_stack) {
   assertthat::assert_that(inherits(raster_stack, "SpatRaster"))
 
-  # compute min and max per layer
-  val_ranges <- terra::global(raster_stack, fun = "range", na.rm = TRUE)
+  # get frequency of values per raster layer
+  freq_tab <- terra::freq(raster_stack, digits=4, bylayer=TRUE)
 
-  # Identify binary layers: must contain either c(0, 1) or just 0 or just 1
-  binary_mask <- (val_ranges$min == 0 & val_ranges$max == 1) | (val_ranges$min == 0 & val_ranges$max == 0) | (val_ranges$min == 1 & val_ranges$max == 1)
+  # Split frequency table by layer
+  freq_by_layer <- split(freq_tab, freq_tab$layer)
+
+  # Identify binary layers: only values 0, 1, or both
+  binary_mask <- sapply(freq_by_layer, function(df) {
+    all(df$value %in% c(0, 1))
+  })
 
   # Subset only if binary layers were found
   if (any(binary_mask, na.rm = TRUE)) {
