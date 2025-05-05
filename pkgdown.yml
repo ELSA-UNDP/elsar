@@ -4,7 +4,7 @@ pkgdown_sha: ~
 articles:
   data-info: data-info.html
   elsaR: elsaR.html
-last_built: 2025-05-05T07:50Z
+last_built: 2025-05-05T23:34Z
 urls:
   reference: https://elsa-undp.github.io/elsar/reference
   article: https://elsa-undp.github.io/elsar/articles
