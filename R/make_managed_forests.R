@@ -76,18 +76,10 @@ make_managed_forests <- function(
     )
 
   if (!is.null(output_path)) {
-    terra::writeRaster(
-      dat_aligned,
+    elsar::save_raster(
+      raster = dat_aligned,
       filename = glue::glue("{output_path}/managed_forests_{iso3}.tif"),
-      datatype = "FLT4S",
-      filetype = "COG",
-      gdal = c(
-        "COMPRESS=ZSTD",
-        "PREDICTOR=3",
-        "NUM_THREADS=ALL_CPUS",
-        "OVERVIEWS=NONE"
-      ),
-      overwrite = TRUE
+      datatype = "FLT4S"
     )
   }
 
@@ -105,18 +97,10 @@ make_managed_forests <- function(
       elsar::rescale_raster()
 
     if (!is.null(output_path)) {
-      terra::writeRaster(
-        prod_man_forest,
+      elsar::save_raster(
+        raster = prod_man_forest,
         filename = glue::glue("{output_path}/productive_managed_forests_{iso3}.tif"),
-        datatype = "FLT4S",
-        filetype = "COG",
-        gdal = c(
-          "COMPRESS=ZSTD",
-          "PREDICTOR=3",
-          "NUM_THREADS=ALL_CPUS",
-          "OVERVIEWS=NONE"
-        ),
-        overwrite = TRUE
+        datatype = "FLT4S"
       )
     }
 

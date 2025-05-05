@@ -70,18 +70,10 @@ make_mangroves <- function(sf_in, # rename function name later
 
   #save if wanted
   if (!is.null(output_path)) {
-    terra::writeRaster(
-      raster_out,
+    elsar::save_raster(
+      raster = raster_out,
       filename = glue::glue("{output_path}/{name_out}_{iso3}.tif"),
-      filetype = "COG",
-      datatype = "FLT4S",
-      gdal = c(
-        "COMPRESS=ZSTD",
-        "PREDICTOR=3",
-        "OVERVIEWS=NONE",
-        "NUM_THREADS=ALL_CPUS"
-      ),
-      overwrite = TRUE
+      datatype = "FLT4S"
     )
   }
   return(raster_out)

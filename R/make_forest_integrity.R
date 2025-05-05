@@ -105,18 +105,10 @@ make_forest_integrity <- function(raster_flii = NULL,
   }
 
   if (!is.null(output_path)) {
-    terra::writeRaster(
-      raster_rescaled,
+    elsar::save_raster(
+      raster = raster_rescaled,
       filename = glue::glue("{output_path}/forest_integrity_{iso3}.tif"),
-      filetype = "COG",
-      datatype = "FLT4S",
-      gdal = c(
-        "COMPRESS=ZSTD",
-        "PREDICTOR=3",
-        "OVERVIEWS=NONE",
-        "NUM_THREADS=ALL_CPUS"
-      ),
-      overwrite = TRUE
+      datatype = "FLT4S"
     )
   }
 

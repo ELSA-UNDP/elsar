@@ -46,7 +46,7 @@ make_degraded_areas <- function(country_iso,
   # Resample and align SDG degradation layer to the planning units (PU) raster
   sdg_degradation_resampled <- terra::resample(
     sdg_degradation_input,
-    terra::project(pu, y = crs(sdg_degradation_input), method = "near"),
+    terra::project(pu, y = terra::crs(sdg_degradation_input), method = "near"),
     method = "near"
   ) %>%
     terra::project(y = pu, method = "near") %>%
@@ -66,14 +66,11 @@ make_degraded_areas <- function(country_iso,
 
   # Save the agriculture layer if output_path is provided
   if (!is.null(output_path)) {
-    terra::writeRaster(
-      agriculture_resampled,
-      filename = glue("{output_path}/esa_agriculture_resample_{country_iso}.tif"),
-      filetype = "COG",
-      gdal = c("compress=deflate", "num_threads=4", "overviews=none"),
-      overwrite = TRUE
+    elsar::save_raster(
+      raster = agriculture_resampled,
+      filename = glue::glue("{output_path}/esa_agriculture_resample_{country_iso}.tif"),
+      datatype = "INT1U"
     )
-    message(glue("Agricultural areas layer created for {country_iso}"))
   }
 
   # Resample and align built-up areas layer
@@ -81,21 +78,17 @@ make_degraded_areas <- function(country_iso,
     built_areas_input,
     terra::project(pu, y = terra::crs(built_areas_input), method = "near"),
     method = "bilinear"
-  ) %<%
+  ) %>%
     terra::project(y = pu, method = "near") %>%
     terra::resample(y = pu, method = "bilinear") * terra::subst(pu, 0, NA)
 
   # Save the built-up areas layer if output_path is provided
   if (!is.null(output_path)) {
-    terra::writeRaster(
-      built_areas_resampled,
-      filename = glue("{output_path}/built_areas_{country_iso}.tif"),
-      filetype = "COG",
-      datatype = "INT1U",
-      gdal = c("compress=deflate", "num_threads=4", "overviews=none"),
-      overwrite = TRUE
+    elsar::save_raster(
+      raster = built_areas_resampled,
+      filename = glue::glue("{output_path}/built_areas_{country_iso}.tif"),
+      datatype = "INT1U"
     )
-    message(glue("Built-up areas layer created for {country_iso}"))
   }
 
   # Resample and align Human Influence Index (HII) layer
@@ -109,15 +102,11 @@ make_degraded_areas <- function(country_iso,
 
   # Save the HII layer if output_path is provided
   if (!is.null(output_path)) {
-    terra::writeRaster(
-      hii_resampled,
-      filename = glue("{output_path}/hii_{country_iso}.tif"),
-      filetype = "COG",
-      datatype = "FLT4S",
-      gdal = c("compress=deflate", "num_threads=4", "overviews=none"),
-      overwrite = TRUE
+    elsar::save_raster(
+      raster = hii_resampled,
+      filename = glue::glue("{output_path}/hii_{country_iso}.tif"),
+      datatype = "FLT4S"
     )
-    message(glue("Human Influence Index (HII) layer created for {country_iso}"))
   }
 
   # Combine all layers to create the restoration zone layer
@@ -132,16 +121,14 @@ make_degraded_areas <- function(country_iso,
 
   # Save the restoration zone layer if output_path is provided
   if (!is.null(output_path)) {
-    terra::writeRaster(
-      restore_zone,
-      filename = glue("{output_path}/restore_zone_{country_iso}.tif"),
-      filetype = "COG",
-      datatype = "INT1U",
-      gdal = c("compress=deflate", "num_threads=4", "overviews=none"),
-      overwrite = TRUE
+    elsar::save_raster(
+      raster = restore_zone,
+      filename = glue::glue("{output_path}/restore_zone_{country_iso}.tif"),
+      datatype = "INT1U"
     )
-    message(glue("Degraded areas/Restore Zone layer created for {country_iso}"))
   }
+
+  log_msg(glue::glue("Degraded areas/Restore Zone layer created for {country_iso}"))
 
   return(restore_zone)  # Return the final restoration zone raster
 }

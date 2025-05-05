@@ -9,6 +9,7 @@ make_urban_greening_opportunities(
   lulc_raster = NULL,
   built_areas_raster = NULL,
   sdei_statistics,
+  threshold = 0.1,
   pus,
   iso3,
   return_urban_areas = FALSE,
@@ -20,13 +21,16 @@ make_urban_greening_opportunities(
 \item{ndvi_raster}{A \code{SpatRaster} representing NDVI values.}
 
 \item{lulc_raster}{Optional. A \code{SpatRaster} representing land use/land cover (LULC) classes.
-Required if \code{built_areas_raster} is not provided.}
+Required if \code{built_areas_raster} is not provided. Urban classes should be coded as \code{7}.}
 
 \item{built_areas_raster}{Optional. A \code{SpatRaster} representing pre-classified binary built areas
 (1 = built, 0 = non-built). Skips internal classification from \code{lulc_raster}.
 Required if \code{lulc_raster} is not provided.}
 
 \item{sdei_statistics}{An \code{sf} object with urban heat exposure data (e.g., WBGT statistics).}
+
+\item{threshold}{Numeric. The fractional threshold (0–1) to classify planning units as urban after aggregation.
+Planning units with built area fraction above this threshold are considered urban. Default is \code{0.10}.}
 
 \item{pus}{A \code{SpatRaster} defining the planning units.}
 
@@ -35,19 +39,26 @@ Required if \code{lulc_raster} is not provided.}
 \item{return_urban_areas}{Logical. If \code{TRUE}, returns a two-layer stack with both greening opportunities
 and binary urban extent.}
 
-\item{output_path}{Optional. Directory to save the resulting raster(s).}
+\item{output_path}{Optional. Directory path to save the resulting raster(s).}
 
 \item{cores}{Integer. Number of CPU cores to use (for future expansion, currently unused).}
 }
 \value{
-A normalized \code{SpatRaster} showing per-PU urban greening potential.
-If \code{return_urban_areas = TRUE}, returns a raster stack including built areas.
+A normalized \code{SpatRaster} representing urban greening opportunities.
+If \code{return_urban_areas = TRUE}, returns a raster stack with both the greening opportunities raster
+and the binary built areas raster.
 }
 \description{
 This function generates an urban greening opportunities raster by integrating NDVI (Normalized
 Difference Vegetation Index), land use/land cover (LULC) classification or a pre-computed built areas raster,
-and urban heat intensity from SDEI/GHS data. The output identifies urban pixels with high heat exposure
+and urban heat intensity from SDEI/GHS data. It identifies urban pixels with high heat exposure
 and low greenness for targeted greening interventions.
+}
+\details{
+The built areas layer can be sourced either from a precomputed binary raster (\code{built_areas_raster})
+or derived dynamically from a LULC raster (\code{lulc_raster}), which is classified on-the-fly to extract urban pixels.
+When aggregating built areas to planning units, fractional values are thresholded to generate a binary raster
+representing urban (1) and non-urban (0) planning units.
 }
 \examples{
 \dontrun{

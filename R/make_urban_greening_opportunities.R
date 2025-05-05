@@ -2,25 +2,34 @@
 #'
 #' This function generates an urban greening opportunities raster by integrating NDVI (Normalized
 #' Difference Vegetation Index), land use/land cover (LULC) classification or a pre-computed built areas raster,
-#' and urban heat intensity from SDEI/GHS data. The output identifies urban pixels with high heat exposure
+#' and urban heat intensity from SDEI/GHS data. It identifies urban pixels with high heat exposure
 #' and low greenness for targeted greening interventions.
+#'
+#' The built areas layer can be sourced either from a precomputed binary raster (`built_areas_raster`)
+#' or derived dynamically from a LULC raster (`lulc_raster`), which is classified on-the-fly to extract urban pixels.
+#' When aggregating built areas to planning units, fractional values are thresholded to generate a binary raster
+#' representing urban (1) and non-urban (0) planning units.
 #'
 #' @param ndvi_raster A `SpatRaster` representing NDVI values.
 #' @param lulc_raster Optional. A `SpatRaster` representing land use/land cover (LULC) classes.
-#'                   Required if `built_areas_raster` is not provided.
+#'                   Required if `built_areas_raster` is not provided. Urban classes should be coded as `7`.
 #' @param built_areas_raster Optional. A `SpatRaster` representing pre-classified binary built areas
 #'                           (1 = built, 0 = non-built). Skips internal classification from `lulc_raster`.
 #'                           Required if `lulc_raster` is not provided.
 #' @param sdei_statistics An `sf` object with urban heat exposure data (e.g., WBGT statistics).
+#' @param threshold Numeric. The fractional threshold (0–1) to classify planning units as urban after aggregation.
+#'                  Planning units with built area fraction above this threshold are considered urban. Default is `0.10`.
 #' @param pus A `SpatRaster` defining the planning units.
 #' @param iso3 Character. ISO3 country code used to subset `sdei_statistics`.
 #' @param return_urban_areas Logical. If `TRUE`, returns a two-layer stack with both greening opportunities
 #'                           and binary urban extent.
-#' @param output_path Optional. Directory to save the resulting raster(s).
+#' @param output_path Optional. Directory path to save the resulting raster(s).
 #' @param cores Integer. Number of CPU cores to use (for future expansion, currently unused).
 #'
-#' @return A normalized `SpatRaster` showing per-PU urban greening potential.
-#'         If `return_urban_areas = TRUE`, returns a raster stack including built areas.
+#' @return A normalized `SpatRaster` representing urban greening opportunities.
+#'         If `return_urban_areas = TRUE`, returns a raster stack with both the greening opportunities raster
+#'         and the binary built areas raster.
+#'
 #' @export
 #'
 #' @examples
@@ -38,6 +47,7 @@ make_urban_greening_opportunities <- function(
     lulc_raster = NULL,
     built_areas_raster = NULL,
     sdei_statistics,
+    threshold = 0.10,
     pus,
     iso3,
     return_urban_areas = FALSE,
@@ -53,12 +63,11 @@ make_urban_greening_opportunities <- function(
   if (!is.null(built_areas_raster)) {
     assertthat::assert_that(inherits(built_areas_raster, "SpatRaster"), msg = "built_areas_raster must be a SpatRaster object.")
   }
-  # Require at least one source of urban/built-up data
   if (is.null(lulc_raster) && is.null(built_areas_raster)) {
     stop("You must provide either `lulc_raster` or `built_areas_raster` to classify urban areas.")
   }
 
-  # Normalize NDVI — remove negative values (i.e., water) and invert to reflect greening priority
+  # Normalize NDVI — invert to reflect greening need, and remove negative values (water or invalid)
   log_msg("Normalizing NDVI: removing negatives and inverting to reflect greening need...")
   rev_ndvi <- make_normalised_raster(
     raster_in = ndvi_raster,
@@ -84,11 +93,14 @@ make_urban_greening_opportunities <- function(
       pus = pus,
       iso3 = iso3,
       method_override = "mean",
-      crop_global_input = FALSE,  # skip cropping for already-local LULC
+      crop_global_input = FALSE,
       input_raster_conditional_expression = function(x) terra::ifel(x == 7, 1, 0)
     )
   }
 
+  # Threshold fractional urban areas to binary
+  urban_areas <- terra::ifel(urban_areas > threshold, 1, 0)
+  urban_areas <- terra::mask(urban_areas, pus)
   names(urban_areas) <- "built_areas"
 
   # Process urban heat exposure from SDEI
@@ -140,18 +152,10 @@ make_urban_greening_opportunities <- function(
   # Save output if requested
   if (!is.null(output_path)) {
     output_file <- glue::glue("{output_path}/urban_greening_opportunities_{iso3}.tif")
-    terra::writeRaster(
-      urban_greening_opportunities,
+    elsar::save_raster(
+      raster = urban_greening_opportunities,
       filename = output_file,
-      filetype = "COG",
-      datatype = "FLT4S",
-      gdal = c(
-        "COMPRESS=ZSTD",
-        "PREDICTOR=3",
-        "OVERVIEWS=NONE",
-        "NUM_THREADS=ALL_CPUS"
-        ),
-      overwrite = TRUE
+      datatype = "FLT4S"
     )
     log_msg(glue::glue("Urban greening raster saved to: {output_file}"))
   }

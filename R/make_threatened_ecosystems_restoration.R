@@ -52,20 +52,11 @@ make_threatened_ecosystems_restoration <- function(
   if (!is.null(output_path)) {
     assertthat::assert_that(dir.exists(output_path), msg = "'output_path' does not exist.")
     out_file <- glue::glue("{output_path}/threatened_ecosystems_for_restoration_{iso3}.tif")
-    log_msg(glue::glue("Writing output to: {out_file}"))
 
-    terra::writeRaster(
-      threatened_ecosystems_for_restoration,
+    elsar::save_raster(
+      raster = threatened_ecosystems_for_restoration,
       filename = out_file,
-      datatype = "FLT4S",
-      filetype = "COG",
-      gdal = c(
-        "COMPRESS=ZSTD",
-        "PREDICTOR=3",
-        "NUM_THREADS=ALL_CPUS",
-        "OVERVIEWS=NONE"
-      ),
-      overwrite = TRUE
+      datatype = "FLT4S"
     )
   }
 

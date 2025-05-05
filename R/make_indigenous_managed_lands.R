@@ -128,21 +128,11 @@ make_indigenous_managed_lands <- function(
   if (!is.null(output_path)) {
     output_file <- glue::glue("{output_path}/indigenous_managed_lands_{iso3}.tif")
 
-    terra::writeRaster(
-      indigenous_managed_lands,
+    elsar::save_raster(
+      raster = indigenous_managed_lands,
       filename = output_file,
-      filetype = "COG",
-      datatype = "FLT4S",
-      gdal = c(
-        "COMPRESS=ZSTD",
-        "PREDICTOR=3",
-        "OVERVIEWS=NONE",
-        "NUM_THREADS=ALL_CPUS"
-      ),
-      overwrite = TRUE
+      datatype = "FLT4S"
     )
-
-    log_msg(glue::glue("Indigenous managed lands raster saved to: {output_file}"))
   }
 
   return(indigenous_managed_lands)

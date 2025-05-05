@@ -240,7 +240,7 @@ elsar_download_esri_lulc_data <- function(
           "COMPRESS=ZSTD",
           "NUM_THREADS=ALL_CPUS",
           "BIGTIFF=IF_SAFER",
-          "PREDICTOR=1",
+          "PREDICTOR=2",
           "OVERVIEWS=NONE"
         ),
         NAflag = 255,
@@ -259,7 +259,7 @@ elsar_download_esri_lulc_data <- function(
           "COMPRESS=ZSTD",
           "NUM_THREADS=ALL_CPUS",
           "BIGTIFF=IF_SAFER",
-          "PREDICTOR=1",
+          "PREDICTOR=2",
           "OVERVIEWS=NONE"
         ),
         NAflag = 255,

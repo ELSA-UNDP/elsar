@@ -1,6 +1,6 @@
 # elsaR R package  <img src="man/figures/elsaR_hex_sticker.png" align="right" style="width:140px"/>
 
-The **elsaR** package provides tools and data pipelines to support *Essential Life Support Area (ELSA)*. It is designed to assist in spatial prioritization and scenario development using globally standardized geospatial data layers for conservation and restoration planning.
+The **elsaR** package provides tools and data pipelines to support *Essential Life Support Areas (ELSA)*. It is designed to assist in spatial prioritization and scenario development using globally standardized geospatial data layers for conservation and restoration planning.
 
 ---
 

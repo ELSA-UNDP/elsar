@@ -80,6 +80,7 @@ reference:
   - rescale_raster
   - split_bbox_into_tiles
   - conditionally_subdivide_bbox
+  - save_raster
 
 - title: Plotting function
   desc: Functions to plot input and output data of an ELSA workflow

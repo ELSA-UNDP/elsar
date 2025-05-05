@@ -550,6 +550,56 @@ conditionally_subdivide_bbox <- function(bbox_sf,
   }
 }
 
+#' Save a Raster as a Cloud Optimized GeoTIFF (COG)
+#'
+#' This helper function saves a `SpatRaster` to disk as a Cloud Optimized GeoTIFF (COG) with ZSTD compression.
+#' It automatically sets the appropriate GDAL predictor based on the data type to optimize file size and performance.
+#' For floating point rasters (`FLT4S`), Predictor 3 is used, and for integer rasters, Predictor 2 is used, which improves compressibility.
+#' A nodata value is also automatically defined and applied: 255 for integer rasters (e.g. `"INT1U"`) and `NaN` for floating point rasters.
+#'
+#' This function should be used across processing functions to ensure consistent raster output formats.
+#'
+#' @param raster A `SpatRaster` object to be saved.
+#' @param filename Character. Full file path (including `.tif` extension) where the raster will be saved.
+#' @param datatype Character. GDAL data type to use for saving the raster (e.g. `"FLT4S"` for float, `"INT1U"` for unsigned byte). Default is `"FLT4S"`.
+#'
+#' @return None. The function is called for its side effect of saving the raster to disk.
+#'
+#'@export
+#'
+#' @examples
+#' \dontrun{
+#' save_raster(my_raster, "output/my_raster.tif", datatype = "INT1U")
+#' save_raster(my_raster, "output/my_raster_float.tif", datatype = "FLT4S")
+#' }
+#'
+save_raster <- function(raster, filename, datatype = "FLT4S") {
+  # Determine GDAL predictor: 3 for float (better for continuous), 2 for integer (better for categorical)
+  predictor_value <- ifelse(datatype == "FLT4S", "3", "2")
+
+  # Define nodata value: NaN for float, 255 for integer (common convention)
+  nodata_value <- if (datatype == "FLT4S") NaN else 255
+
+  # Write raster to disk as Cloud Optimized GeoTIFF (COG)
+  terra::writeRaster(
+    raster,
+    filename = filename,
+    filetype = "COG",
+    datatype = datatype,
+    NAflag = nodata_value,
+    gdal = c(
+      "COMPRESS=ZSTD",
+      glue::glue("PREDICTOR={predictor_value}"),
+      "NUM_THREADS=ALL_CPUS",
+      "OVERVIEWS=NONE"
+    ),
+    overwrite = TRUE
+  )
+
+  # Log saved file path
+  log_msg(glue::glue("Saved: {filename}."))
+}
+
 
 
 
