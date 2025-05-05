@@ -67,17 +67,18 @@ make_protected_areas <- function(from_wdpa = TRUE,
 
   log_msg(glue::glue("Including {glue::glue_collapse(status, sep = ', ', last = ' and ')} areas only"))
 
-  # Filter data
+  # Filter data by STATUS and PA_DEF
   protected_areas <- protected_areas %>%
     dplyr::filter(.data$STATUS %in% status, .data$PA_DEF %in% pa_def)
 
+  # Remove MAB designated areas if specified
   if (!include_mab_designation) {
     log_msg("Excluding UNESCO Man and Biosphere (MAB) reserve areas")
     protected_areas <- protected_areas %>%
       dplyr::filter(!stringr::str_detect(.data$DESIG, "MAB"))
   }
 
-  # Buffer or transform geometries
+  # If geometry includes POINT/MULTIPOINT, buffer or filter
   geom_type <- sf::st_geometry_type(protected_areas)
 
   if (any(geom_type %in% c("POINT", "MULTIPOINT"))) {
@@ -99,6 +100,7 @@ make_protected_areas <- function(from_wdpa = TRUE,
         sf::st_make_valid()
     }
   } else {
+    # If already polygonal, reproject and dissolve
     protected_areas <- protected_areas %>%
       sf::st_transform(sf::st_crs(pus)) %>%
       dplyr::summarise() %>%
@@ -116,9 +118,9 @@ make_protected_areas <- function(from_wdpa = TRUE,
   }
 
   # Mask to original planning units extent (retain NA where no data)
-  protected_areas_raster <- terra::mask(protected_areas_raster, pus)
+  protected_areas_raster <- make_normalised_raster(protected_areas_raster, pus = pus, iso3 = iso3)
 
-  # Optionally save sf for reuse
+  # Optionally store in global environment for reuse
   if (return_sf) {
     protected_areas <- sf::st_cast(protected_areas, "POLYGON")
     log_msg("Current protected areas are available as object `current_protected_area_sf`")
