@@ -158,18 +158,10 @@ make_kbas <- function(
       name_out <- "kba_sites"
     }
 
-    terra::writeRaster(
-      kba,
+    elsar::save_raster(
+      raster = kba,
       filename = glue::glue("{output_path}/{name_out}_{iso3}.tif"),
-      datatype = "FLT4S",
-      filetype = "COG",
-      gdal = c(
-        "COMPRESS=ZSTD",
-        "PREDICTOR=3",
-        "OVERVIEWS=NONE",
-        "NUM_THREADS=ALL_CPUS"
-      ),
-      overwrite = TRUE
+      datatype = "FLT4S"
     )
   }
 

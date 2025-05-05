@@ -164,19 +164,11 @@ make_protect_zone <- function(
   # Save to disk if needed
   if (!is.null(output_path)) {
     filename <- glue::glue("{output_path}/protect_zone_{iso3}.tif")
-    log_msg(glue::glue("Saving protection zone raster to: {filename}"))
-    terra::writeRaster(
+
+    elsar::save_raster(
       protect_zone,
       filename = filename,
-      filetype = "COG",
-      datatype = "INT1U",
-      gdal = c(
-        "COMPRESS=ZSTD",
-        "NUM_THREADS=ALL_CPUS",
-        "PREDICTOR=1",
-        "OVERVIEWS=NONE"
-      ),
-      overwrite = TRUE
+      datatype = "INT1U"
     )
   }
 

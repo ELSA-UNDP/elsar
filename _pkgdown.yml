@@ -80,6 +80,7 @@ reference:
   - rescale_raster
   - split_bbox_into_tiles
   - conditionally_subdivide_bbox
+  - save_raster
 
 - title: Plotting function
   desc: Functions to plot input and output data of an ELSA workflow
@@ -98,6 +99,11 @@ reference:
   - elsar_plot_background_d
   - elsar_plot_extra_data
   - elsar_plot_optics
+
+- title: Utilities pipeline
+  desc:
+- contents:
+  - get_binary_layers
 
 - title: Datasets
 - contents:

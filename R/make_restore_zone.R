@@ -149,25 +149,6 @@ make_restore_zone <- function(
     method_override = "mean"
     )
 
-  # Helper function to save rasters
-  save_raster <- function(raster, filename, datatype = "FLT4S") {
-    predictor_value <- ifelse(datatype == "FLT4S", "3", "1")
-    terra::writeRaster(
-      raster,
-      filename = filename,
-      filetype = "COG",
-      datatype = datatype,
-      gdal = c(
-        "COMPRESS=ZSTD",
-        glue::glue("PREDICTOR={predictor_value}"),
-        "NUM_THREADS=ALL_CPUS",
-        "OVERVIEWS=NONE"
-      ),
-      overwrite = TRUE
-    )
-    log_msg(glue::glue("Saved: {filename}."))
-  }
-
   # Optional output of intermediate layers
   if (!is.null(output_path)) {
     if (!is.null(agricultural_areas_input)) {
@@ -214,7 +195,11 @@ make_restore_zone <- function(
 
   # Save final output
   if (!is.null(output_path)) {
-    save_raster(restore_zones, glue::glue("{output_path}/restore_zones_{iso3}.tif"), datatype = "INT1U")
+    elsar::save_raster(
+      raster = restore_zones,
+      filename = glue::glue("{output_path}/restore_zones_{iso3}.tif"),
+      datatype = "INT1U"
+      )
   }
 
   return(restore_zones)

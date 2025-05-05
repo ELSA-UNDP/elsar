@@ -77,23 +77,29 @@ make_underrepresented_ecosystems <- function(
 
   pa_ids <- seq_len(nrow(current_protected_areas))
 
-  iucn_ecosystems_pa_area <- progressr::with_progress({
-    p <- progressr::progressor(along = pa_ids)
+  # Split sf into list of individual 1-row sf objects
+  pa_list <- split(current_protected_areas, seq_len(nrow(current_protected_areas)))
 
-    future.apply::future_lapply(pa_ids, function(i) {
+  # Then use future_lapply over pa_list
+  iucn_ecosystems_pa_area <- progressr::with_progress({
+    p <- progressr::progressor(along = pa_list)
+
+    future.apply::future_lapply(pa_list, function(pa) {
       p()
-      pa <- current_protected_areas[i, ]
       iucn_crop <- sf::st_filter(iucn_get_sf, pa)
 
       if (nrow(iucn_crop) == 0) return(NULL)
 
       tryCatch({
-        sf::st_intersection(iucn_crop, pa) %>%
-          sf::st_make_valid() %>%
-          dplyr::mutate(area_protected = units::drop_units(sf::st_area(.))) %>%
-          sf::st_set_geometry(NULL) %>%
-          dplyr::select(id, area_protected)
-      }, error = function(e) NULL)
+        result <- sf::st_intersection(iucn_crop, pa)
+        result <- sf::st_make_valid(result)
+        result$area_protected <- units::drop_units(sf::st_area(result))
+        result_df <- sf::st_set_geometry(result, NULL)
+        result_df[, c("id", "area_protected"), drop = FALSE]
+      }, error = function(e) {
+        message("Error: ", conditionMessage(e))
+        return(NULL)
+      })
     })
   })
 
@@ -127,20 +133,11 @@ make_underrepresented_ecosystems <- function(
   # Optional write
   if (!is.null(output_path)) {
     out_file <- glue::glue("{output_path}/underrepresented_ecosystems_{iso3}.tif")
-    log_msg(glue::glue("Writing output to: {out_file}"))
 
-    terra::writeRaster(
-      underrepresented_ecosystems,
+    elsar::save_raster(
+      raster = underrepresented_ecosystems,
       filename = out_file,
-      datatype = "FLT4S",
-      filetype = "COG",
-      gdal = c(
-        "COMPRESS=ZSTD",
-        "PREDICTOR=3",
-        "NUM_THREADS=ALL_CPUS",
-        "OVERVIEWS=NONE"
-      ),
-      overwrite = TRUE
+      datatype = "FLT4S"
     )
   }
 

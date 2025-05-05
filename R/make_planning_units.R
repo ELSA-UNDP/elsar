@@ -156,19 +156,10 @@ make_planning_units <- function(boundary_proj,
   log_msg(glue::glue("Final PU layer: {as.integer(pu_sum)} PUs at {as.integer(pu_size)} m resolution."))
 
   if (!is.null(output_path)) {
-    terra::writeRaster(
-      r1,
+    elsar::save_raster(
+      raster = r1,
       filename = glue::glue("{output_path}/planning_units_{iso3}.tif"),
-      filetype = "COG",
-      datatype = "INT1U",
-      gdal = c(
-        "COMPRESS=ZSTD",
-        "NUM_THREADS=4",
-        "OVERVIEWS=NONE",
-        "PREDICTOR=1"
-      ),
-      NAflag = 255,
-      overwrite = TRUE
+      datatype = "INT1U"
     )
   }
 

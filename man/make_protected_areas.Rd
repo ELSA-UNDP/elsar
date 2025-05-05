@@ -2,7 +2,7 @@
 % Please edit documentation in R/make_protected_areas.R
 \name{make_protected_areas}
 \alias{make_protected_areas}
-\title{Create a Raster of Existing Protected Areas Aligned to Planning Units}
+\title{Create a Binary or Fractional Raster of Protected Areas Aligned to Planning Units}
 \usage{
 make_protected_areas(
   from_wdpa = TRUE,
@@ -16,6 +16,8 @@ make_protected_areas(
   area_column = "REP_AREA",
   area_calc_crs = "ESRI:54009",
   nQuadSegs = 50,
+  threshold = 0.1,
+  binary = TRUE,
   return_sf = TRUE,
   force_update = FALSE,
   pus,
@@ -33,7 +35,7 @@ make_protected_areas(
 
 \item{status}{Character vector. Which \code{STATUS} values to include from the WDPA data. Default is \code{c("Established", "Inscribed", "Designated")}.}
 
-\item{pa_def}{Integer or vector of integers. Values for the \code{PA_DEF} column (1 = Protected Area; 0 = OECM). Only 1 is currently supported. Default is \code{1}.}
+\item{pa_def}{Integer or vector of integers. Values for the \code{PA_DEF} column (1 = Protected Area; 0 = OECM). Only \code{1} is currently supported. Default is \code{1}.}
 
 \item{include_mab_designation}{Logical. If \code{FALSE}, excludes Man and Biosphere (MAB) reserves.}
 
@@ -45,6 +47,10 @@ make_protected_areas(
 
 \item{nQuadSegs}{Integer. Number of segments per quarter circle for buffers. Default is \code{50}.}
 
+\item{threshold}{Numeric. Fractional threshold for considering a planning unit as protected. Default is \code{0.10}. Used only if \code{binary = TRUE}.}
+
+\item{binary}{Logical. If \code{TRUE}, output will be binary (0/1) based on \code{threshold}. If \code{FALSE}, returns fractional coverage raster. Default is \code{TRUE}.}
+
 \item{return_sf}{Logical. If \code{TRUE}, assigns the dissolved individual polygons to \code{current_protected_area_sf} in the global environment for reuse. Default is \code{TRUE}.}
 
 \item{force_update}{Logical. If \code{TRUE}, forces re-download of WDPA data. Default is \code{FALSE}.}
@@ -54,30 +60,8 @@ make_protected_areas(
 \item{output_path}{Optional. File path where the resulting raster should be saved.}
 }
 \value{
-A \code{SpatRaster} representing the fractional coverage of protected areas in each planning unit.
+A \code{SpatRaster} representing protected areas as binary presence/absence or fractional coverage.
 }
 \description{
-This function generates a raster of protected areas for a given country, aligned to the planning units (\code{pus}). It optionally downloads the latest protected area data from the \href{https://www.protectedplanet.net/}{Protected Planet} database via the \pkg{wdpar} package or uses an input \code{sf} object. All geometries are reprojected, dissolved to avoid double-counting overlaps, and converted to individual polygons to improve spatial intersection performance. The raster output represents the fractional area of each planning unit covered by protected areas.
-}
-\examples{
-\dontrun{
-boundary_proj <- make_boundary(
- boundary_in = boundary_dat,
- iso3 = "NPL",
- iso3_column = "iso3cd"
- )
-
-pus <- make_planning_units(
- boundary_proj = boundary_proj,
- pu_size = NULL
- )
-
-pa_raster <- make_protected_areas(
-  iso3 = "NPL",
-  download_path = here::here(),
-  buffer_points = TRUE,
-  pus = pus,
-  force_update = TRUE
-)
-}
+This function generates a binary or fractional raster of protected areas for a given country, aligned to the planning units (\code{pus}). It optionally downloads the latest protected area data from the \href{https://www.protectedplanet.net/}{Protected Planet} database via the \pkg{wdpar} package or uses an input \code{sf} object. All geometries are reprojected, dissolved to avoid double-counting overlaps, and converted to individual polygons to improve spatial intersection performance. The raster output indicates the presence of protected areas in each planning unit (binary) or the fractional area covered.
 }

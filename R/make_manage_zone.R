@@ -185,19 +185,11 @@ make_manage_zone <- function(
   # Save to disk if needed
   if (!is.null(output_path)) {
     filename <- glue::glue("{output_path}/manage_zone_{iso3}.tif")
-    log_msg(glue::glue("Saving manage zone rasters to: {filename}..."))
-    terra::writeRaster(
+
+    elsar::save_raster(
       manage_zones,
       filename = filename,
-      filetype = "COG",
-      datatype = "INT1U",
-      gdal = c(
-        "COMPRESS=ZSTD",
-        "PREDICTOR=1",
-        "NUM_THREADS=ALL_CPUS",
-        "OVERVIEWS=NONE"
-      ),
-      overwrite = TRUE
+      datatype = "INT1U"
     )
   }
 

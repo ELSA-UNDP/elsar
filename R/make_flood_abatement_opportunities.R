@@ -63,21 +63,11 @@ make_flood_abatement_opportunities <- function(
   if (!is.null(output_path)) {
     output_file <- glue::glue("{output_path}/flood_abatement_opportunities_{iso3}.tif")
 
-    terra::writeRaster(
-      flood_abatement_opportunities,
+    elsar::save_raster(
+      raster = flood_abatement_opportunities,
       filename = output_file,
-      filetype = "COG",
-      datatype = "FLT4S",
-      gdal = c(
-        "COMPRESS=ZSTD",
-        "PREDICTOR=3",
-        "OVERVIEWS=NONE",
-        "NUM_THREADS=ALL_CPUS"
-      ),
-      overwrite = TRUE
+      datatype = "FLT4S"
     )
-
-    log_msg(glue::glue("Flood abatement opportunities raster created and saved to: {output_file}"))
   }
 
   return(flood_abatement_opportunities)

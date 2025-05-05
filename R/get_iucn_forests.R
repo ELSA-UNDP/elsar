@@ -81,20 +81,11 @@ get_iucn_forests <- function(
   if (!is.null(output_path)) {
     assertthat::assert_that(dir.exists(output_path), msg = "'output_path' does not exist.")
     out_file <- glue::glue("{output_path}/iucn_get_forests_{iso3}.tif")
-    log_msg(glue::glue("Writing output to: {out_file}"))
 
-    terra::writeRaster(
-      forest_raster,
+    elsar::save_raster(
+      raster = forest_raster,
       filename = out_file,
-      datatype = "FLT4S",
-      filetype = "COG",
-      gdal = c(
-        "COMPRESS=ZSTD",
-        "PREDICTOR=3",
-        "NUM_THREADS=ALL_CPUS",
-        "OVERVIEWS=NONE"
-      ),
-      overwrite = TRUE
+      datatype = "FLT4S"
     )
   }
 
