@@ -72,10 +72,7 @@ make_underrepresented_ecosystems <- function(
 
   future::plan(future::multisession)
 
-  progressr::handlers(global = TRUE)
   progressr::handlers("txtprogressbar")
-
-  pa_ids <- seq_len(nrow(current_protected_areas))
 
   # Split sf into list of individual 1-row sf objects
   pa_list <- split(current_protected_areas, seq_len(nrow(current_protected_areas)))
@@ -85,7 +82,8 @@ make_underrepresented_ecosystems <- function(
     p <- progressr::progressor(along = pa_list)
 
     future.apply::future_lapply(pa_list, function(pa) {
-      p()
+      p(sprintf("Processing PA id %s", pa$id))  # optional, informative message
+
       iucn_crop <- sf::st_filter(iucn_get_sf, pa)
 
       if (nrow(iucn_crop) == 0) return(NULL)
@@ -97,7 +95,7 @@ make_underrepresented_ecosystems <- function(
         result_df <- sf::st_set_geometry(result, NULL)
         result_df[, c("id", "area_protected"), drop = FALSE]
       }, error = function(e) {
-        message("Error: ", conditionMessage(e))
+        message("Error processing PA id ", pa$id, ": ", conditionMessage(e))  # error message
         return(NULL)
       })
     })
