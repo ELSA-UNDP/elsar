@@ -143,8 +143,6 @@ make_threatened_ecosystems_protection <- function(
     attribute = "threat"
   )
   names(threat_raster) <- "threatened_ecosystems_for_protection"
-  terra::units(threat_raster) <- "%"
-  terra::desc(threat_raster) <- "Threat score for each IUCN GET ecosystem (0 = intact, 100 = highly threatened)"
 
   # Optional write to file
   if (!is.null(output_path)) {
