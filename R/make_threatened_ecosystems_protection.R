@@ -84,6 +84,7 @@ make_threatened_ecosystems_protection <- function(
     sf::st_set_geometry(NULL)
 
   # Total area and threat calculation per ecosystem
+  log_msg("Summarising threat within each ecosystem...")
   ecosystems_total <- iucn_get_sf %>%
     dplyr::group_by(.data$id) %>%
     dplyr::summarise() %>%
