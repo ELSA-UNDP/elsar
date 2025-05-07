@@ -106,31 +106,49 @@ get_iucn_ecosystems <- function(
   # Conditionally split boundary
   pus_bbox_wgs <- conditionally_subdivide_bbox(bbox_sf = pus_bbox_wgs)
 
-  log_msg("Reading, reprojecting, and intersecting IUCN GET ecosystem layers...")
-  iucn_list <- lapply(all_files, function(file) {
-    v <- terra::vect(file, extent = pus_bbox_wgs)
-    if (NROW(v) == 0)
-      return(NULL)
+  log_msg("Reading, reprojecting, and intersecting IUCN GET ecosystem layers using parallel processing...")
 
-    # Safely derive layer ID from filename
-    layer_id <- gsub("_", ".", gsub("_v.*$", "", tools::file_path_sans_ext(basename(file))))
-    v$id <- layer_id
+  if (!requireNamespace("future.apply", quietly = TRUE)) stop("Please install the 'future.apply' package.")
+  if (!requireNamespace("progressr", quietly = TRUE)) stop("Please install the 'progressr' package.")
 
-    log_msg(glue::glue(
-      "Intersecting {iso3} boundary with IUCN GET {layer_id} features..."
-    ))
+  n_cores <- parallel::detectCores(logical = FALSE)
+  n_workers <- max(1, floor(n_cores / 2))
 
-    v <- terra::intersect(v, terra::project(terra::vect(boundary_layer), terra::crs(v)))
-    # Reproject if needed
-    if (terra::crs(v) != terra::crs(pus)) {
-      v <- terra::project(v, terra::crs(pus))
-    }
+  old_plan <- future::plan()
+  on.exit(future::plan(old_plan), add = TRUE)
 
-    log_msg(glue::glue(
-      "Intersection with IUCN GET {layer_id} features completed."
-    ))
+  if (.Platform$OS.type == "unix" && !interactive()) {
+    future::plan(future::multicore, workers = n_workers)
+  } else {
+    future::plan(future::multisession, workers = n_workers)
+  }
 
-    return(v)
+  progressr::handlers("txtprogressbar")
+
+  log_msg("Reading, reprojecting, and intersecting IUCN GET ecosystem layers in parallel...")
+  iucn_list <- progressr::with_progress({
+    p <- progressr::progressor(along = all_files)
+
+    future.apply::future_lapply(all_files, function(file) {
+      p(sprintf("Processing %s", basename(file)))
+
+      v <- terra::vect(file, extent = pus_bbox_wgs)
+
+      if (NROW(v) == 0)
+        return(NULL)
+
+      # Safely derive layer ID
+      layer_id <- gsub("_", ".", gsub("_v.*$", "", tools::file_path_sans_ext(basename(file))))
+      v$id <- layer_id
+
+      v <- terra::intersect(v, terra::project(terra::vect(boundary_layer), terra::crs(v)))
+
+      if (terra::crs(v) != terra::crs(pus)) {
+        v <- terra::project(v, terra::crs(pus))
+      }
+
+      return(v)
+    })
   })
 
   log_msg(glue::glue("Finished intersecting all IUCN GET features in {iso3}. Checking for any NULL features..."))
