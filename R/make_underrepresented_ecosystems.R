@@ -70,7 +70,15 @@ make_underrepresented_ecosystems <- function(
   if (!requireNamespace("future.apply", quietly = TRUE)) stop("Please install the 'future.apply' package.")
   if (!requireNamespace("progressr", quietly = TRUE)) stop("Please install the 'progressr' package.")
 
-  future::plan(future::multisession)
+  n_cores <- parallel::detectCores(logical = FALSE)
+  n_workers <- max(1, floor(n_cores / 2))
+
+  # Use multicore if on Linux or Mac outside of RStudio/Shiny
+  if (.Platform$OS.type == "unix" && !interactive()) {
+    future::plan(future::multicore, workers = n_workers)
+  } else {
+    future::plan(future::multisession, workers = n_workers)
+  }
 
   progressr::handlers("txtprogressbar")
 
@@ -84,7 +92,8 @@ make_underrepresented_ecosystems <- function(
     future.apply::future_lapply(pa_list, function(pa) {
       p(sprintf("Processing PA id %s", pa$id))  # optional, informative message
 
-      iucn_crop <- sf::st_filter(iucn_get_sf, pa)
+      # Pre-filter IUCN ecosystems using bounding box of PA
+      iucn_crop <- sf::st_filter(iucn_get_sf, pa, .predicate = sf::st_intersects)
 
       if (nrow(iucn_crop) == 0) return(NULL)
 
