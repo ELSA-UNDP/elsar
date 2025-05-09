@@ -90,19 +90,14 @@ make_underrepresented_ecosystems <- function(
     p <- progressr::progressor(along = pa_list)
 
     future.apply::future_lapply(pa_list, function(pa) {
-      p(sprintf("Processing PA id %s", pa$id))  # optional, informative message
-
-      # Pre-filter IUCN ecosystems using bounding box of PA
-      iucn_crop <- sf::st_filter(iucn_get_sf, pa, .predicate = sf::st_intersects)
-
-      if (nrow(iucn_crop) == 0) return(NULL)
+      p()
 
       tryCatch({
-        result <- sf::st_intersection(iucn_crop, pa)
+        result <- sf::st_intersection(iucn_get_sf, pa[[1]])
         result <- sf::st_make_valid(result)
         result$area_protected <- units::drop_units(sf::st_area(result))
         result_df <- sf::st_set_geometry(result, NULL)
-        result_df[, c("id", "area_protected"), drop = FALSE]
+        result_df[, c("get_id", "area_protected"), drop = FALSE]
       }, error = function(e) {
         message("Error processing PA id ", pa$id, ": ", conditionMessage(e))  # error message
         return(NULL)
@@ -112,16 +107,16 @@ make_underrepresented_ecosystems <- function(
 
   # Bind and summarize
   iucn_ecosystems_pa_area <- dplyr::bind_rows(Filter(Negate(is.null), iucn_ecosystems_pa_area)) %>%
-    dplyr::group_by(id) %>%
+    dplyr::group_by(get_id) %>%
     dplyr::summarise(area_protected = sum(area_protected, na.rm = TRUE), .groups = "drop")
 
   # Calculate total area and protection gaps
   log_msg("Calculating representation gap from 30% protection target...")
   iucn_ecosystems_total <- iucn_get_sf %>%
-    dplyr::group_by(id) %>%
+    dplyr::group_by(get_id) %>%
     dplyr::summarise(.groups = "drop") %>%
     dplyr::mutate(area = units::drop_units(sf::st_area(.))) %>%
-    dplyr::left_join(iucn_ecosystems_pa_area, by = "id") %>%
+    dplyr::left_join(iucn_ecosystems_pa_area, by = "get_id") %>%
     dplyr::mutate(
       percent_protected = area_protected / area * 100,
       target = dplyr::if_else(percent_protected < 30, 30 - percent_protected, 0)
