@@ -48,6 +48,7 @@ make_threatened_ecosystems_protection <- function(
   if (!is.null(iucn_get_prefixes)) {
     iucn_get_sf <- dplyr::filter(iucn_get_sf, prefix %in% iucn_get_prefixes)
   }
+
   if (!include_minor_occurrence) {
     iucn_get_sf <- dplyr::filter(iucn_get_sf, occurrence != 1)
   }
@@ -71,34 +72,75 @@ make_threatened_ecosystems_protection <- function(
     terra::as.polygons(na.rm = TRUE) %>%
     sf::st_as_sf() %>%
     dplyr::filter(.[[1]] == 1) %>%
-    sf::st_make_valid()
-
-  # Area of intact overlap for each ecosystem
-  log_msg(glue::glue("Calculating intactness of each IUCN GET ecosystem based on EII median value ({intactness_median})..."))
-  ecosystems_intact_area <- iucn_get_sf %>%
-    sf::st_intersection(non_intact_areas) %>%
     sf::st_make_valid() %>%
-    dplyr::group_by(.data$id) %>%
-    dplyr::summarise() %>%
-    dplyr::mutate(area_intact = units::drop_units(sf::st_area(.))) %>%
-    sf::st_set_geometry(NULL)
+    sf::st_set_crs(st_crs(iucn_get_sf))
+
+  log_msg("Calculating threat within each IUCN GET ecosystem using parallel processing...")
+
+  # Setup parallel backend if not already done
+  if (!requireNamespace("future.apply", quietly = TRUE)) stop("Please install the 'future.apply' package.")
+  if (!requireNamespace("progressr", quietly = TRUE)) stop("Please install the 'progressr' package.")
+
+  n_cores <- parallel::detectCores(logical = FALSE)
+  n_workers <- max(1, floor(n_cores / 2))
+
+  old_plan <- future::plan()
+  on.exit(future::plan(old_plan), add = TRUE)
+
+  if (.Platform$OS.type == "unix" && !interactive()) {
+    future::plan(future::multicore, workers = n_workers)
+  } else {
+    future::plan(future::multisession, workers = n_workers)
+  }
+
+  progressr::handlers("txtprogressbar")
+
+  # Split IUCN ecosystems into single row sf objects
+  eco_list <- split(iucn_get_sf, seq_len(nrow(iucn_get_sf)))
+
+  ecosystems_intact_area_list <- progressr::with_progress({
+    p <- progressr::progressor(along = eco_list)
+
+    future.apply::future_lapply(eco_list, function(eco) {
+      p()
+
+      tryCatch({
+        result <- sf::st_intersection(eco, non_intact_areas)
+        result <- sf::st_make_valid(result)
+        area_intact <- sum(units::drop_units(sf::st_area(result)))
+
+        data.frame(get_id = eco$get_id, area_intact = area_intact)
+
+      }, error = function(e) {
+        message("Error processing ecosystem id ", eco$get_id, ": ", conditionMessage(e))
+        return(data.frame(get_id = eco$get_id, area_intact = NA))
+      })
+    })
+  })
+
+  # Combine results
+  ecosystems_intact_area <- dplyr::bind_rows(ecosystems_intact_area_list)
 
   # Total area and threat calculation per ecosystem
+  log_msg("Summarising threat within each ecosystem...")
+
   ecosystems_total <- iucn_get_sf %>%
-    dplyr::group_by(.data$id) %>%
+    dplyr::group_by(.data$get_id) %>%
     dplyr::summarise() %>%
     dplyr::mutate(area = units::drop_units(sf::st_area(.))) %>%
-    dplyr::left_join(ecosystems_intact_area, by = "id") %>%
-    dplyr::mutate(threat = .data$area_intact / .data$area * 100)
+    dplyr::left_join(ecosystems_intact_area, by = "get_id") %>%
+    dplyr::mutate(threat = dplyr::if_else(is.na(area_intact), 100, (1 - area_intact / area) * 100))
 
   # Rasterize threat scores
   log_msg("Calculating average intactness and normalising raster output...")
+
   threat_raster <- elsar::exact_rasterise(
     features = ecosystems_total,
     pus = pus,
     iso3 = iso3,
     attribute = "threat"
   )
+
   names(threat_raster) <- "threatened_ecosystems_for_protection"
 
   # Optional write to file

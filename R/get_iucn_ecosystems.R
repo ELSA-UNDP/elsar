@@ -4,7 +4,7 @@
 #' It allows filtering by filename prefixes (e.g., "T1.2", "TF1.4"), excludes specific ecosystem types (e.g., intensive land-use biomes), and optionally removes features
 #' with `minor occurrence` flags. The resulting layer is cropped to a country boundary and reprojected to match a planning units raster.
 #'
-#' The ecosystem layer ID (e.g., "F1.1") is extracted from the source filename and added to each feature as the `id` column for tracking.
+#' The ecosystem layer ID (e.g., "F1.1") is extracted from the source filename and added to each feature as the `get_id` column for tracking.
 #'
 #' If `output_path` is specified, the final filtered and valid `sf` object is saved as a GeoPackage.
 #'
@@ -78,7 +78,9 @@ get_iucn_ecosystems <- function(
   excluded_file_prefixes <- gsub("\\.", "_", excluded_prefixes)
 
   # List all matching files and filter out excluded prefixes
-  all_files <- list.files(iucn_get_directory, pattern = pattern, full.names = TRUE)
+  #all_files <- list.files(iucn_get_directory, pattern = pattern, full.names = TRUE)
+  all_files <- normalizePath(list.files(iucn_get_directory, pattern = pattern, full.names = TRUE))
+
 
   # Identify excluded matches (for logging)
   excluded_matches <- all_files[grepl(paste0("^(", paste(excluded_file_prefixes, collapse = "|"), ")_"),
@@ -106,32 +108,90 @@ get_iucn_ecosystems <- function(
   # Conditionally split boundary
   pus_bbox_wgs <- conditionally_subdivide_bbox(bbox_sf = pus_bbox_wgs)
 
-  log_msg("Reading, reprojecting, and intersecting IUCN GET ecosystem layers...")
-  iucn_list <- lapply(all_files, function(file) {
-    v <- terra::vect(file, extent = pus_bbox_wgs)
-    if (NROW(v) == 0)
-      return(NULL)
+  if (!requireNamespace("future.apply", quietly = TRUE)) stop("Please install the 'future.apply' package.")
+  if (!requireNamespace("progressr", quietly = TRUE)) stop("Please install the 'progressr' package.")
 
-    # Safely derive layer ID from filename
-    layer_id <- gsub("_", ".", gsub("_v.*$", "", tools::file_path_sans_ext(basename(file))))
-    v$id <- layer_id
+  n_cores <- parallel::detectCores(logical = FALSE)
+  n_workers <- max(1, floor(n_cores / 2))
 
-    log_msg(glue::glue(
-      "Intersecting {iso3} boundary with IUCN GET {layer_id} features..."
-    ))
+  old_plan <- future::plan()
+  on.exit(future::plan(old_plan), add = TRUE)
 
-    v <- terra::intersect(v, terra::project(terra::vect(boundary_layer), terra::crs(v)))
-    # Reproject if needed
-    if (terra::crs(v) != terra::crs(pus)) {
-      v <- terra::project(v, terra::crs(pus))
-    }
+  if (.Platform$OS.type == "unix" && !interactive()) {
+    future::plan(future::multicore, workers = n_workers)
+  } else {
+    future::plan(future::multisession, workers = n_workers)
+  }
 
-    log_msg(glue::glue(
-      "Intersection with IUCN GET {layer_id} features completed."
-    ))
+  progressr::handlers("txtprogressbar")
 
-    return(v)
+  log_msg("Reading, reprojecting, and intersecting IUCN GET ecosystem layers using parallel processing...")
+
+  pus_bbox_file <- tempfile(fileext = ".gpkg")
+  boundary_layer_file <- tempfile(fileext = ".gpkg")
+  pus_crs <- terra::crs(pus)
+
+  terra::writeVector(pus_bbox_wgs, pus_bbox_file, overwrite = TRUE)
+  sf::st_write(boundary_layer, boundary_layer_file, delete_dsn = TRUE, quiet = TRUE)
+
+  iucn_list <- progressr::with_progress({
+    p <- progressr::progressor(along = all_files)
+
+    future.apply::future_lapply(all_files, function(file) {
+      p()
+
+      pus_bbox <- terra::vect(pus_bbox_file)
+      boundary <- terra::vect(boundary_layer_file)
+
+      v <- tryCatch({
+        terra::vect(file)
+      }, error = function(e) {
+        message(sprintf("Failed to read %s: %s", basename(file), e$message))
+        return(NULL)
+      })
+
+      if (is.null(v) || terra::nrow(v) == 0)
+        return(NULL)
+
+      v <- terra::crop(v, pus_bbox)
+
+      if (terra::nrow(v) == 0)
+        return(NULL)
+
+      layer_id <- gsub("_", ".", gsub("_v.*$", "", tools::file_path_sans_ext(basename(file))))
+      v$get_id <- layer_id
+
+      v <- tryCatch({
+        terra::intersect(v, terra::project(boundary, terra::crs(v)))
+      }, error = function(e) {
+        message(sprintf("Failed to intersect %s: %s", basename(file), e$message))
+        return(NULL)
+      })
+
+      # Validate that v is still valid after intersect
+      if (is.null(v) || !inherits(v, "SpatVector") || terra::nrow(v) == 0 || is.null(terra::geom(v))) {
+        message(sprintf("Intersect result invalid or empty for %s", basename(file)))
+        return(NULL)
+      }
+
+      if (terra::crs(v) != pus_crs) {
+        # Check again for null geom before projecting
+        if (is.null(terra::geom(v)))
+          return(NULL)
+
+        v <- terra::project(v, pus_crs)
+      }
+
+      if (terra::nrow(v) == 0 || is.null(terra::geom(v)))
+        return(NULL)
+
+      return(sf::st_as_sf(v))
+    })
   })
+
+  unlink(pus_bbox_file)
+  unlink(boundary_layer_file)
+  rm(pus_crs)
 
   log_msg(glue::glue("Finished intersecting all IUCN GET features in {iso3}. Checking for any NULL features..."))
 
@@ -142,19 +202,24 @@ get_iucn_ecosystems <- function(
     return(NULL)
   }
 
-  iucn_ecosystems <- do.call(rbind, iucn_list)
-
   # Correct for issues in GET attribute spelling of occurrence (vs. occurence)
-  col_names <- names(iucn_ecosystems)
-  if ("occurence" %in% col_names && !"occurrence" %in% col_names) {
-    iucn_ecosystems <- dplyr::rename(iucn_ecosystems, occurrence = occurence)
-  } else if ("occurence" %in% col_names && "occurrence" %in% col_names) {
-    warning(
-      "Both 'occurrence' and 'occurence' columns found - merging with preference to 'occurrence'."
-    )
-    iucn_ecosystems$occurrence <- dplyr::coalesce(iucn_ecosystems$occurrence, iucn_ecosystems$occurence)
-    iucn_ecosystems <- dplyr::select(iucn_ecosystems, -occurence)
-  }
+  iucn_list <- lapply(iucn_list, function(x) {
+    colnames(x) <- gsub("^occurence$", "occurrence", colnames(x))
+    x
+  })
+
+  # Find common columns
+  common_cols <- Reduce(intersect, lapply(iucn_list, names))
+
+  # Subset each sf to common columns
+  iucn_list_common <- lapply(iucn_list, function(x) x[, common_cols, drop = FALSE])
+
+  # Combine safely
+  iucn_ecosystems <- do.call(rbind, iucn_list_common)
+
+  iucn_ecosystems <- iucn_ecosystems %>%
+    group_by(get_id, occurrence) %>%
+    summarise()
 
   # Optionally filter out minor occurrence
   if (!include_minor_occurrence) {
@@ -166,7 +231,7 @@ get_iucn_ecosystems <- function(
   log_msg("Checking and repairing geometries...")
   iucn_ecosystems <- sf::st_as_sf(iucn_ecosystems) %>%
     sf::st_make_valid() %>%
-    dplyr::select(id, occurrence)
+    dplyr::select(get_id, occurrence)
 
   # Optionally write to file
   if (!is.null(output_path)) {

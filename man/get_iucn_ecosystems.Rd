@@ -41,7 +41,7 @@ It allows filtering by filename prefixes (e.g., "T1.2", "TF1.4"), excludes speci
 with \verb{minor occurrence} flags. The resulting layer is cropped to a country boundary and reprojected to match a planning units raster.
 }
 \details{
-The ecosystem layer ID (e.g., "F1.1") is extracted from the source filename and added to each feature as the \code{id} column for tracking.
+The ecosystem layer ID (e.g., "F1.1") is extracted from the source filename and added to each feature as the \code{get_id} column for tracking.
 
 If \code{output_path} is specified, the final filtered and valid \code{sf} object is saved as a GeoPackage.
 }

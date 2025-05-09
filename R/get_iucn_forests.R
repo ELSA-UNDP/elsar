@@ -49,13 +49,13 @@ get_iucn_forests <- function(
 
   # Filter by prefixes
   if (!is.null(iucn_get_prefixes)) {
-    iucn_get_sf <- dplyr::filter(iucn_get_sf, id %in% iucn_get_prefixes)
+    iucn_get_sf <- dplyr::filter(iucn_get_sf, get_id %in% iucn_get_prefixes)
   }
   if (!include_minor_occurrence) {
     iucn_get_sf <- dplyr::filter(iucn_get_sf, occurrence != 1)
   }
   if (!is.null(excluded_prefixes)) {
-    iucn_get_sf <- dplyr::filter(iucn_get_sf, !id %in% excluded_prefixes)
+    iucn_get_sf <- dplyr::filter(iucn_get_sf, !get_id %in% excluded_prefixes)
   }
 
   # If no data remains, return a zero raster
@@ -64,7 +64,9 @@ get_iucn_forests <- function(
     forest_raster <- terra::ifel(pus == 1, 0, NA)
   } else {
     # Dissolve into a single geometry
-    iucn_get_sf <- dplyr::summarise(iucn_get_sf)
+    iucn_get_sf <- iucn_get_sf %>%
+      dplyr::ungroup() %>%
+      dplyr::summarise()
 
     # Compute coverage fraction
     log_msg("Calculating forest coverage fractions...")
