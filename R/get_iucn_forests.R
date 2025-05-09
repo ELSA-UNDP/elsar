@@ -64,7 +64,9 @@ get_iucn_forests <- function(
     forest_raster <- terra::ifel(pus == 1, 0, NA)
   } else {
     # Dissolve into a single geometry
-    iucn_get_sf <- dplyr::summarise(iucn_get_sf)
+    iucn_get_sf <- iucn_get_sf %>%
+      dplyr::ungroup() %>%
+      dplyr::summarise()
 
     # Compute coverage fraction
     log_msg("Calculating forest coverage fractions...")
