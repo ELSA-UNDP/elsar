@@ -98,13 +98,13 @@ make_threatened_ecosystems_protection <- function(
     p <- progressr::progressor(along = eco_list)
 
     future.apply::future_lapply(eco_list, function(eco) {
-      p(sprintf("Processing ecosystem id %s", eco$id))
+      p()
 
       # Pre-filter intact areas using bbox (optional but faster)
       intact_crop <- sf::st_filter(non_intact_areas, eco, .predicate = sf::st_intersects)
 
       if (nrow(intact_crop) == 0) {
-        return(data.frame(id = eco$id, area_intact = 0))
+        return(data.frame(get_id = eco$get_id, area_intact = 0))
       }
 
       tryCatch({
@@ -112,11 +112,11 @@ make_threatened_ecosystems_protection <- function(
         result <- sf::st_make_valid(result)
         area_intact <- sum(units::drop_units(sf::st_area(result)))
 
-        data.frame(id = eco$id, area_intact = area_intact)
+        data.frame(get_id = eco$get_id, area_intact = area_intact)
 
       }, error = function(e) {
-        message("Error processing ecosystem id ", eco$id, ": ", conditionMessage(e))
-        return(data.frame(id = eco$id, area_intact = NA))
+        message("Error processing ecosystem id ", eco$get_id, ": ", conditionMessage(e))
+        return(data.frame(get_id = eco$get_id, area_intact = NA))
       })
     })
   })
@@ -128,10 +128,10 @@ make_threatened_ecosystems_protection <- function(
   log_msg("Summarising threat within each ecosystem...")
 
   ecosystems_total <- iucn_get_sf %>%
-    dplyr::group_by(.data$id) %>%
+    dplyr::group_by(.data$get_id) %>%
     dplyr::summarise() %>%
     dplyr::mutate(area = units::drop_units(sf::st_area(.))) %>%
-    dplyr::left_join(ecosystems_intact_area, by = "id") %>%
+    dplyr::left_join(ecosystems_intact_area, by = "get_id") %>%
     dplyr::mutate(threat = dplyr::if_else(is.na(area_intact), 100, (1 - area_intact / area) * 100))
 
   # Rasterize threat scores
