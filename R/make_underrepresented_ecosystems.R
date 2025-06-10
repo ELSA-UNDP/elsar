@@ -1,18 +1,37 @@
 #' Create a Representation Gap Raster for Ecosystems
 #'
-#' Calculates the protection gap for a given set of ecosystem features by dissolving
-#' them by an attribute, computing total and protected area, and rasterizing the gap toward a given protection target.
+#' This function calculates the protection gap for a given set of ecosystem features by:
+#' 1) dissolving features based on a grouping attribute,
+#' 2) intersecting them with protected areas,
+#' 3) calculating the gap between the current protection and a target percentage, and
+#' 4) rasterizing the average underrepresentation value to a planning unit raster.
 #'
-#' @param ecosystems_sf sf object. Ecosystem polygons clipped to the analysis area.
-#' @param group_attribute Character. Column name in `ecosystems_sf` to dissolve by (e.g., "econame").
-#' @param target_percent Numeric. Desired protection target (default is 30 for 30%).
-#' @param protected_areas_sf sf or SpatVector. Current protected area polygons.
-#' @param pus SpatRaster. Planning unit raster (e.g., from `make_planning_units()`).
-#' @param iso3 Optional ISO3 country code for logging or output naming.
-#' @param output_path Optional path to save the output raster.
+#' The output highlights spatial priorities for ecosystem representation based on protection shortfall.
 #'
-#' @return SpatRaster of average representation gap across planning units.
+#' @param ecosystems_sf `sf` object. Polygon features representing ecosystems, clipped to the analysis area.
+#' @param group_attribute `character`. Column name in `ecosystems_sf` used to group features (e.g., "econame" or "get_id").
+#' @param target_percent `numeric`. Target percentage of protection for each ecosystem group (default = 30).
+#' @param protected_areas_sf `sf` or `SpatVector`. Protected areas dataset to be used in the gap calculation.
+#' @param pus `SpatRaster`. Raster of planning units (e.g., from `make_planning_units()`), used as the target grid for rasterization.
+#' @param iso3 `character`, optional. ISO3 country code used for naming output files (e.g., "BRA").
+#' @param output_path `character`, optional. Directory path to save the output raster as a GeoTIFF.
+#'
+#' @return A `SpatRaster` with one layer: `"underrepresented_ecosystems"`, showing the maximum gap (0 to target_percent) per planning unit.
 #' @export
+#'
+#' @examples
+#' \dontrun{
+#' gap_raster <- make_underrepresented_ecosystems(
+#'   ecosystems_sf = my_ecosystem_polygons,
+#'   group_attribute = "eco_type",
+#'   target_percent = 30,
+#'   protected_areas_sf = wdpa,
+#'   pus = planning_units,
+#'   iso3 = "KEN",
+#'   output_path = "outputs"
+#' )
+#' }
+#'
 make_underrepresented_ecosystems <- function(
     ecosystems_sf,
     group_attribute,
@@ -70,19 +89,19 @@ make_underrepresented_ecosystems <- function(
 
   # Rasterize
   log_msg("Rasterizing average target gap per planning unit...")
-  underrep_raster <- elsar::exact_rasterise(
+  underrepresented_ecosystems <- elsar::exact_rasterise(
     features = ecosystems_summary,
     pus = pus,
     fun = "max",
     iso3 = iso3,
     attribute = "target_gap"
   )
-  names(underrep_raster) <- "representation_gap"
+  names(underrepresented_ecosystems) <- "underrepresented_ecosystems"
 
   if (!is.null(output_path)) {
     out_file <- glue::glue("{output_path}/representation_gap_{tolower(group_attribute)}_{iso3}.tif")
-    elsar::save_raster(underrep_raster, out_file, datatype = "FLT4S")
+    elsar::save_raster(underrepresented_ecosystems, out_file, datatype = "FLT4S")
   }
 
-  return(underrep_raster)
+  return(underrepresented_ecosystems)
 }

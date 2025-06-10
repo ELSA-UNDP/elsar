@@ -2,58 +2,59 @@
 % Please edit documentation in R/make_underrepresented_ecosystems.R
 \name{make_underrepresented_ecosystems}
 \alias{make_underrepresented_ecosystems}
-\title{Create Underrepresented Ecosystems Raster Based on IUCN GET and Protection Gaps}
+\title{Create a Representation Gap Raster for Ecosystems}
 \usage{
 make_underrepresented_ecosystems(
-  iucn_get_sf,
-  iso3,
+  ecosystems_sf,
+  group_attribute,
+  target_percent = 30,
+  protected_areas_sf,
   pus,
-  boundary_layer,
-  current_protected_areas,
-  iucn_get_prefixes = NULL,
-  include_minor_occurrence = TRUE,
+  iso3 = NULL,
   output_path = NULL
 )
 }
 \arguments{
-\item{iucn_get_sf}{sf object. IUCN GET polygons already loaded and clipped to the analysis area.}
+\item{ecosystems_sf}{\code{sf} object. Polygon features representing ecosystems, clipped to the analysis area.}
 
-\item{iso3}{Character. ISO3 country code (e.g., "KEN").}
+\item{group_attribute}{\code{character}. Column name in \code{ecosystems_sf} used to group features (e.g., "econame" or "get_id").}
 
-\item{pus}{A \code{SpatRaster}. Raster of planning units (e.g., from \code{make_planning_units()}).}
+\item{target_percent}{\code{numeric}. Target percentage of protection for each ecosystem group (default = 30).}
 
-\item{boundary_layer}{An \code{sf} object of the national boundary used to clip ecosystems.}
+\item{protected_areas_sf}{\code{sf} or \code{SpatVector}. Protected areas dataset to be used in the gap calculation.}
 
-\item{current_protected_areas}{An \code{sf} or \code{SpatVector} object representing protected areas.}
+\item{pus}{\code{SpatRaster}. Raster of planning units (e.g., from \code{make_planning_units()}), used as the target grid for rasterization.}
 
-\item{iucn_get_prefixes}{Optional character vector. Filters the \code{sf} input by prefix (e.g., c("T", "F")).}
+\item{iso3}{\code{character}, optional. ISO3 country code used for naming output files (e.g., "BRA").}
 
-\item{include_minor_occurrence}{Logical. Whether to include ecosystems marked as "minor" (default = TRUE).}
-
-\item{output_path}{Optional character. Directory path to save the output raster.}
+\item{output_path}{\code{character}, optional. Directory path to save the output raster as a GeoTIFF.}
 }
 \value{
-A normalized \code{SpatRaster} layer representing the average protection gap across ecosystems.
+A \code{SpatRaster} with one layer: \code{"underrepresented_ecosystems"}, showing the maximum gap (0 to target_percent) per planning unit.
 }
 \description{
-This function calculates the representation gap of ecosystems defined in the IUCN Global Ecosystem Typology (GET)
-dataset, identifying those that fall short of a 30\% protection target. The resulting raster layer indicates
-the average degree of underrepresentation across each planning unit.
+This function calculates the protection gap for a given set of ecosystem features by:
+\enumerate{
+\item dissolving features based on a grouping attribute,
+\item intersecting them with protected areas,
+\item calculating the gap between the current protection and a target percentage, and
+\item rasterizing the average underrepresentation value to a planning unit raster.
+}
 }
 \details{
-The function uses spatial overlays to calculate the proportion of each ecosystem that is currently protected,
-computes the gap toward a 30\% target, and then rasterizes this value onto the planning units. The output raster
-can be used to prioritise areas for protection of underrepresented ecosystems.
+The output highlights spatial priorities for ecosystem representation based on protection shortfall.
 }
 \examples{
 \dontrun{
-underrep <- make_underrepresented_ecosystems(
-  iucn_get_sf = iucn_data,
-  boundary_layer = boundary_layer,
-  current_protected_areas = protected_areas,
-  iso3 = "KEN",
+gap_raster <- make_underrepresented_ecosystems(
+  ecosystems_sf = my_ecosystem_polygons,
+  group_attribute = "eco_type",
+  target_percent = 30,
+  protected_areas_sf = wdpa,
   pus = planning_units,
+  iso3 = "KEN",
   output_path = "outputs"
 )
 }
+
 }

@@ -22,7 +22,7 @@
 #'
 #' @examples
 #' \dontrun{
-#' underrep <- make_underrepresented_ecosystems(
+#' underrep <- make_iucn_get_underrepresented_ecosystems(
 #'   iucn_get_sf = iucn_data,
 #'   boundary_layer = boundary_layer,
 #'   current_protected_areas = protected_areas,
@@ -32,7 +32,7 @@
 #' )
 #' }
 
-make_underrepresented_ecosystems <- function(
+make_iucn_get_underrepresented_ecosystems <- function(
     iucn_get_sf,
     iso3,
     pus,
