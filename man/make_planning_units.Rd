@@ -11,6 +11,7 @@ make_planning_units(
   pu_tolerance = 0.05,
   limit_to_mainland = FALSE,
   iso3,
+  background_fill = NA,
   output_path = NULL
 )
 }
@@ -30,6 +31,9 @@ when estimating PU size automatically.}
 \item{limit_to_mainland}{Logical. Reserved for future use. If \code{TRUE}, limits planning units to mainland regions only.}
 
 \item{iso3}{Character. ISO3 country code used to name the output raster (e.g., "KEN", "BRA").}
+
+\item{background_fill}{The value to apply to all pixels outside the boundary_proj. This default to NA (e.g., nodata).
+You should have a good reason for wanting to use a different value.}
 
 \item{output_path}{Optional character. Directory path to save the resulting raster. If \code{NULL}, the raster is not saved.}
 }
