@@ -112,7 +112,7 @@ make_restore_zone <- function(
     log_msg("Using previously saved agricultural areas raster...")
     agricultural_areas <- agricultural_areas_input
   } else {
-    assert_that(!is.null(lulc_raster), msg = "When 'agricultural_areas_input' is NULL, 'lulc_raster' must be provided.")
+    assert_that::assert_that(!is.null(lulc_raster), msg = "When 'agricultural_areas_input' is NULL, 'lulc_raster' must be provided.")
     log_msg("Extracting agricultural areas from LULC raster...")
     agricultural_areas <- elsar::make_normalised_raster(
       raster_in = lulc_raster,
@@ -128,7 +128,7 @@ make_restore_zone <- function(
   if (!is.null(built_areas_input)) {
     built_areas <- built_areas_input
   } else {
-    assert_that(!is.null(lulc_raster), msg = "When 'built_areas_input' is NULL, 'lulc_raster' must be provided.")
+    assert_that::assert_that(!is.null(lulc_raster), msg = "When 'built_areas_input' is NULL, 'lulc_raster' must be provided.")
     log_msg("Extracting built areas from LULC raster...")
     built_areas <- elsar::make_normalised_raster(
       raster_in = lulc_raster,
