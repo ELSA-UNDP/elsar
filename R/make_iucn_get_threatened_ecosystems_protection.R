@@ -73,7 +73,7 @@ make_iucn_get_threatened_ecosystems_protection <- function(
     sf::st_as_sf() %>%
     dplyr::filter(.[[1]] == 1) %>%
     sf::st_make_valid() %>%
-    sf::st_set_crs(st_crs(iucn_get_sf))
+    sf::st_set_crs(sf::st_crs(iucn_get_sf))
 
   log_msg("Calculating threat within each IUCN GET ecosystem using parallel processing...")
 

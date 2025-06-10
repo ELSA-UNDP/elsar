@@ -18,22 +18,23 @@ make_threatened_ecosystems_protection(
 \arguments{
 \item{ecosystems_sf}{sf. Polygons representing ecosystems.}
 
-\item{group_attribute}{Character. Column name to group/dissolve ecosystems by (e.g., "eco_id").}
+\item{group_attribute}{character. Column name used to group/dissolve ecosystems (e.g., \code{"eco_id"} or \code{"get_id"}).}
 
-\item{pus}{SpatRaster. Planning unit raster for alignment and rasterization.}
+\item{pus}{SpatRaster. Planning unit raster used for alignment and rasterization.}
 
-\item{boundary_layer}{sf. National boundary used to compute the median EII if \code{integrity_type = "eii"}.}
+\item{boundary_layer}{sf. National boundary used to calculate the median integrity value if \code{integrity_type = "eii"}.}
 
-\item{integrity_raster}{SpatRaster. Raster representing either EII (continuous) or degraded areas (binary).}
+\item{integrity_raster}{SpatRaster. Raster representing either continuous integrity (e.g., EII) or binary degraded areas.}
 
-\item{integrity_type}{Character. One of \code{"eii"} (default) or \code{"degraded"}, indicating how to interpret \code{integrity_raster}.}
+\item{integrity_type}{character. One of \code{"eii"} (default) or \code{"degraded"}, indicating how to interpret the integrity raster.}
 
-\item{iso3}{Optional character. ISO3 country code for naming (e.g., "KEN").}
+\item{iso3}{character, optional. ISO3 code used for naming output files (e.g., \code{"KEN"}).}
 
-\item{output_path}{Optional character. Folder path to save the output raster.}
+\item{output_path}{character, optional. Directory to write the output raster as a GeoTIFF.}
 }
 \value{
-A \code{SpatRaster} with one layer: \code{"threatened_ecosystems"} (range 0–100).
+A \code{SpatRaster} with one layer: \code{"threatened_ecosystems"}, with values from 0 to 100.
+Higher values indicate greater ecosystem degradation or threat.
 }
 \description{
 This generic function calculates ecosystem-level threat scores based on the
@@ -41,9 +42,13 @@ proportion of degraded or low-integrity land within each ecosystem polygon.
 It supports either an EII-style continuous integrity raster (thresholded using
 the national median) or a binary degraded areas raster.
 }
+\details{
+The threat score is calculated as the percentage of each ecosystem area that is
+below the integrity threshold (i.e., not intact), and rasterized by planning unit.
+}
 \examples{
 \dontrun{
-# Using EII (ecological integrity index)
+# Using EII (Ecological Integrity Index)
 threatened_raster_eii <- make_threatened_ecosystems_protection(
   ecosystems_sf = my_ecosystems,
   group_attribute = "eco_id",
@@ -55,7 +60,7 @@ threatened_raster_eii <- make_threatened_ecosystems_protection(
   output_path = "outputs"
 )
 
-# Using a binary degraded areas raster (0 = intact, 1 = degraded)
+# Using binary degraded areas raster (1 = degraded, 0 = intact)
 threatened_raster_degraded <- make_threatened_ecosystems_protection(
   ecosystems_sf = my_ecosystems,
   group_attribute = "eco_id",
@@ -65,6 +70,5 @@ threatened_raster_degraded <- make_threatened_ecosystems_protection(
   integrity_type = "degraded",
   iso3 = "KEN"
 )
-
 }
 }
