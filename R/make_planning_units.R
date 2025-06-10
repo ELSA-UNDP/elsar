@@ -16,6 +16,8 @@
 #'   when estimating PU size automatically.
 #' @param limit_to_mainland Logical. Reserved for future use. If `TRUE`, limits planning units to mainland regions only.
 #' @param iso3 Character. ISO3 country code used to name the output raster (e.g., "KEN", "BRA").
+#' @param background_fill The value to apply to all pixels outside the boundary_proj. This default to NA (e.g., nodata).
+#'   You should have a good reason for wanting to use a different value.
 #' @param output_path Optional character. Directory path to save the resulting raster. If `NULL`, the raster is not saved.
 #'
 #' @return A single-layer `SpatRaster` object from the `terra` package. All non-zero cells represent valid planning units.
@@ -35,6 +37,7 @@ make_planning_units <- function(boundary_proj,
                                 pu_tolerance = 0.05,
                                 limit_to_mainland = FALSE,
                                 iso3,
+                                background_fill = NA,
                                 output_path = NULL) {
 
   threshold_soft <- pu_threshold * (1 + pu_tolerance)
@@ -102,7 +105,7 @@ make_planning_units <- function(boundary_proj,
         rasterMask,
         touches = TRUE,
         update = TRUE,
-        background = 0
+        background = background_fill
       )
 
       pu_sum_temp <- terra::global(r_temp, sum, na.rm = TRUE)[[1]]
@@ -141,7 +144,7 @@ make_planning_units <- function(boundary_proj,
       rasterMask,
       touches = TRUE,
       update = TRUE,
-      background = 0
+      background = background_fill
     )
 
     pu_sum <- terra::global(r1, sum, na.rm = TRUE)[[1]]

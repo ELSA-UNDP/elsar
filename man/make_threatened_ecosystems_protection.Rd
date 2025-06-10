@@ -2,54 +2,73 @@
 % Please edit documentation in R/make_threatened_ecosystems_protection.R
 \name{make_threatened_ecosystems_protection}
 \alias{make_threatened_ecosystems_protection}
-\title{Create Threatened Ecosystems (for Protection) Raster}
+\title{Create a Threatened Ecosystems Raster Based on Integrity or Degradation}
 \usage{
 make_threatened_ecosystems_protection(
-  iso3,
+  ecosystems_sf,
+  group_attribute,
   pus,
   boundary_layer,
-  intactness_input,
-  iucn_get_sf,
-  iucn_get_prefixes = NULL,
-  include_minor_occurrence = TRUE,
+  integrity_raster,
+  integrity_type = c("eii", "degraded"),
+  iso3 = NULL,
   output_path = NULL
 )
 }
 \arguments{
-\item{iso3}{Character. ISO3 country code (e.g., \code{"KEN"}) used for naming and processing.}
+\item{ecosystems_sf}{sf. Polygons representing ecosystems.}
 
-\item{pus}{SpatRaster. Planning units raster used for alignment and resolution.}
+\item{group_attribute}{character. Column name used to group/dissolve ecosystems (e.g., \code{"eco_id"} or \code{"get_id"}).}
 
-\item{boundary_layer}{sf. National boundary used for calculating the national median.}
+\item{pus}{SpatRaster. Planning unit raster used for alignment and rasterization.}
 
-\item{intactness_input}{SpatRaster. Ecological integrity raster.}
+\item{boundary_layer}{sf. National boundary used to calculate the median integrity value if \code{integrity_type = "eii"}.}
 
-\item{iucn_get_sf}{sf. IUCN GET polygons already subset to the country.}
+\item{integrity_raster}{SpatRaster. Raster representing either continuous integrity (e.g., EII) or binary degraded areas.}
 
-\item{iucn_get_prefixes}{Optional character vector. Ecosystem type prefixes to include (e.g., \code{"T"}, \code{"M"}).}
+\item{integrity_type}{character. One of \code{"eii"} (default) or \code{"degraded"}, indicating how to interpret the integrity raster.}
 
-\item{include_minor_occurrence}{Logical. If FALSE, filters out ecosystems marked as minor (occurrence == 1).}
+\item{iso3}{character, optional. ISO3 code used for naming output files (e.g., \code{"KEN"}).}
 
-\item{output_path}{Character or NULL. Directory to write the output raster if desired.}
+\item{output_path}{character, optional. Directory to write the output raster as a GeoTIFF.}
 }
 \value{
-A normalized SpatRaster layer with ecosystem threat scores (0–100).
+A \code{SpatRaster} with one layer: \code{"threatened_ecosystems"}, with values from 0 to 100.
+Higher values indicate greater ecosystem degradation or threat.
 }
 \description{
-This function identifies threatened ecosystems by comparing ecological integrity (EII)
-values against a national median. For each IUCN GET ecosystem, it calculates the area
-of intact land (above the median) and expresses the ratio of intact to total area as a
-threat score. These scores are then rasterized and returned as a continuous raster.
+This generic function calculates ecosystem-level threat scores based on the
+proportion of degraded or low-integrity land within each ecosystem polygon.
+It supports either an EII-style continuous integrity raster (thresholded using
+the national median) or a binary degraded areas raster.
+}
+\details{
+The threat score is calculated as the percentage of each ecosystem area that is
+below the integrity threshold (i.e., not intact), and rasterized by planning unit.
 }
 \examples{
 \dontrun{
-threatened <- make_threatened_ecosystems_protection(
-  iso3 = "KEN",
+# Using EII (Ecological Integrity Index)
+threatened_raster_eii <- make_threatened_ecosystems_protection(
+  ecosystems_sf = my_ecosystems,
+  group_attribute = "eco_id",
   pus = planning_units,
-  boundary_layer = sf::st_read("data/boundary.gpkg"),
-  intactness_input = rast("data/intactness.tif"),
-  iucn_get_sf = iucn_get_sf,
+  boundary_layer = national_boundary,
+  integrity_raster = eii_raster,
+  integrity_type = "eii",
+  iso3 = "KEN",
   output_path = "outputs"
+)
+
+# Using binary degraded areas raster (1 = degraded, 0 = intact)
+threatened_raster_degraded <- make_threatened_ecosystems_protection(
+  ecosystems_sf = my_ecosystems,
+  group_attribute = "eco_id",
+  pus = planning_units,
+  boundary_layer = national_boundary,
+  integrity_raster = degraded_raster,
+  integrity_type = "degraded",
+  iso3 = "KEN"
 )
 }
 }
