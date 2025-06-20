@@ -150,7 +150,7 @@ make_normalised_raster <- function(raster_in,
 
   if (!is.null(fill_na)) {
     dat_aligned[is.na(dat_aligned)] <- fill_na
-    dat_aligned <- terra::mask(dat_aligned, pus, maskvalues = 0)
+    dat_aligned <- terra::mask(dat_aligned, pus, maskvalues = NA)
   }
 
   if (invert) {
