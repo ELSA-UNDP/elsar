@@ -131,7 +131,7 @@ get_iucn_ecosystems <- function(
   boundary_layer_file <- tempfile(fileext = ".gpkg")
   pus_crs <- terra::crs(pus)
 
-  terra::writeVector(pus_bbox_wgs, pus_bbox_file, overwrite = TRUE)
+  terra::writeVector(terra::vect(pus_bbox_wgs), pus_bbox_file, overwrite = TRUE)
   sf::st_write(boundary_layer, boundary_layer_file, delete_dsn = TRUE, quiet = TRUE)
 
   iucn_list <- progressr::with_progress({
