@@ -6,7 +6,7 @@
 #' KBAs marked as "Regional". By default, it includes all KBAs except regional-only sites.
 #' It can also be used to return only AZE sites if `aze_only = TRUE`.
 #'
-#' @param kba_in An `sf` object containing KBA vector features, including columns like `iso3`, `azestatus`, and `kba_qual`.
+#' @param kba_in An `sf` object containing KBA vector features, including columns like `iso3`, `azestatus`, and `kbaclass`.
 #' @param pus A `SpatRaster` object representing planning units (reference extent and resolution).
 #' @param iso3 A character string representing the 3-letter ISO country code (e.g., "KEN").
 #' @param include_aze_sites Logical. If `TRUE`, includes KBAs that are also AZE sites (default is `FALSE`).
@@ -80,7 +80,7 @@ make_kbas <- function(
 
       if (!include_regional_kba) {
         log_msg("Excluding Regional KBAs or those with undetermined Global status.")
-        kba <- dplyr::filter(kba, kba_qual %ni% c("Regional", "Global/ Regional to be determined"))
+        kba <- dplyr::filter(kba, kbaclass %ni% c("Regional", "Global/ Regional to be determined"))
       }
 
       if (nrow(kba) == 0) {
