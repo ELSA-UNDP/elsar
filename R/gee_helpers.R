@@ -218,7 +218,10 @@ check_and_download_required_layers <- function(data_info, iso3, input_path, gee_
 
   gee_layers <- tibble::tibble(
     name = c("LULC", "Pasturelands"),
-    pattern = c("lulc", "grassland"),
+    pattern = c(
+      paste0("lulc_.*_", iso3, "\\.tif$"),
+      paste0("grassland_.*_", iso3, "\\.tif$")
+    ),
     required_if = list(
       c("Urban Greening Opportunities", "Restoration Zone", "Protection Zone", "Agriculture Areas", "Urban Areas"),
       c("Pasturelands")
@@ -340,10 +343,8 @@ elsar_download_gee_layer <- function(
       geodesic = FALSE
     )
 
-    log_msg(glue::glue("Checking for running GEE export tasks with description '{file_name}'..."))
     is_running <- check_existing_ee_export_task(ee, file_name)
     if (!is_running) {
-      log_msg(glue::glue("Starting new GEE export task: {file_name}"))
 
       image <- ic$filterDate(ee$Date(glue::glue("{year}-01-01")), ee$Date(glue::glue("{year}-12-31")))$
         filterBounds(ee_geom)$mosaic()
@@ -359,7 +360,7 @@ elsar_download_gee_layer <- function(
         max_pixels = 1e13,
         file_format = "GeoTIFF"
       )
-      log_msg("Export task submitted.")
+
     }
     wait_for_drive_export(googledrive_folder, file_name, wait_time)
   }
