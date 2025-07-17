@@ -102,11 +102,11 @@ get_iucn_ecosystems <- function(
   pus_bbox <- terra::as.polygons(terra::ext(pus)) %>%
     sf::st_as_sf()
   sf::st_crs(pus_bbox) <- terra::crs(pus)
-  pus_bbox_wgs <- sf::st_transform(pus_bbox, crs = "EPSG:4326") %>%
-    terra::vect()
+  pus_bbox_wgs <- sf::st_transform(pus_bbox, crs = "EPSG:4326")
 
   # Conditionally split boundary
-  pus_bbox_wgs <- conditionally_subdivide_bbox(bbox_sf = pus_bbox_wgs)
+  pus_bbox_wgs <- conditionally_subdivide_bbox(bbox_sf = pus_bbox_wgs) %>%
+    terra::vect()
 
   if (!requireNamespace("future.apply", quietly = TRUE)) stop("Please install the 'future.apply' package.")
   if (!requireNamespace("progressr", quietly = TRUE)) stop("Please install the 'progressr' package.")
@@ -131,7 +131,7 @@ get_iucn_ecosystems <- function(
   boundary_layer_file <- tempfile(fileext = ".gpkg")
   pus_crs <- terra::crs(pus)
 
-  terra::writeVector(terra::vect(pus_bbox_wgs), pus_bbox_file, overwrite = TRUE)
+  terra::writeVector(pus_bbox_wgs, pus_bbox_file, overwrite = TRUE)
   sf::st_write(boundary_layer, boundary_layer_file, delete_dsn = TRUE, quiet = TRUE)
 
   iucn_list <- progressr::with_progress({
