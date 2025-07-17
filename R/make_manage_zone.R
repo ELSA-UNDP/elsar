@@ -2,9 +2,9 @@
 #'
 #' This function identifies planning units eligible for the "Manage" zone under the ELSA framework.
 #' The zone (default) includes areas with a moderate level of human influence (HII between
-#' 20th and 80th percentiles), all managed forest types, and agricultural areas, but
-#' explicitly excludes built-up areas. An alternative zone includes is limtied to all
-#' agricultural areas.
+#' 20th and 80th percentiles), all managed forest types, and agricultural and pastureland areas, but
+#' explicitly excludes built-up areas. An alternative zone includes is limited to all
+#' agricultural areas and paturelands.
 #'
 #' Two layers are returned:
 #' - `manage_zone_v1`: Based on HII quantile range, agriculture, and managed forests (excluding built-up areas)
@@ -17,9 +17,11 @@
 #' @param managed_forests_input SpatRaster. A preprocssed raster of managed forest extent.
 #' @param raster_mf SpatRaster A raster of forest classes to identify managed forests.
 #' @param agricultural_areas_input SpatRaster. A binary or categorical raster representing agricultural areas.
+#' @param pasturelands_input SpatRaster. A binary or categorical raster representing (actively managed/improved)pastures.
 #' @param built_areas_input SpatRaster. A binary or categorical raster representing built-up/urban areas.
 #' @param lulc_raster SpatRaster or NULL. Optional raw LULC input used to extract agriculture and built-up layers if those inputs are categorical.
 #' @param hii_input SpatRaster. Human Footprint Index raster.
+#' @param pasturelands_threshold Numeric. Probability threshold above which cells are considered pasturelands (default = 0.35).
 #' @param agriculture_lulc_value Integer. LULC value for agriculture (default = 4).
 #' @param built_area_lulc_value Integer. LULC value for built-up areas (default = 5).
 #' @param forest_classes Integer vector. LULC values representing managed forests (default = c(20, 31, 32, 40, 53)).
@@ -40,6 +42,7 @@
 #'   pus = planning_units,
 #'   managed_forests_input = forest_raster,
 #'   agricultural_areas_input = agri_raster,
+#'   pasturelands_input = pastures_raster,
 #'   built_areas_input = built_raster,
 #'   lulc_raster = landcover_raster,
 #'   hii_input = hfp_raster,
@@ -53,9 +56,11 @@ make_manage_zone <- function(
     managed_forests_input,
     raster_mf = NULL,
     agricultural_areas_input = NULL,
+    pasturelands_input = NULL,
     built_areas_input = NULL,
     lulc_raster = NULL,
     hii_input = NULL,
+    pasturelands_threshold = 0.35,
     agriculture_lulc_value = 5,
     built_area_lulc_value = 7,
     forest_classes = c(20, 31, 32, 40, 53),
@@ -85,6 +90,9 @@ make_manage_zone <- function(
   if (!is.null(agricultural_areas_input)) {
     assertthat::assert_that(inherits(agricultural_areas_input, "SpatRaster"), msg = "'agricultural_areas_input' must be a SpatRaster.")
   }
+  if (!is.null(pasturelands_input)) {
+    assertthat::assert_that(inherits(pasturelands_input, "SpatRaster"), msg = "'pasturelands_input' must be a SpatRaster.")
+  }
   if (!is.null(built_areas_input)) {
     assertthat::assert_that(inherits(built_areas_input, "SpatRaster"), msg = "'built_areas_input' must be a SpatRaster.")
   }
@@ -105,7 +113,16 @@ make_manage_zone <- function(
       input_raster_conditional_expression = function(x)
         terra::ifel(x == agriculture_lulc_value, 1, 0)
       )
-    }
+  }
+
+  # Process pasturelands
+  log_msg("Processing pasturelands...")
+  pasturelands <- elsar::make_normalised_raster(
+    raster_in = pasturelands_input,
+    pus = pus,
+    iso3 = iso3,
+    method_override = "mean"
+    )
 
   # Process built-up areas
   log_msg("Processing built-up areas...")
@@ -151,11 +168,12 @@ make_manage_zone <- function(
   }
 
   # Main management zone: moderate HFP, OR managed forests, OR ag areas — minus built-up
-  log_msg("Creating the default manage zone using middle 60% of HII value, managed forests, and agricultural areas...")
+  log_msg("Creating the default manage zone using middle 60% of HII value, managed forests, agricultural areas, and pasturelands...")
   manage_zone <- terra::ifel(
     hii_middle_60_pct == 1 |
       managed_forests > forest_class_threshold |
-      agricultural_areas > agriculture_threshold,
+      agricultural_areas > agriculture_threshold |
+      pasturelands > pasturelands_threshold,
     1, 0
   ) %>% make_normalised_raster(
     pus = pus,
@@ -167,8 +185,12 @@ make_manage_zone <- function(
     make_normalised_raster(pus = pus, iso3 = iso3)
 
   # Secondary zone (agriculture only)
-  log_msg("Creating the alternative manage zone using agricultural areas only...")
-  manage_zone_alt <- terra::ifel(agricultural_areas > agriculture_threshold, 1, 0) %>%
+  log_msg("Creating the alternative manage zone using agricultural areas and pasturelands only...")
+  manage_zone_alt <- terra::ifel(
+    agricultural_areas > agriculture_threshold |
+      pasturelands > pasturelands_threshold,
+    1, 0
+    ) %>%
     make_normalised_raster(pus = pus, iso3 = iso3)
 
   # Combine into multi-layer SpatRaster
