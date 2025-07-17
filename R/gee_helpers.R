@@ -378,13 +378,13 @@ elsar_download_gee_layer <- function(
 #'
 #' Retrieves the ESRI Global LULC Time Series at 10m resolution from Earth Engine.
 #' It downloads the most recent year available and returns the result as a local
-#' Cloud-Optimized GeoTIFF.
+#' Cloud-Optimized GeoTIFF. The layer name is taken from the original GEE asset name.
 #'
 #' @inheritParams elsar_download_gee_layer
 #' @param output_dir Optional local output directory (default: project root).
 #' @export
 elsar_download_esri_lulc_data <- function(boundary_layer, iso3, gee_project, output_dir = here::here(), ...) {
-  elsar_download_gee_layer(
+  ee <- elsar_download_gee_layer(
     boundary_layer = boundary_layer,
     iso3 = iso3,
     gee_project = gee_project,
@@ -395,13 +395,16 @@ elsar_download_esri_lulc_data <- function(boundary_layer, iso3, gee_project, out
     datatype = "INT1U",
     ...
   )
+  names(ee) <- "ESRI_Global-LULC_10m_TS"
+  return(ee)
 }
 
 #' Download Global Pasture Watch Grassland Probability Layer
 #'
 #' Downloads either the cultivated or natural/semi-natural grassland probability
 #' layer from the Global Pasture Watch dataset hosted in Earth Engine. Result is
-#' returned as a local Cloud-Optimized GeoTIFF.
+#' returned as a local Cloud-Optimized GeoTIFF. The layer name is taken from the
+#' original GEE asset name.
 #'
 #' @inheritParams elsar_download_gee_layer
 #' @param layer_type One of "cultivated" (default) or "natural".
@@ -426,7 +429,7 @@ elsar_download_global_pasture_data <- function(
     cultivated = "gpw_cultiv-grassland_p",
     natural    = "gpw_nat-semi-grassland_p"
   )
-  elsar_download_gee_layer(
+  ee <- elsar_download_gee_layer(
     boundary_layer = boundary_layer,
     iso3 = iso3,
     gee_project = gee_project,
@@ -437,4 +440,6 @@ elsar_download_global_pasture_data <- function(
     datatype = "FLT4S",
     ...
   )
+  names(ee) <- file_prefix
+  return(ee)
 }

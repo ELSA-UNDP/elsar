@@ -24,5 +24,5 @@ elsar_download_esri_lulc_data(
 \description{
 Retrieves the ESRI Global LULC Time Series at 10m resolution from Earth Engine.
 It downloads the most recent year available and returns the result as a local
-Cloud-Optimized GeoTIFF.
+Cloud-Optimized GeoTIFF. The layer name is taken from the original GEE asset name.
 }

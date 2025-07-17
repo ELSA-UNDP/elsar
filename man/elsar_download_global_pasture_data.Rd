@@ -27,5 +27,6 @@ elsar_download_global_pasture_data(
 \description{
 Downloads either the cultivated or natural/semi-natural grassland probability
 layer from the Global Pasture Watch dataset hosted in Earth Engine. Result is
-returned as a local Cloud-Optimized GeoTIFF.
+returned as a local Cloud-Optimized GeoTIFF. The layer name is taken from the
+original GEE asset name.
 }

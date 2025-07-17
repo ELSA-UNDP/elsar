@@ -184,7 +184,7 @@ make_manage_zone <- function(
   manage_zone <- terra::ifel(built_areas > built_areas_threshold, 0, manage_zone) %>%
     make_normalised_raster(pus = pus, iso3 = iso3)
 
-  # Secondary zone (agriculture only)
+  # Secondary zone (agriculture and pastureland only)
   log_msg("Creating the alternative manage zone using agricultural areas and pasturelands only...")
   manage_zone_alt <- terra::ifel(
     agricultural_areas > agriculture_threshold |
