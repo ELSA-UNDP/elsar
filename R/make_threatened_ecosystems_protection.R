@@ -1,9 +1,9 @@
 #' Create a Threatened Ecosystems Raster Based on Integrity or Degradation
 #'
-#' This generic function calculates ecosystem-level threat scores based on the
-#' proportion of degraded or low-integrity land within each ecosystem polygon.
-#' It supports either an EII-style continuous integrity raster (thresholded using
-#' the national median) or a binary degraded areas raster.
+#' This function calculates ecosystem-level threat scores based on the proportion
+#' of degraded or low-integrity land within each ecosystem polygon. It supports either
+#' an Ecological Intactness Index (EII) style continuous integrity raster (thresholded using
+#' the global median value) or a binary degraded areas raster.
 #'
 #' The threat score is calculated as the percentage of each ecosystem area that is
 #' below the integrity threshold (i.e., not intact), and rasterized by planning unit.
@@ -65,7 +65,7 @@ make_threatened_ecosystems_protection <- function(
   stopifnot(inherits(boundary_layer, "sf"))
   stopifnot(inherits(integrity_raster, "SpatRaster"))
 
-  log_msg(glue::glue("Calculating ecosystem threat using ecosystem integrity data type: {integrity_type}"))
+  message(glue::glue("Calculating ecosystem threat using ecosystem integrity data type: {integrity_type}"))
 
   # Align and normalize integrity raster to match planning units
   integrity_aligned <- elsar::make_normalised_raster(
@@ -75,7 +75,8 @@ make_threatened_ecosystems_protection <- function(
 
   # Create binary mask of intact areas
   if (integrity_type == "eii") {
-    med_val <- exactextractr::exact_extract(integrity_aligned, boundary_layer, fun = "median")
+    med_val <- median_from_rast(r) # Median calculated from pre-computed histogram
+    message(glue::glue("Using the global median inactness value ({med_val}) of the {integrity_type} input to define intact areas"))
     mask <- terra::ifel(integrity_aligned >= med_val, 1, 0)
   } else {
     mask <- terra::ifel(integrity_aligned == 0, 1, 0)
@@ -90,7 +91,7 @@ make_threatened_ecosystems_protection <- function(
     sf::st_set_crs(sf::st_crs(ecosystems_sf)) %>%
     sf::st_cast("POLYGON")
 
-  log_msg("Calculating intact areas within each ecosystem...")
+  message("Calculating intact areas within each ecosystem...")
 
   # Setup parallel processing
   if (!requireNamespace("future.apply", quietly = TRUE)) stop("Please install the 'future.apply' package.")
@@ -140,7 +141,7 @@ make_threatened_ecosystems_protection <- function(
     dplyr::summarise(area_intact = sum(area_intact, na.rm = TRUE), .groups = "drop")
 
   # Summarize total area and compute threat score
-  log_msg("Summarising total ecosystem area and computing threat scores...")
+  message("Summarising total ecosystem area and computing threat scores...")
 
   eco_summary <- ecosystems_sf %>%
     dplyr::group_by(.data[[group_attribute]]) %>%
@@ -152,7 +153,7 @@ make_threatened_ecosystems_protection <- function(
     )
 
   # Rasterize threat scores
-  log_msg("Rasterizing threat score per planning unit...")
+  message("Rasterizing threat score per planning unit...")
   threat_raster <- elsar::exact_rasterise(
     features = eco_summary,
     pus = pus,

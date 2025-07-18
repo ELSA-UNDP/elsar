@@ -37,10 +37,10 @@ A \code{SpatRaster} with one layer: \code{"threatened_ecosystems"}, with values 
 Higher values indicate greater ecosystem degradation or threat.
 }
 \description{
-This generic function calculates ecosystem-level threat scores based on the
-proportion of degraded or low-integrity land within each ecosystem polygon.
-It supports either an EII-style continuous integrity raster (thresholded using
-the national median) or a binary degraded areas raster.
+This function calculates ecosystem-level threat scores based on the proportion
+of degraded or low-integrity land within each ecosystem polygon. It supports either
+an Ecological Intactness Index (EII) style continuous integrity raster (thresholded using
+the global median value) or a binary degraded areas raster.
 }
 \details{
 The threat score is calculated as the percentage of each ecosystem area that is

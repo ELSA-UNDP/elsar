@@ -1,4 +1,4 @@
-#' Rescale Raster to 0–1 Range
+#' Rescale Raster to 0-1 Range
 #'
 #' This function rescales values in a raster to a range between 0 and 1.
 #'
@@ -33,7 +33,7 @@ rescale_raster <- function(
 #' @param area_crs Character. CRS used for buffering operation (default: `"ESRI:54009"` = World Mollweide).
 #' @param nQuadSegs Integer. Number of segments per circle quadrant for buffering (default: `50`).
 #' @param append_original_polygons Logical. If `TRUE`, appends original polygons to buffered features (default: `TRUE`).
-#' @param area_multiplier Numeric. Multiplier applied to the area attribute to convert units (e.g., `1e4` for hectares to m²).
+#' @param area_multiplier Numeric. Multiplier applied to the area attribute to convert units (e.g., `1e4` for hectares to m2).
 #'
 #' @return An `sf` object containing polygon features (either buffered points, original polygons, or both). The `sf` object can be empty.
 #' If no valid features are found, returns `NULL`.
@@ -172,7 +172,7 @@ get_coverage <- function(zone_layer, pu_layer) {
 #' @param iso3 Character. ISO3 country code, passed to `make_normalised_raster()`.
 #' @param pus A `SpatRaster` object defining the resolution, extent, and CRS of the output raster.
 #' @param invert Logical. If `TRUE`, inverts the resulting values during normalization (default: `FALSE`).
-#' @param rescaled Logical. If `TRUE`, rescales the output to 0–1 using `make_normalised_raster()` (default: `TRUE`).
+#' @param rescaled Logical. If `TRUE`, rescales the output to 0-1 using `make_normalised_raster()` (default: `TRUE`).
 #' @param fun Function. Aggregation function applied across overlapping rasterized features (default: `mean`).
 #' @param cores Integer. Number of CPU cores to use for multi-core processing (default: 4).
 #'
@@ -600,6 +600,74 @@ save_raster <- function(raster, filename, datatype = "FLT4S") {
   log_msg(glue::glue("Saved: {filename}."))
 }
 
+#' Compute median from a SpatRaster using its GDAL PAM side-car histogram
+#'
+#' Extracts the histogram stored in the GDAL PAM side-car XML file
+#' (e.g. `raster.tif.aux.xml`) and computes the exact median value
+#' by finding the bucket midpoint where the cumulative count reaches 50%.
+#'
+#' @param r A `SpatRaster` (from **terra**) whose underlying file has
+#'   a GDAL PAM side-car XML (e.g. `raster.tif.aux.xml`).
+#'
+#' @details
+#' Before running this function, you must generate the histogram side‑car:
+#' in a terminal, run:
+#' ```bash
+#' gdalinfo -hist /path/to/your.tif
+#' ```
+#' This computes and stores the histogram in `/path/to/your.tif.aux.xml`.
+#' Once the side-car exists, calling this function reads the stored
+#' `<Histogram>` data without re-scanning pixel values and returns
+#' the exact median bucket midpoint.
+#'
+#' @return A single numeric value: the median of the raster (bucket midpoint).
+#'
+#' @examples
+#' \dontrun{
+#' library(terra)
+#' r <- rast("eii_2023.tif")
+#' # First, in the shell:
+#' #   gdalinfo -hist eii_2023.tif
+#' med <- median_from_rast(r)
+#' }
+#'
+#' @export
+median_from_rast <- function(r) {
+  stopifnot(inherits(r, "SpatRaster"))
+  tif  <- terra::sources(r)[1]
+  xmlf <- paste0(tif, ".aux.xml")
+  if (!file.exists(xmlf)) {
+    alt <- sub("\\.tif$", ".xml", tif, ignore.case = TRUE)
+    if (file.exists(alt)) {
+      xmlf <- alt
+    } else {
+      stop("Side-car XML not found for ", tif)
+    }
+  }
+
+  doc      <- xml2::read_xml(xmlf)
+  histItem <- xml2::xml_find_first(doc, ".//HistItem")
+  if (is.na(histItem)) stop("No <HistItem> in side-car XML: ", xmlf)
+
+  minv        <- as.numeric(xml2::xml_text(xml2::xml_find_first(histItem, "./HistMin")))
+  maxv        <- as.numeric(xml2::xml_text(xml2::xml_find_first(histItem, "./HistMax")))
+  bucketCount <- as.integer(xml2::xml_text(xml2::xml_find_first(histItem, "./BucketCount")))
+
+  counts_str  <- xml2::xml_text(xml2::xml_find_first(histItem, "./HistCounts"))
+  counts      <- as.numeric(strsplit(counts_str, "\\|")[[1]])
+  if (length(counts) != bucketCount) {
+    warning("Declared BucketCount (", bucketCount,
+            ") != number of counts (", length(counts), ").")
+  }
+
+  edges <- seq(minv, maxv, length.out = length(counts) + 1L)
+  mids  <- (head(edges, -1L) + tail(edges, -1L)) / 2
+
+  half <- sum(counts) / 2
+  idx  <- which(cumsum(counts) >= half)[1]
+
+  mids[idx]
+}
 
 
 
