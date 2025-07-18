@@ -2,7 +2,7 @@
 % Please edit documentation in R/elsar_plot_feature.R
 \name{elsar_plot_feature}
 \alias{elsar_plot_feature}
-\title{Create a map of individual features}
+\title{Plot a single feature raster within planning unit outlines}
 \usage{
 elsar_plot_feature(
   raster_in,
@@ -15,37 +15,40 @@ elsar_plot_feature(
 )
 }
 \arguments{
-\item{raster_in}{The \code{SpatRaster} file to be plotted.}
+\item{raster_in}{SpatRaster. The raster to be plotted.}
 
-\item{pus}{\code{SpatVector} The planning units (PUs) to use as outline}
+\item{pus}{SpatVector. Planning units used as an outline for the raster.}
 
-\item{legend_title}{An optional legend title.}
+\item{legend_title}{character, optional. Title for the legend. Defaults to NULL.}
 
-\item{color_map}{The name of the \code{viridis} palette to be used. Default is "viridis".}
+\item{color_map}{character. Name of the viridis palette to use. Defaults to "viridis".}
 
-\item{figure_path}{An optional path to save the produced figures}
+\item{invert_palette}{logical. If TRUE, reverses the palette direction. Defaults to FALSE.}
 
-\item{no_legend}{Logical. TRUE means no legend will be shown}
+\item{figure_path}{character, optional. If provided, path to save the figure as a PNG.}
+
+\item{no_legend}{logical. If TRUE, suppresses the legend. Defaults to FALSE.}
 }
 \value{
-A ggplot object with a map of the feature
+A \code{ggplot} object displaying the raster with optional planning unit outlines.
 }
 \description{
-Create a map of individual features
+Creates a ggplot2 map of a single feature represented by a \code{SpatRaster}, with optional
+planning unit outlines, customizable color palette direction, and optional saving to disk.
 }
 \examples{
 boundary_proj <- make_boundary(
   boundary_in = boundary_dat,
   iso3 = "NPL",
   iso3_column = "iso3cd"
-  )
+)
 
 pus <- make_planning_units(
   boundary_proj = boundary_proj,
   pu_size = NULL,
   pu_threshold = 8.5e5,
   limit_to_mainland = FALSE
-  )
+)
 
 wad_dat <- get_wad_data()
 
@@ -53,12 +56,15 @@ wadOut <- make_normalised_raster(
   raster_in = wad_dat,
   pus = pus,
   iso3 = "NPL"
-  )
-
-elsar_plot_feature(
-raster_in = wadOut,
-pus = pus,
-legend_title = "wad"
 )
 
+elsar_plot_feature(
+  raster_in = wadOut,
+  pus = pus,
+  legend_title = "WAD",
+  color_map = "magma",
+  invert_palette = TRUE,
+  figure_path = "figures",
+  no_legend = FALSE
+)
 }

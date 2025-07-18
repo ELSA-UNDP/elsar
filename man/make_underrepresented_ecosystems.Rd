@@ -33,16 +33,10 @@ make_underrepresented_ecosystems(
 A \code{SpatRaster} with one layer: \code{"underrepresented_ecosystems"}, showing the maximum gap (0 to target_percent) per planning unit.
 }
 \description{
-This function calculates the protection gap for a given set of ecosystem features by:
-\enumerate{
-\item dissolving features based on a grouping attribute,
-\item intersecting them with protected areas,
-\item calculating the gap between the current protection and a target percentage, and
-\item rasterizing the average underrepresentation value to a planning unit raster.
-}
-}
-\details{
-The output highlights spatial priorities for ecosystem representation based on protection shortfall.
+This function calculates the representation gap of ecosystems provided, identifying
+those that fall short of a 30\% protection target. The resulting raster layer indicates
+the average degree of underrepresentation across each planning unit.
+#'
 }
 \examples{
 \dontrun{

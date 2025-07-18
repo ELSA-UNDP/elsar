@@ -1,13 +1,9 @@
 #' Create a Representation Gap Raster for Ecosystems
 #'
-#' This function calculates the protection gap for a given set of ecosystem features by:
-#' 1) dissolving features based on a grouping attribute,
-#' 2) intersecting them with protected areas,
-#' 3) calculating the gap between the current protection and a target percentage, and
-#' 4) rasterizing the average underrepresentation value to a planning unit raster.
-#'
-#' The output highlights spatial priorities for ecosystem representation based on protection shortfall.
-#'
+#' This function calculates the representation gap of ecosystems provided, identifying
+#' those that fall short of a 30% protection target. The resulting raster layer indicates
+#' the average degree of underrepresentation across each planning unit.
+#'#'
 #' @param ecosystems_sf `sf` object. Polygon features representing ecosystems, clipped to the analysis area.
 #' @param group_attribute `character`. Column name in `ecosystems_sf` used to group features (e.g., "econame" or "get_id").
 #' @param target_percent `numeric`. Target percentage of protection for each ecosystem group (default = 30).
@@ -47,7 +43,7 @@ make_underrepresented_ecosystems <- function(
   stopifnot(inherits(pus, "SpatRaster"))
   stopifnot(inherits(protected_areas_sf, "sf") || inherits(protected_areas_sf, "SpatVector"))
 
-  log_msg(glue::glue("Calculating protection gaps for ecosystems grouped by '{group_attribute}'..."))
+  message(glue::glue("Calculating protection gaps for ecosystems grouped by '{group_attribute}'..."))
 
   # Convert to sf if needed
   if (inherits(protected_areas_sf, "SpatVector")) {
@@ -88,7 +84,7 @@ make_underrepresented_ecosystems <- function(
     )
 
   # Rasterize
-  log_msg("Rasterizing average target gap per planning unit...")
+  message("Rasterizing average target gap per planning unit...")
   underrepresented_ecosystems <- elsar::exact_rasterise(
     features = ecosystems_summary,
     pus = pus,

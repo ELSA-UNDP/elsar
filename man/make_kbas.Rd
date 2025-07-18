@@ -12,13 +12,13 @@ make_kbas(
   aze_only = FALSE,
   include_regional_kba = FALSE,
   buffer_points = TRUE,
-  area_column = "gisarea",
+  area_column = "repareakm2",
   nQuadSegs = 50,
   output_path = NULL
 )
 }
 \arguments{
-\item{kba_in}{An \code{sf} object containing KBA vector features, including columns like \code{iso3}, \code{azestatus}, and \code{kba_qual}.}
+\item{kba_in}{An \code{sf} object containing KBA vector features, including columns like \code{iso3}, \code{azestatus}, and \code{kbaclass}.}
 
 \item{pus}{A \code{SpatRaster} object representing planning units (reference extent and resolution).}
 

@@ -24,7 +24,7 @@ convert_points_polygon(
 
 \item{append_original_polygons}{Logical. If \code{TRUE}, appends original polygons to buffered features (default: \code{TRUE}).}
 
-\item{area_multiplier}{Numeric. Multiplier applied to the area attribute to convert units (e.g., \code{1e4} for hectares to m²).}
+\item{area_multiplier}{Numeric. Multiplier applied to the area attribute to convert units (e.g., \code{1e4} for hectares to m2).}
 }
 \value{
 An \code{sf} object containing polygon features (either buffered points, original polygons, or both). The \code{sf} object can be empty.

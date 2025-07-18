@@ -10,9 +10,11 @@ make_manage_zone(
   managed_forests_input,
   raster_mf = NULL,
   agricultural_areas_input = NULL,
+  pasturelands_input = NULL,
   built_areas_input = NULL,
   lulc_raster = NULL,
   hii_input = NULL,
+  pasturelands_threshold = 0.35,
   agriculture_lulc_value = 5,
   built_area_lulc_value = 7,
   forest_classes = c(20, 31, 32, 40, 53),
@@ -35,11 +37,15 @@ make_manage_zone(
 
 \item{agricultural_areas_input}{SpatRaster. A binary or categorical raster representing agricultural areas.}
 
+\item{pasturelands_input}{SpatRaster. A binary or categorical raster representing (actively managed/improved)pastures.}
+
 \item{built_areas_input}{SpatRaster. A binary or categorical raster representing built-up/urban areas.}
 
 \item{lulc_raster}{SpatRaster or NULL. Optional raw LULC input used to extract agriculture and built-up layers if those inputs are categorical.}
 
 \item{hii_input}{SpatRaster. Human Footprint Index raster.}
+
+\item{pasturelands_threshold}{Numeric. Probability threshold above which cells are considered pasturelands (default = 0.35).}
 
 \item{agriculture_lulc_value}{Integer. LULC value for agriculture (default = 4).}
 
@@ -65,9 +71,9 @@ A SpatRaster with two layers: \code{manage_zone_v1} and \code{manage_zone_v2}.
 \description{
 This function identifies planning units eligible for the "Manage" zone under the ELSA framework.
 The zone (default) includes areas with a moderate level of human influence (HII between
-20th and 80th percentiles), all managed forest types, and agricultural areas, but
-explicitly excludes built-up areas. An alternative zone includes is limtied to all
-agricultural areas.
+20th and 80th percentiles), all managed forest types, and agricultural and pastureland areas, but
+explicitly excludes built-up areas. An alternative zone includes is limited to all
+agricultural areas and paturelands.
 }
 \details{
 Two layers are returned:
@@ -85,6 +91,7 @@ manage_zone <- make_manage_zone(
   pus = planning_units,
   managed_forests_input = forest_raster,
   agricultural_areas_input = agri_raster,
+  pasturelands_input = pastures_raster,
   built_areas_input = built_raster,
   lulc_raster = landcover_raster,
   hii_input = hfp_raster,
