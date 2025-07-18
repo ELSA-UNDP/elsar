@@ -75,7 +75,7 @@ make_threatened_ecosystems_protection <- function(
 
   # Create binary mask of intact areas
   if (integrity_type == "eii") {
-    med_val <- median_from_rast(r) # Median calculated from pre-computed histogram
+    med_val <- median_from_rast(integrity_raster) # Median calculated from pre-computed histogram
     message(glue::glue("Using the global median inactness value ({med_val}) of the {integrity_type} input to define intact areas"))
     mask <- terra::ifel(integrity_aligned >= med_val, 1, 0)
   } else {
