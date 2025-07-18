@@ -124,9 +124,9 @@ wait_for_drive_export <- function(folder, prefix, wait_time = 5) {
       return(invisible(TRUE))
     }
     if (difftime(Sys.time(), start_time, units = "mins") > wait_time) {
-      stop(glue::glue("Timeout: No matching files appeared in Drive after {wait_time} minutes."))
+      stop(glue::glue("Timeout: No matching files appeared in Drive after {wait_time} minutes. This should not be entirely unexpected... \nExporting high resoltuion data from GEE over large areas will often take longer than {wait_time} minutes. Please check the status of running tasks at https://code.earthengine.google.com/ before running again."))
     }
-    log_msg("File not yet found. Waiting 30 seconds...")
+    log_msg("Exported file not yet found. Waiting 30 seconds...")
     Sys.sleep(30)
   }
 }
