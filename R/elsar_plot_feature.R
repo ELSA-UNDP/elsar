@@ -1,13 +1,19 @@
-#' Create a map of individual features
+#' Plot a single feature raster within planning unit outlines
 #'
-#' @param raster_in The `SpatRaster` file to be plotted.
-#' @param pus `SpatVector` The planning units (PUs) to use as outline
-#' @param legend_title An optional legend title.
-#' @param color_map The name of the `viridis` palette to be used. Default is "viridis".
-#' @param figure_path An optional path to save the produced figures
-#' @param no_legend Logical. TRUE means no legend will be shown
+#' @description
+#' Creates a ggplot2 map of a single feature represented by a `SpatRaster`, with optional
+#' planning unit outlines, customizable color palette direction, and optional saving to disk.
 #'
-#' @return A ggplot object with a map of the feature
+#' @param raster_in SpatRaster. The raster to be plotted.
+#' @param pus SpatVector. Planning units used as an outline for the raster.
+#' @param legend_title character, optional. Title for the legend. Defaults to NULL.
+#' @param color_map character. Name of the viridis palette to use. Defaults to "viridis".
+#' @param invert_palette logical. If TRUE, reverses the palette direction. Defaults to FALSE.
+#' @param figure_path character, optional. If provided, path to save the figure as a PNG.
+#' @param no_legend logical. If TRUE, suppresses the legend. Defaults to FALSE.
+#'
+#' @return A `ggplot` object displaying the raster with optional planning unit outlines.
+#'
 #' @export
 #'
 #' @examples
@@ -15,14 +21,14 @@
 #'   boundary_in = boundary_dat,
 #'   iso3 = "NPL",
 #'   iso3_column = "iso3cd"
-#'   )
+#' )
 #'
 #' pus <- make_planning_units(
 #'   boundary_proj = boundary_proj,
 #'   pu_size = NULL,
 #'   pu_threshold = 8.5e5,
 #'   limit_to_mainland = FALSE
-#'   )
+#' )
 #'
 #' wad_dat <- get_wad_data()
 #'
@@ -30,14 +36,17 @@
 #'   raster_in = wad_dat,
 #'   pus = pus,
 #'   iso3 = "NPL"
-#'   )
-#'
-#'elsar_plot_feature(
-#' raster_in = wadOut,
-#' pus = pus,
-#' legend_title = "wad"
 #' )
 #'
+#' elsar_plot_feature(
+#'   raster_in = wadOut,
+#'   pus = pus,
+#'   legend_title = "WAD",
+#'   color_map = "magma",
+#'   invert_palette = TRUE,
+#'   figure_path = "figures",
+#'   no_legend = FALSE
+#' )
 elsar_plot_feature <- function(raster_in,
                                pus,
                                legend_title = NULL,

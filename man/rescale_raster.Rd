@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{rescale_raster}
 \alias{rescale_raster}
-\title{Rescale Raster to 0–1 Range}
+\title{Rescale Raster to 0-1 Range}
 \usage{
 rescale_raster(
   raster_in,

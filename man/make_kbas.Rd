@@ -12,7 +12,7 @@ make_kbas(
   aze_only = FALSE,
   include_regional_kba = FALSE,
   buffer_points = TRUE,
-  area_column = "gisarea",
+  area_column = "repareakm2",
   nQuadSegs = 50,
   output_path = NULL
 )

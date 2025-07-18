@@ -26,7 +26,7 @@ exact_rasterise(
 
 \item{invert}{Logical. If \code{TRUE}, inverts the resulting values during normalization (default: \code{FALSE}).}
 
-\item{rescaled}{Logical. If \code{TRUE}, rescales the output to 0–1 using \code{make_normalised_raster()} (default: \code{TRUE}).}
+\item{rescaled}{Logical. If \code{TRUE}, rescales the output to 0-1 using \code{make_normalised_raster()} (default: \code{TRUE}).}
 
 \item{fun}{Function. Aggregation function applied across overlapping rasterized features (default: \code{mean}).}
 
