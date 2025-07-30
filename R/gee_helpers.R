@@ -97,7 +97,7 @@ start_gee_export_task <- function(ee, image, description, region, folder, file_n
     fileNamePrefix = file_name,
     region = region$getInfo()[["coordinates"]],
     scale = scale,
-    maxPixels = reticulate::r_to_py(max_pixels),
+    maxPixels = as.numeric(max_pixels),
     fileFormat = file_format
   )
   task$start()
