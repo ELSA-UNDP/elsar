@@ -12,11 +12,11 @@ make_restore_zone(
   built_areas_input = NULL,
   lulc_raster = NULL,
   hii_input = NULL,
-  iucn_get_forest_input = NULL,
+  forest_cover_input = NULL,
   sdg_threshold = 0.1,
   lulc_threshold = 0.1,
   hii_threshold = 4,
-  iucn_get_forest_threshold = 0.1,
+  forest_threshold = 0.1,
   agriculture_lulc_value = 4,
   built_area_lulc_value = 7,
   filter_patch_size = TRUE,
@@ -39,7 +39,7 @@ make_restore_zone(
 
 \item{hii_input}{SpatRaster. Human Industrial Footprint Index (HII) raster.}
 
-\item{iucn_get_forest_input}{SpatRaster. IUCN GET forest raster used to create \code{restore_zone_v2}.}
+\item{forest_cover_input}{SpatRaster or NULL. Optional forest cover raster used to create \code{restore_zone_v2}. If NULL, only \code{restore_zone_v1} is created.}
 
 \item{sdg_threshold}{Numeric. Threshold for SDG degradation to classify as degraded (default: 0.1).}
 
@@ -47,7 +47,7 @@ make_restore_zone(
 
 \item{hii_threshold}{Numeric. HII threshold for defining high human pressure (default: 4).}
 
-\item{iucn_get_forest_threshold}{Numeric. Minimum forest cover value to retain in restore zone 2 (default: 0.1).}
+\item{forest_threshold}{Numeric. Minimum forest cover value to retain in restore zone 2 (default: 0.1).}
 
 \item{agriculture_lulc_value}{Integer. LULC value representing agriculture if derived from \code{lulc_raster} (default: 4).}
 
@@ -60,10 +60,10 @@ make_restore_zone(
 \item{output_path}{Character or NULL. Directory to save output rasters. If NULL, outputs are returned but not saved (default: NULL).}
 }
 \value{
-A \code{SpatRaster} with two layers:
+A \code{SpatRaster} with one or two layers:
 \itemize{
 \item \code{restore_zone_v1}: Degraded areas based on SDG, LULC, and HII thresholds
-\item \code{restore_zone_v2}: \code{v1} masked by IUCN forest coverage
+\item \code{restore_zone_v2}: \code{v1} masked by forest coverage (only if \code{forest_cover_input} is provided)
 }
 }
 \description{
@@ -72,20 +72,21 @@ This function identifies degraded areas for potential restoration based on a com
 \item \strong{SDG productivity degradation data}
 \item \strong{Agricultural and built-up areas} (either provided or derived from a LULC raster)
 \item \strong{Human Industrial Footprint Index (HII)}
-\item \strong{IUCN GET forest ecosystems coverage} (used to create \code{restore_zone_v1} and \code{restore_zone_v2})
+\item \strong{Forest ecosystems coverage} (optional, used to create \code{restore_zone_v2})
 }
 }
 \details{
-The function applies user-defined thresholds to generate two outputs:
+The function applies user-defined thresholds to generate one or two outputs:
 \itemize{
 \item \code{restore_zone_v1}: Based on SDG degradation, agriculture, built-up, and HII thresholds
-\item \code{restore_zone_v2}: Same as \code{v1} but masked by IUCN GET forest extent
+\item \code{restore_zone_v2}: Same as \code{v1} but masked by forest extent (only created if forest layer provided)
 }
 
 If \code{output_path} is provided, the intermediate layers and final output are saved as Cloud Optimized GeoTIFFs.
 }
 \examples{
 \dontrun{
+# Example 1: With forest cover layer (creates both v1 and v2)
 restore_zone <- make_restore_zone(
   iso3 = "CHL",
   pus = planning_units,
@@ -94,10 +95,11 @@ restore_zone <- make_restore_zone(
   built_areas_input = NULL,
   lulc_raster = lulc_input,
   hii_input = hii_raster,
-  iucn_get_forest_input = forest_raster,
+  forest_cover_input = forest_raster,
   output_path = "outputs/"
 )
 
+# Example 2: Without forest cover layer (creates only v1)
 restore_zone <- make_restore_zone(
   iso3 = "CHL",
   pus = planning_units,
@@ -106,8 +108,19 @@ restore_zone <- make_restore_zone(
   built_areas_input = built_areas_input,
   lulc_raster = NULL,
   hii_input = hii_raster,
-  iucn_get_forest_input = forest_raster,
+  forest_cover_input = NULL,
   output_path = "outputs/"
+)
+
+# Example 3: Using pre-computed agricultural and built areas
+restore_zone <- make_restore_zone(
+  iso3 = "BRA",
+  pus = planning_units,
+  sdg_degradation_input = sdg_raster,
+  agricultural_areas_input = ag_raster,
+  built_areas_input = built_raster,
+  hii_input = hii_raster,
+  forest_cover_input = forest_raster
 )
 }
 }
