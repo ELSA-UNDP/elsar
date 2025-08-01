@@ -17,13 +17,13 @@ make_managed_forests(
 )
 }
 \arguments{
-\item{raster_in}{A \code{SpatRaster} representing LULC classifications.}
+\item{raster_in}{A \code{SpatRaster} representing forest management classifications.}
 
 \item{pus}{A \code{SpatRaster} used as a template for extent, resolution, and alignment.}
 
 \item{iso3}{A 3-letter ISO country code string.}
 
-\item{forest_classes}{Integer vector of LULC class codes representing managed forests (default = c(31, 32, 40, 53)).}
+\item{forest_classes}{Integer vector of class codes representing managed forests (default = c(31, 32, 40, 53)).}
 
 \item{include_disturbed_forest}{Logical. If TRUE, includes disturbed forest class (code 20) in \code{forest_classes}.}
 

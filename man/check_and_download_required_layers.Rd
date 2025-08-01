@@ -2,7 +2,7 @@
 % Please edit documentation in R/gee_helpers.R
 \name{check_and_download_required_layers}
 \alias{check_and_download_required_layers}
-\title{Check and download GEE-sourced layers (e.g. LULC or Pasturelands)}
+\title{Check and download GEE-sourced layers based on metadata requirements}
 \usage{
 check_and_download_required_layers(
   data_info,
@@ -14,23 +14,35 @@ check_and_download_required_layers(
 )
 }
 \arguments{
-\item{data_info}{A dataframe containing \code{data_name} fields to match}
+\item{data_info}{Data.frame containing \code{data_name} fields to match against requirements}
 
-\item{iso3}{ISO3 country code}
+\item{iso3}{Character. ISO3 country code for the target country}
 
-\item{input_path}{Path where data files should exist or be downloaded to}
+\item{input_path}{Character. Path where data files should exist or be downloaded to}
 
-\item{gee_project}{Google Earth Engine project ID}
+\item{gee_project}{Character. Google Earth Engine project ID}
 
-\item{boundary_proj}{\code{sf} object representing the country boundary}
+\item{boundary_proj}{An \code{sf} object representing the country boundary}
 
-\item{wait_time}{Wait time (in minutes) for Drive export}
+\item{wait_time}{Numeric. Wait time (in minutes) for Drive export}
 }
 \value{
-NULL (used for side-effect of downloading)
+NULL (used for side-effect of downloading). Files are downloaded as needed.
 }
 \description{
-This checks for required layer names from metadata, ensures they exist in the output path,
-and prompts the user to download them from GEE if missing.
+This function checks for required layer names from metadata, ensures they exist
+in the output path, and prompts the user to download them from GEE if missing.
+Used internally by other functions to automatically download required datasets.
+}
+\examples{
+\dontrun{
+check_and_download_required_layers(
+  data_info = metadata_df,
+  iso3 = "GHA",
+  input_path = "/path/to/data",
+  gee_project = "my-project",
+  boundary_proj = ghana_boundary
+)
+}
 }
 \keyword{internal}
