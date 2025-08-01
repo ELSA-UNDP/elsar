@@ -7,7 +7,7 @@
 initialize_earthengine(gee_project = "unbl-misc")
 }
 \arguments{
-\item{gee_project}{GEE cloud project ID}
+\item{gee_project}{Character. GEE cloud project ID. Default is "unbl-misc".}
 }
 \value{
 A list containing the \code{ee} module and temporary environment name (if created)
@@ -15,5 +15,11 @@ A list containing the \code{ee} module and temporary environment name (if create
 \description{
 Sets up Python environment and initializes the Earth Engine API.
 Handles authentication and temporary conda environments as needed.
+}
+\examples{
+\dontrun{
+env_info <- initialize_earthengine("my-gee-project")
+ee <- env_info$ee
+}
 }
 \keyword{internal}

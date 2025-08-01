@@ -7,9 +7,17 @@
 cleanup_earthengine(env_info)
 }
 \arguments{
-\item{env_info}{List returned from initialize_earthengine()}
+\item{env_info}{List returned from initialize_earthengine() containing temp_env info}
 }
 \description{
-Removes temporary conda environment if one was created
+Removes temporary conda environment if one was created during initialization.
+Should be called at the end of any function that uses initialize_earthengine().
+}
+\examples{
+\dontrun{
+env_info <- initialize_earthengine()
+# ... do work with GEE ...
+cleanup_earthengine(env_info)
+}
 }
 \keyword{internal}

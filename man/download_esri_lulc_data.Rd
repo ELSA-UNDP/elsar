@@ -13,16 +13,29 @@ download_esri_lulc_data(
 )
 }
 \arguments{
-\item{boundary_layer}{An \code{sf} object defining the spatial boundary of interest.}
+\item{boundary_layer}{An \code{sf} object defining the spatial boundary of interest}
 
-\item{iso3}{Three-letter ISO country code used to generate the export filename.}
+\item{iso3}{Character. Three-letter ISO country code for filename generation}
 
-\item{gee_project}{Earth Engine Cloud project ID.}
+\item{gee_project}{Character. Earth Engine Cloud project ID. Default is "unbl-misc"}
 
-\item{output_dir}{Optional local output directory (default: project root).}
+\item{output_dir}{Character. Local output directory. Defaults to project root via \code{here::here()}}
+}
+\value{
+A \code{SpatRaster} object of the downloaded LULC data, or NULL if download failed
 }
 \description{
 Retrieves the ESRI Global LULC Time Series at 10m resolution from Earth Engine.
-It downloads the most recent year available and returns the result as a local
-Cloud-Optimized GeoTIFF. The layer name is taken from the original GEE asset name.
+Downloads the most recent year available and returns the result as a local
+Cloud-Optimized GeoTIFF with appropriate layer naming.
+}
+\examples{
+\dontrun{
+# Download LULC data for Ghana
+lulc <- download_esri_lulc_data(
+  boundary_layer = ghana_boundary,
+  iso3 = "GHA",
+  gee_project = "my-gee-project"
+)
+}
 }

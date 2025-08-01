@@ -2,21 +2,27 @@
 % Please edit documentation in R/gee_helpers.R
 \name{download_from_drive}
 \alias{download_from_drive}
-\title{Download files from Google Drive (improved version)}
+\title{Download files from Google Drive}
 \usage{
 download_from_drive(drive_folder, file_prefix, local_path)
 }
 \arguments{
-\item{drive_folder}{List with folder name and ID}
+\item{drive_folder}{Character. Google Drive folder name or path}
 
-\item{file_prefix}{File prefix to search for}
+\item{file_prefix}{Character. Prefix to search for in filenames}
 
-\item{local_path}{Local destination folder}
+\item{local_path}{Character. Local directory path where files should be downloaded}
 }
 \value{
-Vector of downloaded file paths
+Invisible NULL. Files are downloaded as a side effect.
 }
 \description{
-Download files from Google Drive (improved version)
+Downloads all files matching a specified prefix from a Google Drive folder.
+Files are filtered to only include .tif files matching the prefix pattern.
+}
+\examples{
+\dontrun{
+download_from_drive("my_gee_exports", "esri_lulc_2024_GHA", "/tmp/downloads")
+}
 }
 \keyword{internal}

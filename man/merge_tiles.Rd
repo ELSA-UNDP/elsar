@@ -2,21 +2,27 @@
 % Please edit documentation in R/gee_helpers.R
 \name{merge_tiles}
 \alias{merge_tiles}
-\title{Merge downloaded tiles into a single COG}
+\title{Merge downloaded GEE tiles into a single Cloud-Optimized GeoTIFF}
 \usage{
 merge_tiles(local_path, output_file, datatype)
 }
 \arguments{
-\item{output_file}{Final merged COG file path}
+\item{local_path}{Character. Path to directory containing downloaded tile files}
 
-\item{datatype}{Output raster datatype}
+\item{output_file}{Character. Full path for the output merged COG file}
 
-\item{tiles}{List of GeoTIFF file paths}
+\item{datatype}{Character. GDAL datatype for output raster (e.g., "INT1U", "FLT4S")}
 }
 \value{
-A \code{SpatRaster} object
+A \code{SpatRaster} object of the merged and written COG
 }
 \description{
-Merge downloaded tiles into a single COG
+Takes multiple downloaded GeoTIFF tiles and merges them into a single
+Cloud-Optimized GeoTIFF (COG) with appropriate compression and optimization.
+}
+\examples{
+\dontrun{
+merged_raster <- merge_tiles("/tmp/tiles", "/output/merged.tif", "INT1U")
+}
 }
 \keyword{internal}

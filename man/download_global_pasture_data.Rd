@@ -14,19 +14,33 @@ download_global_pasture_data(
 )
 }
 \arguments{
-\item{boundary_layer}{An \code{sf} object defining the spatial boundary of interest.}
+\item{boundary_layer}{An \code{sf} object defining the spatial boundary of interest}
 
-\item{iso3}{Three-letter ISO country code used to generate the export filename.}
+\item{iso3}{Character. Three-letter ISO country code for filename generation}
 
-\item{gee_project}{Earth Engine Cloud project ID.}
+\item{gee_project}{Character. Earth Engine Cloud project ID. Default is "unbl-misc"}
 
-\item{output_dir}{Optional local output directory (default: project root).}
+\item{output_dir}{Character. Local output directory. Defaults to project root via \code{here::here()}}
 
-\item{layer_type}{One of "cultivated" (default) or "natural".}
+\item{layer_type}{Character. One of "cultivated" (default) or "natural" to specify
+which grassland probability layer to download}
+}
+\value{
+A \code{SpatRaster} object of the downloaded grassland data, or NULL if download failed
 }
 \description{
 Downloads either the cultivated or natural/semi-natural grassland probability
-layer from the Global Pasture Watch dataset hosted in Earth Engine. Result is
-returned as a local Cloud-Optimized GeoTIFF. The layer name is taken from the
-original GEE asset name.
+layer from the Global Pasture Watch dataset hosted in Earth Engine. Returns
+the result as a local Cloud-Optimized GeoTIFF with appropriate layer naming.
+}
+\examples{
+\dontrun{
+# Download cultivated grassland data for Nepal
+pasture <- download_global_pasture_data(
+  boundary_layer = nepal_boundary,
+  iso3 = "NPL",
+  layer_type = "cultivated",
+  gee_project = "my-gee-project"
+)
+}
 }
