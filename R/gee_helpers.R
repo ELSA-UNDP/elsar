@@ -1,169 +1,86 @@
-# GEE Download Helpers
-
-#' Ensure Google Drive folder exists
+#' Initialize Google Earth Engine
 #'
-#' @param folder_name Name of the Google Drive folder to check or create
-#' @keywords internal
-ensure_drive_folder <- function(folder_name) {
-  folders <- tryCatch(
-    googledrive::drive_ls(path = NULL, type = "folder"),
-    error = function(e) {
-      stop("Google Drive API is not available or not enabled. Please enable it via https://console.developers.google.com/apis/api/drive.googleapis.com/")
-    }
-  )
-  if (!(folder_name %in% folders$name)) {
-    log_msg(glue::glue("Folder '{folder_name}' does not exist. Creating Google Drive folder: {folder_name}"))
-    googledrive::drive_mkdir(folder_name)
-  } else {
-    log_msg(glue::glue("Folder '{folder_name}' already exists in Google Drive."))
-  }
-}
-
-#' Authenticate and initialize Earth Engine
-#'
-#' Sets up a Python environment and initializes the Earth Engine API
+#' Sets up Python environment and initializes the Earth Engine API.
+#' Handles authentication and temporary conda environments as needed.
 #'
 #' @param gee_project GEE cloud project ID
 #' @return A list containing the `ee` module and temporary environment name (if created)
 #' @keywords internal
-initialize_earthengine <- function(gee_project) {
+initialize_earthengine <- function(gee_project = "unbl-misc") {
+
   log_msg("Checking Python environment for Earth Engine API...")
+
+  # Handle Python environment setup
   if (Sys.getenv("RETICULATE_PYTHON") != "") {
     reticulate::use_python(Sys.getenv("RETICULATE_PYTHON"), required = TRUE)
-    if (!reticulate::py_module_available("ee")) {
+
+    if (reticulate::py_module_available("ee")) {
+      log_msg("Using existing Python environment with Earth Engine API installed.")
+      temp_env <- NULL
+    } else {
       log_msg("Earth Engine not available in RETICULATE_PYTHON environment. Creating temporary conda env.")
       temp_env <- paste0("gee_temp_env_", Sys.getpid())
       reticulate::conda_create(temp_env, packages = c("python=3.12", "earthengine-api"))
       reticulate::use_condaenv(temp_env, required = TRUE)
-    } else {
-      log_msg("Earth Engine module is available in RETICULATE_PYTHON.")
-      temp_env <- NULL
+      log_msg(glue::glue("Temporary Conda environment created: {temp_env}"))
     }
   } else {
-    log_msg("RETICULATE_PYTHON not set. Creating new temporary conda environment.")
+    log_msg("RETICULATE_PYTHON not set. Creating temporary conda environment.")
     temp_env <- paste0("gee_temp_env_", Sys.getpid())
     reticulate::conda_create(temp_env, packages = c("python=3.12", "earthengine-api"))
     reticulate::use_condaenv(temp_env, required = TRUE)
+    log_msg(glue::glue("Temporary Conda environment created: {temp_env}"))
   }
+
+  # Import Earth Engine
   ee <- reticulate::import("ee")
+
+  # Handle authentication
   cred_path <- file.path(rappdirs::user_config_dir("earthengine"), "credentials")
   if (!file.exists(cred_path)) {
     log_msg("No Earth Engine credentials found. Starting authentication...")
     ee$Authenticate()
   }
+
+  # Initialize with project
   ee$Initialize(project = gee_project)
-  log_msg("Earth Engine initialized.")
-  list(ee = ee, temp_env = temp_env)
+  log_msg("Google Earth Engine initialized.")
+
+  return(list(ee = ee, temp_env = temp_env))
 }
 
-#' Check for existing Earth Engine export task
+#' Clean up Earth Engine environment
 #'
-#' @param ee The Earth Engine Python module
-#' @param description Description of the export task
-#' @return TRUE if a task with matching description is found running or ready
-#' @keywords internal
-check_existing_ee_export_task <- function(ee, description) {
-  log_msg(glue::glue("Checking for running GEE export tasks with description '{description}'..."))
-  tasks <- ee$batch$Task$list()
-  for (task in tasks) {
-    status <- task$status()
-    if (status$description == description && status$state %in% c("READY", "RUNNING")) {
-      log_msg(glue::glue("Found running task: {description} (state: {status$state})"))
-      return(TRUE)
-    }
-  }
-  log_msg("No running tasks with matching description found.")
-  return(FALSE)
-}
-
-#' Start new Earth Engine export task
+#' Removes temporary conda environment if one was created
 #'
-#' @param ee Earth Engine module
-#' @param image EE Image object to export
-#' @param description Description of the task
-#' @param region Geometry to export
-#' @param folder Google Drive folder name
-#' @param file_name Filename prefix
-#' @param scale Export resolution
-#' @param max_pixels Max pixels allowed
-#' @param file_format Export file format
+#' @param env_info List returned from initialize_earthengine()
 #' @keywords internal
-start_gee_export_task <- function(ee, image, description, region, folder, file_name, scale = 10, max_pixels = 1e13, file_format = "GeoTIFF") {
-  log_msg(glue::glue("Starting new GEE export task: {description}"))
-  task <- ee$batch$Export$image$toDrive(
-    image = image,
-    description = description,
-    folder = folder,
-    fileNamePrefix = file_name,
-    region = region$getInfo()[["coordinates"]],
-    scale = scale,
-    maxPixels = as.numeric(max_pixels),
-    fileFormat = file_format
-  )
-  task$start()
-  log_msg("Export task submitted.")
-  invisible(task)
-}
-
-#' Wait for GEE Drive export to appear
-#'
-#' @param folder Drive folder name
-#' @param prefix Filename prefix to search for
-#' @param wait_time Max wait time in minutes
-#' @keywords internal
-wait_for_drive_export <- function(folder, prefix, wait_time = 5) {
-  start_time <- Sys.time()
-  log_msg(glue::glue("Waiting for file with prefix '{prefix}' to appear in Drive folder '{folder}'..."))
-  repeat {
-    files <- googledrive::drive_ls(
-      path = folder
-    )
-    matches <- files[grepl(glue::glue("^{prefix}.*\\.tif$"), files$name), ]
-    if (nrow(matches) > 0) {
-      log_msg("Matching file(s) found in Drive.")
-      return(invisible(TRUE))
-    }
-    if (difftime(Sys.time(), start_time, units = "mins") > wait_time) {
-      stop(glue::glue("Timeout: No matching files appeared in Drive after {wait_time} minutes. This should not be entirely unexpected... \nExporting high resoltuion data from GEE over large areas will often take longer than {wait_time} minutes. Please check the status of running tasks at https://code.earthengine.google.com/ before running again."))
-    }
-    log_msg("Exported file not yet found. Waiting 30 seconds...")
-    Sys.sleep(30)
+cleanup_earthengine <- function(env_info) {
+  if (!is.null(env_info$temp_env)) {
+    log_msg(glue::glue("Cleaning up temporary conda environment: {env_info$temp_env}"))
+    reticulate::conda_remove(env_info$temp_env)
   }
 }
 
-#' Download files from Google Drive
+#' Download files from Google Drive (improved version)
 #'
-#' @param folder Drive folder name
-#' @param prefix File prefix to search for
-#' @param dest Local destination folder
+#' @param drive_folder List with folder name and ID
+#' @param file_prefix File prefix to search for
+#' @param local_path Local destination folder
 #' @return Vector of downloaded file paths
 #' @keywords internal
-download_from_drive <- function(folder, prefix, dest) {
-  log_msg(glue::glue("Downloading all files with prefix '{prefix}' from folder '{folder}'..."))
-  files <- tryCatch(
-    googledrive::drive_ls(
-      path = folder
-    ),
-    error = function(e) {
-      stop("Failed to access Google Drive. Make sure the Drive API is enabled and credentials are configured.")
-    }
-  )
-  matches <- files[grepl(glue::glue("^{prefix}.*\\.tif$"), files$name), ]
-  if (nrow(matches) == 0) {
-    log_msg("No matching files found in Google Drive.")
-    return(character(0))
-  }
-  paths <- character(nrow(matches))
-  for (i in seq_len(nrow(matches))) {
-    paths[i] <- file.path(dest, matches$name[i])
-    log_msg(glue::glue("Downloading {matches$name[i]} to {paths[i]}"))
+download_from_drive <- function(drive_folder, file_prefix, local_path) {
+  files <- googledrive::drive_ls(path = drive_folder)
+  matching_files <- files[grepl(paste0("^", file_prefix), files$name) & grepl("\\.tif$", files$name), ]
+
+  for (i in seq_len(nrow(matching_files))) {
+    file_path <- file.path(local_path, matching_files$name[i])
     googledrive::drive_download(
-      googledrive::as_id(matches$id[i]),
-      path = paths[i], overwrite = TRUE
+      googledrive::as_id(matching_files$id[i]),
+      path = file_path, overwrite = TRUE
     )
+    log_msg(glue::glue("Downloaded: {matching_files$name[i]}"))
   }
-  log_msg("All matching files downloaded.")
-  return(paths)
 }
 
 #' Merge downloaded tiles into a single COG
@@ -173,31 +90,284 @@ download_from_drive <- function(folder, prefix, dest) {
 #' @param datatype Output raster datatype
 #' @return A `SpatRaster` object
 #' @keywords internal
-merge_tiles_to_cog <- function(tiles, output_file, datatype = "FLT4S") {
-  if (length(tiles) == 0) stop("No tiles provided.")
-  log_msg(glue::glue("Merging {length(tiles)} tile(s) into final output: {output_file}"))
-  if (length(tiles) == 1) {
-    r <- terra::rast(tiles)
-  } else {
-    r <- terra::vrt(tiles)
+merge_tiles <- function(local_path, output_file, datatype) {
+  tile_files <- list.files(local_path, pattern = "\\.tif$", full.names = TRUE)
+  if (length(tile_files) == 0) {
+    stop("No downloaded tiles found!", call. = FALSE)
   }
+
+  log_msg(glue::glue("Merging {length(tile_files)} tile(s) into final output: {output_file}"))
+
+  if (length(tile_files) == 1) {
+    r <- terra::rast(tile_files)
+  } else {
+    r <- terra::vrt(tile_files)
+  }
+
   predictor <- if (grepl("^INT", datatype)) "2" else "3"
   terra::writeRaster(
-    r,
-    output_file,
-    filetype = "COG",
-    datatype = datatype,
-    gdal = c(
-      "COMPRESS=ZSTD",
-      "NUM_THREADS=ALL_CPUS",
-      "BIGTIFF=IF_SAFER",
-      glue::glue("PREDICTOR={predictor}"),
-      "OVERVIEWS=NONE"
-    ),
+    r, output_file, filetype = "COG", datatype = datatype,
+    gdal = c("COMPRESS=ZSTD", "NUM_THREADS=ALL_CPUS", "BIGTIFF=IF_SAFER",
+             glue::glue("PREDICTOR={predictor}"), "OVERVIEWS=NONE"),
     overwrite = TRUE
   )
   log_msg("COG written to disk.")
   return(terra::rast(output_file))
+}
+
+#' Download and Process a GEE Raster Layer into a Cloud-Optimized GeoTIFF
+#'
+#' Generic function for downloading any raster data from Google Earth Engine.
+#' Uses standalone initialization function for cleaner code organization.
+#'
+#' @param boundary_layer An `sf` object defining the spatial boundary of interest.
+#' @param iso3 Three-letter ISO country code used to generate the export filename.
+#' @param output_dir Path to directory for saving the final raster file.
+#' @param asset_id Earth Engine ImageCollection asset ID (e.g., "projects/...").
+#' @param file_prefix Prefix for export filename and GEE task description.
+#' @param scale Resolution of the exported image in meters.
+#' @param datatype Output datatype (GDAL style), e.g., "INT1U" or "FLT4S".
+#' @param gee_project Earth Engine Cloud project ID.
+#' @param googledrive_folder Base name of Google Drive folder (country code will be appended).
+#' @param wait_time Max time (in minutes) to wait for Drive export to appear.
+#'
+#' @return A `SpatRaster` object written to disk, or NULL if export failed.
+#' @keywords internal
+download_gee_layer <- function(
+    boundary_layer,
+    iso3,
+    output_dir = here::here(),
+    asset_id,
+    file_prefix,
+    scale = 10,
+    datatype = "INT1U",
+    gee_project = "unbl-misc",
+    googledrive_folder = "gee_exports",
+    wait_time = 5
+) {
+
+  # Validation
+  if (!requireNamespace("googledrive", quietly = TRUE)) {
+    stop("Package 'googledrive' is required but not installed.")
+  }
+  if (!requireNamespace("reticulate", quietly = TRUE)) {
+    stop("Package 'reticulate' is required but not installed.")
+  }
+  assertthat::assert_that(inherits(boundary_layer, "sf"), msg = "boundary_layer must be an sf object")
+  assertthat::assert_that(
+    is.numeric(wait_time) && length(wait_time) == 1 && wait_time %% 1 == 0,
+    msg = "wait_time must be a single whole number (integer or numeric)"
+  )
+
+  # Create country-specific folder to avoid GEE bug
+  country_folder <- paste0(googledrive_folder)#, "_", iso3)
+  log_msg(glue::glue("Using country-specific folder: {country_folder}"))
+
+  # Create temporary directory
+  temp_dir <- file.path(Sys.getenv("HOME"), glue::glue("{country_folder}_{Sys.getpid()}"))
+  dir.create(temp_dir, showWarnings = FALSE)
+  log_msg(glue::glue("Temporary directory created at: {temp_dir}"))
+
+  # Initialize Earth Engine (now a clean standalone function)
+  env_info <- initialize_earthengine(gee_project)
+  ee <- env_info$ee
+
+  # Load the dataset and find the most recent year
+  ic <- ee$ImageCollection(asset_id)
+  year <- as.numeric(format(Sys.Date(), "%Y")) - 1
+  while (ic$filterDate(ee$Date(glue::glue("{year}-01-01")), ee$Date(glue::glue("{year}-12-31")))$size()$getInfo() == 0) {
+    log_msg(glue::glue("No valid data found for {year}, trying {year - 1}..."))
+    year <- year - 1
+  }
+  log_msg(glue::glue("Using data for year: {year}"))
+
+  # Build filename and check if local file exists
+  file_name <- glue::glue("{file_prefix}_{year}_{iso3}")
+  output_file <- file.path(output_dir, glue::glue("{file_name}.tif"))
+
+  if (file.exists(output_file)) {
+    log_msg(glue::glue("File already exists locally: {output_file}"))
+    log_msg("Loading existing file...")
+    cleanup_earthengine(env_info)
+    unlink(temp_dir, recursive = TRUE)
+    return(terra::rast(output_file))
+  }
+
+  log_msg(glue::glue("Checking Google Drive for existing files: {file_name}*"))
+
+  # Simple folder creation function (from original)
+  ensure_drive_folder <- function(folder_name) {
+    existing_folders <- googledrive::drive_ls(path = NULL, type = "folder")
+    if (!(folder_name %in% existing_folders$name)) {
+      log_msg(glue::glue("Folder '{folder_name}' does not exist. Creating it in Google Drive..."))
+      googledrive::drive_mkdir(folder_name)
+    } else {
+      log_msg(glue::glue("Folder '{folder_name}' already exists in Google Drive."))
+    }
+  }
+
+  # Ensure country folder exists
+  ensure_drive_folder(country_folder)
+
+  # Check for existing files
+  files <- googledrive::drive_ls(path = country_folder)
+  existing_files <- files[grepl(paste0("^", file_name), files$name) & grepl("\\.tif$", files$name), ]
+
+  if (nrow(existing_files) > 0) {
+    log_msg(glue::glue("Existing files for {iso3} found on Google Drive. Downloading instead of exporting from GEE..."))
+  } else {
+    log_msg(glue::glue("No existing exported files found for {iso3} on Google Drive."))
+    log_msg("Checking for existing export tasks that are still running...")
+
+    # Check for running tasks
+    tasks <- ee$batch$Task$list()
+    existing_task <- purrr::detect(tasks, function(t) {
+      t$status()$state %in% c("READY", "RUNNING") && t$status()$description == file_name
+    })
+
+    if (!is.null(existing_task)) {
+      log_msg(glue::glue("Existing export task '{file_name}' is still running. Waiting instead of starting a new one."))
+    } else {
+      log_msg("No similar running tasks found. Proceeding with new GEE export.")
+
+      # Prepare geometry
+      boundary_layer <- sf::st_transform(boundary_layer, crs = 4326)
+      bounding_box <- sf::st_bbox(boundary_layer)
+      ee_bounding_box <- ee$Geometry$Rectangle(
+        c(bounding_box$xmin, bounding_box$ymin, bounding_box$xmax, bounding_box$ymax),
+        proj = "EPSG:4326", geodesic = FALSE
+      )
+
+      # Filter and export
+      start_date <- ee$Date(glue::glue("{year}-01-01"))
+      end_date <- ee$Date(glue::glue("{year}-12-31"))
+      filtered_data <- ic$filterDate(start_date, end_date)$filterBounds(ee_bounding_box)
+
+      task <- ee$batch$Export$image$toDrive(
+        image = filtered_data$mosaic(),
+        description = file_name,
+        folder = country_folder,
+        fileNamePrefix = file_name,
+        scale = scale,
+        region = ee_bounding_box$getInfo()[["coordinates"]],
+        maxPixels = reticulate::r_to_py(1e13),
+        fileFormat = "GeoTIFF"
+      )
+      task$start()
+      log_msg("Export task started. Waiting for files to appear in Google Drive...")
+    }
+
+    # Wait for files to appear (from original logic)
+    start_time <- Sys.time()
+    repeat {
+      files <- googledrive::drive_ls(path = country_folder)
+      matching_files <- files[grepl(paste0("^", file_name), files$name) & grepl("\\.tif$", files$name), ]
+
+      if (nrow(matching_files) > 0) {
+        log_msg("Files found. Proceeding with download.")
+        break
+      }
+
+      if (difftime(Sys.time(), start_time, units = "mins") > wait_time) {
+        message(glue::glue(
+          "Timeout: No files are yet available for download after {as.integer(wait_time)} minutes.\n",
+          "This is not unexpected as GEE exports can take time. You can check the status of exports via the GEE web console.\n",
+          "Please try running again later..."
+        ))
+        cleanup_earthengine(env_info)
+        unlink(temp_dir, recursive = TRUE)
+        return(NULL)
+      }
+
+      log_msg("File not yet available, waiting 30 seconds before re-trying...")
+      Sys.sleep(30)
+    }
+  }
+
+  # Download and process
+  download_from_drive(country_folder, file_name, temp_dir)
+  output_raster <- merge_tiles(temp_dir, output_file, datatype)
+
+  # Cleanup
+  unlink(temp_dir, recursive = TRUE)
+  cleanup_earthengine(env_info)
+  log_msg("Temporary files and Conda environment deleted.")
+
+  return(output_raster)
+}
+
+#' Download the ESRI 10m Land Use/Land Cover Time Series (LULC) Layer
+#'
+#' Retrieves the ESRI Global LULC Time Series at 10m resolution from Earth Engine.
+#' It downloads the most recent year available and returns the result as a local
+#' Cloud-Optimized GeoTIFF. The layer name is taken from the original GEE asset name.
+#'
+#' @inheritParams download_gee_layer
+#' @param output_dir Optional local output directory (default: project root).
+#' @export
+download_esri_lulc_data <- function(boundary_layer, iso3, gee_project, output_dir = here::here(), ...) {
+  ee <- download_gee_layer(
+    boundary_layer = boundary_layer,
+    iso3 = iso3,
+    gee_project = gee_project,
+    output_dir = output_dir,
+    asset_id = "projects/sat-io/open-datasets/landcover/ESRI_Global-LULC_10m_TS",
+    file_prefix = "esri_10m_lulc",
+    scale = 10,
+    datatype = "INT1U",
+    ...
+  )
+  if (!is.null(ee)) {
+    names(ee) <- "ESRI_Global-LULC_10m_TS"
+  }
+  return(ee)
+}
+
+#' Download Global Pasture Watch Grassland Probability Layer
+#'
+#' Downloads either the cultivated or natural/semi-natural grassland probability
+#' layer from the Global Pasture Watch dataset hosted in Earth Engine. Result is
+#' returned as a local Cloud-Optimized GeoTIFF. The layer name is taken from the
+#' original GEE asset name.
+#'
+#' @inheritParams download_gee_layer
+#' @param layer_type One of "cultivated" (default) or "natural".
+#' @param output_dir Optional local output directory (default: project root).
+#' @export
+download_global_pasture_data <- function(
+    boundary_layer,
+    iso3,
+    gee_project,
+    output_dir = here::here(),
+    layer_type = c("cultivated", "natural"),
+    ...
+) {
+  layer_type <- match.arg(layer_type)
+  asset_id <- switch(
+    layer_type,
+    cultivated = "projects/global-pasture-watch/assets/ggc-30m/v1/cultiv-grassland_p",
+    natural    = "projects/global-pasture-watch/assets/ggc-30m/v1/nat-semi-grassland_p"
+  )
+  file_prefix <- switch(
+    layer_type,
+    cultivated = "gpw_cultiv-grassland_p",
+    natural    = "gpw_nat-semi-grassland_p"
+  )
+  ee <- download_gee_layer(
+    boundary_layer = boundary_layer,
+    iso3 = iso3,
+    gee_project = gee_project,
+    output_dir = output_dir,
+    asset_id = asset_id,
+    file_prefix = file_prefix,
+    scale = 30,
+    datatype = "FLT4S",
+    ...
+  )
+  if (!is.null(ee)) {
+    names(ee) <- file_prefix
+  }
+  return(ee)
 }
 
 #' Check and download GEE-sourced layers (e.g. LULC or Pasturelands)
@@ -265,181 +435,4 @@ check_and_download_required_layers <- function(data_info, iso3, input_path, gee_
   }
 
   invisible(NULL)
-}
-
-# The following functions support downloading and processing Earth Engine raster datasets
-# into local Cloud-Optimized GeoTIFFs (COGs). Data is exported to Google Drive,
-# checked for existence before triggering an export, and then downloaded and merged
-# into a local file. Used by `elsar_download_esri_lulc_data()` and
-# `elsar_download_global_pasture_data()`.
-
-#' Download and Process a GEE Raster Layer into a Cloud-Optimized GeoTIFF
-#'
-#' This function handles downloading raster data from Earth Engine. It checks if the
-#' file already exists in a specified Google Drive folder. If not, it checks for
-#' running Earth Engine export tasks. If neither exist, it launches a new export
-#' based on the most recent available year, waits for it to appear in Drive,
-#' downloads the tiles, and merges them into a single COG.
-#'
-#' It uses exponential backoff to retry the download check up to a given wait time
-#' (in minutes), sleeping 30 seconds between attempts.
-#'
-#' @param boundary_layer An `sf` object defining the spatial boundary of interest.
-#' @param iso3 Three-letter ISO country code used to generate the export filename.
-#' @param output_dir Path to directory for saving the final raster file.
-#' @param asset_id Earth Engine ImageCollection asset ID (e.g., "projects/...").
-#' @param file_prefix Prefix for export filename and GEE task description.
-#' @param scale Resolution of the exported image in meters.
-#' @param datatype Output datatype (GDAL style), e.g., "INT1U" or "FLT4S".
-#' @param gee_project Earth Engine Cloud project ID.
-#' @param googledrive_folder Name of Google Drive folder to check and export to.
-#' @param wait_time Max time (in minutes) to wait for Drive export to appear.
-#'
-#' @return A `SpatRaster` object written to disk.
-#' @keywords internal
-elsar_download_gee_layer <- function(
-    boundary_layer,
-    iso3,
-    output_dir = here::here(),
-    asset_id,
-    file_prefix,
-    scale,
-    datatype = "INT1U",
-    gee_project = gee_project,
-    googledrive_folder = "gee_exports",
-    wait_time = 5
-) {
-  file_name <- glue::glue("{file_prefix}_{iso3}")
-  log_msg(glue::glue("Checking Google Drive for existing files: {file_name}*."))
-
-  ensure_drive_folder(googledrive_folder)
-  drive_files <- googledrive::drive_ls(path = googledrive_folder)
-  existing_files <- drive_files[grepl(paste0("^", file_name), drive_files$name) & grepl("\\.tif$", drive_files$name), ]
-
-  temp_dir <- file.path(Sys.getenv("HOME"), glue::glue("{googledrive_folder}_{Sys.getpid()}"))
-  dir.create(temp_dir, showWarnings = FALSE)
-  log_msg(glue::glue("Temporary directory created at: {temp_dir}."))
-
-  if (nrow(existing_files) > 0) {
-    log_msg("File(s) already exist in Drive. Proceeding to download.")
-  } else {
-    log_msg("No existing files found in Drive. Proceeding with Earth Engine export logic...")
-
-    env <- initialize_earthengine(gee_project)
-    ee <- env$ee
-
-    ic <- ee$ImageCollection(asset_id)
-
-    # Get most recent year with valid data
-    year <- as.numeric(format(Sys.Date(), "%Y")) - 1
-    while (ic$filterDate(ee$Date(glue::glue("{year}-01-01")), ee$Date(glue::glue("{year}-12-31")))$size()$getInfo() == 0) {
-      year <- year - 1
-    }
-
-    bbox <- sf::st_bbox(sf::st_transform(boundary_layer, crs = 4326))
-    ee_geom <- ee$Geometry$Rectangle(
-      coords = c(bbox$xmin, bbox$ymin, bbox$xmax, bbox$ymax),
-      proj = "EPSG:4326",
-      geodesic = FALSE
-    )
-
-    is_running <- check_existing_ee_export_task(ee, file_name)
-    if (!is_running) {
-
-      image <- ic$filterDate(ee$Date(glue::glue("{year}-01-01")), ee$Date(glue::glue("{year}-12-31")))$
-        filterBounds(ee_geom)$mosaic()
-
-      start_gee_export_task(
-        ee = ee,
-        image = image,
-        description = file_name,
-        region = ee_geom,
-        folder = googledrive_folder,
-        file_name = file_name,
-        scale = scale,
-        max_pixels = 1e13,
-        file_format = "GeoTIFF"
-      )
-
-    }
-    wait_for_drive_export(googledrive_folder, file_name, wait_time)
-  }
-
-  tile_paths <- download_from_drive(googledrive_folder, file_name, temp_dir)
-  output_file <- file.path(output_dir, glue::glue("{file_name}.tif"))
-  out_rast <- merge_tiles_to_cog(tile_paths, output_file, datatype = datatype)
-
-  if (exists("env") && !is.null(env$temp_env)) reticulate::conda_remove(env$temp_env)
-  unlink(temp_dir, recursive = TRUE)
-  return(out_rast)
-}
-
-#' Download the ESRI 10m Land Use/Land Cover Time Series (LULC) Layer
-#'
-#' Retrieves the ESRI Global LULC Time Series at 10m resolution from Earth Engine.
-#' It downloads the most recent year available and returns the result as a local
-#' Cloud-Optimized GeoTIFF. The layer name is taken from the original GEE asset name.
-#'
-#' @inheritParams elsar_download_gee_layer
-#' @param output_dir Optional local output directory (default: project root).
-#' @export
-elsar_download_esri_lulc_data <- function(boundary_layer, iso3, gee_project, output_dir = here::here(), ...) {
-  ee <- elsar_download_gee_layer(
-    boundary_layer = boundary_layer,
-    iso3 = iso3,
-    gee_project = gee_project,
-    output_dir = output_dir,
-    asset_id = "projects/sat-io/open-datasets/landcover/ESRI_Global-LULC_10m_TS",
-    file_prefix = "esri_10m_lulc",
-    scale = 10,
-    datatype = "INT1U",
-    ...
-  )
-  names(ee) <- "ESRI_Global-LULC_10m_TS"
-  return(ee)
-}
-
-#' Download Global Pasture Watch Grassland Probability Layer
-#'
-#' Downloads either the cultivated or natural/semi-natural grassland probability
-#' layer from the Global Pasture Watch dataset hosted in Earth Engine. Result is
-#' returned as a local Cloud-Optimized GeoTIFF. The layer name is taken from the
-#' original GEE asset name.
-#'
-#' @inheritParams elsar_download_gee_layer
-#' @param layer_type One of "cultivated" (default) or "natural".
-#' @param output_dir Optional local output directory (default: project root).
-#' @export
-elsar_download_global_pasture_data <- function(
-    boundary_layer,
-    iso3,
-    gee_project,
-    output_dir = here::here(),
-    layer_type = c("cultivated", "natural"),
-    ...
-) {
-  layer_type <- match.arg(layer_type)
-  asset_id <- switch(
-    layer_type,
-    cultivated = "projects/global-pasture-watch/assets/ggc-30m/v1/cultiv-grassland_p",
-    natural    = "projects/global-pasture-watch/assets/ggc-30m/v1/nat-semi-grassland_p"
-  )
-  file_prefix <- switch(
-    layer_type,
-    cultivated = "gpw_cultiv-grassland_p",
-    natural    = "gpw_nat-semi-grassland_p"
-  )
-  ee <- elsar_download_gee_layer(
-    boundary_layer = boundary_layer,
-    iso3 = iso3,
-    gee_project = gee_project,
-    output_dir = output_dir,
-    asset_id = asset_id,
-    file_prefix = file_prefix,
-    scale = 30,
-    datatype = "FLT4S",
-    ...
-  )
-  names(ee) <- file_prefix
-  return(ee)
 }

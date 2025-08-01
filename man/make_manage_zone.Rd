@@ -73,7 +73,7 @@ This function identifies planning units eligible for the "Manage" zone under the
 The zone (default) includes areas with a moderate level of human influence (HII between
 20th and 80th percentiles), all managed forest types, and agricultural and pastureland areas, but
 explicitly excludes built-up areas. An alternative zone includes is limited to all
-agricultural areas and paturelands.
+agricultural areas and pasturelands.
 }
 \details{
 Two layers are returned:

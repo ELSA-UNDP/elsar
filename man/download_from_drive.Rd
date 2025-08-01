@@ -2,21 +2,21 @@
 % Please edit documentation in R/gee_helpers.R
 \name{download_from_drive}
 \alias{download_from_drive}
-\title{Download files from Google Drive}
+\title{Download files from Google Drive (improved version)}
 \usage{
-download_from_drive(folder, prefix, dest)
+download_from_drive(drive_folder, file_prefix, local_path)
 }
 \arguments{
-\item{folder}{Drive folder name}
+\item{drive_folder}{List with folder name and ID}
 
-\item{prefix}{File prefix to search for}
+\item{file_prefix}{File prefix to search for}
 
-\item{dest}{Local destination folder}
+\item{local_path}{Local destination folder}
 }
 \value{
 Vector of downloaded file paths
 }
 \description{
-Download files from Google Drive
+Download files from Google Drive (improved version)
 }
 \keyword{internal}

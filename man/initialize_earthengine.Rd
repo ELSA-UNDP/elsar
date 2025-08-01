@@ -2,9 +2,9 @@
 % Please edit documentation in R/gee_helpers.R
 \name{initialize_earthengine}
 \alias{initialize_earthengine}
-\title{Authenticate and initialize Earth Engine}
+\title{Initialize Google Earth Engine}
 \usage{
-initialize_earthengine(gee_project)
+initialize_earthengine(gee_project = "unbl-misc")
 }
 \arguments{
 \item{gee_project}{GEE cloud project ID}
@@ -13,6 +13,7 @@ initialize_earthengine(gee_project)
 A list containing the \code{ee} module and temporary environment name (if created)
 }
 \description{
-Sets up a Python environment and initializes the Earth Engine API
+Sets up Python environment and initializes the Earth Engine API.
+Handles authentication and temporary conda environments as needed.
 }
 \keyword{internal}

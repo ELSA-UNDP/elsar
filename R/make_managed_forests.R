@@ -7,10 +7,10 @@
 #' If `make_productive = TRUE`, the function multiplies the managed forest raster by a normalised raster of
 #' Net Primary Productivity (NPP) to generate a layer representing productive managed forests.
 #'
-#' @param raster_in A `SpatRaster` representing LULC classifications.
+#' @param raster_in A `SpatRaster` representing forest management classifications.
 #' @param pus A `SpatRaster` used as a template for extent, resolution, and alignment.
 #' @param iso3 A 3-letter ISO country code string.
-#' @param forest_classes Integer vector of LULC class codes representing managed forests (default = c(31, 32, 40, 53)).
+#' @param forest_classes Integer vector of class codes representing managed forests (default = c(31, 32, 40, 53)).
 #' @param include_disturbed_forest Logical. If TRUE, includes disturbed forest class (code 20) in `forest_classes`.
 #' @param make_productive Logical. If TRUE, also generates a productive managed forest raster.
 #' @param raster_npp A `SpatRaster` of NPP data used for generating the productive forest layer. Required if `make_productive = TRUE`.
