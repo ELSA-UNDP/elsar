@@ -361,7 +361,9 @@ elsar_plot_extra_data <- function(plot_type = "ggplot",
 #' ))
 elsar_plot_background_c <- function(plot_type = "ggplot",
                                     background_dat = NULL, # SpatRaster file
+                                    layer_name = NULL,
                                     rescale_background = TRUE,
+                                    NA_replace = TRUE,
                                     increase_extend = 0.05,
                                     main_data = NULL, # SpatRaster
                                     background_alpha = 0.2,
@@ -372,6 +374,15 @@ elsar_plot_background_c <- function(plot_type = "ggplot",
 
   # reproject
   bckgrnd_dat <- terra::project(background_dat, terra::crs(main_data))
+
+  if (NA_replace) {
+    bckgrnd_dat <- bckgrnd_dat %>%
+      terra::na.omit()
+  }
+
+  if (!is.null(layer_name)) {
+    background_dat <- background_dat %>% terra::subset(layer_name)
+  }
 
   # rescale if wanted
   if (rescale_background) {
@@ -391,24 +402,20 @@ elsar_plot_background_c <- function(plot_type = "ggplot",
   if (plot_type == "ggplot") {
     col_interest <- terra::names(bckgrnd_dat)
 
-    bckgrnd_dat <- as.data.frame(bckgrnd_dat, xy = TRUE) %>%
-      stats::na.omit()
-
     plot_background <- ggplot2::ggplot() +
-      ggplot2::geom_tile(data = bckgrnd_dat, ggplot2::aes(
-        y = .data$y, x = .data$x,
-        fill = .data[[col_interest]]
-      ), show.legend = FALSE)
+      tidyterra::geom_spatraster(data = bckgrnd_dat)
 
     if (is.null(custom_palette)) {
       plot_background <- plot_background +
         ggplot2::scale_colour_viridis_c(
           option = color_map, alpha = background_alpha,
-          guide = "none"
+          guide = "none",
+          na.value = "transparent"
         ) +
         ggplot2::scale_fill_viridis_c(
           option = color_map, alpha = background_alpha,
-          guide = "none"
+          guide = "none",
+          na.value = "transparent"
         )
     } else {
       plot_background <- plot_background + custom_palette

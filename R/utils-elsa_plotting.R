@@ -155,3 +155,63 @@ elsa_plot_representation <- function(feature_rep_tabl,
 
   return(elsa_representation_plot) # Return the completed plot
 }
+
+#' Function to create a categorical raster based on an input raster
+#'
+#' This function converts an input `SpatRaster` into a categorical raster. The input raster
+#' is processed to remove zero values, and categorical data are derived based on the number
+#' of layers and layer names. Additionally, the categories are linked to a global color
+#' palette and associated labels.
+#'
+#' @param in_rast A `SpatRaster` that is to be divided into categories.
+#' @param elsa_categories A `df` containing columns `action` and `category`
+#' @param pal.elsa A `df` with palette values for ELSA categories. Needs to contain column `category`
+#' @param ELSA_text A `tbl_df` containing the translations for the displayed text in the plot.
+#'
+#' @return A `SpatRaster` with categorical data that includes category values, colors, and labels.
+#' @export
+make_categorical_raster <- function(in_rast,
+                                    elsa_categories,
+                                    pal.elsa,
+                                    ELSA_text) {
+
+  # Create a tibble mapping each layer in the raster to a category
+  number_categories <- tibble::tibble(
+    value = seq(1, terra::nlyr(in_rast), 1),  # Assign a value for each layer from 1 to the number of layers
+    action = terra::names(in_rast)  # Assign the names of the raster layers as actions/categories
+  )
+
+  # Create a working copy of the input raster
+  r_in <- in_rast %>%
+    terra::subst(0, NA) # Replace any zero values in the raster with NA to exclude them from analysis
+
+  # Convert the input raster into a categorical raster for mapping, using the prioritizr function
+  elsa_categorical_raster <- prioritizr::category_layer(r_in)
+
+  # Extract unique categories (layer names)
+  unique_vals <- unique(elsa_categories$action)
+
+  # Ensure all unique values from the raster have corresponding colors in the palette `pal.elsa`
+  if (!all(unique_vals %in% pal.elsa$category)) {
+    stop("Some categories in the raster do not have corresponding colors in `pal.elsa`.")  # Error if mismatch
+  }
+
+  # Create raster attributes by matching the categories to the global palette and text labels
+  raster_attributes <- pal.elsa |>
+    dplyr::filter(category %in% unique_vals) |>
+    dplyr::arrange(factor(category, levels = unique_vals)) |>
+    dplyr::mutate(category_lower = gsub(' ', '_', tolower(category))) |>  # Convert category names to lowercase for consistent matching
+    dplyr::left_join(ELSA_text, by = c("category_lower" = "var")) |>
+    dplyr::left_join(elsa_categories, by = c("category" = "action")) |>
+    dplyr::select(value, colour, category, label = !!sym(language)) |>
+    data.frame()  # Convert to a data frame for compatibility with raster functions
+
+  # Assign the attributes (values, colors, labels) to the categorical raster
+  levels(elsa_categorical_raster) <- raster_attributes
+
+  # Set the active category to the label field (2nd column), to use the required language labels
+  activeCat(elsa_categorical_raster) <- 2
+
+  # Return the processed categorical raster
+  return(elsa_categorical_raster)
+}

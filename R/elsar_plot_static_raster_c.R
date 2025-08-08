@@ -43,6 +43,7 @@
 #'   legend_title = "wad"
 #' ))
 elsar_plot_static_raster_c <- function(raster_in,
+                                       layer_name = NULL,
                                        type = "ggplot_vector", # "ggplot_vector" or ggplot_raster or tmap
                                        # tmap_interactive = FALSE, #when tmap: tmap::tmap_mode("view") #or tmap::tmap_mode("plot")
                                        background = NULL,
@@ -83,27 +84,22 @@ elsar_plot_static_raster_c <- function(raster_in,
     }
 
     if (grepl("[raster]", type)) {
-      raster_df <- as.data.frame(raster_in, xy = TRUE) %>%
-        stats::na.omit()
 
-      col_interest <- terra::names(raster_in)
+      if (!is.null(layer_name)) {
+        raster_in <- raster_in %>% terra::subset(layer_name)
+        col_interest <- terra::names(raster_in)
+      }
 
       if (!is.null(background)) {
         plot_out <- gg_background +
-          ggplot2::geom_tile(data = raster_df, ggplot2::aes(
-            y = .data$y, x = .data$x,
-            fill = .data[[col_interest]]
-          )) +
+          tidyterra::geom_spatraster(data = raster_in) +
           ggplot2::coord_sf(
             xlim = c(min(background_dat$x), max(background_dat$x)),
             ylim = c(min(background_dat$y), max(background_dat$y))
           )
       } else {
         plot_out <- ggplot2::ggplot() +
-          ggplot2::geom_tile(data = raster_df, ggplot2::aes(
-            y = .data$y, x = .data$x,
-            fill = .data[[col_interest]]
-          ))
+          tidyterra::geom_spatraster(data = raster_in)
       }
     } else if (grepl("[vector]", type)) {
       raster_df <- as.data.frame(raster_in, xy = TRUE) %>%
@@ -140,11 +136,13 @@ elsar_plot_static_raster_c <- function(raster_in,
       plot_out <- plot_out +
         ggplot2::scale_colour_viridis_c(
           name = legend_title,
-          option = color_map
+          option = color_map,
+          na.value = "transparent"
         ) +
         ggplot2::scale_fill_viridis_c(
           name = legend_title,
-          option = color_map
+          option = color_map,
+          na.value = "transparent"
         )
     } else {
       plot_out <- plot_out + custom_palette
