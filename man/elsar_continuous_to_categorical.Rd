@@ -52,7 +52,7 @@ wadOut <- make_normalised_raster(
 
 wad_cat <- elsar_continuous_to_categorical(
  wadOut,
- data_layer = "wad_final_cog",
+ data_layer = "Planning.Units",
  number_categories = 10
 )
 }

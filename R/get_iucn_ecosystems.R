@@ -218,8 +218,8 @@ get_iucn_ecosystems <- function(
   iucn_ecosystems <- do.call(rbind, iucn_list_common)
 
   iucn_ecosystems <- iucn_ecosystems %>%
-    group_by(get_id, occurrence) %>%
-    summarise()
+    dplyr::group_by(get_id, occurrence) %>%
+    dplyr::summarise()
 
   # Optionally filter out minor occurrence
   if (!include_minor_occurrence) {

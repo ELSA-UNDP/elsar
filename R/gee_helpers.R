@@ -382,6 +382,8 @@ elsar_download_gee_layer <- function(
 #'
 #' @inheritParams elsar_download_gee_layer
 #' @param output_dir Optional local output directory (default: project root).
+#' @param ... Additional arguments passed to lower-level functions (currently unused)
+#'
 #' @export
 elsar_download_esri_lulc_data <- function(boundary_layer, iso3, gee_project, output_dir = here::here(), ...) {
   ee <- elsar_download_gee_layer(
@@ -409,6 +411,8 @@ elsar_download_esri_lulc_data <- function(boundary_layer, iso3, gee_project, out
 #' @inheritParams elsar_download_gee_layer
 #' @param layer_type One of "cultivated" (default) or "natural".
 #' @param output_dir Optional local output directory (default: project root).
+#' @param ... Additional arguments passed to lower-level functions (currently unused)
+#'
 #' @export
 elsar_download_global_pasture_data <- function(
     boundary_layer,

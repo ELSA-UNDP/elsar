@@ -70,7 +70,7 @@ make_underrepresented_ecosystems <- function(
   # Bind and summarize
   protected_df <- dplyr::bind_rows(Filter(Negate(is.null), protected_intersections)) %>%
     dplyr::group_by(.data[[group_attribute]]) %>%
-    dplyr::summarise(area_protected = sum(area_protected, na.rm = TRUE), .groups = "drop")
+    dplyr::summarise(area_protected = sum(.data$area_protected, na.rm = TRUE), .groups = "drop")
 
   # Total ecosystem area by group
   ecosystems_summary <- ecosystems_sf %>%
@@ -79,8 +79,8 @@ make_underrepresented_ecosystems <- function(
     dplyr::mutate(area = units::drop_units(sf::st_area(.))) %>%
     dplyr::left_join(protected_df, by = group_attribute) %>%
     dplyr::mutate(
-      percent_protected = area_protected / area * 100,
-      target_gap = dplyr::if_else(percent_protected < target_percent, target_percent - percent_protected, 0)
+      percent_protected = .data$area_protected / .data$area * 100,
+      target_gap = dplyr::if_else(.data$percent_protected < target_percent, target_percent - .data$percent_protected, 0)
     )
 
   # Rasterize

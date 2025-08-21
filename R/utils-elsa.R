@@ -151,9 +151,6 @@ get_elsa_target <- function(PU = NULL, target = NULL) {
 #' @return A named numeric vector with two elements: `restore_budget_pct` and `urban_green_budget_pct`,
 #'         each representing the budget as a percentage of the total PU area.
 #'
-#' @examples
-#' calculate_restore_and_urban_budgets("MWI", workspace_dir = "/path/to/my-data/az_uploads")
-#'
 #' @export
 calculate_restore_and_urban_budgets <- function(iso3,
                                                 workspace_dir = NULL,

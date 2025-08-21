@@ -8,3 +8,7 @@
 ^pkgdown$
 ^vignettes/articles$
 ^\.github$
+^.*\.Rproj$
+^\.Rproj\.user$
+^\.git$
+^\.gitignore$

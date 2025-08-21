@@ -113,7 +113,7 @@ make_urban_greening_opportunities <- function(
     terra::vect()
 
   sdei_filtered <- sdei_statistics %>%
-    dplyr::filter(CTR_MN_ISO == iso3) %>%
+    dplyr::filter(.data$CTR_MN_ISO == iso3) %>%
     terra::vect() %>%
     terra::intersect(y = pu_proj) %>%
     sf::st_as_sf()
@@ -123,9 +123,9 @@ make_urban_greening_opportunities <- function(
     urban_extreme_heat <- terra::ifel(pus == 1, 0, NA)
   } else {
     sdei_summary <- sdei_filtered %>%
-      dplyr::group_by(ID_HDC_G0) %>%
-      dplyr::summarise(avg_intens = mean(avg_intens, na.rm = TRUE)) %>%
-      dplyr::filter(!is.na(avg_intens))
+      dplyr::group_by(.data$ID_HDC_G0) %>%
+      dplyr::summarise(avg_intens = mean(.data$avg_intens, na.rm = TRUE)) %>%
+      dplyr::filter(!is.na(.data$avg_intens))
 
     if (nrow(sdei_summary) == 0) {
       log_msg("No non-NA values in urban heat: generating empty raster.")

@@ -136,7 +136,7 @@ make_threatened_ecosystems_protection <- function(
 
   # Combine and aggregate intact area results
   ecosystems_intact_area <- dplyr::bind_rows(Filter(Negate(is.null), ecosystems_intact_area_list)) %>%
-    dplyr::rename(!!group_attribute := group) %>%
+    dplyr::rename(!!group_attribute := .data$group) %>%
     dplyr::group_by(.data[[group_attribute]]) %>%
     dplyr::summarise(area_intact = sum(area_intact, na.rm = TRUE), .groups = "drop")
 
@@ -149,7 +149,7 @@ make_threatened_ecosystems_protection <- function(
     dplyr::mutate(area_total = units::drop_units(sf::st_area(.))) %>%
     dplyr::left_join(ecosystems_intact_area, by = group_attribute) %>%
     dplyr::mutate(
-      threat = dplyr::if_else(is.na(area_intact), 100, (1 - area_intact / area_total) * 100)
+      threat = dplyr::if_else(is.na(.data$area_intact), 100, (1 - .data$area_intact / .data$area_total) * 100)
     )
 
   # Rasterize threat scores

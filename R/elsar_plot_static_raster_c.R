@@ -3,6 +3,7 @@
 #' `elsar_plot_static_raster_c()` allows to plot continuous data from a `SpatRaster` in `ggplot` or `tmap`. It can be combined with [elsar_plot_optics()] and [elsar_plot_extra_data()] to create reproducible plots.
 #'
 #' @param raster_in The `SpatRaster` file to be plotted.
+#' @param layer_name A string of characters denoting the layer of interest. If nothing is provided (NULL), will use default.
 #' @param type A character of the plot type. Either "ggplot_vector", "ggplot_raster" or "tmap".
 #' @param background Requires a `SpatRaster` input (preferably with the same data as `raster_in`) to plot the background data.
 #' @param extend_background A numerical value that allows to extent the background beyond the extent of `raster_in`. If extend_background <= 1, the lat and lon extend will be extended by the ratio provided (e.g. 0.05 will extend it by 5%). If extend_background > 1 all sides will be extended by the absolute value provided.
@@ -94,8 +95,8 @@ elsar_plot_static_raster_c <- function(raster_in,
         plot_out <- gg_background +
           tidyterra::geom_spatraster(data = raster_in) +
           ggplot2::coord_sf(
-            xlim = c(min(background_dat$x), max(background_dat$x)),
-            ylim = c(min(background_dat$y), max(background_dat$y))
+            xlim = c(terra::ext(background_dat)$xmin, terra::ext(background_dat)$xmax),
+            ylim = c(terra::ext(background_dat)$ymin, terra::ext(background_dat)$ymax)
           )
       } else {
         plot_out <- ggplot2::ggplot() +
@@ -158,6 +159,9 @@ elsar_plot_static_raster_c <- function(raster_in,
   }
 
   if (raster_df_out) {
+    raster_df <- as.data.frame(raster_in, xy = TRUE) %>%
+      stats::na.omit()
+
     return(list(plot_out, raster_df))
   } else {
   return(plot_out)

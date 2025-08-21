@@ -7,7 +7,9 @@
 elsar_plot_background_c(
   plot_type = "ggplot",
   background_dat = NULL,
+  layer_name = NULL,
   rescale_background = TRUE,
+  NA_replace = TRUE,
   increase_extend = 0.05,
   main_data = NULL,
   background_alpha = 0.2,
@@ -20,7 +22,11 @@ elsar_plot_background_c(
 
 \item{background_dat}{A \code{SpatRaster} file that contains the data to be used as a background.}
 
+\item{layer_name}{A string of characters denoting the layer of interest. If nothing is provided (NULL), will use default.}
+
 \item{rescale_background}{Logical. If TRUE, rescales the \code{SpatRaster} to values between 0-1.}
+
+\item{NA_replace}{Logical. Whether to use na.omit() or not}
 
 \item{increase_extend}{A numerical value that allows to extend the background beyond the extent of \code{raster_in}. If extend_background <= 1, the lat and lon extend will be extended by the ratio provided (e.g. 0.05 will extend it by 5\%). If extend_background > 1 all sides will be extended by the absolute value provided.}
 

@@ -203,14 +203,14 @@ make_categorical_raster <- function(in_rast,
     dplyr::mutate(category_lower = gsub(' ', '_', tolower(category))) |>  # Convert category names to lowercase for consistent matching
     dplyr::left_join(ELSA_text, by = c("category_lower" = "var")) |>
     dplyr::left_join(elsa_categories, by = c("category" = "action")) |>
-    dplyr::select(value, colour, category, label = !!sym(language)) |>
+    dplyr::select(.data$value, .data$colour, .data$category, label = !!rlang::sym(language)) |>
     data.frame()  # Convert to a data frame for compatibility with raster functions
 
   # Assign the attributes (values, colors, labels) to the categorical raster
   levels(elsa_categorical_raster) <- raster_attributes
 
   # Set the active category to the label field (2nd column), to use the required language labels
-  activeCat(elsa_categorical_raster) <- 2
+  terra::activeCat(elsa_categorical_raster) <- 2
 
   # Return the processed categorical raster
   return(elsa_categorical_raster)

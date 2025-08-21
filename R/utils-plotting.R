@@ -330,6 +330,8 @@ elsar_plot_extra_data <- function(plot_type = "ggplot",
 #' @param background_alpha A value (0-1) for the opacity of the locked in areas when plotted on top of other plots.
 #' @param color_map The name of the `viridis` palette to be used. Default is "viridis".
 #' @param custom_palette An optional custom palette for plotting. Default uses the `viridis` package.
+#' @param NA_replace Logical. Whether to use na.omit() or not
+#' @param layer_name A string of characters denoting the layer of interest. If nothing is provided (NULL), will use default.
 #'
 #' @return  A `list` of a `ggplot` or `tmap` object and a `SpatRaster` with the new background data.
 #' @export
@@ -705,7 +707,7 @@ elsar_extend <- function(raster_main = NULL,
 #'
 #' wad_cat <- elsar_continuous_to_categorical(
 #'  wadOut,
-#'  data_layer = "wad_final_cog",
+#'  data_layer = "Planning.Units",
 #'  number_categories = 10
 #' )
 elsar_continuous_to_categorical <- function(raster_in,

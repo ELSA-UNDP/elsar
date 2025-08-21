@@ -61,7 +61,7 @@ raster_in = wadOut, type = "ggplot_raster",
 categorical = FALSE,
 background = wad_dat,
 number_categories = 10,
-data_layer = "wad_final_cog",
+data_layer = "Planning.Units",
 raster_df_out = TRUE,
 legend_title = "WAD"
 )

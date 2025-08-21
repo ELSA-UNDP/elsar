@@ -73,7 +73,7 @@ elsar_plot_feature <- function(raster_in,
       name = legend_title,
       option = color_map,
       direction = palette_direction,
-      guide = guide_colorbar(
+      guide = ggplot2::guide_colorbar(
         label = TRUE,
         frame.colour = "black",
         barwidth = 11,
@@ -85,13 +85,13 @@ elsar_plot_feature <- function(raster_in,
     ) +
     tidyterra::geom_spatvector(
       data = outlines,
-      color = alpha("white", 0.7),
+      color = scales::alpha("white", 0.7),
       linewidth = 0.18
     ) +
     ggspatial::annotation_scale(
       location = "bl",
       width_hint = 0.25,
-      height = unit(0.25, "cm")
+      height = grid::unit(0.25, "cm")
     ) +
     ggplot2::theme(
       legend.position = "bottom",
@@ -113,7 +113,7 @@ elsar_plot_feature <- function(raster_in,
   }
 
   if (!is.null(figure_path)) {
-    ggsave(file.path(glue::glue("{figure_path}/{legend_title}_{iso3}.png")),
+    ggplot2::ggsave(file.path(glue::glue("{figure_path}/{legend_title}_{iso3}.png")),
       plot = gg_feature,
       device = "png",
       width = 8, height = 6, dpi = 200

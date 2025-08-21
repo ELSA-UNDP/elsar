@@ -79,7 +79,7 @@ type = "ggplot_raster",
 categorical = FALSE,
 number_categories = 10,
 background = wad_dat,
-data_layer = "wad_final_cog",
+data_layer = "Planning.Units",
 raster_df_out = TRUE)
 )
 }

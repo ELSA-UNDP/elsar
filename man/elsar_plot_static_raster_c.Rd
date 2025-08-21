@@ -6,6 +6,7 @@
 \usage{
 elsar_plot_static_raster_c(
   raster_in,
+  layer_name = NULL,
   type = "ggplot_vector",
   background = NULL,
   extend_background = 0.05,
@@ -19,6 +20,8 @@ elsar_plot_static_raster_c(
 }
 \arguments{
 \item{raster_in}{The \code{SpatRaster} file to be plotted.}
+
+\item{layer_name}{A string of characters denoting the layer of interest. If nothing is provided (NULL), will use default.}
 
 \item{type}{A character of the plot type. Either "ggplot_vector", "ggplot_raster" or "tmap".}
 

@@ -149,7 +149,7 @@ make_manage_zone <- function(
     method_override = "mean"
     )
 
-  breaks <- terra::global(hii_resampled, fun = quantile, probs = c(0.2, 0.8), na.rm = TRUE)
+  breaks <- terra::global(hii_resampled, fun = terra::quantile, probs = c(0.2, 0.8), na.rm = TRUE)
   hii_middle_60_pct <- terra::ifel(hii_resampled >= breaks[,1] & hii_resampled <= breaks[,2], 1, 0)
 
   # Process managed forests

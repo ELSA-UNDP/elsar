@@ -25,5 +25,13 @@ get_wad_data <- function() {
 "current_pas_sf"
 
 
+#' Data used for mangroves
+#'
+#' `sf` file from WDPA database
+#'
+#' @source https:// add link here
+"mangroves_hti"
+
+
 
 

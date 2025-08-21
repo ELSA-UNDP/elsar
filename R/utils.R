@@ -661,7 +661,7 @@ median_from_rast <- function(r) {
   }
 
   edges <- seq(minv, maxv, length.out = length(counts) + 1L)
-  mids  <- (head(edges, -1L) + tail(edges, -1L)) / 2
+  mids  <- (terra::head(edges, -1L) + terra::tail(edges, -1L)) / 2
 
   half <- sum(counts) / 2
   idx  <- which(cumsum(counts) >= half)[1]
@@ -669,8 +669,19 @@ median_from_rast <- function(r) {
   mids[idx]
 }
 
-
-
-
-
-
+#' Not in operator
+#'
+#' A negation of `%in%`, for checking if elements are *not* in another object.
+#'
+#' @param x vector or NULL: the values to be matched.
+#' @param df vector, data frame column, or similar: the values to be matched against.
+#'
+#' @return A logical vector, TRUE where `x` is not in `df`.
+#' @examples
+#' 1 %ni% 1:5
+#' 6 %ni% 1:5
+#'
+#' @export
+`%ni%` <- function(x, df) {
+  !(x %in% df)
+}

@@ -1,6 +1,6 @@
 Package: elsar
 Title: Functions and Tools For Creating ELSA Tier 1 Data Stacks
-Version: 0.0.3
+Version: 1.0.0
 Authors@R: 
     c(
     person(
@@ -42,9 +42,9 @@ Depends:
     R (>= 3.5.0)
 Imports: 
     assertthat,
-    bit64,
     dplyr,
     exactextractr,
+    future,
     ggnewscale,
     ggplot2,
     ggridges,
@@ -54,6 +54,7 @@ Imports:
     here,
     magrittr,
     plyr,
+    rappdirs,
     reticulate,
     rlang,
     sf,
@@ -63,7 +64,8 @@ Imports:
     tibble,
     tidyr,
     tidyterra,
-    units
+    units,
+    xml2
 Config/testthat/edition: 3
 LazyData: true
 URL: https://elsa-undp.github.io/elsar/

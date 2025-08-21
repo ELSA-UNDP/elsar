@@ -23,6 +23,8 @@ elsar_download_global_pasture_data(
 \item{output_dir}{Optional local output directory (default: project root).}
 
 \item{layer_type}{One of "cultivated" (default) or "natural".}
+
+\item{...}{Additional arguments passed to lower-level functions (currently unused)}
 }
 \description{
 Downloads either the cultivated or natural/semi-natural grassland probability

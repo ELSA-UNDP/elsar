@@ -20,6 +20,8 @@ elsar_download_esri_lulc_data(
 \item{gee_project}{Earth Engine Cloud project ID.}
 
 \item{output_dir}{Optional local output directory (default: project root).}
+
+\item{...}{Additional arguments passed to lower-level functions (currently unused)}
 }
 \description{
 Retrieves the ESRI Global LULC Time Series at 10m resolution from Earth Engine.

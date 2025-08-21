@@ -58,7 +58,7 @@ make_kbas <- function(
   if (nrow(kba) > 0) {
     if (aze_only) {
       log_msg("Returning only AZE sites.")
-      kba <- dplyr::filter(kba, azestatus == "confirmed")
+      kba <- dplyr::filter(kba, .data$azestatus == "confirmed")
 
       if (nrow(kba) == 0) {
         log_msg("No matching AZE sites found in the study region: returning empty raster.")
@@ -67,7 +67,7 @@ make_kbas <- function(
     } else {
       if (!include_aze_sites) {
         log_msg("Excluding AZE sites from KBA.")
-        kba <- dplyr::filter(kba, is.na(azestatus) | azestatus != "confirmed")
+        kba <- dplyr::filter(kba, is.na(.data$azestatus) | .data$azestatus != "confirmed")
 
         if (nrow(kba) == 0) {
           log_msg("After excluding AZEs, there are no KBA sites found: returning empty raster.")
@@ -80,7 +80,7 @@ make_kbas <- function(
 
       if (!include_regional_kba) {
         log_msg("Excluding Regional KBAs or those with undetermined Global status.")
-        kba <- dplyr::filter(kba, kbaclass %ni% c("Regional", "Global/ Regional to be determined"))
+        kba <- dplyr::filter(kba, .data$kbaclass %ni% c("Regional", "Global/ Regional to be determined"))
       }
 
       if (nrow(kba) == 0) {
