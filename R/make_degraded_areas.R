@@ -17,17 +17,6 @@
 #'
 #' @return A SpatRaster object containing the degraded areas layer.
 #' @export
-#'
-#' @examples
-#' restore_zone <- make_degraded_areas(
-#'   "CHL",
-#'   pu,
-#'   sdg_degradation_input,
-#'   hii_input,
-#'   agriculture_input,
-#'   built_areas_input,
-#'   output_path = "./output"
-#'   )
 make_degraded_areas <- function(country_iso,
                                 pu,
                                 sdg_degradation_input = NULL,

@@ -20,5 +20,5 @@ for recognizable formats (e.g., \code{.shp}, \code{.gdb}).
 \examples{
 get_file_type("data/boundaries.shp")     # returns "shp"
 get_file_type("data/vector_layers.gpkg") # returns "gpkg"
-get_file_type("data/rasters")            # scans folder for known formats
+get_file_type("data/rasters.tif")            # scans folder for known formats
 }
