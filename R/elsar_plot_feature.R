@@ -11,6 +11,7 @@
 #' @param invert_palette logical. If TRUE, reverses the palette direction. Defaults to FALSE.
 #' @param figure_path character, optional. If provided, path to save the figure as a PNG.
 #' @param no_legend logical. If TRUE, suppresses the legend. Defaults to FALSE.
+#' @param iso3 The iso3 country code (character) of the country of interest.
 #'
 #' @return A `ggplot` object displaying the raster with optional planning unit outlines.
 #'
@@ -44,8 +45,8 @@
 #'   legend_title = "WAD",
 #'   color_map = "magma",
 #'   invert_palette = TRUE,
-#'   figure_path = "figures",
-#'   no_legend = FALSE
+#'   no_legend = FALSE,
+#'   iso3 = "NPL"
 #' )
 elsar_plot_feature <- function(raster_in,
                                pus,
@@ -53,7 +54,8 @@ elsar_plot_feature <- function(raster_in,
                                color_map = "viridis", #"rocket",
                                invert_palette = FALSE,
                                figure_path = NULL,
-                               no_legend = FALSE) {
+                               no_legend = FALSE,
+                               iso3 = NULL) {
   # Prep outline
   outlines <- terra::as.polygons(pus) %>%
     # And convert to lines

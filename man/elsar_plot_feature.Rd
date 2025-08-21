@@ -11,7 +11,8 @@ elsar_plot_feature(
   color_map = "viridis",
   invert_palette = FALSE,
   figure_path = NULL,
-  no_legend = FALSE
+  no_legend = FALSE,
+  iso3 = NULL
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ elsar_plot_feature(
 \item{figure_path}{character, optional. If provided, path to save the figure as a PNG.}
 
 \item{no_legend}{logical. If TRUE, suppresses the legend. Defaults to FALSE.}
+
+\item{iso3}{The iso3 country code (character) of the country of interest.}
 }
 \value{
 A \code{ggplot} object displaying the raster with optional planning unit outlines.
@@ -64,7 +67,7 @@ elsar_plot_feature(
   legend_title = "WAD",
   color_map = "magma",
   invert_palette = TRUE,
-  figure_path = "figures",
-  no_legend = FALSE
+  no_legend = FALSE,
+  iso3 = "NPL"
 )
 }
