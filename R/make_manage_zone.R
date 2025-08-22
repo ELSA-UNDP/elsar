@@ -152,6 +152,8 @@ make_manage_zone <- function(
   breaks <- terra::global(hii_resampled, fun = quantile, probs = c(0.2, 0.8), na.rm = TRUE)
   hii_middle_60_pct <- terra::ifel(hii_resampled >= breaks[,1] & hii_resampled <= breaks[,2], 1, 0)
 
+  log_msg(glue::glue("The middle 60% threshold of HII is is between values of {breaks[1]} to {breaks[2]}."))
+
   # Process managed forests
   log_msg("Processing managed forests...")
   if (!is.null(managed_forests_input)) {
