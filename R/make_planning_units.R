@@ -25,12 +25,18 @@
 #' @export
 #'
 #' @examples
-#' # Automatically estimate PU size to stay under 850,000 PUs
-#' boundary_proj <- make_boundary(boundary_in = boundary_data, iso3 = "ZMB", iso3_column = "iso3cd")
-#' pu_raster <- make_planning_units(boundary_proj, iso3 = "ZMB")
+#' boundary_proj <- make_boundary(
+#'   boundary_in = boundary_dat,
+#'   iso3 = "NPL",
+#'   iso3_column = "iso3cd"
+#' )
 #'
-#' # Use a fixed PU size (e.g., 250 meters)
-#' pu_raster <- make_planning_units(boundary_proj, pu_size = 250, iso3 = "ZMB")
+#' pus <- make_planning_units(
+#'   boundary_proj = boundary_proj,
+#'   pu_size = NULL,
+#'   pu_threshold = 8.5e5,
+#'   limit_to_mainland = FALSE
+#' )
 make_planning_units <- function(boundary_proj,
                                 pu_size = NULL,
                                 pu_threshold = 8.5e5,
