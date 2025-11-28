@@ -320,18 +320,26 @@ elsar_plot_extra_data <- function(plot_type = "ggplot",
   }
 }
 
-#' Function to create a plot with continuous background data for another plot
+#' Function to create a plot with background data for another plot
 #'
-#' @param plot_type  A character denoting whether "ggplot" or "tmap" is being used. Needs to match the main plot
+#' Creates a background layer for plotting, supporting both continuous and discrete data.
+#'
+#' @param plot_type A character denoting whether "ggplot" or "tmap" is being used. Needs to match the main plot.
 #' @param background_dat A `SpatRaster` file that contains the data to be used as a background.
+#' @param data_type Character. Either "continuous" (default) or "discrete" to specify how data should be displayed.
 #' @param rescale_background Logical. If TRUE, rescales the `SpatRaster` to values between 0-1.
-#' @param increase_extend A numerical value that allows to extend the background beyond the extent of `raster_in`. If extend_background <= 1, the lat and lon extend will be extended by the ratio provided (e.g. 0.05 will extend it by 5%). If extend_background > 1 all sides will be extended by the absolute value provided.
+#' @param increase_extend A numerical value that allows to extend the background beyond the extent of `raster_in`.
+#'   If extend_background <= 1, the lat and lon extend will be extended by the ratio provided (e.g. 0.05 will extend it by 5%).
+#'   If extend_background > 1 all sides will be extended by the absolute value provided.
 #' @param main_data A `SpatRaster` file that contains the data that will be the main part of the main plot.
-#' @param background_alpha A value (0-1) for the opacity of the locked in areas when plotted on top of other plots.
+#' @param background_alpha A value (0-1) for the opacity of the background layer. Default is 0.2.
 #' @param color_map The name of the `viridis` palette to be used. Default is "viridis".
 #' @param custom_palette An optional custom palette for plotting. Default uses the `viridis` package.
+#' @param categorical Logical. Only used when `data_type = "discrete"`. If TRUE, data is already categorical.
+#' @param number_categories Integer. Only used when `data_type = "discrete"`. Number of categories to split continuous data into.
+#' @param data_layer Character. Only used when `data_type = "discrete"`. The data layer name for categorization.
 #'
-#' @return  A `list` of a `ggplot` or `tmap` object and a `SpatRaster` with the new background data.
+#' @return A `list` of a `ggplot` or `tmap` object and a data frame with the background data.
 #' @export
 #'
 #' @examples
@@ -355,18 +363,33 @@ elsar_plot_extra_data <- function(plot_type = "ggplot",
 #'   iso3 = "NPL"
 #' )
 #'
-#' (background_plot <- elsar_plot_background_c(
+#' # Continuous background
+#' (background_plot <- elsar_plot_background(
 #'   background_dat = wad_dat,
 #'   main_data = wadOut
 #' ))
-elsar_plot_background_c <- function(plot_type = "ggplot",
-                                    background_dat = NULL, # SpatRaster file
-                                    rescale_background = TRUE,
-                                    increase_extend = 0.05,
-                                    main_data = NULL, # SpatRaster
-                                    background_alpha = 0.2,
-                                    color_map = "viridis",
-                                    custom_palette = NULL) {
+#'
+#' # Discrete background
+#' (background_plot_d <- elsar_plot_background(
+#'   background_dat = wad_dat,
+#'   main_data = wadOut,
+#'   data_type = "discrete",
+#'   number_categories = 10,
+#'   data_layer = "wad_final_cog"
+#' ))
+elsar_plot_background <- function(plot_type = "ggplot",
+                                  background_dat = NULL,
+                                  data_type = c("continuous", "discrete"),
+                                  rescale_background = TRUE,
+                                  increase_extend = 0.05,
+                                  main_data = NULL,
+                                  background_alpha = 0.2,
+                                  color_map = "viridis",
+                                  custom_palette = NULL,
+                                  categorical = FALSE,
+                                  number_categories = 10,
+                                  data_layer = NULL) {
+  data_type <- match.arg(data_type)
   assertthat::assert_that(inherits(background_dat, "SpatRaster"))
   message("Adding background layer.")
 
@@ -378,7 +401,7 @@ elsar_plot_background_c <- function(plot_type = "ggplot",
     bckgrnd_dat <- rescale_raster(bckgrnd_dat)
   }
 
-  # crop data to a specifc extend around main data
+  # crop data to a specific extend around main data
   if (!is.null(increase_extend)) {
     bckgrnd_dat <- elsar_extend(
       raster_main = main_data,
@@ -387,31 +410,89 @@ elsar_plot_background_c <- function(plot_type = "ggplot",
     )
   }
 
-  # plot
-  if (plot_type == "ggplot") {
-    col_interest <- terra::names(bckgrnd_dat)
+  # Process data based on type
 
+if (data_type == "discrete") {
+    if (categorical) {
+      assertthat::assert_that(
+        terra::is.factor(bckgrnd_dat),
+        msg = "Input is not a factor."
+      )
+      number_categories <- length(terra::levels(bckgrnd_dat)[[1]][[1]])
+      bckgrnd_dat <- as.data.frame(bckgrnd_dat, xy = TRUE) %>%
+        stats::na.omit() %>%
+        dplyr::rename(interval = .data[[data_layer]]) %>%
+        dplyr::mutate(interval = as.factor(.data$interval))
+    } else {
+      assertthat::assert_that(
+        !is.null(number_categories),
+        msg = "Provide a valid number of categories to split your data into."
+      )
+      raster_cat <- elsar_continuous_to_categorical(
+        raster_in = bckgrnd_dat,
+        data_layer = data_layer,
+        number_categories = number_categories,
+        hist_breaks_out = FALSE
+      )
+      bckgrnd_dat <- raster_cat %>%
+        dplyr::mutate(
+          category = as.factor(.data$category),
+          interval = as.factor(.data$interval)
+        )
+    }
+  } else {
+    # Continuous: convert to data frame
+    col_interest <- terra::names(bckgrnd_dat)
     bckgrnd_dat <- as.data.frame(bckgrnd_dat, xy = TRUE) %>%
       stats::na.omit()
+  }
 
-    plot_background <- ggplot2::ggplot() +
-      ggplot2::geom_tile(data = bckgrnd_dat, ggplot2::aes(
-        y = .data$y, x = .data$x,
-        fill = .data[[col_interest]]
-      ), show.legend = FALSE)
+  # plot
+  if (plot_type == "ggplot") {
+    if (data_type == "discrete") {
+      plot_background <- ggplot2::ggplot() +
+        ggplot2::geom_tile(data = bckgrnd_dat, ggplot2::aes(
+          y = .data$y, x = .data$x,
+          fill = .data$interval
+        ), show.legend = FALSE)
 
-    if (is.null(custom_palette)) {
-      plot_background <- plot_background +
-        ggplot2::scale_colour_viridis_c(
-          option = color_map, alpha = background_alpha,
-          guide = "none"
-        ) +
-        ggplot2::scale_fill_viridis_c(
-          option = color_map, alpha = background_alpha,
-          guide = "none"
-        )
+      if (is.null(custom_palette)) {
+        plot_background <- plot_background +
+          ggplot2::scale_colour_viridis_d(
+            option = color_map, alpha = background_alpha,
+            guide = "none",
+            expand = c(0, 0)
+          ) +
+          ggplot2::scale_fill_viridis_d(
+            option = color_map, alpha = background_alpha,
+            guide = "none",
+            expand = c(0, 0)
+          )
+      } else {
+        plot_background <- plot_background + custom_palette
+      }
     } else {
-      plot_background <- plot_background + custom_palette
+      # Continuous
+      col_interest <- names(bckgrnd_dat)[!names(bckgrnd_dat) %in% c("x", "y")][1]
+      plot_background <- ggplot2::ggplot() +
+        ggplot2::geom_tile(data = bckgrnd_dat, ggplot2::aes(
+          y = .data$y, x = .data$x,
+          fill = .data[[col_interest]]
+        ), show.legend = FALSE)
+
+      if (is.null(custom_palette)) {
+        plot_background <- plot_background +
+          ggplot2::scale_colour_viridis_c(
+            option = color_map, alpha = background_alpha,
+            guide = "none"
+          ) +
+          ggplot2::scale_fill_viridis_c(
+            option = color_map, alpha = background_alpha,
+            guide = "none"
+          )
+      } else {
+        plot_background <- plot_background + custom_palette
+      }
     }
     # prep for adding more data later
     plot_background <- plot_background +
@@ -424,157 +505,56 @@ elsar_plot_background_c <- function(plot_type = "ggplot",
   return(list(plot_background, bckgrnd_dat))
 }
 
-#' Function to create a plot with discrete background data for another plot
-#'
-#' @param plot_type  A character denoting whether "ggplot" or "tmap" is being used. Needs to match the main plot
-#' @param background_dat A `SpatRaster` file that contains the data to be used as a background.
-#' @param rescale_background Logical. If TRUE, rescales the `SpatRaster` to values between 0-1.
-#' @param increase_extend A numerical value that allows to extend the background beyond the extent of `raster_in`. If extend_background <= 1, the lat and lon extend will be extended by the ratio provided (e.g. 0.05 will extend it by 5%). If extend_background > 1 all sides will be extended by the absolute value provided.
-#' @param main_data A `SpatRaster` file that contains the data that will be the main part of the main plot.
-#' @param background_alpha A value (0-1) for the opacity of the locked in areas when plotted on top of other plots.
-#' @param color_map The name of the `viridis` palette to be used. Default is "viridis".
-#' @param categorical logical. if data is categorical (TRUE), convert to factor (if not yet) and use the number of categories given.
-#' @param custom_palette An optional custom palette for plotting. Default uses the `viridis` package.
-#' @param number_categories If data does not have pre-defined categories, how many categories to split the continuous data into
-#' @param data_layer The data layer with continuous data to be converted into categories.
-#'
-#' @return  A `list` of a `ggplot` or `tmap` object and a `SpatRaster` with the new background data.
+#' @rdname elsar_plot_background
 #' @export
-#'
-#' @examples
-#' boundary_proj <- make_boundary(
-#'   boundary_in = boundary_dat,
-#'   iso3 = "NPL",
-#'   iso3_column = "iso3cd"
-#' )
-#'
-#' pus <- make_planning_units(
-#'   boundary_proj = boundary_proj,
-#'   pu_size = NULL,
-#'   pu_threshold = 8.5e5,
-#'   limit_to_mainland = FALSE
-#' )
-#' wad_dat <- get_wad_data()
-#'
-#' wadOut <- make_normalised_raster(
-#'   raster_in = wad_dat,
-#'   pus = pus,
-#'   iso3 = "NPL"
-#' )
-#' (background_plot <- elsar_plot_background_d(
-#'   background_dat = wad_dat,
-#'   main_data = wadOut,
-#'   increase_extend = 0.05,
-#'   number_categories = 10,
-#'   data_layer = "wad_final_cog",
-#' ))
-elsar_plot_background_d <- function(plot_type = "ggplot",
-                                    background_dat = NULL, # SpatRaster file
+elsar_plot_background_c <- function(plot_type = "ggplot",
+                                    background_dat = NULL,
                                     rescale_background = TRUE,
                                     increase_extend = 0.05,
-                                    main_data = NULL, # SpatRaster
+                                    main_data = NULL,
+                                    background_alpha = 0.2,
+                                    color_map = "viridis",
+                                    custom_palette = NULL) {
+ elsar_plot_background(
+    plot_type = plot_type,
+    background_dat = background_dat,
+    data_type = "continuous",
+    rescale_background = rescale_background,
+    increase_extend = increase_extend,
+    main_data = main_data,
+    background_alpha = background_alpha,
+    color_map = color_map,
+    custom_palette = custom_palette
+  )
+}
+
+#' @rdname elsar_plot_background
+#' @export
+elsar_plot_background_d <- function(plot_type = "ggplot",
+                                    background_dat = NULL,
+                                    rescale_background = TRUE,
+                                    increase_extend = 0.05,
+                                    main_data = NULL,
                                     background_alpha = 0.2,
                                     color_map = "viridis",
                                     custom_palette = NULL,
                                     categorical = FALSE,
                                     number_categories = 10,
                                     data_layer = NULL) {
-  assertthat::assert_that(inherits(background_dat, "SpatRaster"))
-  message("Adding background layer.")
-
-  # reproject
-  bckgrnd_dat <- terra::project(background_dat, terra::crs(main_data))
-
-  # rescale if wanted
-  if (rescale_background) {
-    bckgrnd_dat <- rescale_raster(bckgrnd_dat)
-  }
-
-  # crop data to a specifc extend around main data
-  if (!is.null(increase_extend)) {
-    bckgrnd_dat <- elsar_extend(
-      raster_main = main_data,
-      raster_to_crop = bckgrnd_dat,
-      extend_by = increase_extend
-    )
-  }
-
-  # categorize
-
-  if (categorical) {
-    # message("Plotting input data that is already categorical.")
-
-    assertthat::assert_that(
-      terra::is.factor(bckgrnd_dat),
-      msg = "Input is not a factor."
-    )
-
-    # get number of categories
-    number_categories <- length(terra::levels(bckgrnd_dat)[[1]][[1]])
-
-    bckgrnd_dat <- as.data.frame(bckgrnd_dat, xy = TRUE) %>%
-      stats::na.omit() %>%
-      dplyr::rename(interval = .data[[data_layer]]) %>%
-      dplyr::mutate(interval = as.factor(.data$interval))
-  } else {
-    # message("Plotting input data that is continuous and will be split into categories.")
-
-    assertthat::assert_that(
-      !is.null(number_categories),
-      msg = "Provide a valid number of categories to split your data into."
-    )
-
-    raster_cat <- elsar_continuous_to_categorical(
-      raster_in = bckgrnd_dat,
-      data_layer = data_layer,
-      number_categories = number_categories,
-      hist_breaks_out = FALSE
-    )
-
-    bckgrnd_dat <- raster_cat %>%
-      dplyr::mutate(
-        category = as.factor(.data$category),
-        interval = as.factor(.data$interval)
-      )
-  }
-
-  # plot
-  if (plot_type == "ggplot") {
-    # col_interest <- terra::names(bckgrnd_dat)
-    #
-    # bckgrnd_dat <- as.data.frame(bckgrnd_dat, xy = TRUE) %>%
-    #   stats::na.omit()
-
-    plot_background <- ggplot2::ggplot() +
-      ggplot2::geom_tile(data = bckgrnd_dat, ggplot2::aes(
-        y = .data$y, x = .data$x,
-        fill = .data$interval
-      ), show.legend = FALSE)
-
-    if (is.null(custom_palette)) {
-      plot_background <- plot_background +
-        ggplot2::scale_colour_viridis_d(
-          option = color_map, alpha = background_alpha,
-          guide = "none",
-          expand = c(0, 0)
-        ) +
-        ggplot2::scale_fill_viridis_d(
-          option = color_map, alpha = background_alpha,
-          guide = "none",
-          expand = c(0, 0)
-        )
-    } else {
-      plot_background <- plot_background + custom_palette
-    }
-    # prep for adding more data later
-    plot_background <- plot_background +
-      ggnewscale::new_scale_fill() +
-      ggnewscale::new_scale_colour()
-  } else if (plot_type == "tmap") {
-    message("Will be added later.")
-  }
-
-  return(list(plot_background, bckgrnd_dat))
+  elsar_plot_background(
+    plot_type = plot_type,
+    background_dat = background_dat,
+    data_type = "discrete",
+    rescale_background = rescale_background,
+    increase_extend = increase_extend,
+    main_data = main_data,
+    background_alpha = background_alpha,
+    color_map = color_map,
+    custom_palette = custom_palette,
+    categorical = categorical,
+    number_categories = number_categories,
+    data_layer = data_layer
+  )
 }
 
 

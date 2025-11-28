@@ -29,8 +29,8 @@ define_problem_avail <- function(input,
                                  Rest,
                                  Rest0,
                                  pas_locked_out) {
-  # get minimum targets required to lock in existing PAs and Restoratio areas
-  target <- get_elsa_min_lockin_target(c(PA, Rest, PA0), input, pu)
+  # get minimum targets required to lock in existing PAs and Restoration areas
+  target <- get_min_lockin_target(c(PA, Rest, PA0), input, pu)
 
 
   prob.ta <- prob.ta %>%
@@ -39,7 +39,7 @@ define_problem_avail <- function(input,
     prioritizr::add_locked_out_constraints(pas_locked_out) %>%
     prioritizr::add_locked_in_constraints(c(Rest0, Rest, Rest0, Rest0, Rest0)) %>%
     prioritizr::add_linear_constraints(
-      threshold = get_elsa_target(pu, target[1]),
+      threshold = get_target(pu, target[1]),
       sense = "<=",
       data = c(
         pu_temp[[1]], # protect_zone
@@ -50,7 +50,7 @@ define_problem_avail <- function(input,
       )
     ) %>%
     prioritizr::add_linear_constraints(
-      threshold = get_elsa_target(pu, target[2]),
+      threshold = get_target(pu, target[2]),
       sense = "<=",
       data = c(
         pu_temp[[1]] * 0, # protect_zone
@@ -61,7 +61,7 @@ define_problem_avail <- function(input,
       )
     ) %>%
     prioritizr::add_linear_constraints(
-      threshold = get_elsa_target(pu, target[3]),
+      threshold = get_target(pu, target[3]),
       sense = "<=",
       data = c(
         pu_temp[[1]] * 0, # protect_zone

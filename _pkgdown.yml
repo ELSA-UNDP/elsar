@@ -54,9 +54,9 @@ reference:
 - title: ELSA-specific utilities functions
   desc: Functions to help ELSA analysis
 - contents:
-  - get_elsa_coverage
-  - get_elsa_min_lockin_target
-  - get_elsa_target
+  - calculate_restore_and_urban_budgets
+  - get_min_lockin_target
+  - get_target
 
 - title: Helper Functions
 - contents:
@@ -78,6 +78,7 @@ reference:
   - extract_filename_filetype
   - exact_rasterise
   - get_coverage
+  - median_from_rast
   - rescale_raster
   - split_bbox_into_tiles
   - conditionally_subdivide_bbox
@@ -88,6 +89,7 @@ reference:
 - contents:
   - elsar_plot_distribution
   - elsar_plot_feature
+  - elsar_plot_static_raster
   - elsar_plot_static_raster_c
   - elsar_plot_static_raster_d
 
@@ -96,6 +98,7 @@ reference:
 - contents:
   - elsar_continuous_to_categorical
   - elsar_extend
+  - elsar_plot_background
   - elsar_plot_background_c
   - elsar_plot_background_d
   - elsar_plot_extra_data

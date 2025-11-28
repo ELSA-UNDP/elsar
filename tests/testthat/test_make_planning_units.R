@@ -11,7 +11,8 @@ test_that("planning_units", {
                              pu_threshold = 8.5e5,
                              limit_to_mainland = FALSE)
   expect_equal(class(pus)[1], "SpatRaster")
-  expect_equal(terra::global(pus, "min", na.rm = TRUE)[[1]], 0)
+  # Planning units inside boundary have value 1, outside is NA
+  expect_equal(terra::global(pus, "min", na.rm = TRUE)[[1]], 1)
   expect_equal(terra::global(pus, "max", na.rm = TRUE)[[1]], 1)
   expect_lt(terra::global(pus, "sum", na.rm = TRUE)[[1]], 850000)
 })
