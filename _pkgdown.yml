@@ -70,7 +70,6 @@ reference:
   - get_iucn_forests
   - log_msg
   - make_custom_projection
-  - make_postgres_connection
 
 - title: Utilities
 - contents:

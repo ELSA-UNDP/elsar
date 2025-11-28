@@ -3,12 +3,22 @@
 #' Automatically detects file type and loads spatial (`sf`) or raster (`SpatRaster`) data.
 #' Supports local files (e.g., shapefiles, GeoPackages, TIFFs) and PostGIS tables.
 #'
-#' @param file_name Character or NULL. File name with extension. Use NULL to load all files of a type in a folder.
-#' @param file_path Character. Folder or file path.
-#' @param file_lyr Character. Optional. Layer name for multi-layer files (e.g., GeoPackage or GDB).
-#' @param wkt_filter `sf`, `SpatRaster`, or `SpatVector`, from which WKT geometry can be derived to spatially filter vector data when reading in.
-#' @param db_info Named list. For Postgres: host, dbname, port, user, password.
-#' @param pg_connection Named list. Alternative to db_info for Postgres.
+#' @param file_name Character or NULL. File name with extension. Use NULL to load all
+#'   files of a type in a folder. Set to `"postgres"` to load from a PostGIS database.
+#' @param file_path Character. Folder or file path. Not required when loading from PostgreSQL.
+#' @param file_lyr Character. Optional. Layer name for multi-layer files (e.g., GeoPackage
+#'   or GDB). When loading from PostgreSQL, this specifies the table name.
+#' @param wkt_filter `sf`, `SpatRaster`, or `SpatVector`, from which WKT geometry can be
+#'   derived to spatially filter vector data when reading in.
+#' @param db_info Named list with PostgreSQL connection parameters. Required elements:
+#'   \describe{
+#'     \item{host}{Database host (e.g., "localhost" or an IP address)}
+#'     \item{dbname}{Name of the PostgreSQL database}
+#'     \item{port}{Port number (typically 5432)}
+#'     \item{user}{Database username}
+#'     \item{password}{Database password}
+#'   }
+#' @param pg_connection Named list. Alternative parameter name for `db_info` (same structure).
 #' @param drop3d Logical. Drop Z/M dimensions if TRUE. Default is TRUE.
 #' @param iso3_column Character. Column name to filter by ISO3 code.
 #' @param iso3 Character. ISO3 code to filter vector data.
