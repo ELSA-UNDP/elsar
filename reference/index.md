@@ -54,7 +54,7 @@ Functions to help formulate a conservation problem for an ELSA analysis
 - [`make_protect_zone()`](https://elsa-undp.github.io/elsar/reference/make_protect_zone.md)
   : Generate Protect Zone Raster for ELSA Analysis
 - [`make_restore_zone()`](https://elsa-undp.github.io/elsar/reference/make_restore_zone.md)
-  : Generate a Degraded Areas Layer for Restoration Planning
+  : Generate Restore Zones for Spatial Planning
 - [`make_manage_zone()`](https://elsa-undp.github.io/elsar/reference/make_manage_zone.md)
   : Generate Sustainable Management Zones for ELSA Analysis
 

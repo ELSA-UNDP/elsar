@@ -84,7 +84,7 @@ non-zero cells represent valid planning units.
 boundary_proj <- make_boundary(boundary_in = boundary_data, iso3 = "ZMB", iso3_column = "iso3cd")
 #> Error: object 'boundary_data' not found
 pu_raster <- make_planning_units(boundary_proj, iso3 = "ZMB")
-#> [2025-11-28 05:57] pu_size not provided: estimating size to target <= 850000 PUs (allowing 5% tolerance).
+#> [2025-11-28 06:06] pu_size not provided: estimating size to target <= 850000 PUs (allowing 5% tolerance).
 #> Error: object 'boundary_proj' not found
 
 # Use a fixed PU size (e.g., 250 meters)

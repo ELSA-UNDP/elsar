@@ -1,17 +1,8 @@
-# Generate a Degraded Areas Layer for Restoration Planning
+# Generate Restore Zones for Spatial Planning
 
-This function identifies degraded areas for potential restoration based
-on a combination of:
-
-- **SDG productivity degradation data**
-
-- **Agricultural and built-up areas** (either provided or derived from a
-  LULC raster)
-
-- **Human Industrial Footprint Index (HII)**
-
-- **IUCN GET forest ecosystems coverage** (used to create
-  `restore_zone_v1` and `restore_zone_v2`)
+Identifies potential restoration areas by combining degradation
+indicators while excluding areas unsuitable for restoration (e.g.,
+active farmland, urban areas).
 
 ## Usage
 
@@ -19,19 +10,20 @@ on a combination of:
 make_restore_zone(
   iso3,
   pus,
-  sdg_degradation_input = NULL,
-  agricultural_areas_input = NULL,
-  built_areas_input = NULL,
-  lulc_raster = NULL,
-  hii_input = NULL,
-  iucn_get_forest_input = NULL,
-  sdg_threshold = 0.1,
-  lulc_threshold = 0.1,
-  hii_threshold = 4,
-  iucn_get_forest_threshold = 0.1,
-  agriculture_lulc_value = 4,
-  built_area_lulc_value = 7,
-  filter_patch_size = TRUE,
+  degradation,
+  human_pressure,
+  forest_mask,
+  agricultural_areas = NULL,
+  built_areas = NULL,
+  lulc = NULL,
+  degradation_threshold = 0.1,
+  human_pressure_threshold = 4,
+  agriculture_threshold = 0.1,
+  built_area_threshold = 0.1,
+  forest_threshold = 0.1,
+  lulc_agriculture_class = 4,
+  lulc_built_class = 7,
+  filter_small_patches = TRUE,
   min_patch_size = 10,
   output_path = NULL
 )
@@ -45,123 +37,146 @@ make_restore_zone(
 
 - pus:
 
-  SpatRaster. Planning units raster used to define resolution and
+  SpatRaster. Planning units raster defining the output resolution and
   extent.
 
-- sdg_degradation_input:
+- degradation:
 
-  SpatRaster. SDG degradation raster input.
+  SpatRaster. Raster indicating land degradation. Values of -1 are
+  treated as degraded (e.g., SDG 15.3.1 productivity degradation layer).
 
-- agricultural_areas_input:
+- human_pressure:
 
-  SpatRaster or NULL. Optional input raster for agricultural areas. If
-  NULL, `lulc_raster` must be provided.
+  SpatRaster. Raster of human pressure/impact values (e.g., Human
+  Footprint Index). Higher values indicate greater pressure.
 
-- built_areas_input:
+- forest_mask:
 
-  SpatRaster or NULL. Optional input raster for built-up areas. If NULL,
-  `lulc_raster` must be provided.
+  SpatRaster. Raster indicating forest ecosystem extent, used to create
+  the forest-only restore zone (v2). Values represent forest cover
+  proportion.
 
-- lulc_raster:
+- agricultural_areas:
 
-  SpatRaster or NULL. LULC raster used to derive agriculture/built areas
-  if not directly provided. Assumes using the ESRI 10m LULC dataset.
+  SpatRaster or NULL. Pre-computed raster of agricultural area
+  proportions (0-1). If NULL, derived from `lulc`.
 
-- hii_input:
+- built_areas:
 
-  SpatRaster. Human Industrial Footprint Index (HII) raster.
+  SpatRaster or NULL. Pre-computed raster of built-up/urban area
+  proportions (0-1). If NULL, derived from `lulc`.
 
-- iucn_get_forest_input:
+- lulc:
 
-  SpatRaster. IUCN GET forest raster used to create `restore_zone_v2`.
+  SpatRaster or NULL. Land use/land cover raster used to derive
+  agriculture and built-up areas when not provided directly.
 
-- sdg_threshold:
+- degradation_threshold:
 
-  Numeric. Threshold for SDG degradation to classify as degraded
+  Numeric. Proportion threshold above which an area is considered
+  degraded (default: 0.1).
+
+- human_pressure_threshold:
+
+  Numeric. Human pressure value at or above which an area is considered
+  degraded (default: 4).
+
+- agriculture_threshold:
+
+  Numeric. Proportion threshold above which an area is excluded as
+  agricultural land (default: 0.1).
+
+- built_area_threshold:
+
+  Numeric. Proportion threshold above which an area is excluded as
+  built-up land (default: 0.1).
+
+- forest_threshold:
+
+  Numeric. Minimum forest cover proportion to include in restore_zone_v2
   (default: 0.1).
 
-- lulc_threshold:
+- lulc_agriculture_class:
 
-  Numeric. Threshold for agri/built classification (default: 0.1).
+  Integer. Class value in `lulc` representing agricultural land
+  (default: 4, for ESRI 10m LULC).
 
-- hii_threshold:
+- lulc_built_class:
 
-  Numeric. HII threshold for defining high human pressure (default: 4).
+  Integer. Class value in `lulc` representing built-up areas (default:
+  7, for ESRI 10m LULC).
 
-- iucn_get_forest_threshold:
+- filter_small_patches:
 
-  Numeric. Minimum forest cover value to retain in restore zone 2
-  (default: 0.1).
-
-- agriculture_lulc_value:
-
-  Integer. LULC value representing agriculture if derived from
-  `lulc_raster` (default: 4).
-
-- built_area_lulc_value:
-
-  Integer. LULC value representing built-up areas if derived from
-  `lulc_raster` (default: 7).
-
-- filter_patch_size:
-
-  Logical. Whether to remove small isolated patches (default: TRUE).
+  Logical. Whether to remove small isolated patches from the output
+  (default: TRUE).
 
 - min_patch_size:
 
-  Integer. Minimum number of connected pixels to retain (default: 10).
+  Integer. Minimum number of connected pixels to retain when filtering
+  patches (default: 10).
 
 - output_path:
 
-  Character or NULL. Directory to save output rasters. If NULL, outputs
-  are returned but not saved (default: NULL).
+  Character or NULL. Directory to save output rasters as Cloud Optimized
+  GeoTIFFs. If NULL, outputs are returned but not saved.
 
 ## Value
 
-A `SpatRaster` with two layers:
+A SpatRaster with two layers:
 
-- `restore_zone_v1`: Degraded areas based on SDG, LULC, and HII
-  thresholds
+- restore_zone_v1:
 
-- `restore_zone_v2`: `v1` masked by IUCN forest coverage
+  Degraded areas excluding agriculture and built-up land
+
+- restore_zone_v2:
+
+  restore_zone_v1 masked to forest ecosystems only
 
 ## Details
 
-The function applies user-defined thresholds to generate two outputs:
+The function generates two restore zone outputs:
 
-- `restore_zone_v1`: Based on SDG degradation, agriculture, built-up,
-  and HII thresholds
+- `restore_zone_v1`: All degraded areas excluding agriculture and
+  built-up land
 
-- `restore_zone_v2`: Same as `v1` but masked by IUCN GET forest extent
+- `restore_zone_v2`: Same as v1, but further masked to forest ecosystems
+  only
 
-If `output_path` is provided, the intermediate layers and final output
-are saved as Cloud Optimized GeoTIFFs.
+Areas are classified as degraded based on either:
+
+- Land degradation indicators (e.g., productivity decline)
+
+- Human pressure exceeding a threshold
+
+Agricultural and built-up areas can be provided directly as rasters, or
+derived from a land use/land cover (LULC) raster by specifying class
+values.
 
 ## Examples
 
 ``` r
 if (FALSE) { # \dontrun{
-restore_zone <- make_restore_zone(
+# Using LULC raster to derive agriculture/built areas
+restore_zones <- make_restore_zone(
   iso3 = "CHL",
   pus = planning_units,
-  sdg_degradation_input = sdg_raster,
-  agricultural_areas_input = NULL,
-  built_areas_input = NULL,
-  lulc_raster = lulc_input,
-  hii_input = hii_raster,
-  iucn_get_forest_input = forest_raster,
+  degradation = degradation_raster,
+  human_pressure = hfi_raster,
+  forest_mask = forest_raster,
+  lulc = lulc_raster,
   output_path = "outputs/"
 )
 
-restore_zone <- make_restore_zone(
+# Using pre-computed agriculture/built area rasters
+restore_zones <- make_restore_zone(
   iso3 = "CHL",
   pus = planning_units,
-  sdg_degradation_input = sdg_raster,
-  agricultural_areas_input = ag_areas_input,
-  built_areas_input = built_areas_input,
-  lulc_raster = NULL,
-  hii_input = hii_raster,
-  iucn_get_forest_input = forest_raster,
+  degradation = degradation_raster,
+  human_pressure = hfi_raster,
+  forest_mask = forest_raster,
+  agricultural_areas = ag_raster,
+  built_areas = urban_raster,
   output_path = "outputs/"
 )
 } # }

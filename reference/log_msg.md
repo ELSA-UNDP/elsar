@@ -20,5 +20,5 @@ log_msg(msg)
 
 ``` r
 log_msg("Starting the process...")
-#> [2025-11-28 05:57] Starting the process...
+#> [2025-11-28 06:06] Starting the process...
 ```

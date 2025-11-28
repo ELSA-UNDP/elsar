@@ -100,12 +100,12 @@ pus <- make_planning_units(
   pu_threshold = 8.5e5,
   limit_to_mainland = FALSE
 )
-#> [2025-11-28 05:56] pu_size not provided: estimating size to target <= 850000 PUs (allowing 5% tolerance).
-#> [2025-11-28 05:56] Iteration 1: 741036 PUs at resolution 450 m
-#> [2025-11-28 05:56] Iteration 2: 830662 PUs at resolution 425 m
-#> [2025-11-28 05:56] Iteration 3: 937494 PUs at resolution 400 m
-#> [2025-11-28 05:56] Exceeded soft threshold (892500); using best previous result.
-#> [2025-11-28 05:56] Final PU layer: 830662 PUs at 425 m resolution.
+#> [2025-11-28 06:05] pu_size not provided: estimating size to target <= 850000 PUs (allowing 5% tolerance).
+#> [2025-11-28 06:05] Iteration 1: 741036 PUs at resolution 450 m
+#> [2025-11-28 06:05] Iteration 2: 830662 PUs at resolution 425 m
+#> [2025-11-28 06:05] Iteration 3: 937494 PUs at resolution 400 m
+#> [2025-11-28 06:05] Exceeded soft threshold (892500); using best previous result.
+#> [2025-11-28 06:05] Final PU layer: 830662 PUs at 425 m resolution.
 wad_dat <- get_wad_data()
 
 wadOut <- make_normalised_raster(
