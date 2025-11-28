@@ -1,0 +1,76 @@
+# Function to make standardised mangroves data
+
+`make_mangroves()`allows you to align, normalise an `sf`file and save it
+as a raster file. Originally created to prepare the Global Mangrove
+Watch data.
+
+## Usage
+
+``` r
+make_mangroves(sf_in, pus, iso3, name_out, output_path = NULL)
+```
+
+## Arguments
+
+- sf_in:
+
+  An `sf` file that contains the data to be put into right format
+
+- pus:
+
+  A `SpatRaster` file that contains the reference spatial extent, crs
+  etc.in form of the planning units
+
+- iso3:
+
+  A string of the iso3 name of the data (country name)
+
+- name_out:
+
+  A string with the data name that will be used for the output `tif`file
+
+- output_path:
+
+  An optional output path for the created file.
+
+## Value
+
+A `SpatRaster` file that has been aligned and normalised
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+boundary_proj <- make_boundary(
+  boundary_in = boundary_dat,
+  iso3 = "IND",
+  iso3_column = "iso3cd"
+  )
+
+# make planning units
+pus <- make_planning_units(
+  boundary_proj = boundary_proj,
+  pu_size = NULL,
+  pu_threshold = 8.5e5,
+  limit_to_mainland = FALSE
+  )
+
+path_in <- "<yourPath>"
+ist_dat <- extract_filename_filetype(
+  data_name = "gmw",
+  file_path = path_in
+  )
+
+mangroves <- load_data(
+  file_name = paste0(list_dat["filename"][[1]], list_dat["filetype"][[1]]),
+  file_path = path_in,
+  wkt_filter = TRUE,
+  bb_extend = pus
+  )
+
+mangrove_raster <- make_mangroves(
+  sf_in = mangroves,
+  pus = pus
+  )
+} # }
+```

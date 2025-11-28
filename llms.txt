@@ -1,0 +1,219 @@
+# elsaR R package ![](reference/figures/elsaR_hex_sticker.png)
+
+The **elsaR** package provides tools and data pipelines to support
+*Essential Life Support Areas (ELSA)*. It is designed to assist in
+spatial prioritization and scenario development using globally
+standardized geospatial data layers for conservation and restoration
+planning.
+
+------------------------------------------------------------------------
+
+## What does elsaR do?
+
+- Loads and harmonizes global spatial datasets (e.g., WDPA, KBA,
+  LANDMark, ICCA)
+- Prepares binary and fractional raster layers for datastack creation
+- Supports creation of key ELSA zone layers: protect, restore, manage
+- Calculates spatial coverage metrics over planning units
+- Provides tools to buffer and rasterise point-based spatial data
+- Outputs results in ready-to-use formats (COG, SpatRaster, etc.)
+
+------------------------------------------------------------------------
+
+## Installation
+
+``` r
+# Install the development version from GitHub
+remotes::install_github("ELSA-UNDP/elsar")
+```
+
+# Package index
+
+## Prepare Planning Region
+
+Functions to prepare the planning region for the ELSA workflow
+
+- [`make_boundary()`](https://elsa-undp.github.io/elsar/reference/make_boundary.md)
+  : Create a boundary of the planning region
+- [`make_planning_units()`](https://elsa-undp.github.io/elsar/reference/make_planning_units.md)
+  : Create a Planning Units Raster
+
+## Prepare Feature Data
+
+Functions to prepare the global datasets for the ELSA workflow
+
+- [`get_all_features()`](https://elsa-undp.github.io/elsar/reference/get_all_features.md)
+  : Wrapper function to get a raster file with all wanted features
+- [`make_degraded_areas()`](https://elsa-undp.github.io/elsar/reference/make_degraded_areas.md)
+  : Create degraded areas layer for restoration planning
+- [`make_flood_abatement_opportunities()`](https://elsa-undp.github.io/elsar/reference/make_flood_abatement_opportunities.md)
+  : Create a Flood Abatement Opportunities Raster
+- [`make_forest_integrity()`](https://elsa-undp.github.io/elsar/reference/make_forest_integrity.md)
+  : Create the forest integrity index using flii and fsii data
+- [`make_indigenous_managed_lands()`](https://elsa-undp.github.io/elsar/reference/make_indigenous_managed_lands.md)
+  : Create Indigenous Managed Lands Raster (LANDMark + ICCA)
+- [`make_kbas()`](https://elsa-undp.github.io/elsar/reference/make_kbas.md)
+  : Create a Standardised Raster of Key Biodiversity Areas (KBAs)
+- [`make_managed_forests()`](https://elsa-undp.github.io/elsar/reference/make_managed_forests.md)
+  : Create Managed Forests and Productive Managed Forests Raster Layers
+- [`make_mangroves()`](https://elsa-undp.github.io/elsar/reference/make_mangroves.md)
+  : Function to make standardised mangroves data
+- [`make_normalised_raster()`](https://elsa-undp.github.io/elsar/reference/make_normalised_raster.md)
+  : Create a Normalised Raster Aligned with and masked by Planning Units
+- [`make_protected_areas()`](https://elsa-undp.github.io/elsar/reference/make_protected_areas.md)
+  : Create a Binary or Fractional Raster of Protected Areas Aligned to
+  Planning Units
+- [`make_threatened_ecosystems_protection()`](https://elsa-undp.github.io/elsar/reference/make_threatened_ecosystems_protection.md)
+  : Create a Threatened Ecosystems Raster Based on Integrity or
+  Degradation
+- [`make_threatened_ecosystems_restoration()`](https://elsa-undp.github.io/elsar/reference/make_threatened_ecosystems_restoration.md)
+  : Create Threatened Ecosystems (for Restoration) Raster Based on
+  Intactness and Degradation
+- [`make_underrepresented_ecosystems()`](https://elsa-undp.github.io/elsar/reference/make_underrepresented_ecosystems.md)
+  : Create a Representation Gap Raster for Ecosystems
+- [`make_urban_greening_opportunities()`](https://elsa-undp.github.io/elsar/reference/make_urban_greening_opportunities.md)
+  : Create Urban Greening Opportunities Raster
+- [`make_wetlands_ramsar()`](https://elsa-undp.github.io/elsar/reference/make_wetlands_ramsar.md)
+  : Create a Standardised Raster for Wetlands and Ramsar Sites
+
+## Set up ELSA analysis
+
+Functions to help formulate a conservation problem for an ELSA analysis
+
+- [`make_protect_zone()`](https://elsa-undp.github.io/elsar/reference/make_protect_zone.md)
+  : Generate Protect Zone Raster for ELSA Analysis
+- [`make_restore_zone()`](https://elsa-undp.github.io/elsar/reference/make_restore_zone.md)
+  : Generate a Degraded Areas Layer for Restoration Planning
+- [`make_manage_zone()`](https://elsa-undp.github.io/elsar/reference/make_manage_zone.md)
+  : Generate Sustainable Management Zones for ELSA Analysis
+
+## Post-hoc analysis for ELSA framework
+
+Functions to help formulate a conservation problem for an ELSA analysis
+
+- [`calc_feat_rep()`](https://elsa-undp.github.io/elsar/reference/calc_feat_rep.md)
+  : Calculate feature representation
+
+## ELSA-specific plotting functions
+
+Functions to help visualise ELSA output
+
+- [`elsa_plot_output_map()`](https://elsa-undp.github.io/elsar/reference/elsa_plot_output_map.md)
+  : Create a Map of the ELSA output to download with GIS layers
+- [`elsa_plot_representation()`](https://elsa-undp.github.io/elsar/reference/elsa_plot_representation.md)
+  : Create a Bar Plot of Feature Representation
+
+## ELSA-specific utilities functions
+
+Functions to help ELSA analysis
+
+- [`calculate_restore_and_urban_budgets()`](https://elsa-undp.github.io/elsar/reference/calculate_restore_and_urban_budgets.md)
+  : Calculate restore and urban green zone budgets as percentages
+- [`get_min_lockin_target()`](https://elsa-undp.github.io/elsar/reference/get_min_lockin_target.md)
+  : Get Minimum Lock-in Targets for Zones
+- [`get_target()`](https://elsa-undp.github.io/elsar/reference/get_target.md)
+  : Calculate Target Area from Percentage
+
+## Helper Functions
+
+- [`elsar_load_data()`](https://elsa-undp.github.io/elsar/reference/elsar_load_data.md)
+  : Load spatial or raster data from local files or Postgres
+- [`download_esri_lulc_data()`](https://elsa-undp.github.io/elsar/reference/download_esri_lulc_data.md)
+  : Download the ESRI 10m Land Use/Land Cover Time Series (LULC) Layer
+- [`download_global_pasture_data()`](https://elsa-undp.github.io/elsar/reference/download_global_pasture_data.md)
+  : Download Global Pasture Watch Grassland Probability Layer
+- [`download_gee_layer()`](https://elsa-undp.github.io/elsar/reference/download_gee_layer.md)
+  : Download and Process a GEE Raster Layer into a Cloud-Optimized
+  GeoTIFF
+- [`filter_sf()`](https://elsa-undp.github.io/elsar/reference/filter_sf.md)
+  : Load and optionally filter a single vector layer
+- [`get_file_type()`](https://elsa-undp.github.io/elsar/reference/get_file_type.md)
+  : Infer file type from file path or directory
+- [`get_iucn_ecosystems()`](https://elsa-undp.github.io/elsar/reference/get_iucn_ecosystems.md)
+  : Extract and Filter IUCN GET Ecosystem Vector Layers
+- [`get_iucn_forests()`](https://elsa-undp.github.io/elsar/reference/get_iucn_forests.md)
+  : Extract and Rasterise IUCN Forest Ecosystems from Preloaded Layer
+- [`log_msg()`](https://elsa-undp.github.io/elsar/reference/log_msg.md)
+  : Log a timestamped message to the console
+- [`make_custom_projection()`](https://elsa-undp.github.io/elsar/reference/make_custom_projection.md)
+  : Create a custom projection based on the planning region
+
+## Utilities
+
+- [`convert_points_polygon()`](https://elsa-undp.github.io/elsar/reference/convert_points_polygon.md)
+  : Convert Points to Buffered Polygons Based on Area
+- [`crop_global_raster()`](https://elsa-undp.github.io/elsar/reference/crop_global_raster.md)
+  : Crop a Global Raster to the Extent of Planning Units
+- [`extract_filename_filetype()`](https://elsa-undp.github.io/elsar/reference/extract_filename_filetype.md)
+  : Extract Filename and Filetype from Directory
+- [`exact_rasterise()`](https://elsa-undp.github.io/elsar/reference/exact_rasterise.md)
+  : Efficient Attribute-Weighted Rasterization Using Coverage Fraction
+- [`get_coverage()`](https://elsa-undp.github.io/elsar/reference/get_coverage.md)
+  : Calculate Areal Coverage of a Zone Relative to Planning Units
+- [`median_from_rast()`](https://elsa-undp.github.io/elsar/reference/median_from_rast.md)
+  : Compute median from a SpatRaster using its GDAL PAM side-car
+  histogram
+- [`rescale_raster()`](https://elsa-undp.github.io/elsar/reference/rescale_raster.md)
+  : Rescale Raster to 0-1 Range
+- [`split_bbox_into_tiles()`](https://elsa-undp.github.io/elsar/reference/split_bbox_into_tiles.md)
+  : Split a Bounding Box into a Regular Grid of Polygon Tiles
+- [`conditionally_subdivide_bbox()`](https://elsa-undp.github.io/elsar/reference/conditionally_subdivide_bbox.md)
+  : Conditionally Subdivide Bounding Box into Grid Tiles Based on
+  Geographic Extent
+- [`save_raster()`](https://elsa-undp.github.io/elsar/reference/save_raster.md)
+  : Save a Raster as a Cloud Optimized GeoTIFF (COG)
+
+## Plotting function
+
+Functions to plot input and output data of an ELSA workflow
+
+- [`elsar_plot_distribution()`](https://elsa-undp.github.io/elsar/reference/elsar_plot_distribution.md)
+  : Function to create basic histogram with categorical data
+- [`elsar_plot_feature()`](https://elsa-undp.github.io/elsar/reference/elsar_plot_feature.md)
+  : Plot a single feature raster within planning unit outlines
+- [`elsar_plot_static_raster()`](https://elsa-undp.github.io/elsar/reference/elsar_plot_static_raster.md)
+  : Function to create a static plot from raster data
+- [`elsar_plot_static_raster_c()`](https://elsa-undp.github.io/elsar/reference/elsar_plot_static_raster_c.md)
+  : Function to create a static plot from raster data with continuous
+  data
+- [`elsar_plot_static_raster_d()`](https://elsa-undp.github.io/elsar/reference/elsar_plot_static_raster_d.md)
+  : Function to create a static plot from raster data with discrete data
+
+## Utilities plotting
+
+- [`elsar_continuous_to_categorical()`](https://elsa-undp.github.io/elsar/reference/elsar_continuous_to_categorical.md)
+  : Function to create categories for plotting out of continuous data
+- [`elsar_extend()`](https://elsa-undp.github.io/elsar/reference/elsar_extend.md)
+  : Function to extend the spatial extend around a raster file for
+  plotting
+- [`elsar_plot_background()`](https://elsa-undp.github.io/elsar/reference/elsar_plot_background.md)
+  [`elsar_plot_background_c()`](https://elsa-undp.github.io/elsar/reference/elsar_plot_background.md)
+  [`elsar_plot_background_d()`](https://elsa-undp.github.io/elsar/reference/elsar_plot_background.md)
+  : Function to create a plot with background data for another plot
+- [`elsar_plot_extra_data()`](https://elsa-undp.github.io/elsar/reference/elsar_plot_extra_data.md)
+  : Function to add additional data to an existing plot
+- [`elsar_plot_optics()`](https://elsa-undp.github.io/elsar/reference/elsar_plot_optics.md)
+  : Function to easily adapt the visual appearance of a plot
+
+## Utilities pipeline
+
+- [`get_binary_layers()`](https://elsa-undp.github.io/elsar/reference/get_binary_layers.md)
+  : Extract binary layers within a raster stack
+
+## Datasets
+
+- [`boundary_dat`](https://elsa-undp.github.io/elsar/reference/boundary_dat.md)
+  : Data used to extract the Nepal boundary
+- [`current_pas_sf`](https://elsa-undp.github.io/elsar/reference/current_pas_sf.md)
+  : Data used for current protected areas
+- [`get_wad_data()`](https://elsa-undp.github.io/elsar/reference/wad_subset.md)
+  : Get wad data saved as tif
+
+# Articles
+
+### All vignettes
+
+- [Processing global data in
+  R](https://elsa-undp.github.io/elsar/articles/data-info.md):
+- [An Example ELSA
+  Workflow](https://elsa-undp.github.io/elsar/articles/elsaR.md):

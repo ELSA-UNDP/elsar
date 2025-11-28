@@ -110,7 +110,7 @@ use a pre-saved dataset.</p>
 <span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">boundary</span><span class="op">)</span></span></code></pre></div>
-<p><img src="elsaR_files/figure-html/unnamed-chunk-3-1.png" width="336" style="display: block; margin: auto;"></p>
+<p><img src="elsaR_files/figure-html/unnamed-chunk-3-1.png" class="r-plt" width="336" style="display: block; margin: auto;"></p>
 <p>The <code><a href="../reference/make_boundary.html">make_boundary()</a></code> function also provides the option to
 create a custom projection centred on the planning region. This can also
 be done in separate steps using the
@@ -152,12 +152,12 @@ planning units, which is based on previous experience with run time.</p>
 <span>  pu_threshold <span class="op">=</span> <span class="fl">8.5e5</span>,</span>
 <span>  limit_to_mainland <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; [2025-05-09 07:45] pu_size not provided: estimating size to target &lt;= 850000 PUs (allowing 5% tolerance).</span></span>
-<span><span class="co">#&gt; [2025-05-09 07:45] Iteration 1: 741036 PUs at resolution 450 m</span></span>
-<span><span class="co">#&gt; [2025-05-09 07:45] Iteration 2: 830662 PUs at resolution 425 m</span></span>
-<span><span class="co">#&gt; [2025-05-09 07:45] Iteration 3: 937494 PUs at resolution 400 m</span></span>
-<span><span class="co">#&gt; [2025-05-09 07:45] Exceeded soft threshold (892500); using best previous result.</span></span>
-<span><span class="co">#&gt; [2025-05-09 07:45] Final PU layer: 830662 PUs at 425 m resolution.</span></span></code></pre></div>
+<span><span class="co">#&gt; [2025-11-28 05:57] pu_size not provided: estimating size to target &lt;= 850000 PUs (allowing 5% tolerance).</span></span>
+<span><span class="co">#&gt; [2025-11-28 05:57] Iteration 1: 741036 PUs at resolution 450 m</span></span>
+<span><span class="co">#&gt; [2025-11-28 05:57] Iteration 2: 830662 PUs at resolution 425 m</span></span>
+<span><span class="co">#&gt; [2025-11-28 05:57] Iteration 3: 937494 PUs at resolution 400 m</span></span>
+<span><span class="co">#&gt; [2025-11-28 05:57] Exceeded soft threshold (892500); using best previous result.</span></span>
+<span><span class="co">#&gt; [2025-11-28 05:57] Final PU layer: 830662 PUs at 425 m resolution.</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="features">Features<a class="anchor" aria-label="anchor" href="#features"></a>
@@ -186,7 +186,7 @@ units. We also normalise the data to only have values within the range
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">terra</span><span class="fu">::</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/plot.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">wadOut</span><span class="op">)</span></span></code></pre></div>
-<p><img src="elsaR_files/figure-html/unnamed-chunk-8-1.png" width="336" style="display: block; margin: auto;"></p>
+<p><img src="elsaR_files/figure-html/unnamed-chunk-8-1.png" class="r-plt" width="336" style="display: block; margin: auto;"></p>
 <p>Instead of only having a quick look at the data by using the
 <code>terra</code> package’s <code>plot</code> function, we can also
 create a plot using the plotting options integrated in the
@@ -198,7 +198,7 @@ continuous raster data with <code>ggplot</code>.</p>
 <span>  raster_in <span class="op">=</span> <span class="va">wadOut</span>, type <span class="op">=</span> <span class="st">"ggplot_raster"</span>,</span>
 <span>  legend_title <span class="op">=</span> <span class="st">"WAD"</span></span>
 <span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="elsaR_files/figure-html/unnamed-chunk-9-1.png" width="672" style="display: block; margin: auto;"></p>
+<p><img src="elsaR_files/figure-html/unnamed-chunk-9-1.png" class="r-plt" width="672" style="display: block; margin: auto;"></p>
 <p>We can also add background data to the plot and add additional
 properties to change the appearance of the plot by using the
 <code><a href="../reference/elsar_plot_optics.html">elsar_plot_optics()</a></code> function that allows to specify a
@@ -220,7 +220,7 @@ to be something other than the default “viridis”.</p>
 <span>  <span class="fu"><a href="../reference/elsar_plot_optics.html">elsar_plot_optics</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Adding background layer.</span></span>
 <span><span class="co">#&gt; Extend based on ratio.</span></span></code></pre></div>
-<p><img src="elsaR_files/figure-html/unnamed-chunk-10-1.png" width="768" style="display: block; margin: auto;"></p>
+<p><img src="elsaR_files/figure-html/unnamed-chunk-10-1.png" class="r-plt" width="768" style="display: block; margin: auto;"></p>
 <p>If needed, logos can be included on the map. The location is
 dependent on the plot dimensions and therefore needs to be adjusted
 based on the figure, for example by using <code><a href="https://rspatial.github.io/terra/reference/ext.html" class="external-link">terra::ext()</a></code>.</p>
@@ -250,7 +250,7 @@ based on the figure, for example by using <code><a href="https://rspatial.github
 <span>                      logo_dim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">50</span>, <span class="fl">60</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Adding background layer.</span></span>
 <span><span class="co">#&gt; Extend based on ratio.</span></span></code></pre></div>
-<p><img src="elsaR_files/figure-html/unnamed-chunk-11-1.png" width="768" style="display: block; margin: auto;"></p>
+<p><img src="elsaR_files/figure-html/unnamed-chunk-11-1.png" class="r-plt" width="768" style="display: block; margin: auto;"></p>
 <p>If we are interested in the distribution, we can also plot the
 distribution on the plots. For this, we need to create two separate
 plots that we then put together:</p>
@@ -274,9 +274,9 @@ and the inset that way.</p>
 <span><span class="co">#&gt; Adding background layer.</span></span>
 <span><span class="co">#&gt; Extend based on ratio.</span></span>
 <span><span class="co">#&gt; Adding PA layer.</span></span>
-<span><span class="co">#&gt; Coordinate system already present. Adding new coordinate system, which will</span></span>
-<span><span class="co">#&gt; replace the existing one.</span></span></code></pre></div>
-<p><img src="elsaR_files/figure-html/unnamed-chunk-14-1.png" width="672" style="display: block; margin: auto;"></p>
+<span><span class="co">#&gt; Coordinate system already present.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Adding new coordinate system, which will replace the existing one.</span></span></code></pre></div>
+<p><img src="elsaR_files/figure-html/unnamed-chunk-14-1.png" class="r-plt" width="672" style="display: block; margin: auto;"></p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="va">plot_wad_pas2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/elsar_plot_static_raster_c.html">elsar_plot_static_raster_c</a></span><span class="op">(</span></span>
 <span>  raster_in <span class="op">=</span> <span class="va">wadOut</span>, type <span class="op">=</span> <span class="st">"ggplot_raster"</span>,</span>
@@ -288,9 +288,9 @@ and the inset that way.</p>
 <span><span class="co">#&gt; Adding background layer.</span></span>
 <span><span class="co">#&gt; Extend based on ratio.</span></span>
 <span><span class="co">#&gt; Adding PA layer.</span></span>
-<span><span class="co">#&gt; Coordinate system already present. Adding new coordinate system, which will</span></span>
-<span><span class="co">#&gt; replace the existing one.</span></span></code></pre></div>
-<p><img src="elsaR_files/figure-html/unnamed-chunk-15-1.png" width="672" style="display: block; margin: auto;"></p>
+<span><span class="co">#&gt; Coordinate system already present.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Adding new coordinate system, which will replace the existing one.</span></span></code></pre></div>
+<p><img src="elsaR_files/figure-html/unnamed-chunk-15-1.png" class="r-plt" width="672" style="display: block; margin: auto;"></p>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
@@ -304,7 +304,7 @@ and the inset that way.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.2.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>

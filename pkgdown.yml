@@ -1,10 +1,10 @@
 pandoc: 3.1.11
-pkgdown: 2.1.2
+pkgdown: 2.2.0
 pkgdown_sha: ~
 articles:
   data-info: data-info.html
   elsaR: elsaR.html
-last_built: 2025-05-09T07:44Z
+last_built: 2025-11-28T05:55Z
 urls:
   reference: https://elsa-undp.github.io/elsar/reference
   article: https://elsa-undp.github.io/elsar/articles
