@@ -7,14 +7,15 @@
 download_from_drive(drive_folder, file_prefix, local_path)
 }
 \arguments{
-\item{drive_folder}{Character. Google Drive folder name or path}
+\item{drive_folder}{Character or NULL. Google Drive folder name/path, or NULL for root.}
 
-\item{file_prefix}{Character. Prefix to search for in filenames}
+\item{file_prefix}{Character. Prefix to search for in filenames.}
 
-\item{local_path}{Character. Local directory path where files should be downloaded}
+\item{local_path}{Character. Local directory path where files should be downloaded.}
 }
 \value{
-Invisible NULL. Files are downloaded as a side effect.
+Invisible list with \code{success} (logical) and \code{files} (character vector of
+successfully downloaded file paths). Returns \code{success = FALSE} if any download fails.
 }
 \description{
 Downloads all files matching a specified prefix from a Google Drive folder.
@@ -22,7 +23,8 @@ Files are filtered to only include .tif files matching the prefix pattern.
 }
 \examples{
 \dontrun{
-download_from_drive("my_gee_exports", "esri_lulc_2024_GHA", "/tmp/downloads")
+result <- download_from_drive("my_gee_exports", "esri_lulc_2024_GHA", "/tmp/downloads")
+if (!result$success) warning("Some downloads failed")
 }
 }
 \keyword{internal}

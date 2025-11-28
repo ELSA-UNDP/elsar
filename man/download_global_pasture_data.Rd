@@ -14,11 +14,13 @@ download_global_pasture_data(
 )
 }
 \arguments{
-\item{boundary_layer}{An \code{sf} object defining the spatial boundary of interest}
+\item{boundary_layer}{An \code{sf} object defining the spatial boundary of interest.}
 
-\item{iso3}{Character. Three-letter ISO country code for filename generation}
+\item{iso3}{Character. Three-letter ISO country code for filename generation.}
 
-\item{gee_project}{Character. Earth Engine Cloud project ID. Default is "unbl-misc"}
+\item{gee_project}{Character. Google Earth Engine cloud project ID. This is
+required and must be a valid GEE project you have access to. Find your
+project ID in the \href{https://code.earthengine.google.com/}{GEE Code Editor}.}
 
 \item{output_dir}{Character. Local output directory. Defaults to project root via \code{here::here()}}
 

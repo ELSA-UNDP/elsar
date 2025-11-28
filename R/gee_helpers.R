@@ -9,7 +9,10 @@
 #' Sets up Python environment and initializes the Earth Engine API.
 #' Handles authentication and temporary conda environments as needed.
 #'
-#' @param gee_project Character. GEE cloud project ID. Default is "unbl-misc".
+#' @param gee_project Character. Google Earth Engine cloud project ID.
+#'   This is required and must be a valid GEE project you have access to.
+#'   You can find your project ID in the [GEE Code Editor](https://code.earthengine.google.com/)
+#'   or [Google Cloud Console](https://console.cloud.google.com/).
 #' @return A list containing the `ee` module and temporary environment name (if created)
 #' @keywords internal
 #' @examples
@@ -17,7 +20,11 @@
 #' env_info <- initialize_earthengine("my-gee-project")
 #' ee <- env_info$ee
 #' }
-initialize_earthengine <- function(gee_project = "unbl-misc") {
+initialize_earthengine <- function(gee_project) {
+  assertthat::assert_that(
+    assertthat::is.string(gee_project) && nchar(gee_project) > 0,
+    msg = "gee_project is required and must be a non-empty string (your GEE cloud project ID)"
+  )
 
   log_msg("Checking Python environment for Earth Engine API...")
 
@@ -87,34 +94,79 @@ cleanup_earthengine <- function(env_info) {
 #' Downloads all files matching a specified prefix from a Google Drive folder.
 #' Files are filtered to only include .tif files matching the prefix pattern.
 #'
-#' @param drive_folder Character. Google Drive folder name or path
-#' @param file_prefix Character. Prefix to search for in filenames
-#' @param local_path Character. Local directory path where files should be downloaded
-#' @return Invisible NULL. Files are downloaded as a side effect.
+#' @param drive_folder Character or NULL. Google Drive folder name/path, or NULL for root.
+#' @param file_prefix Character. Prefix to search for in filenames.
+#' @param local_path Character. Local directory path where files should be downloaded.
+#'
+#' @return Invisible list with `success` (logical) and `files` (character vector of
+#'   successfully downloaded file paths). Returns `success = FALSE` if any download fails.
 #' @keywords internal
 #' @examples
 #' \dontrun{
-#' download_from_drive("my_gee_exports", "esri_lulc_2024_GHA", "/tmp/downloads")
+#' result <- download_from_drive("my_gee_exports", "esri_lulc_2024_GHA", "/tmp/downloads")
+#' if (!result$success) warning("Some downloads failed")
 #' }
 download_from_drive <- function(drive_folder, file_prefix, local_path) {
   # List all files in the specified Drive folder
-  files <- googledrive::drive_ls(path = drive_folder)
+  files <- tryCatch(
+    googledrive::drive_ls(path = drive_folder),
+    error = function(e) {
+      log_msg(glue::glue("Error accessing Google Drive folder: {e$message}"))
+      return(NULL)
+    }
+  )
+
+ if (is.null(files) || nrow(files) == 0) {
+    log_msg("No files found in Google Drive folder")
+    return(invisible(list(success = FALSE, files = character(0))))
+  }
 
   # Filter to only .tif files that match the prefix pattern
   matching_files <- files[grepl(paste0("^", file_prefix), files$name) & grepl("\\.tif$", files$name), ]
 
-  # Download each matching file
-  for (i in seq_len(nrow(matching_files))) {
-    file_path <- file.path(local_path, matching_files$name[i])
-    googledrive::drive_download(
-      googledrive::as_id(matching_files$id[i]),
-      path = file_path,
-      overwrite = TRUE
-    )
-    log_msg(glue::glue("Downloaded: {matching_files$name[i]}"))
+  if (nrow(matching_files) == 0) {
+    log_msg(glue::glue("No .tif files matching prefix '{file_prefix}' found"))
+    return(invisible(list(success = FALSE, files = character(0))))
   }
 
-  invisible(NULL)
+  # Download each matching file with error handling
+ downloaded_files <- character(0)
+  failed_downloads <- character(0)
+
+  for (i in seq_len(nrow(matching_files))) {
+    file_path <- file.path(local_path, matching_files$name[i])
+
+    result <- tryCatch({
+      googledrive::drive_download(
+        googledrive::as_id(matching_files$id[i]),
+        path = file_path,
+        overwrite = TRUE
+      )
+      log_msg(glue::glue("Downloaded: {matching_files$name[i]}"))
+      TRUE
+    }, error = function(e) {
+      log_msg(glue::glue("Failed to download {matching_files$name[i]}: {e$message}"))
+      FALSE
+    })
+
+    if (result) {
+      downloaded_files <- c(downloaded_files, file_path)
+    } else {
+      failed_downloads <- c(failed_downloads, matching_files$name[i])
+    }
+  }
+
+  if (length(failed_downloads) > 0) {
+    warning(
+      glue::glue("Failed to download {length(failed_downloads)} file(s): {paste(failed_downloads, collapse = ', ')}"),
+      call. = FALSE
+    )
+  }
+
+  invisible(list(
+    success = length(failed_downloads) == 0,
+    files = downloaded_files
+  ))
 }
 
 #' Merge downloaded GEE tiles into a single Cloud-Optimized GeoTIFF
@@ -179,20 +231,32 @@ merge_tiles <- function(local_path, output_file, datatype) {
 #' into a local Cloud-Optimized GeoTIFF. Exports to Google Drive root to avoid
 #' GEE folder duplication bugs.
 #'
-#' @param boundary_layer An `sf` object defining the spatial boundary of interest
-#' @param iso3 Character. Three-letter ISO country code for filename generation
+#' For most use cases, prefer the higher-level wrapper functions like
+#' [download_esri_lulc_data()] or [download_global_pasture_data()] which
+#' have sensible defaults for common datasets.
+#'
+#' @param boundary_layer An `sf` object defining the spatial boundary of interest.
+#' @param iso3 Character. Three-letter ISO country code for filename generation.
+#' @param gee_project Character. Google Earth Engine cloud project ID. This is
+#'   required and must be a valid GEE project you have access to. Find your
+#'   project ID in the [GEE Code Editor](https://code.earthengine.google.com/).
+#' @param asset_id Character. Earth Engine ImageCollection asset ID
+#'   (e.g., "projects/sat-io/open-datasets/...").
+#' @param file_prefix Character. Prefix for export filename and GEE task description.
 #' @param output_dir Character. Path to directory for saving the final raster file.
-#'   Defaults to project root via `here::here()`
-#' @param asset_id Character. Earth Engine ImageCollection asset ID (e.g., "projects/...")
-#' @param file_prefix Character. Prefix for export filename and GEE task description
-#' @param scale Numeric. Resolution of the exported image in meters. Default is 10
-#' @param datatype Character. Output datatype (GDAL style), e.g., "INT1U" or "FLT4S"
-#' @param gee_project Character. Earth Engine Cloud project ID. Default is "unbl-misc"
-#' @param googledrive_folder Character. Google Drive folder name. Currently exports
-#'   to Drive root (NULL) to avoid GEE folder duplication bug
-#' @param wait_time Numeric. Max time (in minutes) to wait for Drive export to appear
-#' @return A `SpatRaster` object written to disk, or NULL if export failed
-#' @keywords internal
+#'   Defaults to project root via `here::here()`.
+#' @param scale Numeric. Resolution of the exported image in meters. Default is 10.
+#' @param datatype Character. Output datatype (GDAL style), e.g., "INT1U" or "FLT4S".
+#'   Default is "INT1U".
+#' @param googledrive_folder Character or NULL. Google Drive folder name for exports.
+#'   Currently defaults to NULL (Drive root) to avoid a GEE folder duplication bug.
+#' @param wait_time Numeric. Maximum time in minutes to wait for the GEE export
+#'   to appear in Google Drive. Default is 5. Increase for large exports.
+#'
+#' @return A `SpatRaster` object written to disk, or NULL if export timed out.
+#'
+#' @seealso [download_esri_lulc_data()], [download_global_pasture_data()]
+#'
 #' @export
 #' @examples
 #' \dontrun{
@@ -200,6 +264,7 @@ merge_tiles <- function(local_path, output_file, datatype) {
 #' lulc <- download_gee_layer(
 #'   boundary_layer = ghana_boundary,
 #'   iso3 = "GHA",
+#'   gee_project = "my-gee-project",
 #'   asset_id = "projects/sat-io/open-datasets/landcover/ESRI_Global-LULC_10m_TS",
 #'   file_prefix = "esri_10m_lulc",
 #'   scale = 10,
@@ -209,13 +274,13 @@ merge_tiles <- function(local_path, output_file, datatype) {
 download_gee_layer <- function(
     boundary_layer,
     iso3,
-    output_dir = here::here(),
+    gee_project,
     asset_id,
     file_prefix,
+    output_dir = here::here(),
     scale = 10,
     datatype = "INT1U",
-    gee_project = "unbl-misc",
-    googledrive_folder = NULL, # Export to Drive root pending fix on duplicate folder creation
+    googledrive_folder = NULL,
     wait_time = 5
 ) {
 
@@ -512,19 +577,25 @@ download_global_pasture_data <- function(
 #' Check and download GEE-sourced layers based on metadata requirements
 #'
 #' This function checks for required layer names from metadata, ensures they exist
-#' in the output path, and prompts the user to download them from GEE if missing.
-#' Used internally by other functions to automatically download required datasets.
+#' in the output path, and optionally prompts the user to download them from GEE
+#' if missing. Used internally by other functions to automatically download
+#' required datasets.
 #'
-#' @param data_info Data.frame containing `data_name` fields to match against requirements
-#' @param iso3 Character. ISO3 country code for the target country
-#' @param input_path Character. Path where data files should exist or be downloaded to
-#' @param gee_project Character. Google Earth Engine project ID
-#' @param boundary_proj An `sf` object representing the country boundary
-#' @param wait_time Numeric. Wait time (in minutes) for Drive export
-#' @return NULL (used for side-effect of downloading). Files are downloaded as needed.
+#' @param data_info Data.frame containing `data_name` fields to match against requirements.
+#' @param iso3 Character. ISO3 country code for the target country.
+#' @param input_path Character. Path where data files should exist or be downloaded to.
+#' @param gee_project Character. Google Earth Engine project ID.
+#' @param boundary_proj An `sf` object representing the country boundary.
+#' @param wait_time Numeric. Wait time (in minutes) for Drive export. Default is 5.
+#' @param interactive Logical. If TRUE (default), prompts user before downloading.
+#'   If FALSE, automatically downloads missing layers without prompting. Set to
+#'   FALSE for non-interactive sessions (e.g., batch jobs, CI/CD pipelines).
+#'
+#' @return Invisible NULL. Files are downloaded as a side effect.
 #' @keywords internal
 #' @examples
 #' \dontrun{
+#' # Interactive mode (default) - prompts user
 #' check_and_download_required_layers(
 #'   data_info = metadata_df,
 #'   iso3 = "GHA",
@@ -532,8 +603,26 @@ download_global_pasture_data <- function(
 #'   gee_project = "my-project",
 #'   boundary_proj = ghana_boundary
 #' )
+#'
+#' # Non-interactive mode - auto-downloads without prompts
+#' check_and_download_required_layers(
+#'   data_info = metadata_df,
+#'   iso3 = "GHA",
+#'   input_path = "/path/to/data",
+#'   gee_project = "my-project",
+#'   boundary_proj = ghana_boundary,
+#'   interactive = FALSE
+#' )
 #' }
-check_and_download_required_layers <- function(data_info, iso3, input_path, gee_project, boundary_proj, wait_time = 5) {
+check_and_download_required_layers <- function(
+    data_info,
+    iso3,
+    input_path,
+    gee_project,
+    boundary_proj,
+    wait_time = 5,
+    interactive = TRUE
+) {
   required_layers <- unique(data_info$data_name)
 
   # Define available GEE layers and their requirements
@@ -551,8 +640,8 @@ check_and_download_required_layers <- function(data_info, iso3, input_path, gee_
     ),
     # Download functions for each layer
     download_fun = list(
-      function() elsar::elsar_download_esri_lulc_data(boundary_layer = boundary_proj, iso3 = iso3, gee_project = gee_project, output_dir = input_path, wait_time = wait_time),
-      function() elsar::elsar_download_global_pasture_data(boundary_layer = boundary_proj, iso3 = iso3, gee_project = gee_project, output_dir = input_path, wait_time = wait_time)
+      function() elsar::download_esri_lulc_data(boundary_layer = boundary_proj, iso3 = iso3, gee_project = gee_project, output_dir = input_path, wait_time = wait_time),
+      function() elsar::download_global_pasture_data(boundary_layer = boundary_proj, iso3 = iso3, gee_project = gee_project, output_dir = input_path, wait_time = wait_time)
     )
   )
 
@@ -566,24 +655,37 @@ check_and_download_required_layers <- function(data_info, iso3, input_path, gee_
       if (!has_data) {
         log_msg(glue::glue("No {gee_layers$name[i]} data found for {iso3}."))
 
-        # Prompt user for download
-        answer <- readline(glue::glue("Do you want to download {gee_layers$name[i]} data from GEE? Press Enter to confirm [default = yes] (yes/no): "))
-        answer <- tolower(trimws(answer))
-        if (answer == "") answer <- "yes"
+        if (interactive && base::interactive()) {
+          # Interactive mode: prompt user for confirmation
+          answer <- readline(glue::glue("Do you want to download {gee_layers$name[i]} data from GEE? [yes/no, default=yes]: "))
+          answer <- tolower(trimws(answer))
+          if (answer == "") answer <- "yes"
 
-        if (answer %in% c("yes", "y")) {
-          answer2 <- readline("Do you have GEE access and an internet connection? Press Enter to confirm [default = yes] (yes/no): ")
-          answer2 <- tolower(trimws(answer2))
-          if (answer2 == "") answer2 <- "yes"
+          if (answer %in% c("yes", "y")) {
+            answer2 <- readline("Do you have GEE access and an internet connection? [yes/no, default=yes]: ")
+            answer2 <- tolower(trimws(answer2))
+            if (answer2 == "") answer2 <- "yes"
 
-          if (answer2 %in% c("yes", "y")) {
-            log_msg(glue::glue("Starting download of {gee_layers$name[i]} for {iso3}..."))
-            gee_layers$download_fun[[i]]()
+            if (answer2 %in% c("yes", "y")) {
+              log_msg(glue::glue("Starting download of {gee_layers$name[i]} for {iso3}..."))
+              gee_layers$download_fun[[i]]()
+            } else {
+              message(glue::glue("Cannot proceed without GEE access for {gee_layers$name[i]}."))
+            }
           } else {
-            message(glue::glue("Cannot proceed without access for {gee_layers$name[i]}."))
+            message(glue::glue("Skipping {gee_layers$name[i]}. Ensure it is provided manually."))
           }
         } else {
-          message(glue::glue("Skipping {gee_layers$name[i]}. Ensure it is provided manually."))
+          # Non-interactive mode: auto-download without prompting
+          log_msg(glue::glue("Non-interactive mode: automatically downloading {gee_layers$name[i]} for {iso3}..."))
+          tryCatch({
+            gee_layers$download_fun[[i]]()
+          }, error = function(e) {
+            warning(
+              glue::glue("Failed to download {gee_layers$name[i]} for {iso3}: {e$message}"),
+              call. = FALSE
+            )
+          })
         }
       } else {
         log_msg(glue::glue("Found existing {gee_layers$name[i]} data for {iso3}, skipping download."))
