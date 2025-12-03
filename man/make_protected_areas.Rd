@@ -5,63 +5,90 @@
 \title{Create a Binary or Fractional Raster of Protected Areas Aligned to Planning Units}
 \usage{
 make_protected_areas(
-  from_wdpa = TRUE,
+  pus,
   iso3,
+  from_wdpa = TRUE,
+  sf_in = NULL,
   download_path = NULL,
-  sf_in,
   status = c("Established", "Inscribed", "Designated"),
   pa_def = 1,
   include_mab_designation = FALSE,
   buffer_points = TRUE,
   area_column = "REP_AREA",
   area_calc_crs = "ESRI:54009",
-  nQuadSegs = 50,
-  threshold = 0.1,
+  n_quad_segs = 50,
   binary = TRUE,
-  return_sf = TRUE,
+  threshold = 0.1,
   force_update = FALSE,
-  pus,
   output_path = NULL
 )
 }
 \arguments{
-\item{from_wdpa}{Logical. If \code{TRUE}, downloads protected area data using the \pkg{wdpar} package. If \code{FALSE}, uses \code{sf_in}.}
+\item{pus}{SpatRaster. Planning units raster defining the output resolution and extent.}
 
-\item{iso3}{Character. ISO3 code for the country of interest.}
+\item{iso3}{Character. ISO3 country code (e.g., "CHL").}
 
-\item{download_path}{Character. Path where WDPA data will be saved or loaded from.}
+\item{from_wdpa}{Logical. If \code{TRUE}, downloads protected area data using the
+\pkg{wdpar} package. If \code{FALSE}, uses \code{sf_in}. Default is \code{TRUE}.}
 
-\item{sf_in}{An \code{sf} object containing protected area geometries. Used only if \code{from_wdpa = FALSE}.}
+\item{sf_in}{sf object or NULL. Protected area geometries to use when
 
-\item{status}{Character vector. Which \code{STATUS} values to include from the WDPA data. Default is \code{c("Established", "Inscribed", "Designated")}.}
+\code{from_wdpa = FALSE}. Required if \code{from_wdpa = FALSE}.}
 
-\item{pa_def}{Integer or vector of integers. Values for the \code{PA_DEF} column (1 = Protected Area; 0 = OECM). Only \code{1} is currently supported. Default is \code{1}.}
+\item{download_path}{Character or NULL. Directory where WDPA data will be saved
+or loaded from. Required if \code{from_wdpa = TRUE}.}
 
-\item{include_mab_designation}{Logical. If \code{FALSE}, excludes Man and Biosphere (MAB) reserves.}
+\item{status}{Character vector. Which \code{STATUS} values to include from WDPA data.
+Valid values: "Designated", "Established", "Inscribed", "Proposed", "Adopted".
+Default is \code{c("Established", "Inscribed", "Designated")}.}
 
-\item{buffer_points}{Logical. If \code{TRUE}, creates geodesic buffers around \code{POINT} and \code{MULTIPOINT} features using area attributes.}
+\item{pa_def}{Integer vector. Values for the \code{PA_DEF} column (1 = Protected Area,
+0 = OECM). Default is \code{1}.}
 
-\item{area_column}{Character. Column name indicating the area (used for buffering). Default is \code{"REP_AREA"}.}
+\item{include_mab_designation}{Logical. If \code{FALSE}, excludes UNESCO Man and
 
-\item{area_calc_crs}{Character. CRS to use for buffering operations. Default is \code{"ESRI:54009"} (World Mollweide).}
+Biosphere (MAB) reserves. Default is \code{FALSE}.}
 
-\item{nQuadSegs}{Integer. Number of segments per quarter circle for buffers. Default is \code{50}.}
+\item{buffer_points}{Logical. If \code{TRUE}, creates geodesic buffers around point
+geometries using the area attribute. Default is \code{TRUE}.}
 
-\item{threshold}{Numeric. Fractional threshold for considering a planning unit as protected. Default is \code{0.10}. Used only if \code{binary = TRUE}.}
+\item{area_column}{Character. Column name containing area values for buffering
+point geometries. Default is \code{"REP_AREA"}.}
 
-\item{binary}{Logical. If \code{TRUE}, output will be binary (0/1) based on \code{threshold}. If \code{FALSE}, returns fractional coverage raster. Default is \code{TRUE}.}
+\item{area_calc_crs}{Character. CRS to use for buffer calculations.
+Default is \code{"ESRI:54009"} (World Mollweide).}
 
-\item{return_sf}{Logical. If \code{TRUE}, assigns the dissolved individual polygons to \code{current_protected_area_sf} in the global environment for reuse. Default is \code{TRUE}.}
+\item{n_quad_segs}{Integer. Number of segments per quarter circle when creating
+buffers. Default is \code{50}.}
 
-\item{force_update}{Logical. If \code{TRUE}, forces re-download of WDPA data. Default is \code{FALSE}.}
+\item{binary}{Logical. If \code{TRUE}, output is binary (0/1) based on \code{threshold}.
+If \code{FALSE}, returns fractional coverage. Default is \code{TRUE}.}
 
-\item{pus}{A \code{SpatRaster} of planning units to which the protected areas will be aligned.}
+\item{threshold}{Numeric. Coverage fraction threshold for binary classification.
+Planning units with coverage above this value are classified as protected.
+Only used when \code{binary = TRUE}. Default is \code{0.10}.}
 
-\item{output_path}{Optional. File path where the resulting raster should be saved.}
+\item{force_update}{Logical. If \code{TRUE}, forces re-download of WDPA data even
+if cached. Default is \code{FALSE}.}
+
+\item{output_path}{Character or NULL. Directory to save the output raster.
+If NULL, the raster is returned but not saved.}
 }
 \value{
-A \code{SpatRaster} representing protected areas as binary presence/absence or fractional coverage.
+If \code{sf_in} was provided (i.e., \code{from_wdpa = FALSE}), returns a SpatRaster.
+If data was downloaded from WDPA (\code{from_wdpa = TRUE}), returns a list with:
+\describe{
+\item{raster}{SpatRaster of protected areas}
+\item{sf}{sf object of dissolved protected area polygons for reuse}
+}
 }
 \description{
-This function generates a binary or fractional raster of protected areas for a given country, aligned to the planning units (\code{pus}). It optionally downloads the latest protected area data from the \href{https://www.protectedplanet.net/}{Protected Planet} database via the \pkg{wdpar} package or uses an input \code{sf} object. All geometries are reprojected, dissolved to avoid double-counting overlaps, and converted to individual polygons to improve spatial intersection performance. The raster output indicates the presence of protected areas in each planning unit (binary) or the fractional area covered.
+Generates a raster of protected areas for a given country, aligned to the planning
+units. Data can be downloaded from the \href{https://www.protectedplanet.net/}{Protected Planet}
+database via the \pkg{wdpar} package, or provided as an \code{sf} object.
+}
+\details{
+All geometries are reprojected, dissolved to avoid double-counting overlaps, and
+rasterized. The output can be binary (presence/absence based on a coverage threshold)
+or fractional (proportion of each planning unit covered).
 }

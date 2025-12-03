@@ -10,38 +10,55 @@ check_and_download_required_layers(
   input_path,
   gee_project,
   boundary_proj,
-  wait_time = 5
+  wait_time = 5,
+  interactive = TRUE
 )
 }
 \arguments{
-\item{data_info}{Data.frame containing \code{data_name} fields to match against requirements}
+\item{data_info}{Data.frame containing \code{data_name} fields to match against requirements.}
 
-\item{iso3}{Character. ISO3 country code for the target country}
+\item{iso3}{Character. ISO3 country code for the target country.}
 
-\item{input_path}{Character. Path where data files should exist or be downloaded to}
+\item{input_path}{Character. Path where data files should exist or be downloaded to.}
 
-\item{gee_project}{Character. Google Earth Engine project ID}
+\item{gee_project}{Character. Google Earth Engine project ID.}
 
-\item{boundary_proj}{An \code{sf} object representing the country boundary}
+\item{boundary_proj}{An \code{sf} object representing the country boundary.}
 
-\item{wait_time}{Numeric. Wait time (in minutes) for Drive export}
+\item{wait_time}{Numeric. Wait time (in minutes) for Drive export. Default is 5.}
+
+\item{interactive}{Logical. If TRUE (default), prompts user before downloading.
+If FALSE, automatically downloads missing layers without prompting. Set to
+FALSE for non-interactive sessions (e.g., batch jobs, CI/CD pipelines).}
 }
 \value{
-NULL (used for side-effect of downloading). Files are downloaded as needed.
+Invisible NULL. Files are downloaded as a side effect.
 }
 \description{
 This function checks for required layer names from metadata, ensures they exist
-in the output path, and prompts the user to download them from GEE if missing.
-Used internally by other functions to automatically download required datasets.
+in the output path, and optionally prompts the user to download them from GEE
+if missing. Used internally by other functions to automatically download
+required datasets.
 }
 \examples{
 \dontrun{
+# Interactive mode (default) - prompts user
 check_and_download_required_layers(
   data_info = metadata_df,
   iso3 = "GHA",
   input_path = "/path/to/data",
   gee_project = "my-project",
   boundary_proj = ghana_boundary
+)
+
+# Non-interactive mode - auto-downloads without prompts
+check_and_download_required_layers(
+  data_info = metadata_df,
+  iso3 = "GHA",
+  input_path = "/path/to/data",
+  gee_project = "my-project",
+  boundary_proj = ghana_boundary,
+  interactive = FALSE
 )
 }
 }

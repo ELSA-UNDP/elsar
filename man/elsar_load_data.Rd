@@ -17,17 +17,27 @@ elsar_load_data(
 )
 }
 \arguments{
-\item{file_name}{Character or NULL. File name with extension. Use NULL to load all files of a type in a folder.}
+\item{file_name}{Character or NULL. File name with extension. Use NULL to load all
+files of a type in a folder. Set to \code{"postgres"} to load from a PostGIS database.}
 
-\item{file_path}{Character. Folder or file path.}
+\item{file_path}{Character. Folder or file path. Not required when loading from PostgreSQL.}
 
-\item{file_lyr}{Character. Optional. Layer name for multi-layer files (e.g., GeoPackage or GDB).}
+\item{file_lyr}{Character. Optional. Layer name for multi-layer files (e.g., GeoPackage
+or GDB). When loading from PostgreSQL, this specifies the table name.}
 
-\item{wkt_filter}{\code{sf}, \code{SpatRaster}, or \code{SpatVector}, from which WKT geometry can be derived to spatially filter vector data when reading in.}
+\item{wkt_filter}{\code{sf}, \code{SpatRaster}, or \code{SpatVector}, from which WKT geometry can be
+derived to spatially filter vector data when reading in.}
 
-\item{db_info}{Named list. For Postgres: host, dbname, port, user, password.}
+\item{db_info}{Named list with PostgreSQL connection parameters. Required elements:
+\describe{
+\item{host}{Database host (e.g., "localhost" or an IP address)}
+\item{dbname}{Name of the PostgreSQL database}
+\item{port}{Port number (typically 5432)}
+\item{user}{Database username}
+\item{password}{Database password}
+}}
 
-\item{pg_connection}{Named list. Alternative to db_info for Postgres.}
+\item{pg_connection}{Named list. Alternative parameter name for \code{db_info} (same structure).}
 
 \item{drop3d}{Logical. Drop Z/M dimensions if TRUE. Default is TRUE.}
 

@@ -4,10 +4,13 @@
 \alias{initialize_earthengine}
 \title{Initialize Google Earth Engine}
 \usage{
-initialize_earthengine(gee_project = "unbl-misc")
+initialize_earthengine(gee_project)
 }
 \arguments{
-\item{gee_project}{Character. GEE cloud project ID. Default is "unbl-misc".}
+\item{gee_project}{Character. Google Earth Engine cloud project ID.
+This is required and must be a valid GEE project you have access to.
+You can find your project ID in the \href{https://code.earthengine.google.com/}{GEE Code Editor}
+or \href{https://console.cloud.google.com/}{Google Cloud Console}.}
 }
 \value{
 A list containing the \code{ee} module and temporary environment name (if created)

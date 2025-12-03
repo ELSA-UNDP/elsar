@@ -11,7 +11,9 @@ elsar_plot_feature(
   color_map = "viridis",
   invert_palette = FALSE,
   figure_path = NULL,
-  no_legend = FALSE
+  iso3 = NULL,
+  no_legend = FALSE,
+  custom_resolution = 200
 )
 }
 \arguments{
@@ -27,7 +29,11 @@ elsar_plot_feature(
 
 \item{figure_path}{character, optional. If provided, path to save the figure as a PNG.}
 
+\item{iso3}{iso3 code of the country of interest.}
+
 \item{no_legend}{logical. If TRUE, suppresses the legend. Defaults to FALSE.}
+
+\item{custom_resolution}{A value that is used in ggsave() for dpi. Default is 200.}
 }
 \value{
 A \code{ggplot} object displaying the raster with optional planning unit outlines.
@@ -64,7 +70,9 @@ elsar_plot_feature(
   legend_title = "WAD",
   color_map = "magma",
   invert_palette = TRUE,
-  figure_path = "figures",
-  no_legend = FALSE
+  figure_path = here::here(),
+  no_legend = FALSE,
+  iso3 = "test",
+  custom_resolution = 400
 )
 }

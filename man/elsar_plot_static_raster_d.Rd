@@ -25,15 +25,17 @@ elsar_plot_static_raster_d(
 
 \item{type}{A character of the plot type. Either "ggplot_vector", "ggplot_raster" or "tmap".}
 
-\item{categorical}{logical. if data is categorical (TRUE), convert to factor (if not yet) and use the number of categories given.}
+\item{categorical}{Logical. Only used when \code{data_type = "discrete"}. If TRUE, data is already categorical.}
 
-\item{number_categories}{If data does not have pre-defined categories, how many categories to split the continuous data into}
+\item{number_categories}{Integer. Only used when \code{data_type = "discrete"}. Number of categories to split continuous data into. Default is 10.}
 
-\item{data_layer}{A character of the data layer used.}
+\item{data_layer}{Character. Only used when \code{data_type = "discrete"}. The data layer name for categorization.}
 
 \item{background}{Requires a \code{SpatRaster} input (preferably with the same data as \code{raster_in}) to plot the background data.}
 
-\item{extend_background}{A numerical value that allows to extent the background beyond the extent of \code{raster_in}. If extend_background <= 1, the lat and lon extend will be extended by the ratio provided (e.g. 0.05 will extend it by 5\%). If extend_background > 1 all sides will be extended by the absolute value provided.}
+\item{extend_background}{A numerical value that allows to extent the background beyond the extent of \code{raster_in}.
+If extend_background <= 1, the lat and lon extend will be extended by the ratio provided (e.g. 0.05 will extend it by 5\%).
+If extend_background > 1 all sides will be extended by the absolute value provided.}
 
 \item{custom_palette}{An optional custom palette for plotting. Default uses the \code{viridis} package.}
 
@@ -43,15 +45,23 @@ elsar_plot_static_raster_d(
 
 \item{color_map}{The name of the \code{viridis} palette to be used. Default is "viridis".}
 
-\item{expand_plot}{logical. Whether to expand the plot, so there is not space betwen border and plot.}
+\item{expand_plot}{Logical. Whether to expand the plot, so there is no space between border and plot.}
 
-\item{raster_df_out}{logical. Whether to return only the plot (FALSE) or also the data frame behind the plot (TRUE). Needed for \code{elsar_plot_distribution()}}
+\item{raster_df_out}{Logical. Whether to return only the plot (FALSE) or also the data frame behind the plot (TRUE).
+Needed for \code{elsar_plot_distribution()}.}
 }
 \value{
-Either a \code{ggplot} object or a list with the \code{ggplot} and the \code{df} created.
+Either a \code{ggplot} object or a list with the \code{ggplot} and the \code{df}.
 }
 \description{
-\code{elsar_plot_static_raster_d()} allows to plot discrete data from a \code{SpatRaster} in \code{ggplot} or \code{tmap}. It can be combined with \code{\link[=elsar_plot_optics]{elsar_plot_optics()}} and \code{\link[=elsar_plot_extra_data]{elsar_plot_extra_data()}} to create reproducible plots.
+\code{elsar_plot_static_raster_d()} allows to plot discrete data from a
+\code{SpatRaster} in \code{ggplot} or \code{tmap}. It can be combined with
+\code{\link[=elsar_plot_optics]{elsar_plot_optics()}} and \code{\link[=elsar_plot_extra_data]{elsar_plot_extra_data()}} to create
+reproducible plots.
+}
+\details{
+This is a convenience wrapper around \code{\link[=elsar_plot_static_raster]{elsar_plot_static_raster()}} with
+\code{data_type = "discrete"}.
 }
 \examples{
 boundary_proj <- make_boundary(
@@ -82,4 +92,7 @@ background = wad_dat,
 data_layer = "wad_final_cog",
 raster_df_out = TRUE)
 )
+}
+\seealso{
+\code{\link[=elsar_plot_static_raster]{elsar_plot_static_raster()}} for the unified plotting function
 }

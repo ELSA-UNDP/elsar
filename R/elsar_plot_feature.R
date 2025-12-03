@@ -11,6 +11,8 @@
 #' @param invert_palette logical. If TRUE, reverses the palette direction. Defaults to FALSE.
 #' @param figure_path character, optional. If provided, path to save the figure as a PNG.
 #' @param no_legend logical. If TRUE, suppresses the legend. Defaults to FALSE.
+#' @param custom_resolution A value that is used in ggsave() for dpi. Default is 200.
+#' @param iso3 iso3 code of the country of interest.
 #'
 #' @return A `ggplot` object displaying the raster with optional planning unit outlines.
 #'
@@ -44,8 +46,10 @@
 #'   legend_title = "WAD",
 #'   color_map = "magma",
 #'   invert_palette = TRUE,
-#'   figure_path = "figures",
-#'   no_legend = FALSE
+#'   figure_path = here::here(),
+#'   no_legend = FALSE,
+#'   iso3 = "test",
+#'   custom_resolution = 400
 #' )
 elsar_plot_feature <- function(raster_in,
                                pus,
@@ -53,7 +57,9 @@ elsar_plot_feature <- function(raster_in,
                                color_map = "viridis", #"rocket",
                                invert_palette = FALSE,
                                figure_path = NULL,
-                               no_legend = FALSE) {
+                               iso3 = NULL,
+                               no_legend = FALSE,
+                               custom_resolution = 200) {
   # Prep outline
   outlines <- terra::as.polygons(pus) %>%
     # And convert to lines
@@ -73,7 +79,7 @@ elsar_plot_feature <- function(raster_in,
       name = legend_title,
       option = color_map,
       direction = palette_direction,
-      guide = guide_colorbar(
+      guide = ggplot2::guide_colorbar(
         label = TRUE,
         frame.colour = "black",
         barwidth = 11,
@@ -85,13 +91,13 @@ elsar_plot_feature <- function(raster_in,
     ) +
     tidyterra::geom_spatvector(
       data = outlines,
-      color = alpha("white", 0.7),
+      color = scales::alpha("white", 0.7),
       linewidth = 0.18
     ) +
     ggspatial::annotation_scale(
       location = "bl",
       width_hint = 0.25,
-      height = unit(0.25, "cm")
+      height = grid::unit(0.25, "cm")
     ) +
     ggplot2::theme(
       legend.position = "bottom",
@@ -113,10 +119,11 @@ elsar_plot_feature <- function(raster_in,
   }
 
   if (!is.null(figure_path)) {
-    ggsave(file.path(glue::glue("{figure_path}/{legend_title}_{iso3}.png")),
+    ggplot2::ggsave(file.path(glue::glue("{figure_path}/{legend_title}_{iso3}.png")),
       plot = gg_feature,
       device = "png",
-      width = 8, height = 6, dpi = 200
+      width = 8, height = 6,
+      dpi = custom_resolution
     )
   }
 
