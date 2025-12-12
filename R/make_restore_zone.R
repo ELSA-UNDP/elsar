@@ -122,11 +122,6 @@ make_restore_zone <- function(
   assertthat::assert_that(inherits(human_pressure, "SpatRaster"))
   assertthat::assert_that(inherits(forest_mask, "SpatRaster"))
 
-  # Validate forest cover input if provided
-  if (!is.null(forest_cover_input)) {
-    assertthat::assert_that(inherits(forest_cover_input, "SpatRaster"))
-  }
-
   # Ensure at least one valid input source for agricultural/built areas exists
   assertthat::assert_that(
     !(is.null(agricultural_areas) && is.null(built_areas) && is.null(lulc)),
@@ -212,7 +207,7 @@ make_restore_zone <- function(
     )
 
   # Create Restore Zone v2 (the alternative Restore Zone) as only degraded forest areas
-  restore_zone_alt <- terra::ifel(
+  restore_zone_v2 <- terra::ifel(
     restore_zone == 1 & forest_mask > forest_threshold,
     1, 0
   ) %>%
@@ -222,28 +217,9 @@ make_restore_zone <- function(
       method_override = "mean"
     )
 
-    # Create forest-masked restore zone
-    restore_zone_v2 <- terra::ifel(
-      restore_zone_v1 == 1 & forest_cover_resampled > forest_threshold,
-      1, 0
-    ) %>%
-      elsar::make_normalised_raster(
-        pus = pus,
-        iso3 = iso3
-      )
-
-    restore_zones$restore_zone_v2 <- restore_zone_v2
-
-    # Save forest layer if output path provided
-    if (!is.null(output_path)) {
-      elsar::save_raster(forest_cover_resampled, glue::glue("{output_path}/forest_cover_{iso3}.tif"))
-    }
-  } else {
-    log_msg("Forest cover input not provided - creating only restore zone v1")
-  }
-
-  # Convert list to SpatRaster
-  restore_zones <- terra::rast(restore_zones)
+  # Combine into multi-layer raster
+  restore_zones <- c(restore_zone, restore_zone_v2)
+  names(restore_zones) <- c("restore_zone_v1", "restore_zone_v2")
 
   # Optionally remove small patches (default behaviour)
   if (filter_small_patches) {
