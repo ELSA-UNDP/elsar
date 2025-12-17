@@ -3,17 +3,18 @@
 \docType{data}
 \name{current_pas_sf}
 \alias{current_pas_sf}
-\title{Data used for current protected areas}
+\title{Current Protected Areas}
 \format{
-An object of class \code{sf} (inherits from \code{tbl_df}, \code{tbl}, \code{data.frame}) with 1 rows and 1 columns.
+An \code{sf} data frame with polygon geometries.
 }
 \source{
-https:// add link here
+UNEP-WCMC and IUCN WDPA \url{https://www.protectedplanet.net/}
 }
 \usage{
 current_pas_sf
 }
 \description{
-\code{current_pas_sf} file from WDPA database
+An \code{sf} object containing current protected areas from the
+World Database on Protected Areas (WDPA).
 }
 \keyword{datasets}
