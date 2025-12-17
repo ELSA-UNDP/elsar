@@ -1,5 +1,17 @@
 #' Extract and Filter IUCN GET Ecosystem Vector Layers
 #'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
+#' This function is deprecated and not recommended for current use. The IUCN GET
+#' ecosystem data has known quality issues and incomplete coverage. Users should
+#' supply their own ecosystem data to functions like [make_threatened_ecosystems_protection()]
+#' and [make_underrepresented_ecosystems()].
+#'
+#' A replacement data source from the Global Ecosystems Atlas is planned for future
+#' versions of this package.
+#'
+#' @details
 #' This function reads, intersects, reprojects, and merges `.gpkg` vector files representing IUCN Global Ecosystem Typology (GET) layers from a specified directory.
 #' It allows filtering by filename prefixes (e.g., "T1.2", "TF1.4"), excludes specific ecosystem types (e.g., intensive land-use biomes), and optionally removes features
 #' with `minor occurrence` flags. The resulting layer is cropped to a country boundary and reprojected to match a planning units raster.

@@ -40,7 +40,7 @@ Suggests:
 VignetteBuilder: knitr
 Depends:
     R (>= 3.5.0)
-Imports: 
+Imports:
     assertthat,
     bit64,
     dplyr,
@@ -52,6 +52,7 @@ Imports:
     googledrive,
     glue,
     here,
+    lifecycle,
     magrittr,
     plyr,
     reticulate,
