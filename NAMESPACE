@@ -2,6 +2,7 @@
 
 export("%>%")
 export(calculate_restore_and_urban_budgets)
+export(check_and_download_required_layers)
 export(conditionally_subdivide_bbox)
 export(convert_points_polygon)
 export(crop_global_raster)

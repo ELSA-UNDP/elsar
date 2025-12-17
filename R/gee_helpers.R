@@ -684,7 +684,7 @@ download_global_pasture_data <- function(
 #'   FALSE for non-interactive sessions (e.g., batch jobs, CI/CD pipelines).
 #'
 #' @return Invisible NULL. Files are downloaded as a side effect.
-#' @keywords internal
+#' @export
 #' @examples
 #' \dontrun{
 #' # Interactive mode (default) - prompts user
