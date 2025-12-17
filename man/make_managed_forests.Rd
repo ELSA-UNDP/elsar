@@ -8,7 +8,8 @@ make_managed_forests(
   raster_in,
   pus,
   iso3,
-  forest_classes = c(31, 32, 40, 53),
+  lulc_product = c("esri_10m", "dynamic_world", "esa_worldcover", "local"),
+  forest_classes = NULL,
   include_disturbed_forest = FALSE,
   make_productive = FALSE,
   raster_npp = NULL,
@@ -23,7 +24,11 @@ make_managed_forests(
 
 \item{iso3}{A 3-letter ISO country code string.}
 
-\item{forest_classes}{Integer vector of class codes representing managed forests (default = c(31, 32, 40, 53)).}
+\item{lulc_product}{Character. LULC product used for class value lookups: "esri_10m" (default),
+"dynamic_world", "esa_worldcover", or "local". When "local", \code{forest_classes} must be explicitly provided.}
+
+\item{forest_classes}{Integer vector or NULL. Class codes representing managed forests. If NULL,
+automatically determined from \code{lulc_product}. Default is NULL.}
 
 \item{include_disturbed_forest}{Logical. If TRUE, includes disturbed forest class (code 20) in \code{forest_classes}.}
 

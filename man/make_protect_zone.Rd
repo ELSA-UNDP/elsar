@@ -14,8 +14,9 @@ make_protect_zone(
   hii_input,
   hii_threshold = NULL,
   hii_quantile = 0.95,
-  agriculture_lulc_value = 5,
-  built_area_lulc_value = 7,
+  lulc_product = c("esri_10m", "dynamic_world", "esa_worldcover", "local"),
+  agriculture_lulc_value = NULL,
+  built_area_lulc_value = NULL,
   agriculture_threshold = 0.1,
   built_areas_threshold = 0.1,
   filter_patch_size = TRUE,
@@ -44,9 +45,14 @@ If NULL, \code{elsar::make_protected_areas()} will be used.}
 
 \item{hii_quantile}{A quantile threshold (e.g., 0.95) used to calculate the HII threshold within protected areas if \code{hii_threshold} is NULL.}
 
-\item{agriculture_lulc_value}{LULC value representing agriculture (default: 5).}
+\item{lulc_product}{Character. LULC product used for class value lookups: "esri_10m" (default),
+"dynamic_world", "esa_worldcover", or "local". When "local", explicit class values must be provided.}
 
-\item{built_area_lulc_value}{LULC value representing built-up areas (default: 7).}
+\item{agriculture_lulc_value}{Integer or NULL. LULC value representing agriculture. If NULL,
+automatically determined from \code{lulc_product}. Default is NULL.}
+
+\item{built_area_lulc_value}{Integer or NULL. LULC value representing built-up areas. If NULL,
+automatically determined from \code{lulc_product}. Default is NULL.}
 
 \item{agriculture_threshold}{Minimum fraction for agriculture to exclude a cell (default: 0.1).}
 

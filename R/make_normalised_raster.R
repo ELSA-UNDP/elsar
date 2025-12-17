@@ -125,29 +125,65 @@ make_normalised_raster <- function(raster_in,
                             msg = glue::glue("'output_path' directory does not exist: {output_path}"))
   }
 
-  # Crop before reprojection if a conditional expression is to be applied and the raw input is a large global raster
-  if (!is.null(input_raster_conditional_expression)) {
-    if (crop_global_input) {
-      log_message("Cropping input raster before applying conditional expression...")
-      cropped <- crop_global_raster(raster_in, pus)
-      log_message("Applying conditional expression to cropped input raster...")
-      raster_in <- input_raster_conditional_expression(cropped)
-    } else {
-      log_message("Applying conditional expression to input raster...")
-      raster_in <- input_raster_conditional_expression(raster_in)
+  # Check if raster was pre-aggregated in GEE (has pre_aggregated attribute)
+  is_pre_aggregated <- isTRUE(attr(raster_in, "pre_aggregated"))
+
+  if (is_pre_aggregated) {
+    # Skip expensive resampling - data is already at PU resolution
+    log_message("Input raster was pre-aggregated in GEE. Skipping local resampling.")
+
+    # Just align and mask to PUs
+    dat_aligned <- terra::project(raster_in, y = pus, threads = threads)
+
+    if (is.null(dat_aligned) || isTRUE(is.na(suppressWarnings(terra::minmax(dat_aligned)[2]))) || terra::minmax(dat_aligned)[2] == 0) {
+      log_message("No valid raster values found: returning empty raster.")
+      return(terra::ifel(pus == 1, 0, NA))
     }
+
+    # Apply input conditional expression if provided (for class extraction)
+    if (!is.null(input_raster_conditional_expression)) {
+      # Warn if applying class extraction to mode-aggregated categorical data
+      aggregation_reducer <- attr(raster_in, "aggregation_reducer")
+      if (!is.null(aggregation_reducer) && aggregation_reducer == "mode") {
+        warning(
+          "Applying conditional expression to pre-aggregated categorical data (mode reducer). ",
+          "This will produce binary (0/1) values per PU, not class proportions. ",
+          "For proper class proportions, use download_lulc_class_proportion() or pass ",
+          "pre-computed class proportion rasters via agricultural_areas_input/built_areas_input parameters.",
+          call. = FALSE
+        )
+      }
+      log_message("Applying conditional expression to pre-aggregated raster...")
+      dat_aligned <- input_raster_conditional_expression(dat_aligned)
+    }
+
+  } else {
+    # Standard processing path with full resampling
+
+    # Crop before reprojection if a conditional expression is to be applied and the raw input is a large global raster
+    if (!is.null(input_raster_conditional_expression)) {
+      if (crop_global_input) {
+        log_message("Cropping input raster before applying conditional expression...")
+        cropped <- crop_global_raster(raster_in, pus)
+        log_message("Applying conditional expression to cropped input raster...")
+        raster_in <- input_raster_conditional_expression(cropped)
+      } else {
+        log_message("Applying conditional expression to input raster...")
+        raster_in <- input_raster_conditional_expression(raster_in)
+      }
+    }
+
+    # Reproject and align raster to match PUs
+    dat_aligned <- terra::project(raster_in, y = pus, threads = threads)
+
+    if (is.null(dat_aligned) || isTRUE(is.na(suppressWarnings(terra::minmax(dat_aligned)[2]))) || terra::minmax(dat_aligned)[2] == 0) {
+      log_message("No valid raster values found: returning empty raster.")
+      return(terra::ifel(pus == 1, 0, NA))
+    }
+
+    # Resample using exactextractr to match PU resolution
+    dat_aligned <- exactextractr::exact_resample(x = dat_aligned, y = pus, fun = method)
   }
-
-  # Reproject and align raster to match PUs
-  dat_aligned <- terra::project(raster_in, y = pus, threads = threads)
-
-  if (is.null(dat_aligned) || isTRUE(is.na(suppressWarnings(terra::minmax(dat_aligned)[2]))) || terra::minmax(dat_aligned)[2] == 0) {
-    log_message("No valid raster values found: returning empty raster.")
-    return(terra::ifel(pus == 1, 0, NA))
-  }
-
-  # Resample using exactextractr to match PU resolution
-  dat_aligned <- exactextractr::exact_resample(x = dat_aligned, y = pus, fun = method)
 
   if (!is.null(conditional_expression)) {
     dat_aligned <- conditional_expression(dat_aligned)

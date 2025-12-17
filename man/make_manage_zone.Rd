@@ -15,9 +15,10 @@ make_manage_zone(
   lulc_raster = NULL,
   hii_input = NULL,
   pasturelands_threshold = 0.35,
-  agriculture_lulc_value = 5,
-  built_area_lulc_value = 7,
-  forest_classes = c(20, 31, 32, 40, 53),
+  lulc_product = c("esri_10m", "dynamic_world", "esa_worldcover", "local"),
+  agriculture_lulc_value = NULL,
+  built_area_lulc_value = NULL,
+  forest_classes = NULL,
   forest_class_threshold = 0.1,
   agriculture_threshold = 0.1,
   built_areas_threshold = 0.1,
@@ -47,11 +48,17 @@ make_manage_zone(
 
 \item{pasturelands_threshold}{Numeric. Probability threshold above which cells are considered pasturelands (default = 0.35).}
 
-\item{agriculture_lulc_value}{Integer. LULC value for agriculture (default = 5, for ESRI 10m LULC).}
+\item{lulc_product}{Character. LULC product used for class value lookups: "esri_10m" (default),
+"dynamic_world", "esa_worldcover", or "local". When "local", explicit class values must be provided.}
 
-\item{built_area_lulc_value}{Integer. LULC value for built-up areas (default = 7, for ESRI 10m LULC).}
+\item{agriculture_lulc_value}{Integer or NULL. LULC value for agriculture. If NULL, automatically
+determined from \code{lulc_product}. Default is NULL.}
 
-\item{forest_classes}{Integer vector. LULC values representing managed forests (default = c(20, 31, 32, 40, 53)).}
+\item{built_area_lulc_value}{Integer or NULL. LULC value for built-up areas. If NULL, automatically
+determined from \code{lulc_product}. Default is NULL.}
+
+\item{forest_classes}{Integer vector or NULL. LULC values representing managed forests. If NULL,
+automatically determined from \code{lulc_product}. Default is NULL.}
 
 \item{forest_class_threshold}{Numeric. Minimum proportion of managed forest in a cell to include (default = 0.1).}
 
@@ -98,4 +105,7 @@ manage_zone <- make_manage_zone(
   output_path = "outputs/"
 )
 }
+}
+\seealso{
+\code{\link[=get_lulc_classes]{get_lulc_classes()}}, \code{\link[=get_lulc_class_value]{get_lulc_class_value()}}, \code{\link[=download_lulc_data]{download_lulc_data()}}
 }

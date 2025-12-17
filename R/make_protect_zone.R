@@ -18,8 +18,12 @@
 #' @param hii_input A `SpatRaster` of the Human Footprint Index.
 #' @param hii_threshold A fixed numeric HII threshold. If NULL, `hii_quantile` is used to estimate it.
 #' @param hii_quantile A quantile threshold (e.g., 0.95) used to calculate the HII threshold within protected areas if `hii_threshold` is NULL.
-#' @param agriculture_lulc_value LULC value representing agriculture (default: 5).
-#' @param built_area_lulc_value LULC value representing built-up areas (default: 7).
+#' @param lulc_product Character. LULC product used for class value lookups: "esri_10m" (default),
+#'   "dynamic_world", "esa_worldcover", or "local". When "local", explicit class values must be provided.
+#' @param agriculture_lulc_value Integer or NULL. LULC value representing agriculture. If NULL,
+#'   automatically determined from `lulc_product`. Default is NULL.
+#' @param built_area_lulc_value Integer or NULL. LULC value representing built-up areas. If NULL,
+#'   automatically determined from `lulc_product`. Default is NULL.
 #' @param agriculture_threshold Minimum fraction for agriculture to exclude a cell (default: 0.1).
 #' @param built_areas_threshold Minimum fraction for built-up area to exclude a cell (default: 0.1).
 #' @param filter_patch_size Logical. Whether to remove small isolated patches (default: TRUE).
@@ -54,8 +58,9 @@ make_protect_zone <- function(
     hii_input,
     hii_threshold = NULL,
     hii_quantile = 0.95,
-    agriculture_lulc_value = 5,
-    built_area_lulc_value = 7,
+    lulc_product = c("esri_10m", "dynamic_world", "esa_worldcover", "local"),
+    agriculture_lulc_value = NULL,
+    built_area_lulc_value = NULL,
     agriculture_threshold = 0.1,
     built_areas_threshold = 0.1,
     filter_patch_size = TRUE,
@@ -63,6 +68,26 @@ make_protect_zone <- function(
     make_locked_out = FALSE,
     output_path = NULL
 ) {
+  lulc_product <- match.arg(lulc_product)
+
+  # Resolve LULC class values from product if not explicitly provided
+  if (is.null(agriculture_lulc_value)) {
+    if (lulc_product == "local") {
+      stop("When lulc_product = 'local', agriculture_lulc_value must be explicitly provided.", call. = FALSE)
+    }
+    agriculture_lulc_value <- get_lulc_class_value(lulc_product, "agriculture")
+  }
+  if (is.null(built_area_lulc_value)) {
+    if (lulc_product == "local") {
+      stop("When lulc_product = 'local', built_area_lulc_value must be explicitly provided.", call. = FALSE)
+    }
+    built_area_lulc_value <- get_lulc_class_value(lulc_product, "built_area")
+  }
+
+  log_message("Using LULC product: {lulc_product}")
+  log_message("Agriculture class value(s): {paste(agriculture_lulc_value, collapse=', ')}")
+  log_message("Built area class value(s): {paste(built_area_lulc_value, collapse=', ')}")
+
   # Validate protected areas input or load default
   assertthat::assert_that(
       inherits(current_protected_areas, "sf") || inherits(current_protected_areas, "SpatVector"),

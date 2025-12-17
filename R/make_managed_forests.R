@@ -10,7 +10,10 @@
 #' @param raster_in A `SpatRaster` representing forest management classifications.
 #' @param pus A `SpatRaster` used as a template for extent, resolution, and alignment.
 #' @param iso3 A 3-letter ISO country code string.
-#' @param forest_classes Integer vector of class codes representing managed forests (default = c(31, 32, 40, 53)).
+#' @param lulc_product Character. LULC product used for class value lookups: "esri_10m" (default),
+#'   "dynamic_world", "esa_worldcover", or "local". When "local", `forest_classes` must be explicitly provided.
+#' @param forest_classes Integer vector or NULL. Class codes representing managed forests. If NULL,
+#'   automatically determined from `lulc_product`. Default is NULL.
 #' @param include_disturbed_forest Logical. If TRUE, includes disturbed forest class (code 20) in `forest_classes`.
 #' @param make_productive Logical. If TRUE, also generates a productive managed forest raster.
 #' @param raster_npp A `SpatRaster` of NPP data used for generating the productive forest layer. Required if `make_productive = TRUE`.
@@ -34,12 +37,25 @@ make_managed_forests <- function(
     raster_in,
     pus,
     iso3,
-    forest_classes = c(31, 32, 40, 53),
+    lulc_product = c("esri_10m", "dynamic_world", "esa_worldcover", "local"),
+    forest_classes = NULL,
     include_disturbed_forest = FALSE,
     make_productive = FALSE,
     raster_npp = NULL,
     name_out,
     output_path = NULL) {
+  lulc_product <- match.arg(lulc_product)
+
+  # Resolve forest classes from product if not explicitly provided
+  if (is.null(forest_classes)) {
+    if (lulc_product == "local") {
+      stop("When lulc_product = 'local', forest_classes must be explicitly provided.", call. = FALSE)
+    }
+    forest_classes <- get_lulc_class_value(lulc_product, "forest_managed")
+  }
+
+  log_message("Using LULC product: {lulc_product}")
+  log_message("Forest class value(s): {paste(forest_classes, collapse=', ')}")
 
   if (!is.null(raster_in) & !is.null(raster_npp)) {
     assertthat::assert_that(

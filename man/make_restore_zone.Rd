@@ -18,8 +18,9 @@ make_restore_zone(
   agriculture_threshold = 0.1,
   built_area_threshold = 0.1,
   forest_threshold = 0.1,
-  agriculture_lulc_value = 5,
-  built_area_lulc_value = 7,
+  lulc_product = c("esri_10m", "dynamic_world", "esa_worldcover", "local"),
+  agriculture_lulc_value = NULL,
+  built_area_lulc_value = NULL,
   filter_small_patches = TRUE,
   min_patch_size = 10,
   output_path = NULL

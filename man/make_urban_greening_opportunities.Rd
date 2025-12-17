@@ -7,6 +7,8 @@
 make_urban_greening_opportunities(
   ndvi_raster,
   lulc_raster = NULL,
+  lulc_product = c("esri_10m", "dynamic_world", "esa_worldcover", "local"),
+  built_area_lulc_value = NULL,
   built_areas_raster = NULL,
   sdei_statistics,
   threshold = 0.1,
@@ -21,7 +23,14 @@ make_urban_greening_opportunities(
 \item{ndvi_raster}{A \code{SpatRaster} representing NDVI values.}
 
 \item{lulc_raster}{Optional. A \code{SpatRaster} representing land use/land cover (LULC) classes.
-Required if \code{built_areas_raster} is not provided. Urban classes should be coded as \code{7}.}
+Required if \code{built_areas_raster} is not provided.}
+
+\item{lulc_product}{Character. LULC product used for class value lookups: "esri_10m" (default),
+"dynamic_world", "esa_worldcover", or "local". When "local", \code{built_area_lulc_value}
+must be explicitly provided.}
+
+\item{built_area_lulc_value}{Integer or NULL. LULC value representing built-up/urban areas. If NULL,
+automatically determined from \code{lulc_product}. Default is NULL.}
 
 \item{built_areas_raster}{Optional. A \code{SpatRaster} representing pre-classified binary built areas
 (1 = built, 0 = non-built). Skips internal classification from \code{lulc_raster}.

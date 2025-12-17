@@ -11,7 +11,10 @@ check_and_download_required_layers(
   gee_project,
   boundary_proj,
   wait_time = 5,
-  interactive = TRUE
+  interactive = TRUE,
+  lulc_product = c("esri_10m", "dynamic_world", "esa_worldcover"),
+  pus = NULL,
+  aggregate_to_pus = FALSE
 )
 }
 \arguments{
@@ -30,6 +33,15 @@ check_and_download_required_layers(
 \item{interactive}{Logical. If TRUE (default), prompts user before downloading.
 If FALSE, automatically downloads missing layers without prompting. Set to
 FALSE for non-interactive sessions (e.g., batch jobs, CI/CD pipelines).}
+
+\item{lulc_product}{Character. LULC product to download: "esri_10m" (default),
+"dynamic_world", or "esa_worldcover". Affects which product is downloaded
+when LULC data is required.}
+
+\item{pus}{SpatRaster or NULL. Planning units for GEE-side aggregation.}
+
+\item{aggregate_to_pus}{Logical. If TRUE and \code{pus} provided, aggregate in GEE
+before download. Default is FALSE.}
 }
 \value{
 Invisible NULL. Files are downloaded as a side effect.
@@ -59,6 +71,16 @@ check_and_download_required_layers(
   gee_project = "my-project",
   boundary_proj = ghana_boundary,
   interactive = FALSE
+)
+
+# Use Dynamic World instead of ESRI LULC
+check_and_download_required_layers(
+  data_info = metadata_df,
+  iso3 = "GHA",
+  input_path = "/path/to/data",
+  gee_project = "my-project",
+  boundary_proj = ghana_boundary,
+  lulc_product = "dynamic_world"
 )
 }
 }

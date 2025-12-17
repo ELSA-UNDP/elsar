@@ -108,14 +108,34 @@ make_restore_zone <- function(
     agriculture_threshold = 0.1,
     built_area_threshold = 0.1,
     forest_threshold = 0.1,
-    agriculture_lulc_value = 5,
-    built_area_lulc_value = 7,
+    lulc_product = c("esri_10m", "dynamic_world", "esa_worldcover", "local"),
+    agriculture_lulc_value = NULL,
+    built_area_lulc_value = NULL,
     filter_small_patches = TRUE,
     min_patch_size = 10,
     output_path = NULL
 ) {
-  # Input validation
+  lulc_product <- match.arg(lulc_product)
 
+  # Resolve LULC class values from product if not explicitly provided
+  if (is.null(agriculture_lulc_value)) {
+    if (lulc_product == "local") {
+      stop("When lulc_product = 'local', agriculture_lulc_value must be explicitly provided.", call. = FALSE)
+    }
+    agriculture_lulc_value <- get_lulc_class_value(lulc_product, "agriculture")
+  }
+  if (is.null(built_area_lulc_value)) {
+    if (lulc_product == "local") {
+      stop("When lulc_product = 'local', built_area_lulc_value must be explicitly provided.", call. = FALSE)
+    }
+    built_area_lulc_value <- get_lulc_class_value(lulc_product, "built_area")
+  }
+
+  log_message("Using LULC product: {lulc_product}")
+  log_message("Agriculture class value(s): {paste(agriculture_lulc_value, collapse=', ')}")
+  log_message("Built area class value(s): {paste(built_area_lulc_value, collapse=', ')}")
+
+  # Input validation
   assertthat::assert_that(assertthat::is.string(iso3))
   assertthat::assert_that(inherits(pus, "SpatRaster"))
   assertthat::assert_that(inherits(degradation, "SpatRaster"))

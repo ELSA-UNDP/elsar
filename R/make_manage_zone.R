@@ -22,9 +22,14 @@
 #' @param lulc_raster SpatRaster or NULL. Optional raw LULC input used to extract agriculture and built-up layers if those inputs are categorical.
 #' @param hii_input SpatRaster. Human Footprint Index raster.
 #' @param pasturelands_threshold Numeric. Probability threshold above which cells are considered pasturelands (default = 0.35).
-#' @param agriculture_lulc_value Integer. LULC value for agriculture (default = 5, for ESRI 10m LULC).
-#' @param built_area_lulc_value Integer. LULC value for built-up areas (default = 7, for ESRI 10m LULC).
-#' @param forest_classes Integer vector. LULC values representing managed forests (default = c(20, 31, 32, 40, 53)).
+#' @param lulc_product Character. LULC product used for class value lookups: "esri_10m" (default),
+#'   "dynamic_world", "esa_worldcover", or "local". When "local", explicit class values must be provided.
+#' @param agriculture_lulc_value Integer or NULL. LULC value for agriculture. If NULL, automatically
+#'   determined from `lulc_product`. Default is NULL.
+#' @param built_area_lulc_value Integer or NULL. LULC value for built-up areas. If NULL, automatically
+#'   determined from `lulc_product`. Default is NULL.
+#' @param forest_classes Integer vector or NULL. LULC values representing managed forests. If NULL,
+#'   automatically determined from `lulc_product`. Default is NULL.
 #' @param forest_class_threshold Numeric. Minimum proportion of managed forest in a cell to include (default = 0.1).
 #' @param agriculture_threshold Numeric. Minimum proportion of agriculture in a cell to include (default = 0.1).
 #' @param built_areas_threshold Numeric. Threshold above which cells are considered built-up and excluded (default = 0.1).
@@ -33,6 +38,9 @@
 #' @param output_path Character or NULL. If provided, save result to this path as a COG (default = NULL).
 #'
 #' @return A SpatRaster with two layers: `manage_zone_v1` and `manage_zone_v2`.
+#'
+#' @seealso [get_lulc_classes()], [get_lulc_class_value()], [download_lulc_data()]
+#'
 #' @export
 #'
 #' @examples
@@ -61,9 +69,10 @@ make_manage_zone <- function(
     lulc_raster = NULL,
     hii_input = NULL,
     pasturelands_threshold = 0.35,
-    agriculture_lulc_value = 5,
-    built_area_lulc_value = 7,
-    forest_classes = c(20, 31, 32, 40, 53),
+    lulc_product = c("esri_10m", "dynamic_world", "esa_worldcover", "local"),
+    agriculture_lulc_value = NULL,
+    built_area_lulc_value = NULL,
+    forest_classes = NULL,
     forest_class_threshold = 0.1,
     agriculture_threshold = 0.1,
     built_areas_threshold = 0.1,
@@ -71,6 +80,32 @@ make_manage_zone <- function(
     min_patch_size = 10,
     output_path = NULL
 ) {
+  lulc_product <- match.arg(lulc_product)
+
+  # Resolve LULC class values from product if not explicitly provided
+  if (is.null(agriculture_lulc_value)) {
+    if (lulc_product == "local") {
+      stop("When lulc_product = 'local', agriculture_lulc_value must be explicitly provided.", call. = FALSE)
+    }
+    agriculture_lulc_value <- get_lulc_class_value(lulc_product, "agriculture")
+  }
+  if (is.null(built_area_lulc_value)) {
+    if (lulc_product == "local") {
+      stop("When lulc_product = 'local', built_area_lulc_value must be explicitly provided.", call. = FALSE)
+    }
+    built_area_lulc_value <- get_lulc_class_value(lulc_product, "built_area")
+  }
+  if (is.null(forest_classes)) {
+    if (lulc_product == "local") {
+      stop("When lulc_product = 'local', forest_classes must be explicitly provided.", call. = FALSE)
+    }
+    forest_classes <- get_lulc_class_value(lulc_product, "forest_managed")
+  }
+
+  log_message("Using LULC product: {lulc_product}")
+  log_message("Agriculture class value(s): {paste(agriculture_lulc_value, collapse=', ')}")
+  log_message("Built area class value(s): {paste(built_area_lulc_value, collapse=', ')}")
+  log_message("Forest class value(s): {paste(forest_classes, collapse=', ')}")
 
   # Input validation
   assertthat::assert_that(assertthat::is.string(iso3), msg = "'iso3' must be a character string.")

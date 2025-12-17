@@ -12,7 +12,12 @@
 #'
 #' @param ndvi_raster A `SpatRaster` representing NDVI values.
 #' @param lulc_raster Optional. A `SpatRaster` representing land use/land cover (LULC) classes.
-#'                   Required if `built_areas_raster` is not provided. Urban classes should be coded as `7`.
+#'                   Required if `built_areas_raster` is not provided.
+#' @param lulc_product Character. LULC product used for class value lookups: "esri_10m" (default),
+#'                     "dynamic_world", "esa_worldcover", or "local". When "local", `built_area_lulc_value`
+#'                     must be explicitly provided.
+#' @param built_area_lulc_value Integer or NULL. LULC value representing built-up/urban areas. If NULL,
+#'                              automatically determined from `lulc_product`. Default is NULL.
 #' @param built_areas_raster Optional. A `SpatRaster` representing pre-classified binary built areas
 #'                           (1 = built, 0 = non-built). Skips internal classification from `lulc_raster`.
 #'                           Required if `lulc_raster` is not provided.
@@ -45,6 +50,8 @@
 make_urban_greening_opportunities <- function(
     ndvi_raster,
     lulc_raster = NULL,
+    lulc_product = c("esri_10m", "dynamic_world", "esa_worldcover", "local"),
+    built_area_lulc_value = NULL,
     built_areas_raster = NULL,
     sdei_statistics,
     threshold = 0.10,
@@ -54,6 +61,19 @@ make_urban_greening_opportunities <- function(
     output_path = NULL,
     cores = 4
 ) {
+  lulc_product <- match.arg(lulc_product)
+
+  # Resolve LULC class values from product if not explicitly provided
+  if (is.null(built_area_lulc_value)) {
+    if (lulc_product == "local") {
+      stop("When lulc_product = 'local', built_area_lulc_value must be explicitly provided.", call. = FALSE)
+    }
+    built_area_lulc_value <- get_lulc_class_value(lulc_product, "built_area")
+  }
+
+  log_message("Using LULC product: {lulc_product}")
+  log_message("Built area class value(s): {paste(built_area_lulc_value, collapse=', ')}")
+
   # Validate inputs
   assertthat::assert_that(inherits(ndvi_raster, "SpatRaster"), msg = "ndvi_raster must be a SpatRaster object.")
   if (!is.null(lulc_raster)) {
@@ -98,7 +118,7 @@ make_urban_greening_opportunities <- function(
       iso3 = iso3,
       method_override = "mean",
       crop_global_input = FALSE,
-      input_raster_conditional_expression = function(x) terra::ifel(x == 7, 1, 0)
+      input_raster_conditional_expression = function(x) terra::ifel(x == built_area_lulc_value, 1, 0)
     )
   }
 
