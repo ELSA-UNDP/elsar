@@ -68,7 +68,7 @@ make_urban_greening_opportunities <- function(
   }
 
   # Normalize NDVI — invert to reflect greening need, and remove negative values (water or invalid)
-  log_msg("Normalizing NDVI: removing negatives and inverting to reflect greening need...")
+  log_message("Normalizing NDVI: removing negatives and inverting to reflect greening need...")
   rev_ndvi <- make_normalised_raster(
     raster_in = ndvi_raster,
     pus = pus,
@@ -79,7 +79,7 @@ make_urban_greening_opportunities <- function(
 
   # Handle urban area detection
   if (!is.null(built_areas_raster)) {
-    log_msg("Using precomputed built areas raster...")
+    log_message("Using precomputed built areas raster...")
     urban_areas <- make_normalised_raster(
       raster_in = built_areas_raster,
       pus = pus,
@@ -87,7 +87,7 @@ make_urban_greening_opportunities <- function(
       method_override = "mean"
     )
   } else {
-    log_msg("Classifying built areas from LULC raster...")
+    log_message("Classifying built areas from LULC raster...")
     urban_areas <- make_normalised_raster(
       raster_in = lulc_raster,
       pus = pus,
@@ -104,7 +104,7 @@ make_urban_greening_opportunities <- function(
   names(urban_areas) <- "built_areas"
 
   # Process urban heat exposure from SDEI
-  log_msg("Rasterizing urban heat exposure from SDEI...")
+  log_message("Rasterizing urban heat exposure from SDEI...")
   pu_proj <- terra::as.polygons(pus) %>%
     sf::st_as_sf() %>%
     dplyr::filter(`Planning Units` == 1) %>%
@@ -119,7 +119,7 @@ make_urban_greening_opportunities <- function(
     sf::st_as_sf()
 
   if (!"ID_HDC_G0" %in% names(sdei_filtered) || !"avg_intens" %in% names(sdei_filtered)) {
-    log_msg("No usable heat exposure data: generating empty raster.")
+    log_message("No usable heat exposure data: generating empty raster.")
     urban_extreme_heat <- terra::ifel(pus == 1, 0, NA)
   } else {
     sdei_summary <- sdei_filtered %>%
@@ -128,7 +128,7 @@ make_urban_greening_opportunities <- function(
       dplyr::filter(!is.na(avg_intens))
 
     if (nrow(sdei_summary) == 0) {
-      log_msg("No non-NA values in urban heat: generating empty raster.")
+      log_message("No non-NA values in urban heat: generating empty raster.")
       urban_extreme_heat <- terra::ifel(pus == 1, 0, NA)
     } else {
       urban_extreme_heat <- exact_rasterise(
@@ -143,7 +143,7 @@ make_urban_greening_opportunities <- function(
   }
 
   # Combine layers: areas with low NDVI, high heat, and urban presence
-  log_msg("Combining NDVI, heat, and urban data into final greening opportunities raster...")
+  log_message("Combining NDVI, heat, and urban data into final greening opportunities raster...")
   urban_greening_opportunities <- ((rev_ndvi + urban_extreme_heat) / 2 * urban_areas) %>%
     elsar::make_normalised_raster(pus = pus, iso3 = iso3)
 
@@ -157,7 +157,7 @@ make_urban_greening_opportunities <- function(
       filename = output_file,
       datatype = "FLT4S"
     )
-    log_msg(glue::glue("Urban greening raster saved to: {output_file}"))
+    log_message(glue::glue("Urban greening raster saved to: {output_file}"))
   }
 
   # Optionally return both layers

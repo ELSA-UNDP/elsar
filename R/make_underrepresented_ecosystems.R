@@ -38,12 +38,18 @@ make_underrepresented_ecosystems <- function(
     output_path = NULL
 ) {
   # Validate inputs
-  stopifnot(inherits(ecosystems_sf, "sf"))
-  stopifnot(group_attribute %in% colnames(ecosystems_sf))
-  stopifnot(inherits(pus, "SpatRaster"))
-  stopifnot(inherits(protected_areas_sf, "sf") || inherits(protected_areas_sf, "SpatVector"))
+  assertthat::assert_that(inherits(ecosystems_sf, "sf"),
+                          msg = "'ecosystems_sf' must be an sf object.")
+  assertthat::assert_that(group_attribute %in% colnames(ecosystems_sf),
+                          msg = glue::glue("'{group_attribute}' not found in 'ecosystems_sf' columns."))
+  assertthat::assert_that(inherits(pus, "SpatRaster"),
+                          msg = "'pus' must be a SpatRaster object.")
+  assertthat::assert_that(
+    inherits(protected_areas_sf, "sf") || inherits(protected_areas_sf, "SpatVector"),
+    msg = "'protected_areas_sf' must be an sf or SpatVector object."
+  )
 
-  message(glue::glue("Calculating protection gaps for ecosystems grouped by '{group_attribute}'..."))
+  log_message("Calculating protection gaps for ecosystems grouped by '{group_attribute}'...")
 
   # Convert to sf if needed
   if (inherits(protected_areas_sf, "SpatVector")) {
@@ -84,7 +90,7 @@ make_underrepresented_ecosystems <- function(
     )
 
   # Rasterize
-  message("Rasterizing average target gap per planning unit...")
+  log_message("Rasterizing average target gap per planning unit...")
   underrepresented_ecosystems <- elsar::exact_rasterise(
     features = ecosystems_summary,
     pus = pus,

@@ -129,7 +129,7 @@ make_restore_zone <- function(
   )
 
   # Land degradation layer
-  log_msg("Processing degradation layer...")
+  log_message("Processing degradation layer...")
   degradation_processed <- elsar::make_normalised_raster(
     raster_in = degradation,
     pus = pus,
@@ -139,13 +139,13 @@ make_restore_zone <- function(
   )
 
   # Agricultural areas
-  log_msg("Processing agricultural areas...")
+  log_message("Processing agricultural areas...")
   if (!is.null(agricultural_areas)) {
-    log_msg("Using provided agricultural areas raster...")
+    log_message("Using provided agricultural areas raster...")
     agricultural_areas_processed <- agricultural_areas
   } else {
     assertthat::assert_that(!is.null(lulc), msg = "When 'agricultural_areas' is NULL, 'lulc' must be provided.")
-    log_msg("Extracting agricultural areas from LULC raster...")
+    log_message("Extracting agricultural areas from LULC raster...")
     agricultural_areas_processed <- elsar::make_normalised_raster(
       raster_in = lulc,
       pus = pus,
@@ -156,13 +156,13 @@ make_restore_zone <- function(
   }
 
   # Built-up areas
-  log_msg("Processing built-up areas...")
+  log_message("Processing built-up areas...")
   if (!is.null(built_areas)) {
-    log_msg("Using provided built areas raster...")
+    log_message("Using provided built areas raster...")
     built_areas_processed <- built_areas
   } else {
     assertthat::assert_that(!is.null(lulc), msg = "When 'built_areas' is NULL, 'lulc' must be provided.")
-    log_msg("Extracting built areas from LULC raster...")
+    log_message("Extracting built areas from LULC raster...")
     built_areas_processed <- elsar::make_normalised_raster(
       raster_in = lulc,
       pus = pus,
@@ -173,7 +173,7 @@ make_restore_zone <- function(
   }
 
   # Human pressure layer
-  log_msg("Processing human pressure layer...")
+  log_message("Processing human pressure layer...")
   human_pressure_processed <- elsar::make_normalised_raster(
     raster_in = human_pressure,
     pus = pus,
@@ -232,7 +232,7 @@ make_restore_zone <- function(
 
   # Save final output
   if (!is.null(output_path)) {
-    log_msg("Saving final restore zones...")
+    log_message("Saving final restore zones...")
     elsar::save_raster(
       raster = restore_zones,
       filename = glue::glue("{output_path}/restore_zones_{iso3}.tif"),
@@ -240,6 +240,6 @@ make_restore_zone <- function(
     )
   }
 
-  log_msg(glue::glue("Successfully created {terra::nlyr(restore_zones)} restore zone layer(s)"))
+  log_message(glue::glue("Successfully created {terra::nlyr(restore_zones)} restore zone layer(s)"))
   return(restore_zones)
 }

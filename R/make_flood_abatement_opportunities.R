@@ -36,7 +36,7 @@ make_flood_abatement_opportunities <- function(
     threads = TRUE) {
 
   # Normalize NDVI
-  log_msg("Normalizing NDVI raster and removing negative (e.g., water) values...")
+  log_message("Normalizing NDVI raster and removing negative (e.g., water) values...")
   ndvi <- elsar::make_normalised_raster(
     raster_in = ndvi_raster,
     pus = pus,
@@ -45,7 +45,7 @@ make_flood_abatement_opportunities <- function(
   )
 
   # Normalize Global Flood Database
-  log_msg("Normalizing Global Flood Database...")
+  log_message("Normalizing Global Flood Database...")
   gfd_risk <- elsar::make_normalised_raster(
     raster_in = gfd_raster,
     pus = pus,

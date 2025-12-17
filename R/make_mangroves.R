@@ -64,7 +64,7 @@ make_mangroves <- function(sf_in, # rename function name later
         )
 
   } else {
-    log_msg("No mangrove areas found. Returning an empty raster.")
+    log_message("No mangrove areas found. Returning an empty raster.")
     raster_out <- terra::ifel(pus == 1, 0, NA)
   }
 

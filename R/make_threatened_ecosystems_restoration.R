@@ -40,7 +40,7 @@ make_threatened_ecosystems_restoration <- function(
                           msg = "'degradation_input' must be a SpatRaster.")
 
   # Retain threat values only where degraded areas exist
-  log_msg("Finding overlap of threatened ecosystems and degraded areas...")
+  log_message("Finding overlap of threatened ecosystems and degraded areas...")
   threatened_ecosystems_for_restoration <- threatened_ecosystems_input * degradation_input %>%
     make_normalised_raster(
       pus = pus,

@@ -98,7 +98,7 @@ get_iucn_ecosystems <- function(
   excluded_matches <- all_files[grepl(paste0("^(", paste(excluded_file_prefixes, collapse = "|"), ")_"),
                                       basename(all_files))]
   if (length(excluded_matches) > 0) {
-    log_msg(glue::glue("Excluding {length(excluded_matches)} IUCN layers based on excluded_prefixes: {paste(excluded_prefixes, collapse = ', ')}"))
+    log_message(glue::glue("Excluding {length(excluded_matches)} IUCN layers based on excluded_prefixes: {paste(excluded_prefixes, collapse = ', ')}"))
   }
 
   # Apply exclusion filter
@@ -137,7 +137,7 @@ get_iucn_ecosystems <- function(
 
   progressr::handlers("txtprogressbar")
 
-  log_msg("Reading, reprojecting, and intersecting IUCN GET ecosystem layers using parallel processing...")
+  log_message("Reading, reprojecting, and intersecting IUCN GET ecosystem layers using parallel processing...")
 
   pus_bbox_file <- tempfile(fileext = ".gpkg")
   boundary_layer_file <- tempfile(fileext = ".gpkg")
@@ -205,12 +205,12 @@ get_iucn_ecosystems <- function(
   unlink(boundary_layer_file)
   rm(pus_crs)
 
-  log_msg(glue::glue("Finished intersecting all IUCN GET features in {iso3}. Checking for any NULL features..."))
+  log_message(glue::glue("Finished intersecting all IUCN GET features in {iso3}. Checking for any NULL features..."))
 
   iucn_list <- Filter(NROW, iucn_list)
 
   if (length(iucn_list) == 0) {
-    log_msg("No intersecting features found in any file.")
+    log_message("No intersecting features found in any file.")
     return(NULL)
   }
 
@@ -235,12 +235,12 @@ get_iucn_ecosystems <- function(
 
   # Optionally filter out minor occurrence
   if (!include_minor_occurrence) {
-    log_msg("Removing minor occurence polygons...")
+    log_message("Removing minor occurence polygons...")
     iucn_ecosystems <- dplyr::filter(iucn_ecosystems, occurrence != 1)
   }
 
   # Ensure valid geometry and select output fields
-  log_msg("Checking and repairing geometries...")
+  log_message("Checking and repairing geometries...")
   iucn_ecosystems <- sf::st_as_sf(iucn_ecosystems) %>%
     sf::st_make_valid() %>%
     dplyr::select(get_id, occurrence)
@@ -249,7 +249,7 @@ get_iucn_ecosystems <- function(
   if (!is.null(output_path)) {
     dir.create(output_path, showWarnings = FALSE, recursive = TRUE)
     out_file <- file.path(output_path, glue::glue("iucn_ecosystems_{iso3}.gpkg"))
-    log_msg(glue::glue("Saving merged vector layer to: {out_file}"))
+    log_message(glue::glue("Saving merged vector layer to: {out_file}"))
     sf::st_write(iucn_ecosystems, out_file, delete_dsn = TRUE, quiet = TRUE)
   }
 

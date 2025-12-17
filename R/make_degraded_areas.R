@@ -128,7 +128,7 @@ make_degraded_areas <- function(country_iso,
     )
   }
 
-  log_msg(glue::glue("Degraded areas/Restore Zone layer created for {country_iso}"))
+  log_message(glue::glue("Degraded areas/Restore Zone layer created for {country_iso}"))
 
   return(restore_zone)  # Return the final restoration zone raster
 }

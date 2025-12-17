@@ -64,30 +64,30 @@ make_forest_integrity <- function(raster_flii = NULL,
   ))
 
   if ((terra::global(fsii, sum, na.rm=TRUE)[[1]]) == 0) {
-    log_msg("FSII only contains 0s for the study area. Forest integrity will be calculated using FLII only.")
+    log_message("FSII only contains 0s for the study area. Forest integrity will be calculated using FLII only.")
 
     raster_rescaled <- rescale_raster(flii)
 
   } else if ((terra::global(flii, sum, na.rm=TRUE)[[1]]) == 0) {
 
-    log_msg("FLII only contains 0s for the study area. Forest integrity will be calculated using FSII only.")
+    log_message("FLII only contains 0s for the study area. Forest integrity will be calculated using FSII only.")
 
     raster_rescaled <- rescale_raster(fsii)
 
   } else if (((terra::global(fsii, sum, na.rm=TRUE)[[1]]) > 0) & ((terra::global(fsii, sum, na.rm=TRUE)[[1]]) > 0)) {
-    log_msg("Forest integrity will be caluclated using FLII and FSII")
+    log_message("Forest integrity will be calculated using FLII and FSII.")
 
     # get mean of fsii and flii and rescale
     fi <- terra::mean(fsii + flii)
     raster_rescaled <- rescale_raster(fi)
 
   } else {
-    log_msg("Both of your input data files only contain 0 values. Please check your input data.")
+    log_message("Both of your input data files only contain 0 values. Please check your input data.")
   }
 
   } else if (is.null(raster_flii) & !is.null(raster_fsii)) {
 
-    log_msg("Only fsii data provided. Forest integrity will be caluclated using fsii only.")
+    log_message("Only FSII data provided. Forest integrity will be calculated using FSII only.")
 
     raster_rescaled <- make_normalised_raster(
       raster_in = raster_fsii,
@@ -95,7 +95,7 @@ make_forest_integrity <- function(raster_flii = NULL,
     )
 
   } else if (!is.null(raster_flii) & is.null(raster_fsii)) {
-    log_msg("Only flii data provided. Forest integrity will be caluclated using flii only.")
+    log_message("Only FLII data provided. Forest integrity will be calculated using FLII only.")
 
     raster_rescaled <- make_normalised_raster(
       raster_in = raster_flii,

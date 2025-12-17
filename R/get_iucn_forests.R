@@ -80,7 +80,7 @@ get_iucn_forests <- function(
       dplyr::summarise()
 
     # Compute coverage fraction
-    log_msg("Calculating forest coverage fractions...")
+    log_message("Calculating forest coverage fractions...")
     forest_raster <- exactextractr::coverage_fraction(pus, iucn_get_sf)[[1]] %>%
       elsar::make_normalised_raster(
         pus = pus,

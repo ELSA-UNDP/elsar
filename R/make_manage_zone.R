@@ -101,7 +101,7 @@ make_manage_zone <- function(
   }
 
   # Process agricultural areas
-  log_msg("Processing agricultural areas...")
+  log_message("Processing agricultural areas...")
   if (!is.null(agricultural_areas_input)) {
     agricultural_areas <- agricultural_areas_input
   } else {
@@ -116,7 +116,7 @@ make_manage_zone <- function(
   }
 
   # Process pasturelands
-  log_msg("Processing pasturelands...")
+  log_message("Processing pasturelands...")
   pasturelands <- elsar::make_normalised_raster(
     raster_in = pasturelands_input,
     pus = pus,
@@ -125,7 +125,7 @@ make_manage_zone <- function(
     )
 
   # Process built-up areas
-  log_msg("Processing built-up areas...")
+  log_message("Processing built-up areas...")
   if (!is.null(built_areas_input)) {
     built_areas <- built_areas_input
   } else {
@@ -140,7 +140,7 @@ make_manage_zone <- function(
     }
 
   # Normalize HFP and extract middle 60%
-  log_msg("Processing HII layer and extracting middle 60% quantile range...")
+  log_message("Processing HII layer and extracting middle 60% quantile range...")
   hii_resampled <- elsar::make_normalised_raster(
     raster_in = hii_input,
     pus = pus,
@@ -152,10 +152,10 @@ make_manage_zone <- function(
   breaks <- terra::global(hii_resampled, fun = quantile, probs = c(0.2, 0.8), na.rm = TRUE)
   hii_middle_60_pct <- terra::ifel(hii_resampled >= breaks[,1] & hii_resampled <= breaks[,2], 1, 0)
 
-  log_msg(glue::glue("The middle 60% threshold of HII is is between values of {breaks[1]} to {breaks[2]}."))
+  log_message(glue::glue("The middle 60% threshold of HII is is between values of {breaks[1]} to {breaks[2]}."))
 
   # Process managed forests
-  log_msg("Processing managed forests...")
+  log_message("Processing managed forests...")
   if (!is.null(managed_forests_input)) {
     managed_forests <- managed_forests_input
   } else {
@@ -170,7 +170,7 @@ make_manage_zone <- function(
   }
 
   # Main management zone: moderate HFP, OR managed forests, OR ag areas — minus built-up
-  log_msg("Creating the default manage zone using middle 60% of HII value, managed forests, agricultural areas, and pasturelands...")
+  log_message("Creating the default manage zone using middle 60% of HII value, managed forests, agricultural areas, and pasturelands...")
   manage_zone <- terra::ifel(
     hii_middle_60_pct == 1 |
       managed_forests > forest_class_threshold |
@@ -182,12 +182,12 @@ make_manage_zone <- function(
     iso3 = iso3)
 
   # Exclude built-up areas
-  log_msg("Excluding built areas from the manage zone...")
+  log_message("Excluding built areas from the manage zone...")
   manage_zone <- terra::ifel(built_areas > built_areas_threshold, 0, manage_zone) %>%
     make_normalised_raster(pus = pus, iso3 = iso3)
 
   # Secondary zone (agriculture and pastureland only)
-  log_msg("Creating the alternative manage zone using agricultural areas and pasturelands only...")
+  log_message("Creating the alternative manage zone using agricultural areas and pasturelands only...")
   manage_zone_alt <- terra::ifel(
     agricultural_areas > agriculture_threshold |
       pasturelands > pasturelands_threshold,
@@ -201,7 +201,7 @@ make_manage_zone <- function(
 
   # Filter out small patches
   if (filter_patch_size) {
-    log_msg(glue::glue("Sieving out patch sizes smaller than {min_patch_size} planning units..."))
+    log_message(glue::glue("Sieving out patch sizes smaller than {min_patch_size} planning units..."))
     manage_zones[[1]] <- terra::sieve(manage_zones[[1]], threshold = min_patch_size)
     manage_zones[[2]] <- terra::sieve(manage_zones[[2]], threshold = min_patch_size)
   }

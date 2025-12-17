@@ -123,12 +123,12 @@ make_normalised_raster <- function(raster_in,
   # Crop before reprojection if a conditional expression is to be applied and the raw input is a large global raster
   if (!is.null(input_raster_conditional_expression)) {
     if (crop_global_input) {
-      log_msg("Cropping input raster before applying conditional expression...")
+      log_message("Cropping input raster before applying conditional expression...")
       cropped <- crop_global_raster(raster_in, pus)
-      log_msg("Applying conditional expression to cropped input raster...")
+      log_message("Applying conditional expression to cropped input raster...")
       raster_in <- input_raster_conditional_expression(cropped)
     } else {
-      log_msg("Applying conditional expression to input raster...")
+      log_message("Applying conditional expression to input raster...")
       raster_in <- input_raster_conditional_expression(raster_in)
     }
   }
@@ -137,7 +137,7 @@ make_normalised_raster <- function(raster_in,
   dat_aligned <- terra::project(raster_in, y = pus, threads = threads)
 
   if (is.null(dat_aligned) || isTRUE(is.na(suppressWarnings(terra::minmax(dat_aligned)[2]))) || terra::minmax(dat_aligned)[2] == 0) {
-    log_msg("No valid raster values found: returning empty raster.")
+    log_message("No valid raster values found: returning empty raster.")
     return(terra::ifel(pus == 1, 0, NA))
   }
 

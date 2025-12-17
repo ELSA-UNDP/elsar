@@ -64,7 +64,7 @@ make_planning_units <- function(boundary_proj,
   }
 
   if (is.null(pu_size)) {
-    log_msg(glue::glue("pu_size not provided: estimating size to target <= {pu_threshold} PUs (allowing {round(pu_tolerance * 100, 0)}% tolerance)."))
+    log_message(glue::glue("pu_size not provided: estimating size to target <= {pu_threshold} PUs (allowing {round(pu_tolerance * 100, 0)}% tolerance)."))
 
     # Estimate starting size from area
     area_km2 <- units::drop_units(sf::st_area(boundary_proj)) / 1e6
@@ -86,7 +86,7 @@ make_planning_units <- function(boundary_proj,
           r1 <- best_r1
           pu_sum <- best_pu_sum
           pu_size <- best_pu_size
-          log_msg("Max iterations reached or PU size too small. Using best result under soft threshold.")
+          log_message("Max iterations reached or PU size too small. Using best result under soft threshold.")
           break
         } else {
           stop("Unable to find PU size under soft threshold within iteration or size limits.")
@@ -109,7 +109,7 @@ make_planning_units <- function(boundary_proj,
       )
 
       pu_sum_temp <- terra::global(r_temp, sum, na.rm = TRUE)[[1]]
-      log_msg(glue::glue("Iteration {iter}: {as.integer(pu_sum_temp)} PUs at resolution {pu_size} m"))
+      log_message(glue::glue("Iteration {iter}: {as.integer(pu_sum_temp)} PUs at resolution {pu_size} m"))
 
       if (pu_sum_temp <= threshold_soft) {
         best_r1 <- r_temp
@@ -124,7 +124,7 @@ make_planning_units <- function(boundary_proj,
           r1 <- best_r1
           pu_sum <- best_pu_sum
           pu_size <- best_pu_size
-          log_msg(glue::glue("Exceeded soft threshold ({threshold_soft}); using best previous result."))
+          log_message(glue::glue("Exceeded soft threshold ({threshold_soft}); using best previous result."))
           break
         } else {
           stop("No valid PU size found under soft threshold.")
@@ -150,13 +150,13 @@ make_planning_units <- function(boundary_proj,
     pu_sum <- terra::global(r1, sum, na.rm = TRUE)[[1]]
 
     if (pu_sum > pu_threshold) {
-      log_msg(glue::glue("The provided PU size ({pu_size} m) results in {pu_sum} PUs, exceeding the threshold ({pu_threshold}). Consider using automatic estimation."))
+      log_message(glue::glue("The provided PU size ({pu_size} m) results in {pu_sum} PUs, exceeding the threshold ({pu_threshold}). Consider using automatic estimation."))
     }
   }
 
   names(r1) <- "Planning Units"
 
-  log_msg(glue::glue("Final PU layer: {as.integer(pu_sum)} PUs at {as.integer(pu_size)} m resolution."))
+  log_message(glue::glue("Final PU layer: {as.integer(pu_sum)} PUs at {as.integer(pu_size)} m resolution."))
 
   if (!is.null(output_path)) {
     elsar::save_raster(

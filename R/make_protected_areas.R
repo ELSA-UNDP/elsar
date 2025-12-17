@@ -98,7 +98,7 @@ make_protected_areas <- function(
     wdpa_dir <- file.path(download_path, "wdpa_downloads")
     if (!dir.exists(wdpa_dir)) dir.create(wdpa_dir, recursive = TRUE)
 
-    log_msg("Downloading protected areas using the wdpar package")
+    log_message("Downloading protected areas using the wdpar package")
     protected_areas <- wdpar::wdpa_fetch(
       iso3,
       wait = TRUE,
@@ -110,7 +110,7 @@ make_protected_areas <- function(
     protected_areas <- sf_in
   }
 
-  log_msg(glue::glue("Including {glue::glue_collapse(status, sep = ', ', last = ' and ')} areas only"))
+  log_message(glue::glue("Including {glue::glue_collapse(status, sep = ', ', last = ' and ')} areas only"))
 
   # Filter data by STATUS and PA_DEF
   protected_areas <- protected_areas %>%
@@ -118,7 +118,7 @@ make_protected_areas <- function(
 
   # Remove MAB designated areas if specified
   if (!include_mab_designation) {
-    log_msg("Excluding UNESCO Man and Biosphere (MAB) reserve areas")
+    log_message("Excluding UNESCO Man and Biosphere (MAB) reserve areas")
     protected_areas <- protected_areas %>%
       dplyr::filter(!stringr::str_detect(.data$DESIG, "MAB"))
   }
@@ -128,7 +128,7 @@ make_protected_areas <- function(
 
   if (any(geom_type %in% c("POINT", "MULTIPOINT"))) {
     if (buffer_points) {
-      log_msg("Creating geodesic buffers around point geometries")
+      log_message("Creating geodesic buffers around point geometries")
       protected_areas <- convert_points_polygon(
         sf_layer = protected_areas,
         area_crs = area_calc_crs,
@@ -153,7 +153,7 @@ make_protected_areas <- function(
   }
 
   # Rasterize with coverage fraction
-  log_msg("Generating raster from dissolved protected area geometries")
+  log_message("Generating raster from dissolved protected area geometries")
   protected_areas_raster <- exactextractr::coverage_fraction(pus, protected_areas)[[1]]
 
   # Binary conversion if requested

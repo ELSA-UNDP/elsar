@@ -57,34 +57,34 @@ make_kbas <- function(
 
   if (nrow(kba) > 0) {
     if (aze_only) {
-      log_msg("Returning only AZE sites.")
+      log_message("Returning only AZE sites.")
       kba <- dplyr::filter(kba, azestatus == "confirmed")
 
       if (nrow(kba) == 0) {
-        log_msg("No matching AZE sites found in the study region: returning empty raster.")
+        log_message("No matching AZE sites found in the study region: returning empty raster.")
         kba <- terra::ifel(pus == 1, 0, NA)
       }
     } else {
       if (!include_aze_sites) {
-        log_msg("Excluding AZE sites from KBA.")
+        log_message("Excluding AZE sites from KBA.")
         kba <- dplyr::filter(kba, is.na(azestatus) | azestatus != "confirmed")
 
         if (nrow(kba) == 0) {
-          log_msg("After excluding AZEs, there are no KBA sites found: returning empty raster.")
+          log_message("After excluding AZEs, there are no KBA sites found: returning empty raster.")
           kba <- terra::ifel(pus == 1, 0, NA)
           return(kba)
         }
       } else {
-        log_msg("Including AZE sites in KBAs.")
+        log_message("Including AZE sites in KBAs.")
       }
 
       if (!include_regional_kba) {
-        log_msg("Excluding Regional KBAs or those with undetermined Global status.")
+        log_message("Excluding Regional KBAs or those with undetermined Global status.")
         kba <- dplyr::filter(kba, kbaclass %ni% c("Regional", "Global/ Regional to be determined"))
       }
 
       if (nrow(kba) == 0) {
-        log_msg("No sites founds after removing Regional sites and those with undetermined Global status: returning empty raster.")
+        log_message("No sites founds after removing Regional sites and those with undetermined Global status: returning empty raster.")
         kba <- terra::ifel(pus == 1, 0, NA)
       }
     }
@@ -108,7 +108,7 @@ make_kbas <- function(
             dplyr::summarise() %>%
             sf::st_make_valid()
 
-          log_msg("Rasterising and normalising sites...")
+          log_message("Rasterising and normalising sites...")
           kba <- exactextractr::coverage_fraction(pus, kba)[[1]] %>%
             elsar::make_normalised_raster(pus = pus, iso3 = iso3)
 
@@ -121,13 +121,13 @@ make_kbas <- function(
               dplyr::summarise() %>%
               sf::st_make_valid()
 
-            log_msg("Rasterising and normalising sites...")
+            log_message("Rasterising and normalising sites...")
             kba <- exactextractr::coverage_fraction(pus, kba)[[1]] %>%
               elsar::make_normalised_raster(pus = pus, iso3 = iso3)
 
           } else {
-            log_msg("Only 'POINT' or 'MULTIPOINT' geometry type sites found in the planning region and 'buffer_points' is set to false.")
-            log_msg("Returning an empty raster.")
+            log_message("Only 'POINT' or 'MULTIPOINT' geometry type sites found in the planning region and 'buffer_points' is set to false.")
+            log_message("Returning an empty raster.")
 
             kba <- terra::ifel(pus == 1, 0, NA)
           }
@@ -138,13 +138,13 @@ make_kbas <- function(
           dplyr::summarise() %>%
           sf::st_make_valid()
 
-        log_msg("Rasterising and normalising sites...")
+        log_message("Rasterising and normalising sites...")
         kba <- exactextractr::coverage_fraction(pus, kba)[[1]] %>%
           elsar::make_normalised_raster(pus = pus, iso3 = iso3)
       }
     }
   } else {
-    log_msg("No matching KBA features found in the study region: returning empty raster.")
+    log_message("No matching KBA features found in the study region: returning empty raster.")
     kba <- terra::ifel(pus == 1, 0, NA)
   }
 

@@ -36,14 +36,14 @@ make_wetlands_ramsar <- function(
   iso3_filter <- iso3
 
   if (!is.null(ramsar_in)) {
-    log_msg(glue::glue("Filtering Ramsar sites data for iso3 code: {iso3}..."))
+    log_message(glue::glue("Filtering Ramsar sites data for iso3 code: {iso3}..."))
     ramsar <- ramsar_in %>%
       dplyr::filter(iso3 == iso3_filter) %>%
       sf::st_transform(crs = sf::st_crs(pus)) %>%
       sf::st_make_valid()
 
     if (nrow(ramsar_in) == 0) {
-      log_msg("No Ramsar sites in the planning region - returning an empty raster.")
+      log_message("No Ramsar sites in the planning region - returning an empty raster.")
       ramsar <- terra::ifel(pus == 1, 0, NA)
     } else {
       # exactextractr only works with polygon information; need to deal with points
@@ -73,15 +73,15 @@ make_wetlands_ramsar <- function(
               dplyr::summarise() %>%
               sf::st_make_valid()
 
-            log_msg("Rasterising and normalising Ramsar sites...")
+            log_message("Rasterising and normalising Ramsar sites...")
             ramsar <- exactextractr::coverage_fraction(pus, ramsar)[[1]] %>% # problem when point
               elsar::make_normalised_raster(pus = pus, iso3 = iso3)
 
           } else {
-            log_msg(
+            log_message(
               "Only 'POINT' or 'MULTIPOINT' geometry type Ramsar sites found in the planning region and 'buffer_points' is set to false."
             )
-            log_msg("Returning an empty raster.")
+            log_message("Returning an empty raster.")
 
             ramsar <- terra::ifel(pus == 1, 0, NA)
           }
@@ -103,22 +103,22 @@ make_wetlands_ramsar <- function(
 
   if (!is.null(wetlands) & !is.na(suppressWarnings(terra::minmax(wetlands)[2])) & terra::minmax(wetlands)[2] > 0 & nrow(ramsar_in) > 0) {
 
-    log_msg("Wetlands and Ramsar raster built using Wetlands AND Ramsar data.")
+    log_message("Wetlands and Ramsar raster built using Wetlands AND Ramsar data.")
     ramsar_wetlands <- 0.5 * wetlands + ramsar
 
   } else if (is.null(wetlands_in) & is.na(suppressWarnings(terra::minmax(wetlands)[2])) | terra::minmax(wetlands)[2] == 0 & nrow(ramsar_in) > 0) {
 
-      log_msg("Wetlands and Ramsar raster built using only Ramsar data.")
+      log_message("Wetlands and Ramsar raster built using only Ramsar data.")
       ramsar_wetlands <- ramsar
 
   } else if (!is.null(wetlands_in) & !is.na(suppressWarnings(terra::minmax(wetlands)[2])) & terra::minmax(wetlands)[2] > 0 & nrow(ramsar_in) == 0) {
 
-        log_msg("Wetlands and Ramsar raster built using Wetlands data.")
+        log_message("Wetlands and Ramsar raster built using Wetlands data.")
         ramsar_wetlands <- wetlands
 
   } else {
 
-    log_msg("Either Wetlands or Ramsar data must be provided.")
+    log_message("Either Wetlands or Ramsar data must be provided.")
 
   }
 

@@ -56,7 +56,7 @@ make_indigenous_managed_lands <- function(
         landmark <- sf_landmark %>%
           dplyr::filter(sf::st_is(., c("POLYGON", "MULTIPOLYGON")))
         if (nrow(landmark) == 0) {
-          log_msg("Only POINT/MULTIPOINT geometries found in LANDMark and buffering is disabled.")
+          log_message("Only POINT/MULTIPOINT geometries found in LANDMark and buffering is disabled.")
         }
       }
     } else {
@@ -87,7 +87,7 @@ make_indigenous_managed_lands <- function(
         icca <- sf_icca %>%
           dplyr::filter(sf::st_is(., c("POLYGON", "MULTIPOLYGON")))
         if (nrow(icca) == 0) {
-          log_msg("Only POINT/MULTIPOINT geometries found in ICCA and buffering is disabled.")
+          log_message("Only POINT/MULTIPOINT geometries found in ICCA and buffering is disabled.")
         }
       }
     } else {
@@ -120,7 +120,7 @@ make_indigenous_managed_lands <- function(
       elsar::make_normalised_raster(pus = pus, iso3 = iso3)
 
   } else {
-    log_msg("No matching LANDMark or ICCA Registry features found in the study region: returning empty raster.")
+    log_message("No matching LANDMark or ICCA Registry features found in the study region: returning empty raster.")
     indigenous_managed_lands <- terra::ifel(pus == 1, 0, NA)
   }
 

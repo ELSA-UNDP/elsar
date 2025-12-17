@@ -75,12 +75,12 @@ make_protect_zone <- function(
     }
 
   # Process agriculture
-  log_msg("Processing agricultural areas...")
+  log_message("Processing agricultural areas...")
   if (!is.null(agricultural_areas_input)) {
     agricultural_areas <- agricultural_areas_input
   } else {
     assertthat::assert_that(!is.null(lulc_raster), msg = "If 'agricultural_areas_input' is NULL, 'lulc_raster' must be provided.")
-    log_msg("Extracting agricultural areas from LULC raster...")
+    log_message("Extracting agricultural areas from LULC raster...")
     agricultural_areas <- elsar::make_normalised_raster(
       raster_in = lulc_raster,
       pus = pus,
@@ -92,12 +92,12 @@ make_protect_zone <- function(
     }
 
   # Process built-up areas
-  log_msg("Processing built-up areas...")
+  log_message("Processing built-up areas...")
   if (!is.null(built_areas_input)) {
     built_areas <- built_areas_input
   } else {
     assertthat::assert_that(!is.null(lulc_raster), msg = "If 'built_areas_input' is NULL, 'lulc_raster' must be provided.")
-    log_msg("Extracting built areas from LULC raster...")
+    log_message("Extracting built areas from LULC raster...")
     built_areas <-  elsar::make_normalised_raster(
       raster_in = lulc_raster,
       pus = pus,
@@ -109,7 +109,7 @@ make_protect_zone <- function(
     }
 
   # Normalize HII
-  log_msg("Processing HII raster...")
+  log_message("Processing HII raster...")
   hii_resampled <- elsar::make_normalised_raster(
     raster_in = hii_input,
     pus = pus,
@@ -121,7 +121,7 @@ make_protect_zone <- function(
   # Determine threshold from fixed value or quantile
   if (!is.null(hii_threshold)) {
     breaks <- hii_threshold
-    log_msg(glue::glue("Using fixed HII threshold: {breaks}"))
+    log_message(glue::glue("Using fixed HII threshold: {breaks}"))
   } else {
     breaks <- exactextractr::exact_extract(
       x = hii_resampled,
@@ -129,15 +129,15 @@ make_protect_zone <- function(
       fun = "quantile",
       quantiles = hii_quantile
     )
-    log_msg(glue::glue("HII threshold calculated from quantile {hii_quantile}: {breaks}"))
+    log_message(glue::glue("HII threshold calculated from quantile {hii_quantile}: {breaks}"))
   }
 
   # Base zone: where HII is low
-  log_msg("Creating initial protect zone based on HII values...")
+  log_message("Creating initial protect zone based on HII values...")
   protect_zone <- terra::ifel(hii_resampled < breaks, 1, 0)
 
   # Exclude agriculture and built-up areas
-  log_msg("Removing built and agricultural areas...")
+  log_message("Removing built and agricultural areas...")
   if (!is.null(built_areas) && is.null(agricultural_areas)) {
     protect_zone <- terra::ifel(built_areas > built_areas_threshold, 0, protect_zone)
   } else if (is.null(built_areas) && !is.null(agricultural_areas)) {
@@ -145,12 +145,12 @@ make_protect_zone <- function(
   } else if (!is.null(built_areas) && !is.null(agricultural_areas)) {
     protect_zone <- terra::ifel(built_areas > built_areas_threshold | agricultural_areas > agriculture_threshold, 0, protect_zone)
   } else {
-    log_msg("No building or agricultural area found - Protection zone based on HII only.")
+    log_message("No building or agricultural area found - Protection zone based on HII only.")
   }
 
   # Optionally filter out small patches
   if (filter_patch_size) {
-    log_msg(glue::glue("Sieving out patch sizes smaller than {min_patch_size} planning units..."))
+    log_message(glue::glue("Sieving out patch sizes smaller than {min_patch_size} planning units..."))
     protect_zone <- terra::sieve(protect_zone, threshold = min_patch_size)
   }
 

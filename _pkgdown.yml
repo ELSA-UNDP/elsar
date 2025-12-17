@@ -68,7 +68,7 @@ reference:
   - get_file_type
   - get_iucn_ecosystems
   - get_iucn_forests
-  - log_msg
+  - log_message
   - make_custom_projection
 
 - title: Utilities

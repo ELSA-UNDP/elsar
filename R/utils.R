@@ -316,20 +316,46 @@ crop_global_raster <- function(raster_in, pus, threads = TRUE) {
   })
 }
 
-#' Log a timestamped message to the console
+#' Log a message with timestamp
 #'
-#' Utility function to print a timestamped message using `message()`, which
-#' works well with progress bars and other console output.
+#' Prints a timestamped message to the console. Supports glue-style interpolation
+#' of variables from the calling environment. Optionally prints and returns a variable
+#' value, useful for debugging pipelines.
 #'
-#' @param msg A character string to log.
+#' @param msg Character. Message to log, supports glue syntax for variable interpolation.
+#' @param variable Optional. If provided, appends the value to the message and returns it invisibly.
+#'
+#' @return Invisibly returns NULL, or the variable if provided.
 #' @export
 #'
 #' @examples
-#' log_msg("Starting the process...")
-log_msg <- function(msg) {
-  timestamp <- format(Sys.time(), "%Y-%m-%d %H:%M")
-  message(glue::glue("[{timestamp}] {msg}"), appendLF = TRUE)
-  invisible(NULL)
+#' # Simple message
+#' log_message("Starting the process...")
+#'
+#' # With variable interpolation
+#' iso3 <- "KEN"
+#' log_message("Processing {iso3}...")
+#'
+#' # With variable return (useful in pipelines)
+#' result <- log_message("Computed value", 42)
+log_message <- function(msg, variable = NULL) {
+  timestamp <- format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+  glued_msg <- glue::glue(msg, .envir = parent.frame())
+
+  if (!is.null(variable)) {
+    message(glue::glue("[{timestamp}] {glued_msg}: {toString(variable)}"))
+    return(invisible(variable))
+  } else {
+    message(glue::glue("[{timestamp}] {glued_msg}"))
+    return(invisible(NULL))
+  }
+}
+
+#' @rdname log_message
+#' @export
+log_msg <- function(msg, variable = NULL) {
+ .Deprecated("log_message")
+  log_message(msg, variable)
 }
 
 #' Infer file type from file path or directory
