@@ -47,9 +47,9 @@ make_manage_zone(
 
 \item{pasturelands_threshold}{Numeric. Probability threshold above which cells are considered pasturelands (default = 0.35).}
 
-\item{agriculture_lulc_value}{Integer. LULC value for agriculture (default = 4).}
+\item{agriculture_lulc_value}{Integer. LULC value for agriculture (default = 5, for ESRI 10m LULC).}
 
-\item{built_area_lulc_value}{Integer. LULC value for built-up areas (default = 5).}
+\item{built_area_lulc_value}{Integer. LULC value for built-up areas (default = 7, for ESRI 10m LULC).}
 
 \item{forest_classes}{Integer vector. LULC values representing managed forests (default = c(20, 31, 32, 40, 53)).}
 

@@ -22,8 +22,8 @@
 #' @param lulc_raster SpatRaster or NULL. Optional raw LULC input used to extract agriculture and built-up layers if those inputs are categorical.
 #' @param hii_input SpatRaster. Human Footprint Index raster.
 #' @param pasturelands_threshold Numeric. Probability threshold above which cells are considered pasturelands (default = 0.35).
-#' @param agriculture_lulc_value Integer. LULC value for agriculture (default = 4).
-#' @param built_area_lulc_value Integer. LULC value for built-up areas (default = 5).
+#' @param agriculture_lulc_value Integer. LULC value for agriculture (default = 5, for ESRI 10m LULC).
+#' @param built_area_lulc_value Integer. LULC value for built-up areas (default = 7, for ESRI 10m LULC).
 #' @param forest_classes Integer vector. LULC values representing managed forests (default = c(20, 31, 32, 40, 53)).
 #' @param forest_class_threshold Numeric. Minimum proportion of managed forest in a cell to include (default = 0.1).
 #' @param agriculture_threshold Numeric. Minimum proportion of agriculture in a cell to include (default = 0.1).
