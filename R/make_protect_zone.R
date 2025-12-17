@@ -18,7 +18,7 @@
 #' @param hii_input A `SpatRaster` of the Human Footprint Index.
 #' @param hii_threshold A fixed numeric HII threshold. If NULL, `hii_quantile` is used to estimate it.
 #' @param hii_quantile A quantile threshold (e.g., 0.95) used to calculate the HII threshold within protected areas if `hii_threshold` is NULL.
-#' @param agriculture_lulc_value LULC value representing agriculture (default: 4).
+#' @param agriculture_lulc_value LULC value representing agriculture (default: 5).
 #' @param built_area_lulc_value LULC value representing built-up areas (default: 7).
 #' @param agriculture_threshold Minimum fraction for agriculture to exclude a cell (default: 0.1).
 #' @param built_areas_threshold Minimum fraction for built-up area to exclude a cell (default: 0.1).

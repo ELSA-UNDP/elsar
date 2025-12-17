@@ -38,9 +38,9 @@
 #'   is excluded as built-up land (default: 0.1).
 #' @param forest_threshold Numeric. Minimum forest cover proportion to include
 #'   in restore_zone_v2 (default: 0.1).
-#' @param lulc_agriculture_class Integer. Class value in `lulc` representing
-#'   agricultural land (default: 4, for ESRI 10m LULC).
-#' @param lulc_built_class Integer. Class value in `lulc` representing built-up
+#' @param agriculture_lulc_value Integer. Class value in `lulc` representing
+#'   agricultural land (default: 5, for ESRI 10m LULC).
+#' @param built_area_lulc_value Integer. Class value in `lulc` representing built-up
 #'   areas (default: 7, for ESRI 10m LULC).
 #' @param filter_small_patches Logical. Whether to remove small isolated patches
 #'   from the output (default: TRUE).
@@ -108,8 +108,8 @@ make_restore_zone <- function(
     agriculture_threshold = 0.1,
     built_area_threshold = 0.1,
     forest_threshold = 0.1,
-    lulc_agriculture_class = 4,
-    lulc_built_class = 7,
+    agriculture_lulc_value = 5,
+    built_area_lulc_value = 7,
     filter_small_patches = TRUE,
     min_patch_size = 10,
     output_path = NULL
@@ -161,7 +161,7 @@ make_restore_zone <- function(
       pus = pus,
       iso3 = iso3,
       method_override = "mean",
-      input_raster_conditional_expression = function(x) terra::ifel(x == lulc_agriculture_class, 1, 0)
+      input_raster_conditional_expression = function(x) terra::ifel(x == agriculture_lulc_value, 1, 0)
     )
   }
 
@@ -184,7 +184,7 @@ make_restore_zone <- function(
       pus = pus,
       iso3 = iso3,
       method_override = "mean",
-      input_raster_conditional_expression = function(x) terra::ifel(x == lulc_built_class, 1, 0)
+      input_raster_conditional_expression = function(x) terra::ifel(x == built_area_lulc_value, 1, 0)
     )
   }
 
