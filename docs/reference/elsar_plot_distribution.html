@@ -18,7 +18,7 @@
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/data-info.html">Processing global data in R</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/data-info.html">Global Data Processing Reference</a></li>
     <li><a class="dropdown-item" href="../articles/elsaR.html">An Example ELSA Workflow</a></li>
   </ul></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -103,21 +103,22 @@
 <span class="r-in"><span>  iso3_column <span class="op">=</span> <span class="st">"iso3cd"</span>,</span></span>
 <span class="r-in"><span>  custom_projection <span class="op">=</span> <span class="cn">TRUE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> [2025-12-17 12:56:10] Creating boundary for planning region...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> [2025-12-17 12:56:10] Creating custom Mollweide projection centred on planning region...</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">pus</span> <span class="op">&lt;-</span> <span class="fu"><a href="make_planning_units.html">make_planning_units</a></span><span class="op">(</span>boundary_proj <span class="op">=</span> <span class="va">boundary_proj</span>,</span></span>
 <span class="r-in"><span>                           pu_size <span class="op">=</span> <span class="cn">NULL</span>,</span></span>
 <span class="r-in"><span>                           pu_threshold <span class="op">=</span> <span class="fl">8.5e5</span>,</span></span>
 <span class="r-in"><span>                           limit_to_mainland <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> [2025-04-04 19:24] The current number of planning units is: 3743382</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> [2025-04-04 19:24] The current number of planning units is: 2396805</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> [2025-04-04 19:24] The current number of planning units is: 1665187</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> [2025-04-04 19:24] The current number of planning units is: 1223941</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> [2025-04-04 19:24] The current number of planning units is: 741036</span>
-<span class="r-in"><span><span class="va">wad_dat</span> <span class="op">&lt;-</span> <span class="fu"><a href="wad_subset.html">get_wad_data</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in eval(assertion, env):</span> argument "iso3" is missing, with no default</span>
+<span class="r-in"><span><span class="va">wad_dat</span> <span class="op">&lt;-</span> <span class="fu"><a href="get_wad_data.html">get_wad_data</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> [2025-12-17 12:56:10] Loading WAD subset data from package...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> [2025-12-17 12:56:10] WAD subset data loaded successfully.</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">wadOut</span> <span class="op">&lt;-</span> <span class="fu"><a href="make_normalised_raster.html">make_normalised_raster</a></span><span class="op">(</span>raster_in <span class="op">=</span> <span class="va">wad_dat</span>,</span></span>
 <span class="r-in"><span>                                 pus <span class="op">=</span> <span class="va">pus</span>,</span></span>
 <span class="r-in"><span>                                 iso3 <span class="op">=</span> <span class="st">"NPL"</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'pus' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">plot_cat</span> <span class="op">&lt;-</span> <span class="fu"><a href="elsar_plot_static_raster_d.html">elsar_plot_static_raster_d</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>raster_in <span class="op">=</span> <span class="va">wadOut</span>, type <span class="op">=</span> <span class="st">"ggplot_raster"</span>,</span></span>
@@ -128,8 +129,10 @@
 <span class="r-in"><span>raster_df_out <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
 <span class="r-in"><span>legend_title <span class="op">=</span> <span class="st">"WAD"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Plotting input data that is continuous and will be split into categories.</span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in hist.default(raster_df[[data_layer]], breaks = seq(min(raster_df[[data_layer]]),     max(raster_df[[data_layer]]), length.out = number_categories +         1), plot = FALSE):</span> 'x' must be numeric</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>'elsar_plot_static_raster_d' is deprecated.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> Use 'elsar_plot_static_raster' instead.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> See help("Deprecated")</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'wadOut' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">plot_wad_cat</span> <span class="op">&lt;-</span> <span class="va">plot_cat</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span></span>
 <span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'plot_cat' not found</span>
@@ -172,7 +175,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

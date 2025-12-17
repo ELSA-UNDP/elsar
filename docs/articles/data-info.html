@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Processing global data in R • elsar</title>
+<title>Global Data Processing Reference • elsar</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Processing global data in R">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Global Data Processing Reference">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -33,7 +33,7 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/data-info.html">Processing global data in R</a></li>
+<li><a class="dropdown-item" href="../articles/data-info.html">Global Data Processing Reference</a></li>
     <li><a class="dropdown-item" href="../articles/elsaR.html">An Example ELSA Workflow</a></li>
   </ul>
 </li>
@@ -51,11 +51,11 @@
 
 
 
-<script src="data-info_files/kePrint-0.0.1/kePrint.js"></script><link href="data-info_files/lightable-0.0.1/lightable.css" rel="stylesheet">
+<script src="data-info_files/accessible-code-block-0.0.1/empty-anchor.js"></script><script src="data-info_files/kePrint-0.0.1/kePrint.js"></script><link href="data-info_files/lightable-0.0.1/lightable.css" rel="stylesheet">
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Processing global data in R</h1>
+      <h1>Global Data Processing Reference</h1>
             
       
 
@@ -64,12 +64,15 @@
 
     
     
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://elsa-undp.github.io/elsar/">elsar</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://readr.tidyverse.org" class="external-link">readr</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="http://haozhu233.github.io/kableExtra/" class="external-link">kableExtra</a></span><span class="op">)</span></span></code></pre></div>
-<table class="table table table-hover table" style="font-size: 10px; width: auto !important; margin-left: auto; margin-right: auto; font-size: 10px; margin-left: auto; margin-right: auto;">
+<div class="section level2">
+<h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
+</h2>
+<p>The <code>elsar</code> package provides functions to process various global datasets for use in ELSA (Essential Life Support Areas) conservation planning. This reference table summarizes the available datasets, their corresponding R functions, and processing notes.</p>
+</div>
+<div class="section level2">
+<h2 id="dataset-reference">Dataset Reference<a class="anchor" aria-label="anchor" href="#dataset-reference"></a>
+</h2>
+<table class="table table table-hover" style="font-size: 10px; width: auto !important; margin-left: auto; margin-right: auto;">
 <thead><tr>
 <th style="text-align:left;">
 Dataset
@@ -81,7 +84,7 @@ Dataset Name
 R Function
 </th>
 <th style="text-align:left;">
-Function Specifics
+Specifics
 </th>
 <th style="text-align:left;">
 Comments
@@ -445,9 +448,7 @@ make_managed_forests()
 default
 </td>
 <td style="text-align:left;width: 4cm; ">
-predefined categories: 11: undisturbed forest (NOT managed), 20:
-disturbed forest (can be considered managed), rest (31, 32, 40, 53):
-managed (palm oil, etc.)
+predefined categories: 11: undisturbed forest (NOT managed), 20: disturbed forest (can be considered managed), rest (31, 32, 40, 53): managed (palm oil, etc.)
 </td>
 <td style="text-align:left;width: 4cm; ">
 Y
@@ -614,7 +615,21 @@ N
 </td>
 </tr>
 </tbody>
-</table></main>
+</table>
+</div>
+<div class="section level2">
+<h2 id="notes">Notes<a class="anchor" aria-label="anchor" href="#notes"></a>
+</h2>
+<ul>
+<li>
+<strong>Tested</strong>: Indicates whether the function has been tested with real data (Y = Yes, N = No)</li>
+<li>Most datasets use <code><a href="../reference/make_normalised_raster.html">make_normalised_raster()</a></code> for standard processing</li>
+<li>Some datasets require specialized functions (e.g., <code><a href="../reference/make_kbas.html">make_kbas()</a></code>, <code><a href="../reference/make_mangroves.html">make_mangroves()</a></code>)</li>
+<li>Datasets marked as “NA” or “deprecated” are not currently available</li>
+</ul>
+</div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside>
 </div>
 
 
@@ -624,7 +639,7 @@ N
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>
