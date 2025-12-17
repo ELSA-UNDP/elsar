@@ -147,7 +147,16 @@ elsar_plot_feature <- function(raster_in,
   }
 
   if (!is.null(figure_path)) {
-    output_file <- file.path(glue::glue("{figure_path}/{legend_title}_{iso3}.png"))
+    # Clean filename: replace spaces/special chars, collapse underscores, lowercase
+    clean_title <- gsub("[^a-zA-Z0-9_-]", "_", legend_title)
+    clean_title <- gsub("-", "_", clean_title)
+    clean_title <- gsub("_+", "_", clean_title)
+    clean_title <- gsub("^_|_$", "", clean_title)
+    clean_title <- tolower(clean_title)
+
+    clean_iso3 <- if (!is.null(iso3)) tolower(iso3) else "unknown"
+
+    output_file <- file.path(figure_path, paste0(clean_title, "_", clean_iso3, ".png"))
     log_message("Saving plot to '{output_file}'...")
     ggplot2::ggsave(output_file,
       plot = gg_feature,
