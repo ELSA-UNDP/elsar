@@ -1,8 +1,8 @@
 ---
-title: "Processing global data in R"
+title: "Global Data Processing Reference"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Processing global data in R}
+  %\VignetteIndexEntry{Global Data Processing Reference}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -14,24 +14,31 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup, message=FALSE}
+## Overview
+
+The `elsar` package provides functions to process various global datasets for use in ELSA (Essential Life Support Areas) conservation planning. This reference table summarizes the available datasets, their corresponding R functions, and processing notes.
+
+## Dataset Reference
+
+```{r setup, message=FALSE, echo=FALSE}
 library(elsar)
 library(readr)
 library(dplyr)
 library(kableExtra)
-
 ```
 
-
-
 ```{r, echo = FALSE, message=FALSE, warning=FALSE}
-data_summary <- read_delim("data_summary.csv", delim = ";") %>%
-  kable() %>%
-  kable_styling("hover", full_width = F, font_size = 10) %>%
- # kable_paper("hover", full_width = F) %>%
-  kable_styling(font_size = 10) %>%
-  column_spec(1, width = "6cm", bold = T) %>%
+data_summary <- read_delim("data_summary.csv", delim = ";", show_col_types = FALSE) %>%
+  kable(col.names = c("Dataset", "Dataset Name", "R Function", "Specifics", "Comments", "Tested")) %>%
+  kable_styling("hover", full_width = FALSE, font_size = 10) %>%
+  column_spec(1, width = "6cm", bold = TRUE) %>%
   column_spec(2:6, width = "4cm")
 data_summary
 ```
 
+## Notes
+
+- **Tested**: Indicates whether the function has been tested with real data (Y = Yes, N = No)
+- Most datasets use `make_normalised_raster()` for standard processing
+- Some datasets require specialized functions (e.g., `make_kbas()`, `make_mangroves()`)
+- Datasets marked as "NA" or "deprecated" are not currently available
