@@ -6,10 +6,13 @@ test_that("planning_units", {
     custom_projection = TRUE
   )
 
-  pus <- make_planning_units(boundary_proj = boundary_proj,
-                             pu_size = NULL,
-                             pu_threshold = 8.5e5,
-                             limit_to_mainland = FALSE)
+  pus <- make_planning_units(
+    boundary_proj = boundary_proj,
+    pu_size = NULL,
+    pu_threshold = 8.5e5,
+    limit_to_mainland = FALSE,
+    iso3 = "NPL"
+  )
   expect_equal(class(pus)[1], "SpatRaster")
   # Planning units inside boundary have value 1, outside is NA
   expect_equal(terra::global(pus, "min", na.rm = TRUE)[[1]], 1)
