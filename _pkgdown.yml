@@ -1,6 +1,7 @@
 url: https://elsa-undp.github.io/elsar/
 template:
   bootstrap: 5
+llm-docs: false
 articles:
 development:
   destination:
@@ -50,6 +51,7 @@ reference:
 - title: Helper Functions
 - contents:
   - elsar_load_data
+  - check_and_download_required_layers
   - download_esri_lulc_data
   - download_global_pasture_data
   - download_gee_layer
