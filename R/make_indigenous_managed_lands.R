@@ -39,6 +39,11 @@ make_indigenous_managed_lands <- function(
     buffer_points = TRUE,
     output_path = NULL
 ) {
+  if (!is.null(output_path)) {
+    assertthat::assert_that(dir.exists(output_path),
+                            msg = glue::glue("'output_path' directory does not exist: {output_path}"))
+  }
+
   crs_pus <- sf::st_crs(pus)
 
   # --- Process LANDMark ---

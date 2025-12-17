@@ -70,6 +70,10 @@ make_threatened_ecosystems_protection <- function(
                           msg = "'boundary_layer' must be an sf object.")
   assertthat::assert_that(inherits(integrity_raster, "SpatRaster"),
                           msg = "'integrity_raster' must be a SpatRaster object.")
+  if (!is.null(output_path)) {
+    assertthat::assert_that(dir.exists(output_path),
+                            msg = glue::glue("'output_path' directory does not exist: {output_path}"))
+  }
 
   log_message("Calculating ecosystem threat using integrity data type: {integrity_type}")
 

@@ -73,9 +73,30 @@ elsar_load_data <- function(file_name = NULL,
                             iso3_column = NULL,
                             iso3 = NULL) {
 
+ # Input validation
+  assertthat::assert_that(
+    is.null(file_name) || is.character(file_name),
+    msg = "'file_name' must be NULL or a character string."
+  )
+
+  assertthat::assert_that(
+    is.null(file_path) || is.character(file_path),
+    msg = "'file_path' must be NULL or a character string."
+  )
+
+  assertthat::assert_that(
+    is.logical(drop3d),
+    msg = "'drop3d' must be TRUE or FALSE."
+  )
+
   # Prepare spatial filter (WKT) if needed
   wkt_str <- NULL
-  if (!is.null(wkt_filter) && inherits(wkt_filter, c("sf", "SpatRaster", "SpatVector"))) {
+  if (!is.null(wkt_filter)) {
+    assertthat::assert_that(
+      inherits(wkt_filter, c("sf", "SpatRaster", "SpatVector")),
+      msg = "'wkt_filter' must be an sf, SpatRaster, or SpatVector object."
+    )
+    log_message("Preparing spatial filter from input extent...")
     wkt_str <- terra::ext(wkt_filter) %>%
       terra::as.polygons() %>%
       sf::st_as_sf() %>%
@@ -89,13 +110,19 @@ elsar_load_data <- function(file_name = NULL,
   if (is.null(file_path) &&
       !is.null(file_name) && file_name == "postgres") {
     if (is.null(pg_connection) && is.null(db_info)) {
-      stop("Postgres connection info required.")
+      stop("Postgres connection info required. Provide 'db_info' or 'pg_connection'.")
     }
+    assertthat::assert_that(
+      !is.null(file_lyr),
+      msg = "'file_lyr' (table name) is required when loading from PostgreSQL."
+    )
+    log_message("Connecting to PostgreSQL database...")
     con <- if (is.null(pg_connection)) {
       RPostgres::dbConnect(RPostgres::Postgres(), !!!db_info)
     } else {
       RPostgres::dbConnect(RPostgres::Postgres(), !!!pg_connection)
     }
+    log_message("Loading table '{file_lyr}' from PostgreSQL...")
     return(sf::st_read(
       dsn = con,
       query = glue::glue("SELECT * FROM {file_lyr} WHERE {iso3_column} = '{iso3}'")
@@ -110,22 +137,32 @@ elsar_load_data <- function(file_name = NULL,
   }
 
   file_type <- get_file_type(input_path)
+  log_message("Detected file type: {file_type}")
 
-
+  # Raster formats
   if (file_type %in% c("tif", "tiff", "grd", "gri", "nc", "hdf")) {
-    return(if (!is.null(file_lyr))
+    log_message("Loading raster data from '{input_path}'...")
+    result <- if (!is.null(file_lyr)) {
       terra::rast(input_path, lyrs = file_lyr)
-      else
-        terra::rast(input_path))
+    } else {
+      terra::rast(input_path)
+    }
+    assertthat::assert_that(
+      inherits(result, "SpatRaster"),
+      msg = "Failed to load raster data."
+    )
+    log_message("Loaded raster with {terra::nlyr(result)} layer(s).")
+    return(result)
   }
 
-  # Vector formats
+  # Vector formats - multiple shapefiles
   if (file_type == "shp" && (is.null(file_name) || length(file_name) > 1)) {
     shapefiles <- if (is.null(file_name)) {
       list.files(file_path, pattern = "\\.shp$", full.names = TRUE)
     } else {
       file.path(file_path, file_name)
     }
+    log_message("Loading {length(shapefiles)} shapefile(s)...")
     all_data <- lapply(shapefiles, function(f)
       filter_sf(f, iso3, iso3_column, drop3d = drop3d, wkt_filter = wkt_str, file_type = file_type))
     all_data <- Filter(Negate(is.null), all_data)
@@ -136,11 +173,15 @@ elsar_load_data <- function(file_name = NULL,
         x[[col]] <- NA
       x[, all_cols]
     })
-    return(dplyr::bind_rows(all_data))
+    result <- dplyr::bind_rows(all_data)
+    log_message("Loaded {nrow(result)} features from {length(all_data)} file(s).")
+    return(result)
   }
 
-  if (file_type %in% c("gpkg", "gdb") && is.null(file_lyr)) {
+  # Vector formats - multi-layer files without specified layer
+ if (file_type %in% c("gpkg", "gdb") && is.null(file_lyr)) {
     all_layers <- sf::st_layers(input_path)$name
+    log_message("Loading all {length(all_layers)} layers from '{file_type}' file...")
     all_data <- lapply(all_layers, function(lyr)
       filter_sf(input_path, iso3, iso3_column, lyr, drop3d, wkt_str, file_type))
     all_data <- Filter(Negate(is.null), all_data)
@@ -151,9 +192,16 @@ elsar_load_data <- function(file_name = NULL,
         x[[col]] <- NA
       x[, all_cols]
     })
-    return(dplyr::bind_rows(all_data))
+    result <- dplyr::bind_rows(all_data)
+    log_message("Loaded {nrow(result)} features from {length(all_data)} layer(s).")
+    return(result)
   }
 
   # Single vector layer
-  return(filter_sf(input_path, iso3, iso3_column, layer_name = file_lyr, drop3d = drop3d, wkt_filter = wkt_str, file_type = file_type))
+  log_message("Loading vector data from '{input_path}'...")
+  result <- filter_sf(input_path, iso3, iso3_column, layer_name = file_lyr, drop3d = drop3d, wkt_filter = wkt_str, file_type = file_type)
+  if (!is.null(result)) {
+    log_message("Loaded {nrow(result)} features.")
   }
+  return(result)
+}

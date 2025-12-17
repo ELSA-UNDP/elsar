@@ -60,6 +60,34 @@ elsar_plot_feature <- function(raster_in,
                                iso3 = NULL,
                                no_legend = FALSE,
                                custom_resolution = 200) {
+  # Input validation
+  assertthat::assert_that(
+    inherits(raster_in, "SpatRaster"),
+    msg = "'raster_in' must be a SpatRaster object."
+  )
+
+  assertthat::assert_that(
+    inherits(pus, c("SpatRaster", "SpatVector")),
+    msg = "'pus' must be a SpatRaster or SpatVector object."
+  )
+
+  assertthat::assert_that(
+    is.logical(invert_palette),
+    msg = "'invert_palette' must be TRUE or FALSE."
+  )
+
+  assertthat::assert_that(
+    is.logical(no_legend),
+    msg = "'no_legend' must be TRUE or FALSE."
+  )
+
+  assertthat::assert_that(
+    is.numeric(custom_resolution) && custom_resolution > 0,
+    msg = "'custom_resolution' must be a positive number."
+  )
+
+  log_message("Creating feature plot...")
+
   # Prep outline
   outlines <- terra::as.polygons(pus) %>%
     # And convert to lines
@@ -119,7 +147,9 @@ elsar_plot_feature <- function(raster_in,
   }
 
   if (!is.null(figure_path)) {
-    ggplot2::ggsave(file.path(glue::glue("{figure_path}/{legend_title}_{iso3}.png")),
+    output_file <- file.path(glue::glue("{figure_path}/{legend_title}_{iso3}.png"))
+    log_message("Saving plot to '{output_file}'...")
+    ggplot2::ggsave(output_file,
       plot = gg_feature,
       device = "png",
       width = 8, height = 6,
@@ -127,5 +157,6 @@ elsar_plot_feature <- function(raster_in,
     )
   }
 
+  log_message("Feature plot created successfully.")
   return(gg_feature)
 }

@@ -99,6 +99,10 @@ make_manage_zone <- function(
   if (!is.null(lulc_raster)) {
     assertthat::assert_that(inherits(lulc_raster, "SpatRaster"), msg = "'lulc_raster' must be a SpatRaster.")
   }
+  if (!is.null(output_path)) {
+    assertthat::assert_that(dir.exists(output_path),
+                            msg = glue::glue("'output_path' directory does not exist: {output_path}"))
+  }
 
   # Process agricultural areas
   log_message("Processing agricultural areas...")
@@ -152,7 +156,7 @@ make_manage_zone <- function(
   breaks <- terra::global(hii_resampled, fun = quantile, probs = c(0.2, 0.8), na.rm = TRUE)
   hii_middle_60_pct <- terra::ifel(hii_resampled >= breaks[,1] & hii_resampled <= breaks[,2], 1, 0)
 
-  log_message(glue::glue("The middle 60% threshold of HII is is between values of {breaks[1]} to {breaks[2]}."))
+  log_message("The middle 60% threshold of HII is is between values of {breaks[1]} to {breaks[2]}.")
 
   # Process managed forests
   log_message("Processing managed forests...")
@@ -201,7 +205,7 @@ make_manage_zone <- function(
 
   # Filter out small patches
   if (filter_patch_size) {
-    log_message(glue::glue("Sieving out patch sizes smaller than {min_patch_size} planning units..."))
+    log_message("Sieving out patch sizes smaller than {min_patch_size} planning units...")
     manage_zones[[1]] <- terra::sieve(manage_zones[[1]], threshold = min_patch_size)
     manage_zones[[2]] <- terra::sieve(manage_zones[[2]], threshold = min_patch_size)
   }

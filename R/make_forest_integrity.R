@@ -43,6 +43,11 @@ make_forest_integrity <- function(raster_flii = NULL,
                                   iso3,
                                   output_path = NULL) {
 
+  if (!is.null(output_path)) {
+    assertthat::assert_that(dir.exists(output_path),
+                            msg = glue::glue("'output_path' directory does not exist: {output_path}"))
+  }
+
   if (!is.null(raster_flii) & !is.null(raster_fsii)) {
 
     assertthat::assert_that(

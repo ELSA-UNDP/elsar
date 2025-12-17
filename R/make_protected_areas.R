@@ -92,6 +92,10 @@ make_protected_areas <- function(
       msg = "sf_in must be a valid sf object when from_wdpa = FALSE"
     )
   }
+  if (!is.null(output_path)) {
+    assertthat::assert_that(dir.exists(output_path),
+                            msg = glue::glue("'output_path' directory does not exist: {output_path}"))
+  }
 
   # Load data
   if (from_wdpa) {
@@ -110,7 +114,7 @@ make_protected_areas <- function(
     protected_areas <- sf_in
   }
 
-  log_message(glue::glue("Including {glue::glue_collapse(status, sep = ', ', last = ' and ')} areas only"))
+  log_message("Including {glue::glue_collapse(status, sep = ', ', last = ' and ')} areas only")
 
   # Filter data by STATUS and PA_DEF
   protected_areas <- protected_areas %>%

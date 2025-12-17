@@ -42,6 +42,10 @@ make_degraded_areas <- function(country_iso,
   if (is.null(sdg_degradation_input) || is.null(hii_input) || is.null(agriculture_input) || is.null(built_areas_input)) {
     stop("All required input rasters (sdg_degradation_input, hii_input, agriculture_input, built_areas_input) must be provided.")
   }
+  if (!is.null(output_path)) {
+    assertthat::assert_that(dir.exists(output_path),
+                            msg = glue::glue("'output_path' directory does not exist: {output_path}"))
+  }
 
   # Resample and align SDG degradation layer to the planning units (PU) raster
   sdg_degradation_resampled <- terra::resample(
@@ -128,7 +132,7 @@ make_degraded_areas <- function(country_iso,
     )
   }
 
-  log_message(glue::glue("Degraded areas/Restore Zone layer created for {country_iso}"))
+  log_message("Degraded areas/Restore Zone layer created for {country_iso}")
 
   return(restore_zone)  # Return the final restoration zone raster
 }

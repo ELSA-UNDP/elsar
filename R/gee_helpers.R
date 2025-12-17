@@ -41,7 +41,7 @@ initialize_earthengine <- function(gee_project) {
       temp_env <- paste0("gee_temp_env_", Sys.getpid())
       reticulate::conda_create(temp_env, packages = c("python=3.12", "earthengine-api"))
       reticulate::use_condaenv(temp_env, required = TRUE)
-      log_message(glue::glue("Temporary Conda environment created: {temp_env}"))
+      log_message("Temporary Conda environment created: {temp_env}")
     }
   } else {
     # No RETICULATE_PYTHON set - create new temporary environment
@@ -49,7 +49,7 @@ initialize_earthengine <- function(gee_project) {
     temp_env <- paste0("gee_temp_env_", Sys.getpid())
     reticulate::conda_create(temp_env, packages = c("python=3.12", "earthengine-api"))
     reticulate::use_condaenv(temp_env, required = TRUE)
-    log_message(glue::glue("Temporary Conda environment created: {temp_env}"))
+    log_message("Temporary Conda environment created: {temp_env}")
   }
 
   # Import Earth Engine module
@@ -84,7 +84,7 @@ initialize_earthengine <- function(gee_project) {
 #' }
 cleanup_earthengine <- function(env_info) {
   if (!is.null(env_info$temp_env)) {
-    log_message(glue::glue("Cleaning up temporary conda environment: {env_info$temp_env}"))
+    log_message("Cleaning up temporary conda environment: {env_info$temp_env}")
     reticulate::conda_remove(env_info$temp_env)
   }
 }
@@ -107,11 +107,24 @@ cleanup_earthengine <- function(env_info) {
 #' if (!result$success) warning("Some downloads failed")
 #' }
 download_from_drive <- function(drive_folder, file_prefix, local_path) {
+  # Input validation
+  assertthat::assert_that(
+    is.character(file_prefix) && nchar(file_prefix) > 0,
+    msg = "'file_prefix' must be a non-empty character string."
+  )
+
+  assertthat::assert_that(
+    is.character(local_path) && dir.exists(local_path),
+    msg = "'local_path' must be an existing directory path."
+  )
+
+  log_message("Searching Google Drive for files matching '{file_prefix}'...")
+
   # List all files in the specified Drive folder
   files <- tryCatch(
     googledrive::drive_ls(path = drive_folder),
     error = function(e) {
-      log_message(glue::glue("Error accessing Google Drive folder: {e$message}"))
+      log_message("Error accessing Google Drive folder: {e$message}")
       return(NULL)
     }
   )
@@ -125,7 +138,7 @@ download_from_drive <- function(drive_folder, file_prefix, local_path) {
   matching_files <- files[grepl(paste0("^", file_prefix), files$name) & grepl("\\.tif$", files$name), ]
 
   if (nrow(matching_files) == 0) {
-    log_message(glue::glue("No .tif files matching prefix '{file_prefix}' found"))
+    log_message("No .tif files matching prefix '{file_prefix}' found")
     return(invisible(list(success = FALSE, files = character(0))))
   }
 
@@ -142,10 +155,10 @@ download_from_drive <- function(drive_folder, file_prefix, local_path) {
         path = file_path,
         overwrite = TRUE
       )
-      log_message(glue::glue("Downloaded: {matching_files$name[i]}"))
+      log_message("Downloaded: {matching_files$name[i]}")
       TRUE
     }, error = function(e) {
-      log_message(glue::glue("Failed to download {matching_files$name[i]}: {e$message}"))
+      log_message("Failed to download {matching_files$name[i]}: {e$message}")
       FALSE
     })
 
@@ -184,14 +197,33 @@ download_from_drive <- function(drive_folder, file_prefix, local_path) {
 #' merged_raster <- merge_tiles("/tmp/tiles", "/output/merged.tif", "INT1U")
 #' }
 merge_tiles <- function(local_path, output_file, datatype) {
+  # Input validation
+  assertthat::assert_that(
+    is.character(local_path) && dir.exists(local_path),
+    msg = "'local_path' must be an existing directory path."
+  )
+
+  assertthat::assert_that(
+    is.character(output_file) && nchar(output_file) > 0,
+    msg = "'output_file' must be a non-empty character string."
+  )
+
+  assertthat::assert_that(
+    is.character(datatype) && datatype %in% c("INT1U", "INT2U", "INT4U", "FLT4S", "FLT8S"),
+    msg = "'datatype' must be a valid GDAL datatype (e.g., 'INT1U', 'FLT4S')."
+  )
+
   # Find all .tif files in the local directory
   tile_files <- list.files(local_path, pattern = "\\.tif$", full.names = TRUE)
 
   if (length(tile_files) == 0) {
-    stop("No downloaded tiles found!", call. = FALSE)
+    stop(
+      glue::glue("No downloaded tiles found in '{local_path}'. Check that GEE export completed successfully."),
+      call. = FALSE
+    )
   }
 
-  log_message(glue::glue("Merging {length(tile_files)} tile(s) into final output: {output_file}"))
+  log_message("Merging {length(tile_files)} tile(s) into final output: {output_file}")
 
   # Handle single tile vs multiple tiles
   if (length(tile_files) == 1) {
@@ -305,55 +337,79 @@ download_gee_layer <- function(
     log_message("Exporting to Google Drive root (no folder) to avoid GEE folder duplication bug")
   } else {
     export_folder <- paste0(googledrive_folder, "_", iso3)
-    log_message(glue::glue("Using country-specific folder: {export_folder}"))
+    log_message("Using country-specific folder: {export_folder}")
   }
 
   # Create temporary local directory for downloads
   temp_dir <- file.path(Sys.getenv("HOME"), glue::glue("gee_download_{iso3}_{Sys.getpid()}"))
   dir.create(temp_dir, showWarnings = FALSE)
-  log_message(glue::glue("Temporary directory created at: {temp_dir}"))
+  log_message("Temporary directory created at: {temp_dir}")
 
   # Initialize Earth Engine
-  env_info <- initialize_earthengine(gee_project)
+  env_info <- tryCatch({
+    initialize_earthengine(gee_project)
+  }, error = function(e) {
+    log_message("Failed to initialize Earth Engine: {e$message}")
+    unlink(temp_dir, recursive = TRUE)
+    stop(
+      glue::glue("Earth Engine initialization failed. Check your GEE project ID and credentials. Error: {e$message}"),
+      call. = FALSE
+    )
+  })
   ee <- env_info$ee
 
   # Load the dataset and find the most recent year with data
-  ic <- ee$ImageCollection(asset_id)
+  log_message("Loading GEE asset: {asset_id}")
+  ic <- tryCatch({
+    ee$ImageCollection(asset_id)
+  }, error = function(e) {
+    log_message("Failed to load GEE asset: {e$message}")
+    cleanup_earthengine(env_info)
+    unlink(temp_dir, recursive = TRUE)
+    stop(
+      glue::glue("Failed to load GEE asset '{asset_id}'. Check the asset ID is correct. Error: {e$message}"),
+      call. = FALSE
+    )
+  })
+
   year <- as.numeric(format(Sys.Date(), "%Y")) - 1
 
   # Search backwards for a year with data
+  log_message("Searching for most recent year with data...")
   while (ic$filterDate(ee$Date(glue::glue("{year}-01-01")), ee$Date(glue::glue("{year}-12-31")))$size()$getInfo() == 0) {
-    log_message(glue::glue("No valid data found for {year}, trying {year - 1}..."))
+    log_message("No valid data found for {year}, trying {year - 1}...")
     year <- year - 1
     # Prevent infinite loop - stop if we go too far back
     if (year < 2000) {
-      stop("No data found for any recent year in the collection", call. = FALSE)
+      cleanup_earthengine(env_info)
+      unlink(temp_dir, recursive = TRUE)
+      stop("No data found for any recent year (back to 2000) in the collection.", call. = FALSE)
     }
   }
-  log_message(glue::glue("Using data for year: {year}"))
+  log_message("Using data for year: {year}")
 
   # Build export filename and check if local file already exists
   file_name <- glue::glue("{file_prefix}_{year}_{iso3}")
   output_file <- file.path(output_dir, glue::glue("{file_name}.tif"))
 
   if (file.exists(output_file)) {
-    log_message(glue::glue("File already exists locally: {output_file}"))
+    log_message("File already exists locally: {output_file}")
     log_message("Loading existing file...")
     cleanup_earthengine(env_info)
     unlink(temp_dir, recursive = TRUE)
     return(terra::rast(output_file))
   }
 
-  log_message(glue::glue("Checking Google Drive for existing files: {file_name}*"))
+  log_message("Checking Google Drive for existing files: {file_name}*")
 
   # Simple folder creation function (only used if not exporting to root)
   ensure_drive_folder <- function(folder_name) {
     existing_folders <- googledrive::drive_ls(path = NULL, type = "folder")
     if (!(folder_name %in% existing_folders$name)) {
-      log_message(glue::glue("Folder '{folder_name}' does not exist. Creating it in Google Drive..."))
+      log_message("Folder '{folder_name}' does not exist. Creating it in Google Drive...")
       googledrive::drive_mkdir(folder_name)
     } else {
-      log_message(glue::glue("Folder '{folder_name}' already exists in Google Drive."))
+      log_message("Folder '{folder_name}' already exists in Google Drive.")
     }
   }
 
@@ -374,9 +430,9 @@ download_gee_layer <- function(
   existing_files <- files[grepl(paste0("^", file_name), files$name) & grepl("\\.tif$", files$name), ]
 
   if (nrow(existing_files) > 0) {
-    log_message(glue::glue("Existing files for {iso3} found on Google Drive. Downloading instead of exporting from GEE..."))
+    log_message("Existing files for {iso3} found on Google Drive. Downloading instead of exporting from GEE...")
   } else {
-    log_message(glue::glue("No existing exported files found for {iso3} on Google Drive."))
+    log_message("No existing exported files found for {iso3} on Google Drive.")
     log_message("Checking for existing export tasks that are still running...")
 
     # Check for running export tasks with the same description
@@ -386,7 +442,7 @@ download_gee_layer <- function(
     })
 
     if (!is.null(existing_task)) {
-      log_message(glue::glue("Existing export task '{file_name}' is still running. Waiting instead of starting a new one."))
+      log_message("Existing export task '{file_name}' is still running. Waiting instead of starting a new one.")
     } else {
       log_message("No similar running tasks found. Proceeding with new GEE export.")
 
@@ -490,6 +546,24 @@ download_gee_layer <- function(
 #' )
 #' }
 download_esri_lulc_data <- function(boundary_layer, iso3, gee_project, output_dir = here::here(), ...) {
+  # Input validation
+ assertthat::assert_that(
+    inherits(boundary_layer, "sf"),
+    msg = "'boundary_layer' must be an sf object."
+  )
+
+  assertthat::assert_that(
+    is.character(iso3) && nchar(iso3) == 3,
+    msg = "'iso3' must be a 3-letter country code."
+  )
+
+  assertthat::assert_that(
+    is.character(gee_project) && nchar(gee_project) > 0,
+    msg = "'gee_project' must be a non-empty character string (your GEE cloud project ID)."
+  )
+
+  log_message("Downloading ESRI 10m LULC data for {iso3}...")
+
   result <- download_gee_layer(
     boundary_layer = boundary_layer,
     iso3 = iso3,
@@ -541,6 +615,24 @@ download_global_pasture_data <- function(
     ...
 ) {
   layer_type <- match.arg(layer_type)
+
+  # Input validation
+  assertthat::assert_that(
+    inherits(boundary_layer, "sf"),
+    msg = "'boundary_layer' must be an sf object."
+  )
+
+  assertthat::assert_that(
+    is.character(iso3) && nchar(iso3) == 3,
+    msg = "'iso3' must be a 3-letter country code."
+  )
+
+  assertthat::assert_that(
+    is.character(gee_project) && nchar(gee_project) > 0,
+    msg = "'gee_project' must be a non-empty character string (your GEE cloud project ID)."
+  )
+
+  log_message("Downloading Global Pasture Watch ({layer_type}) data for {iso3}...")
 
   # Set asset ID and filename prefix based on layer type
   asset_id <- switch(
@@ -653,7 +745,7 @@ check_and_download_required_layers <- function(
       has_data <- any(grepl(gee_layers$pattern[i], all_dat, ignore.case = TRUE) & grepl(iso3, all_dat, ignore.case = TRUE))
 
       if (!has_data) {
-        log_message(glue::glue("No {gee_layers$name[i]} data found for {iso3}."))
+        log_message("No {gee_layers$name[i]} data found for {iso3}.")
 
         if (interactive && base::interactive()) {
           # Interactive mode: prompt user for confirmation
@@ -667,7 +759,7 @@ check_and_download_required_layers <- function(
             if (answer2 == "") answer2 <- "yes"
 
             if (answer2 %in% c("yes", "y")) {
-              log_message(glue::glue("Starting download of {gee_layers$name[i]} for {iso3}..."))
+              log_message("Starting download of {gee_layers$name[i]} for {iso3}...")
               gee_layers$download_fun[[i]]()
             } else {
               message(glue::glue("Cannot proceed without GEE access for {gee_layers$name[i]}."))
@@ -677,7 +769,7 @@ check_and_download_required_layers <- function(
           }
         } else {
           # Non-interactive mode: auto-download without prompting
-          log_message(glue::glue("Non-interactive mode: automatically downloading {gee_layers$name[i]} for {iso3}..."))
+          log_message("Non-interactive mode: automatically downloading {gee_layers$name[i]} for {iso3}...")
           tryCatch({
             gee_layers$download_fun[[i]]()
           }, error = function(e) {
@@ -688,7 +780,7 @@ check_and_download_required_layers <- function(
           })
         }
       } else {
-        log_message(glue::glue("Found existing {gee_layers$name[i]} data for {iso3}, skipping download."))
+        log_message("Found existing {gee_layers$name[i]} data for {iso3}, skipping download.")
       }
     }
   }

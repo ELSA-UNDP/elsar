@@ -54,6 +54,10 @@ make_managed_forests <- function(
       msg = "NPP data must be provided as a SpatRaster when make_productive is TRUE."
     )
   }
+  if (!is.null(output_path)) {
+    assertthat::assert_that(dir.exists(output_path),
+                            msg = glue::glue("'output_path' directory does not exist: {output_path}"))
+  }
 
   # Include disturbed forest class if selected
   if (include_disturbed_forest) {

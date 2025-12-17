@@ -127,6 +127,10 @@ make_restore_zone <- function(
     !(is.null(agricultural_areas) && is.null(built_areas) && is.null(lulc)),
     msg = "Either 'agricultural_areas' and/or 'built_areas' must be provided, or 'lulc' must be supplied to derive them."
   )
+  if (!is.null(output_path)) {
+    assertthat::assert_that(dir.exists(output_path),
+                            msg = glue::glue("'output_path' directory does not exist: {output_path}"))
+  }
 
   # Land degradation layer
   log_message("Processing degradation layer...")
@@ -240,6 +244,6 @@ make_restore_zone <- function(
     )
   }
 
-  log_message(glue::glue("Successfully created {terra::nlyr(restore_zones)} restore zone layer(s)"))
+  log_message("Successfully created {terra::nlyr(restore_zones)} restore zone layer(s)")
   return(restore_zones)
 }

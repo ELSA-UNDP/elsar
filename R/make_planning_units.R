@@ -39,6 +39,15 @@ make_planning_units <- function(boundary_proj,
                                 iso3,
                                 background_fill = NA,
                                 output_path = NULL) {
+  # Input validation
+  assertthat::assert_that(inherits(boundary_proj, "sf"),
+                          msg = "'boundary_proj' must be an sf object.")
+  assertthat::assert_that(assertthat::is.string(iso3),
+                          msg = "'iso3' must be a character string.")
+  if (!is.null(output_path)) {
+    assertthat::assert_that(dir.exists(output_path),
+                            msg = glue::glue("'output_path' directory does not exist: {output_path}"))
+  }
 
   threshold_soft <- pu_threshold * (1 + pu_tolerance)
 
@@ -64,7 +73,7 @@ make_planning_units <- function(boundary_proj,
   }
 
   if (is.null(pu_size)) {
-    log_message(glue::glue("pu_size not provided: estimating size to target <= {pu_threshold} PUs (allowing {round(pu_tolerance * 100, 0)}% tolerance)."))
+    log_message("pu_size not provided: estimating size to target <= {pu_threshold} PUs (allowing {round(pu_tolerance * 100, 0)}% tolerance).")
 
     # Estimate starting size from area
     area_km2 <- units::drop_units(sf::st_area(boundary_proj)) / 1e6
@@ -109,7 +118,7 @@ make_planning_units <- function(boundary_proj,
       )
 
       pu_sum_temp <- terra::global(r_temp, sum, na.rm = TRUE)[[1]]
-      log_message(glue::glue("Iteration {iter}: {as.integer(pu_sum_temp)} PUs at resolution {pu_size} m"))
+      log_message("Iteration {iter}: {as.integer(pu_sum_temp)} PUs at resolution {pu_size} m")
 
       if (pu_sum_temp <= threshold_soft) {
         best_r1 <- r_temp
@@ -124,7 +133,7 @@ make_planning_units <- function(boundary_proj,
           r1 <- best_r1
           pu_sum <- best_pu_sum
           pu_size <- best_pu_size
-          log_message(glue::glue("Exceeded soft threshold ({threshold_soft}); using best previous result."))
+          log_message("Exceeded soft threshold ({threshold_soft}); using best previous result.")
           break
         } else {
           stop("No valid PU size found under soft threshold.")
@@ -150,13 +159,13 @@ make_planning_units <- function(boundary_proj,
     pu_sum <- terra::global(r1, sum, na.rm = TRUE)[[1]]
 
     if (pu_sum > pu_threshold) {
-      log_message(glue::glue("The provided PU size ({pu_size} m) results in {pu_sum} PUs, exceeding the threshold ({pu_threshold}). Consider using automatic estimation."))
+      log_message("The provided PU size ({pu_size} m) results in {pu_sum} PUs, exceeding the threshold ({pu_threshold}). Consider using automatic estimation.")
     }
   }
 
   names(r1) <- "Planning Units"
 
-  log_message(glue::glue("Final PU layer: {as.integer(pu_sum)} PUs at {as.integer(pu_size)} m resolution."))
+  log_message("Final PU layer: {as.integer(pu_sum)} PUs at {as.integer(pu_size)} m resolution.")
 
   if (!is.null(output_path)) {
     elsar::save_raster(

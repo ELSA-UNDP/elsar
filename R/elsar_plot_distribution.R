@@ -74,6 +74,34 @@ elsar_plot_distribution <- function(type = "ggplot",
                                     custom_palette = NULL, # needs to match main palette
                                     show_legend = FALSE,
                                     color_map = "viridis") {
+  # Input validation
+  assertthat::assert_that(
+    type %in% c("ggplot", "tmap"),
+    msg = "'type' must be either 'ggplot' or 'tmap'."
+  )
+
+  assertthat::assert_that(
+    is.logical(categorical),
+    msg = "'categorical' must be TRUE or FALSE."
+  )
+
+  assertthat::assert_that(
+    is.data.frame(raster_df),
+    msg = "'raster_df' must be a data frame."
+  )
+
+  assertthat::assert_that(
+    is.numeric(bin_number) && bin_number > 0,
+    msg = "'bin_number' must be a positive integer."
+  )
+
+  assertthat::assert_that(
+    is.logical(show_legend),
+    msg = "'show_legend' must be TRUE or FALSE."
+  )
+
+  log_message("Creating distribution plot ({ifelse(categorical, 'categorical', 'continuous')})...")
+
   if (type == "ggplot") {
     if (categorical) {
       if (is.null(col_interest)) {

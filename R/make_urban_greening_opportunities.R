@@ -66,6 +66,10 @@ make_urban_greening_opportunities <- function(
   if (is.null(lulc_raster) && is.null(built_areas_raster)) {
     stop("You must provide either `lulc_raster` or `built_areas_raster` to classify urban areas.")
   }
+  if (!is.null(output_path)) {
+    assertthat::assert_that(dir.exists(output_path),
+                            msg = glue::glue("'output_path' directory does not exist: {output_path}"))
+  }
 
   # Normalize NDVI — invert to reflect greening need, and remove negative values (water or invalid)
   log_message("Normalizing NDVI: removing negatives and inverting to reflect greening need...")
@@ -157,7 +161,7 @@ make_urban_greening_opportunities <- function(
       filename = output_file,
       datatype = "FLT4S"
     )
-    log_message(glue::glue("Urban greening raster saved to: {output_file}"))
+    log_message("Urban greening raster saved to: {output_file}")
   }
 
   # Optionally return both layers

@@ -47,6 +47,10 @@ make_kbas <- function(
   assertthat::assert_that(inherits(kba_in, "sf"), msg = "kba_in must be an sf object.")
   assertthat::assert_that(inherits(pus, "SpatRaster"), msg = "pus must be a SpatRaster object.")
   assertthat::assert_that(is.character(iso3) && nchar(iso3) == 3, msg = "iso3 must be a 3-character country code.")
+  if (!is.null(output_path)) {
+    assertthat::assert_that(dir.exists(output_path),
+                            msg = glue::glue("'output_path' directory does not exist: {output_path}"))
+  }
 
   # To keep consistent with use of iso3 elsewhere, and to avoid issues around filtering
   # on the attribute of the same name in the KBA dataset, we use iso3_filter.

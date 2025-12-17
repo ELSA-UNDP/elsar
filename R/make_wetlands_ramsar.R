@@ -36,7 +36,7 @@ make_wetlands_ramsar <- function(
   iso3_filter <- iso3
 
   if (!is.null(ramsar_in)) {
-    log_message(glue::glue("Filtering Ramsar sites data for iso3 code: {iso3}..."))
+    log_message("Filtering Ramsar sites data for iso3 code: {iso3}...")
     ramsar <- ramsar_in %>%
       dplyr::filter(iso3 == iso3_filter) %>%
       sf::st_transform(crs = sf::st_crs(pus)) %>%

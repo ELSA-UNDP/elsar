@@ -28,6 +28,11 @@ get_all_features <- function (
     iso3,
     output_path = NULL,
     ...) {
+  if (!is.null(output_path)) {
+    assertthat::assert_that(dir.exists(output_path),
+                            msg = glue::glue("'output_path' directory does not exist: {output_path}"))
+  }
+
   # init out raster
   raster_out <- pus
 

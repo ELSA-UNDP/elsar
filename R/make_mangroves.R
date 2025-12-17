@@ -50,7 +50,23 @@ make_mangroves <- function(sf_in, # rename function name later
                            iso3,
                            name_out,
                            output_path = NULL) {
-  # re-project sf, turn into raster and normalise
+  # Input validation
+  assertthat::assert_that(inherits(sf_in, "sf"),
+                          msg = "'sf_in' must be an sf object.")
+  assertthat::assert_that(inherits(pus, "SpatRaster"),
+                          msg = "'pus' must be a SpatRaster object.")
+  assertthat::assert_that(assertthat::is.string(iso3),
+                          msg = "'iso3' must be a character string.")
+  assertthat::assert_that(assertthat::is.string(name_out),
+                          msg = "'name_out' must be a character string.")
+  if (!is.null(output_path)) {
+    assertthat::assert_that(dir.exists(output_path),
+                            msg = glue::glue("'output_path' directory does not exist: {output_path}"))
+  }
+
+  log_message("Processing mangrove data for {iso3}...")
+
+  # Re-project sf, turn into raster and normalise
   if (nrow(sf_in) > 0) {
     sf_in <- sf_in %>%
       sf::st_transform(crs = sf::st_crs(pus)) %>%

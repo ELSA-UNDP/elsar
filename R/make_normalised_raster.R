@@ -120,6 +120,11 @@ make_normalised_raster <- function(raster_in,
     method <- "mean"
   }
 
+  if (!is.null(output_path)) {
+    assertthat::assert_that(dir.exists(output_path),
+                            msg = glue::glue("'output_path' directory does not exist: {output_path}"))
+  }
+
   # Crop before reprojection if a conditional expression is to be applied and the raw input is a large global raster
   if (!is.null(input_raster_conditional_expression)) {
     if (crop_global_input) {

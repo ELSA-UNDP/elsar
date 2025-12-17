@@ -48,6 +48,10 @@ make_underrepresented_ecosystems <- function(
     inherits(protected_areas_sf, "sf") || inherits(protected_areas_sf, "SpatVector"),
     msg = "'protected_areas_sf' must be an sf or SpatVector object."
   )
+  if (!is.null(output_path)) {
+    assertthat::assert_that(dir.exists(output_path),
+                            msg = glue::glue("'output_path' directory does not exist: {output_path}"))
+  }
 
   log_message("Calculating protection gaps for ecosystems grouped by '{group_attribute}'...")
 

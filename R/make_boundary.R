@@ -28,7 +28,31 @@ make_boundary <- function(boundary_in,
                           iso3 = NULL,
                           iso3_column = NULL,
                           output_path = NULL) {
-  #load the file with load_file() outside of this function and then use it as input here
+  # Input validation
+  assertthat::assert_that(
+    input_type %in% c("sf", "SpatRaster"),
+    msg = "'input_type' must be either 'sf' or 'SpatRaster'."
+  )
+  if (input_type == "sf") {
+    assertthat::assert_that(inherits(boundary_in, "sf"),
+                            msg = "'boundary_in' must be an sf object when input_type = 'sf'.")
+  } else {
+    assertthat::assert_that(inherits(boundary_in, "SpatRaster"),
+                            msg = "'boundary_in' must be a SpatRaster when input_type = 'SpatRaster'.")
+  }
+  if (!is.null(iso3)) {
+    assertthat::assert_that(assertthat::is.string(iso3),
+                            msg = "'iso3' must be a character string.")
+    assertthat::assert_that(!is.null(iso3_column),
+                            msg = "'iso3_column' must be provided when 'iso3' is specified.")
+  }
+  if (!is.null(output_path)) {
+    assertthat::assert_that(dir.exists(output_path),
+                            msg = glue::glue("'output_path' directory does not exist: {output_path}"))
+  }
+
+  log_message("Creating boundary for planning region...")
+
   if (input_type == "sf") {
     nb <- boundary_in
   } else if (input_type == "SpatRaster") {

@@ -67,6 +67,10 @@ make_protect_zone <- function(
   assertthat::assert_that(
       inherits(current_protected_areas, "sf") || inherits(current_protected_areas, "SpatVector"),
       msg = "'current_protected_areas' must be an 'sf' or 'SpatVector' object.")
+  if (!is.null(output_path)) {
+    assertthat::assert_that(dir.exists(output_path),
+                            msg = glue::glue("'output_path' directory does not exist: {output_path}"))
+  }
 
   if (nrow(current_protected_areas) > 1){
     current_protected_areas <- current_protected_areas %>%
@@ -121,7 +125,7 @@ make_protect_zone <- function(
   # Determine threshold from fixed value or quantile
   if (!is.null(hii_threshold)) {
     breaks <- hii_threshold
-    log_message(glue::glue("Using fixed HII threshold: {breaks}"))
+    log_message("Using fixed HII threshold: {breaks}")
   } else {
     breaks <- exactextractr::exact_extract(
       x = hii_resampled,
@@ -129,7 +133,7 @@ make_protect_zone <- function(
       fun = "quantile",
       quantiles = hii_quantile
     )
-    log_message(glue::glue("HII threshold calculated from quantile {hii_quantile}: {breaks}"))
+    log_message("HII threshold calculated from quantile {hii_quantile}: {breaks}")
   }
 
   # Base zone: where HII is low
@@ -150,7 +154,7 @@ make_protect_zone <- function(
 
   # Optionally filter out small patches
   if (filter_patch_size) {
-    log_message(glue::glue("Sieving out patch sizes smaller than {min_patch_size} planning units..."))
+    log_message("Sieving out patch sizes smaller than {min_patch_size} planning units...")
     protect_zone <- terra::sieve(protect_zone, threshold = min_patch_size)
   }
 
