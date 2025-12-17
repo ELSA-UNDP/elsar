@@ -18,8 +18,8 @@ make_restore_zone(
   agriculture_threshold = 0.1,
   built_area_threshold = 0.1,
   forest_threshold = 0.1,
-  lulc_agriculture_class = 4,
-  lulc_built_class = 7,
+  agriculture_lulc_value = 5,
+  built_area_lulc_value = 7,
   filter_small_patches = TRUE,
   min_patch_size = 10,
   output_path = NULL
@@ -63,10 +63,10 @@ is excluded as built-up land (default: 0.1).}
 \item{forest_threshold}{Numeric. Minimum forest cover proportion to include
 in restore_zone_v2 (default: 0.1).}
 
-\item{lulc_agriculture_class}{Integer. Class value in \code{lulc} representing
-agricultural land (default: 4, for ESRI 10m LULC).}
+\item{agriculture_lulc_value}{Integer. Class value in \code{lulc} representing
+agricultural land (default: 5, for ESRI 10m LULC).}
 
-\item{lulc_built_class}{Integer. Class value in \code{lulc} representing built-up
+\item{built_area_lulc_value}{Integer. Class value in \code{lulc} representing built-up
 areas (default: 7, for ESRI 10m LULC).}
 
 \item{filter_small_patches}{Logical. Whether to remove small isolated patches

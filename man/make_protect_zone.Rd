@@ -44,7 +44,7 @@ If NULL, \code{elsar::make_protected_areas()} will be used.}
 
 \item{hii_quantile}{A quantile threshold (e.g., 0.95) used to calculate the HII threshold within protected areas if \code{hii_threshold} is NULL.}
 
-\item{agriculture_lulc_value}{LULC value representing agriculture (default: 4).}
+\item{agriculture_lulc_value}{LULC value representing agriculture (default: 5).}
 
 \item{built_area_lulc_value}{LULC value representing built-up areas (default: 7).}
 
