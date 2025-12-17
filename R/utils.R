@@ -235,11 +235,11 @@ exact_rasterise <- function(
 
       r_stack <- c(r_stack, f_r)
 
-      log_msg(glue::glue("{round(100 * i / nrow(features), 1)}% complete"))
+      log_message("{round(100 * i / nrow(features), 1)}% complete")
     }
 
     # Aggregate across all rasterized layers using the specified function
-    log_msg(glue::glue("Aggregating layers..."))
+    log_message("Aggregating layers...")
     r_stack <- terra::app(
       r_stack,
       cores = cores,
@@ -249,13 +249,13 @@ exact_rasterise <- function(
 
   } else {
     # Single feature: get coverage fraction directly.
-    log_msg(glue::glue("Calculating weighted coverage fraction using a single feature..."))
+    log_message("Calculating weighted coverage fraction using a single feature...")
     r_stack <- exactextractr::coverage_fraction(pus, features)[[1]]
     r_stack <- r_stack * dplyr::pull(features, attribute)
   }
 
   # Normalise the final result
-  log_msg(glue::glue("Normalising output..."))
+  log_message("Normalising output...")
   result <- elsar::make_normalised_raster(
     raster_in = r_stack,
     pus = pus,
@@ -294,7 +294,7 @@ crop_global_raster <- function(raster_in, pus, threads = TRUE) {
 
   # Attempt to project and crop
   tryCatch({
-    log_msg("Projecting PUs to match global input raster...")
+    log_message("Projecting PUs to match global input raster...")
     pus_extent <- pus %>%
       terra::project(
         terra::crs(raster_in),
@@ -302,7 +302,7 @@ crop_global_raster <- function(raster_in, pus, threads = TRUE) {
         ) %>%
       terra::ext()
 
-    log_msg("Cropping raster to PU layer...")
+    log_message("Cropping raster to PU layer...")
     cropped <- terra::crop(
       raster_in,
       pus_extent,
@@ -311,7 +311,7 @@ crop_global_raster <- function(raster_in, pus, threads = TRUE) {
 
     return(cropped)
   }, error = function(e) {
-    log_msg(glue::glue("Warning: crop failed: {e$message}; returning an empty raster."))
+    log_message("Warning: crop failed: {e$message}; returning an empty raster.")
     return(terra::ifel(pus == 1, 0, NA))  # Or NULL if you want to explicitly handle failure
   })
 }
@@ -431,12 +431,12 @@ filter_sf <- function(file_path,
 
   # Build SQL query for attribute filtering if needed
   query <- if (!is.null(iso3) && !is.null(iso3_column) && !is.null(layer_name)) {
-    log_msg(glue::glue("Building SQL query to filter layer {layer_name} by ISO3 code..."))
+    log_message("Building SQL query to filter layer {layer_name} by ISO3 code...")
     glue::glue("SELECT * FROM \"{layer_name}\" WHERE \"{iso3_column}\" = '{iso3}'")
   } else NULL
 
   if(!is.null(wkt_filter) && is.null(query)){
-  log_msg(glue::glue("Applying a spatial filter to the input data..."))
+    log_message("Applying a spatial filter to the input data...")
   }
 
   # Dynamically build st_read() call
@@ -453,13 +453,13 @@ filter_sf <- function(file_path,
 
   # Drop Z/M geometry dimensions if requested
   if (!is.null(dat) && drop3d) {
-    log_msg("Dropping 3D geometries (if present)...")
+    log_message("Dropping 3D geometries (if present)...")
     dat <- sf::st_zm(dat, drop = TRUE, what = "ZM")
   }
 
   # Ensure geometry is valid
   if (!is.null(dat)) {
-    log_msg("Repairing any geometry errors...")
+    log_message("Repairing any geometry errors...")
     dat <- sf::st_make_valid(dat)
   }
 
@@ -565,7 +565,7 @@ conditionally_subdivide_bbox <- function(bbox_sf,
     nrows <- ceiling(lat_span / tile_size_deg)
 
     # Optional message for logging context (you can remove iso3 if undefined)
-    log_msg(glue::glue("Input spans a large area ({round(lon_span, 1)} degrees longitude by {round(lat_span, 1)} degrees latitude) - subdividing into ~{tile_size_deg} degree tiles (grid: {ncols} x {nrows})"))
+    log_message("Input spans a large area ({round(lon_span, 1)} degrees longitude by {round(lat_span, 1)} degrees latitude) - subdividing into ~{tile_size_deg} degree tiles (grid: {ncols} x {nrows})")
 
     # Create grid tiles
     tiles <- split_bbox_into_tiles(bbox_sf, ncols = ncols, nrows = nrows)
@@ -623,7 +623,7 @@ save_raster <- function(raster, filename, datatype = "FLT4S") {
   )
 
   # Log saved file path
-  log_msg(glue::glue("Saved: {filename}."))
+  log_message("Saved: {filename}.")
 }
 
 #' Compute median from a SpatRaster using its GDAL PAM side-car histogram
@@ -695,8 +695,54 @@ median_from_rast <- function(r) {
   mids[idx]
 }
 
+#' Extract binary layers within a raster stack
+#'
+#' This function extracts all layers in a raster stack that have either c(0,1) or only 1 or only 0.
+#' This is needed to split the raster stack saved from the pipeline into two raster stacks, one int and one float.
+#'
+#' @param raster_stack A `terra` `SpatRaster` containing several raster layers, some of which can be binary.
+#'
+#' @return Two `terra` `SpatRaster` raster stacks, one containing only the binary layers, and one containing the float layers
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' raster_out <- get_binary_layers(raster_stack = stack)
+#'
+#' int_stack <- raster_out[[1]]
+#' float_stack <- raster_out[[2]]
+#' }
+get_binary_layers <- function(raster_stack) {
+  assertthat::assert_that(
+    inherits(raster_stack, "SpatRaster"),
+    msg = "'raster_stack' must be a SpatRaster object."
+  )
 
+  log_message("Analyzing {terra::nlyr(raster_stack)} layer(s) for binary values...")
 
+  # get frequency of values per raster layer
+  freq_tab <- terra::freq(raster_stack, digits = 4, bylayer = TRUE)
 
+  # Split frequency table by layer
+  freq_by_layer <- split(freq_tab, freq_tab$layer)
+
+  # Identify binary layers: only values 0, 1, or both
+  binary_mask <- sapply(freq_by_layer, function(df) {
+    all(df$value %in% c(0, 1))
+  })
+
+  # Subset only if binary layers were found
+  if (any(binary_mask, na.rm = TRUE)) {
+    int_layers <- raster_stack[[which(binary_mask)]]
+    float_layers <- raster_stack[[which(!binary_mask)]]
+    log_message("Found {sum(binary_mask)} binary layer(s) and {sum(!binary_mask)} float layer(s).")
+  } else {
+    log_message("No binary layers found in raster stack.")
+    int_layers <- NULL
+    float_layers <- raster_stack
+  }
+
+  return(list(int_layers, float_layers))
+}
 
 
