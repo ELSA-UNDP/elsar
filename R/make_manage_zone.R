@@ -107,7 +107,14 @@ make_manage_zone <- function(
   # Process agricultural areas
   log_message("Processing agricultural areas...")
   if (!is.null(agricultural_areas_input)) {
-    agricultural_areas <- agricultural_areas_input
+    log_message("Aligning provided agricultural areas raster to planning units...")
+    agricultural_areas <- elsar::make_normalised_raster(
+      raster_in = agricultural_areas_input,
+      pus = pus,
+      iso3 = iso3,
+      rescaled = FALSE,
+      method_override = "mean"
+    )
   } else {
     agricultural_areas <- elsar::make_normalised_raster(
       raster_in = lulc_raster,
@@ -131,7 +138,14 @@ make_manage_zone <- function(
   # Process built-up areas
   log_message("Processing built-up areas...")
   if (!is.null(built_areas_input)) {
-    built_areas <- built_areas_input
+    log_message("Aligning provided built areas raster to planning units...")
+    built_areas <- elsar::make_normalised_raster(
+      raster_in = built_areas_input,
+      pus = pus,
+      iso3 = iso3,
+      rescaled = FALSE,
+      method_override = "mean"
+    )
   } else {
     built_areas <- elsar::make_normalised_raster(
       raster_in = lulc_raster,
@@ -149,7 +163,7 @@ make_manage_zone <- function(
     raster_in = hii_input,
     pus = pus,
     iso3 = iso3,
-    rescale = FALSE,
+    rescaled = FALSE,
     method_override = "mean"
     )
 
@@ -161,7 +175,14 @@ make_manage_zone <- function(
   # Process managed forests
   log_message("Processing managed forests...")
   if (!is.null(managed_forests_input)) {
-    managed_forests <- managed_forests_input
+    log_message("Aligning provided managed forests raster to planning units...")
+    managed_forests <- elsar::make_normalised_raster(
+      raster_in = managed_forests_input,
+      pus = pus,
+      iso3 = iso3,
+      rescaled = FALSE,
+      method_override = "mean"
+    )
   } else {
   # Normalise and reclass
     managed_forests <- elsar::make_managed_forests(

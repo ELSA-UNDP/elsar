@@ -145,8 +145,14 @@ make_restore_zone <- function(
   # Agricultural areas
   log_message("Processing agricultural areas...")
   if (!is.null(agricultural_areas)) {
-    log_message("Using provided agricultural areas raster...")
-    agricultural_areas_processed <- agricultural_areas
+    log_message("Aligning provided agricultural areas raster to planning units...")
+    agricultural_areas_processed <- elsar::make_normalised_raster(
+      raster_in = agricultural_areas,
+      pus = pus,
+      iso3 = iso3,
+      rescaled = FALSE,
+      method_override = "mean"
+    )
   } else {
     assertthat::assert_that(!is.null(lulc), msg = "When 'agricultural_areas' is NULL, 'lulc' must be provided.")
     log_message("Extracting agricultural areas from LULC raster...")
@@ -162,8 +168,14 @@ make_restore_zone <- function(
   # Built-up areas
   log_message("Processing built-up areas...")
   if (!is.null(built_areas)) {
-    log_message("Using provided built areas raster...")
-    built_areas_processed <- built_areas
+    log_message("Aligning provided built areas raster to planning units...")
+    built_areas_processed <- elsar::make_normalised_raster(
+      raster_in = built_areas,
+      pus = pus,
+      iso3 = iso3,
+      rescaled = FALSE,
+      method_override = "mean"
+    )
   } else {
     assertthat::assert_that(!is.null(lulc), msg = "When 'built_areas' is NULL, 'lulc' must be provided.")
     log_message("Extracting built areas from LULC raster...")
@@ -182,7 +194,17 @@ make_restore_zone <- function(
     raster_in = human_pressure,
     pus = pus,
     iso3 = iso3,
-    rescale = FALSE,
+    rescaled = FALSE,
+    method_override = "mean"
+  )
+
+  # Forest mask - align to planning units
+  log_message("Aligning forest mask to planning units...")
+  forest_mask_processed <- elsar::make_normalised_raster(
+    raster_in = forest_mask,
+    pus = pus,
+    iso3 = iso3,
+    rescaled = FALSE,
     method_override = "mean"
   )
 
@@ -212,7 +234,7 @@ make_restore_zone <- function(
 
   # Create Restore Zone v2 (the alternative Restore Zone) as only degraded forest areas
   restore_zone_v2 <- terra::ifel(
-    restore_zone == 1 & forest_mask > forest_threshold,
+    restore_zone == 1 & forest_mask_processed > forest_threshold,
     1, 0
   ) %>%
     make_normalised_raster(

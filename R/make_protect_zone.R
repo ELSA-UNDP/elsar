@@ -81,7 +81,14 @@ make_protect_zone <- function(
   # Process agriculture
   log_message("Processing agricultural areas...")
   if (!is.null(agricultural_areas_input)) {
-    agricultural_areas <- agricultural_areas_input
+    log_message("Aligning provided agricultural areas raster to planning units...")
+    agricultural_areas <- elsar::make_normalised_raster(
+      raster_in = agricultural_areas_input,
+      pus = pus,
+      iso3 = iso3,
+      rescaled = FALSE,
+      method_override = "mean"
+    )
   } else {
     assertthat::assert_that(!is.null(lulc_raster), msg = "If 'agricultural_areas_input' is NULL, 'lulc_raster' must be provided.")
     log_message("Extracting agricultural areas from LULC raster...")
@@ -98,7 +105,14 @@ make_protect_zone <- function(
   # Process built-up areas
   log_message("Processing built-up areas...")
   if (!is.null(built_areas_input)) {
-    built_areas <- built_areas_input
+    log_message("Aligning provided built areas raster to planning units...")
+    built_areas <- elsar::make_normalised_raster(
+      raster_in = built_areas_input,
+      pus = pus,
+      iso3 = iso3,
+      rescaled = FALSE,
+      method_override = "mean"
+    )
   } else {
     assertthat::assert_that(!is.null(lulc_raster), msg = "If 'built_areas_input' is NULL, 'lulc_raster' must be provided.")
     log_message("Extracting built areas from LULC raster...")
@@ -118,7 +132,7 @@ make_protect_zone <- function(
     raster_in = hii_input,
     pus = pus,
     iso3 = iso3,
-    rescale = FALSE,
+    rescaled = FALSE,
     method_override = "mean"
     )
 
