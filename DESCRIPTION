@@ -17,7 +17,11 @@ Authors@R:
       comment = c(ORCID = "0000-0002-3112-4116")
       )
     )
-Description: What the package does (one paragraph).
+Description: Provides tools and data pipelines to support Essential Life Support
+    Areas (ELSA) conservation planning. Includes functions to load and harmonize
+    global spatial datasets, prepare raster layers for spatial prioritization,
+    create zone layers (protect, restore, manage), and calculate coverage metrics
+    over planning units.
 License: CC BY 4.0
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
