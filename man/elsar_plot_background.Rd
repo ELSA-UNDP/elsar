@@ -115,3 +115,4 @@ wadOut <- make_normalised_raster(
   data_layer = "wad_final_cog"
 ))
 }
+\keyword{internal}

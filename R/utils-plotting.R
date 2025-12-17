@@ -57,6 +57,32 @@ elsar_plot_optics <- function(type = "ggplot",
                               move_horizontal = NULL,
                               move_vertical = NULL
                               ) {
+  # Input validation
+  assertthat::assert_that(
+    type %in% c("ggplot", "tmap"),
+    msg = "'type' must be either 'ggplot' or 'tmap'."
+  )
+
+  assertthat::assert_that(
+    is.logical(include_north_scale),
+    msg = "'include_north_scale' must be TRUE or FALSE."
+  )
+
+  assertthat::assert_that(
+    is.logical(include_logo),
+    msg = "'include_logo' must be TRUE or FALSE."
+  )
+
+  assertthat::assert_that(
+    is.logical(include_text),
+    msg = "'include_text' must be TRUE or FALSE."
+  )
+
+  assertthat::assert_that(
+    text_location %in% c("bottom_right", "bottom_left", "top_right", "top_left"),
+    msg = "'text_location' must be one of: 'bottom_right', 'bottom_left', 'top_right', 'top_left'."
+  )
+
   # ggplot
   if (type == "ggplot") {
     ggList <- list()
@@ -175,8 +201,11 @@ elsar_plot_optics <- function(type = "ggplot",
     } else if (inherits(theme, "list")) {
       ggList <- c(ggList, theme)
     }
+
+    return(ggList)
   } else { # tmap
-    message("not added yet")
+    log_message("tmap support not yet implemented.")
+    return(NULL)
   }
 }
 
@@ -250,10 +279,26 @@ elsar_plot_extra_data <- function(plot_type = "ggplot",
                                   legend_pa = "", label_pa = "PAs"
                                   # other_locked_in = NULL
 ) {
+  # Input validation
+  assertthat::assert_that(
+    plot_type %in% c("ggplot", "tmap"),
+    msg = "'plot_type' must be either 'ggplot' or 'tmap'."
+  )
+
+  assertthat::assert_that(
+    pas_look %in% c("contours", "area"),
+    msg = "'pas_look' must be either 'contours' or 'area'."
+  )
+
+  assertthat::assert_that(
+    is.numeric(alpha_pa) && alpha_pa >= 0 && alpha_pa <= 1,
+    msg = "'alpha_pa' must be a numeric value between 0 and 1."
+  )
+
   ggList <- list()
 
   if (inherits(include_pas, "sf")) {
-    message("Adding PA layer.")
+    log_message("Adding PA layer with '{pas_look}' style...")
 
     if (plot_type == "ggplot") {
       if (pas_look == "area") {
@@ -318,6 +363,8 @@ elsar_plot_extra_data <- function(plot_type = "ggplot",
       }
     }
   }
+
+  return(ggList)
 }
 
 #' Function to create a plot with background data for another plot
@@ -390,8 +437,34 @@ elsar_plot_background <- function(plot_type = "ggplot",
                                   number_categories = 10,
                                   data_layer = NULL) {
   data_type <- match.arg(data_type)
-  assertthat::assert_that(inherits(background_dat, "SpatRaster"))
-  message("Adding background layer.")
+
+  # Input validation
+  assertthat::assert_that(
+    inherits(background_dat, "SpatRaster"),
+    msg = "'background_dat' must be a SpatRaster object."
+  )
+
+  assertthat::assert_that(
+    inherits(main_data, "SpatRaster"),
+    msg = "'main_data' must be a SpatRaster object."
+  )
+
+  assertthat::assert_that(
+    plot_type %in% c("ggplot", "tmap"),
+    msg = "'plot_type' must be either 'ggplot' or 'tmap'."
+  )
+
+  assertthat::assert_that(
+    is.logical(rescale_background),
+    msg = "'rescale_background' must be TRUE or FALSE."
+  )
+
+  assertthat::assert_that(
+    is.numeric(background_alpha) && background_alpha >= 0 && background_alpha <= 1,
+    msg = "'background_alpha' must be a numeric value between 0 and 1."
+  )
+
+  log_message("Adding background layer ({data_type})...")
 
   # reproject
   bckgrnd_dat <- terra::project(background_dat, terra::crs(main_data))
@@ -499,7 +572,7 @@ if (data_type == "discrete") {
       ggnewscale::new_scale_fill() +
       ggnewscale::new_scale_colour()
   } else if (plot_type == "tmap") {
-    message("Will be added later.")
+    log_message("tmap support not yet implemented.")
   }
 
   return(list(plot_background, bckgrnd_dat))
@@ -507,6 +580,7 @@ if (data_type == "discrete") {
 
 #' @rdname elsar_plot_background
 #' @export
+#' @keywords internal
 elsar_plot_background_c <- function(plot_type = "ggplot",
                                     background_dat = NULL,
                                     rescale_background = TRUE,
@@ -515,7 +589,8 @@ elsar_plot_background_c <- function(plot_type = "ggplot",
                                     background_alpha = 0.2,
                                     color_map = "viridis",
                                     custom_palette = NULL) {
- elsar_plot_background(
+  .Deprecated("elsar_plot_background")
+  elsar_plot_background(
     plot_type = plot_type,
     background_dat = background_dat,
     data_type = "continuous",
@@ -530,6 +605,7 @@ elsar_plot_background_c <- function(plot_type = "ggplot",
 
 #' @rdname elsar_plot_background
 #' @export
+#' @keywords internal
 elsar_plot_background_d <- function(plot_type = "ggplot",
                                     background_dat = NULL,
                                     rescale_background = TRUE,
@@ -541,6 +617,7 @@ elsar_plot_background_d <- function(plot_type = "ggplot",
                                     categorical = FALSE,
                                     number_categories = 10,
                                     data_layer = NULL) {
+  .Deprecated("elsar_plot_background")
   elsar_plot_background(
     plot_type = plot_type,
     background_dat = background_dat,
@@ -600,15 +677,24 @@ elsar_extend <- function(raster_main = NULL,
                          raster_to_crop = NULL,
                          extend_by = 0.05 # or 1000 or
 ) {
+  # Input validation
   assertthat::assert_that(
     inherits(raster_main, "SpatRaster"),
-    inherits(raster_to_crop, "SpatRaster")
+    msg = "'raster_main' must be a SpatRaster object."
   )
 
-  assertthat::is.number(extend_by)
+  assertthat::assert_that(
+    inherits(raster_to_crop, "SpatRaster"),
+    msg = "'raster_to_crop' must be a SpatRaster object."
+  )
+
+  assertthat::assert_that(
+    assertthat::is.number(extend_by) && extend_by > 0,
+    msg = "'extend_by' must be a positive number."
+  )
 
   if (extend_by <= 1) {
-    message("Extend based on ratio.")
+    log_message("Extending based on ratio ({extend_by * 100}%)...")
 
     extent <- as.vector(terra::ext(raster_main))
 
@@ -625,7 +711,7 @@ elsar_extend <- function(raster_main = NULL,
 
     raster_out <- terra::crop(raster_to_crop, e)
   } else if (extend_by > 1) {
-    message("Extend based on absolute values.")
+    log_message("Extending based on absolute value ({extend_by} units)...")
 
     extent <- as.vector(terra::ext(raster_main))
 
@@ -686,6 +772,29 @@ elsar_continuous_to_categorical <- function(raster_in,
                                             number_categories,
                                             manual_breaks = NULL,
                                             hist_breaks_out = TRUE) {
+  # Input validation
+  assertthat::assert_that(
+    inherits(raster_in, "SpatRaster"),
+    msg = "'raster_in' must be a SpatRaster object."
+  )
+
+  assertthat::assert_that(
+    is.character(data_layer) && length(data_layer) == 1,
+    msg = "'data_layer' must be a single character string."
+  )
+
+  assertthat::assert_that(
+    is.numeric(number_categories) && number_categories > 0,
+    msg = "'number_categories' must be a positive integer."
+  )
+
+  assertthat::assert_that(
+    is.logical(hist_breaks_out),
+    msg = "'hist_breaks_out' must be TRUE or FALSE."
+  )
+
+  log_message("Converting continuous data to {number_categories} categories...")
+
   raster_df <- as.data.frame(raster_in, xy = TRUE) %>% # ADD this with terra::hist later on to export a SpatRaster
     stats::na.omit()
 

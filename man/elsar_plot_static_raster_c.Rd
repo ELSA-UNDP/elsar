@@ -45,14 +45,10 @@ Needed for \code{elsar_plot_distribution()}.}
 A \code{ggplot} or \code{tmap} object.
 }
 \description{
-\code{elsar_plot_static_raster_c()} allows to plot continuous data from a
-\code{SpatRaster} in \code{ggplot} or \code{tmap}. It can be combined with
-\code{\link[=elsar_plot_optics]{elsar_plot_optics()}} and \code{\link[=elsar_plot_extra_data]{elsar_plot_extra_data()}} to create
-reproducible plots.
-}
-\details{
-This is a convenience wrapper around \code{\link[=elsar_plot_static_raster]{elsar_plot_static_raster()}} with
-\code{data_type = "continuous"}.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+\code{elsar_plot_static_raster_c()} is deprecated. Please use
+\code{\link[=elsar_plot_static_raster]{elsar_plot_static_raster()}} with \code{data_type = "continuous"} instead.
 }
 \examples{
 boundary_proj <- make_boundary(
@@ -84,3 +80,4 @@ wadOut <- make_normalised_raster(
 \seealso{
 \code{\link[=elsar_plot_static_raster]{elsar_plot_static_raster()}} for the unified plotting function
 }
+\keyword{internal}

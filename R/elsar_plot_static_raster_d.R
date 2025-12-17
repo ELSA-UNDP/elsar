@@ -1,18 +1,17 @@
 #' Function to create a static plot from raster data with discrete data
 #'
-#' `elsar_plot_static_raster_d()` allows to plot discrete data from a
-#' `SpatRaster` in `ggplot` or `tmap`. It can be combined with
-#' [elsar_plot_optics()] and [elsar_plot_extra_data()] to create
-#' reproducible plots.
+#' @description
+#' `r lifecycle::badge("deprecated")`
 #'
-#' This is a convenience wrapper around [elsar_plot_static_raster()] with
-#' `data_type = "discrete"`.
+#' `elsar_plot_static_raster_d()` is deprecated. Please use
+#' [elsar_plot_static_raster()] with `data_type = "discrete"` instead.
 #'
 #' @inheritParams elsar_plot_static_raster
 #'
 #' @return Either a `ggplot` object or a list with the `ggplot` and the `df`.
 #' @export
 #' @seealso [elsar_plot_static_raster()] for the unified plotting function
+#' @keywords internal
 #'
 #' @examples
 #' boundary_proj <- make_boundary(
@@ -56,6 +55,7 @@ elsar_plot_static_raster_d <- function(raster_in,
                                        color_map = "viridis",
                                        expand_plot = FALSE,
                                        raster_df_out = FALSE) {
+  .Deprecated("elsar_plot_static_raster")
   elsar_plot_static_raster(
     raster_in = raster_in,
     data_type = "discrete",
