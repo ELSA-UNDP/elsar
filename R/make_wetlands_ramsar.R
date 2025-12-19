@@ -49,24 +49,70 @@ make_wetlands_ramsar <- function(
 
       # Read boundaries (polygons) if available
       if ("boundaries" %in% available_layers) {
-        boundaries <- sf::st_read(ramsar_in, layer = "boundaries", quiet = TRUE)
-        log_message("Read {nrow(boundaries)} boundary features from Ramsar gpkg")
-        ramsar_combined <- boundaries
+        boundaries <- tryCatch({
+          # Try reading with sf::st_read - may fail if curve geometries present
+          b <- sf::st_read(ramsar_in, layer = "boundaries", quiet = TRUE)
+          b <- sf::st_make_valid(b)
+          # Cast to MULTIPOLYGON to ensure compatible geometry type
+          b <- sf::st_cast(b, "MULTIPOLYGON")
+          b
+        }, error = function(e) {
+          # If sf can't parse curves, try with GDAL's curve approximation via ogr2ogr workaround
+          tryCatch({
+            log_message("Curve geometries detected - using GDAL linearization...")
+            # Read using a lower-level approach that can handle curves
+            # Set the GDAL config to convert non-linear geometries
+            old_val <- Sys.getenv("OGR_STROKE_CURVE")
+            on.exit(Sys.setenv(OGR_STROKE_CURVE = old_val), add = TRUE)
+            Sys.setenv(OGR_STROKE_CURVE = "TRUE")
+
+            b <- sf::st_read(ramsar_in, layer = "boundaries", quiet = TRUE)
+            b <- sf::st_make_valid(b)
+            # Force to MULTIPOLYGON
+            b <- sf::st_cast(b, "MULTIPOLYGON")
+            b
+          }, error = function(e2) {
+            # Final fallback: read as WKB and try to linearize
+            tryCatch({
+              log_message("Attempting geometry linearization fallback...")
+              # Use terra/GDAL as intermediary which may handle curves better
+              temp_vect <- terra::vect(ramsar_in, layer = "boundaries")
+              b <- sf::st_as_sf(temp_vect)
+              b <- sf::st_make_valid(b)
+              b <- sf::st_cast(b, "MULTIPOLYGON")
+              b
+            }, error = function(e3) {
+              log_message("Warning: Could not read boundaries layer: {e3$message}")
+              NULL
+            })
+          })
+        })
+        if (!is.null(boundaries) && nrow(boundaries) > 0) {
+          log_message("Read {nrow(boundaries)} boundary features from Ramsar gpkg")
+          ramsar_combined <- boundaries
+        }
       }
 
       # Read centroids (points) if available
       if ("centroids" %in% available_layers) {
-        centroids <- sf::st_read(ramsar_in, layer = "centroids", quiet = TRUE)
-        log_message("Read {nrow(centroids)} centroid features from Ramsar gpkg")
-        if (is.null(ramsar_combined)) {
-          ramsar_combined <- centroids
-        } else {
-          # Combine - keep only common columns
-          common_cols <- intersect(names(ramsar_combined), names(centroids))
-          ramsar_combined <- dplyr::bind_rows(
-            ramsar_combined[, common_cols],
-            centroids[, common_cols]
-          )
+        centroids <- tryCatch({
+          sf::st_read(ramsar_in, layer = "centroids", quiet = TRUE)
+        }, error = function(e) {
+          log_message("Warning: Could not read centroids layer: {e$message}")
+          NULL
+        })
+        if (!is.null(centroids) && nrow(centroids) > 0) {
+          log_message("Read {nrow(centroids)} centroid features from Ramsar gpkg")
+          if (is.null(ramsar_combined)) {
+            ramsar_combined <- centroids
+          } else {
+            # Combine - keep only common columns
+            common_cols <- intersect(names(ramsar_combined), names(centroids))
+            ramsar_combined <- dplyr::bind_rows(
+              ramsar_combined[, common_cols],
+              centroids[, common_cols]
+            )
+          }
         }
       }
 

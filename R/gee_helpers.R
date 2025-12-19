@@ -833,12 +833,15 @@ download_gee_layer <- function(
 
       elapsed <- difftime(Sys.time(), start_time, units = "mins")
       if (elapsed > wait_time) {
-        message(glue::glue(
-          "Timeout after {as.integer(wait_time)} min. Check: https://code.earthengine.google.com/tasks"
-        ))
         cleanup_earthengine(env_info)
         unlink(temp_dir, recursive = TRUE)
-        return(NULL)
+        stop(glue::glue(
+          "GEE export timeout after {as.integer(wait_time)} min.\n",
+          "The export is still running in GEE. Please:\n",
+          "  1. Check status at: https://code.earthengine.google.com/tasks\n",
+          "  2. Wait for the export to complete\n",
+          "  3. Run the pipeline again - it will download the completed file"
+        ), call. = FALSE)
       }
 
       if (elapsed >= 0.5) {  # Only show after 30 seconds
@@ -2048,11 +2051,13 @@ download_lulc_proportions <- function(
           if (elapsed > wait_time) {
             cleanup_earthengine(env_info)
             unlink(temp_dir, recursive = TRUE)
-            message(glue::glue(
-              "Timeout: '{cn}' not available after {as.integer(wait_time)} min. ",
-              "Check: https://code.earthengine.google.com/tasks"
-            ))
-            return(NULL)
+            stop(glue::glue(
+              "GEE export timeout: '{cn}' not available after {as.integer(wait_time)} min.\n",
+              "The export is still running in GEE. Please:\n",
+              "  1. Check status at: https://code.earthengine.google.com/tasks\n",
+              "  2. Wait for the export to complete\n",
+              "  3. Run the pipeline again - it will download the completed file"
+            ), call. = FALSE)
           }
 
           log_message("Waiting for export... ({round(elapsed, 1)} min)")

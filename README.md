@@ -62,7 +62,7 @@ elsar_plot_static_raster(
 | Category | Functions |
 |----------|-----------|
 | Planning Region | `make_boundary()`, `make_planning_units()` |
-| Feature Data | `make_normalised_raster()`, `make_kbas()`, `make_protected_areas()`, `make_mangroves()` |
+| Feature Data | `make_normalised_raster()`, `make_kbas()`, `make_protected_areas()`, `make_mangroves()`, `make_wetlands_ramsar()` |
 | Zone Layers | `make_protect_zone()`, `make_restore_zone()`, `make_manage_zone()` |
 | Utilities | `get_coverage()`, `rescale_raster()`, `save_raster()` |
 | Plotting | `elsar_plot_static_raster()`, `elsar_plot_feature()` |
