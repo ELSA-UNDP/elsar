@@ -13,7 +13,7 @@
 #' @param aze_only Logical. If `TRUE`, returns only confirmed AZE sites (default is `FALSE`).
 #' @param include_regional_kba Logical. If `FALSE`, filters out KBAs marked as "Regional" or "Global/ Regional to be determined".
 #' @param buffer_points Logical. If `TRUE`, circular buffers are generated around point geometries using the `area_column` attribute (default is `TRUE`).
-#' @param area_column A string indicating the name of the column containing site area (in hectares), used when buffering point geometries.
+#' @param area_column A string indicating the name of the column containing the reported area for point geometries (in km²), used when buffering points. The default `"repareakm2"` is the KBA dataset's column for points with reported areas. Note: `sitareakm2` contains site area for polygon features but is typically NA for points.
 #' @param nQuadSegs An integer specifying the number of segments used to approximate circular buffers (default: 50).
 #' @param output_path Optional character. Directory path to save the output raster. If `NULL`, output is not written to file.
 #'
@@ -84,7 +84,7 @@ make_kbas <- function(
 
       if (!include_regional_kba) {
         log_message("Excluding Regional KBAs or those with undetermined Global status.")
-        kba <- dplyr::filter(kba, kbaclass %ni% c("Regional", "Global/ Regional to be determined"))
+        kba <- dplyr::filter(kba, !kbaclass %in% c("Regional", "Global/ Regional to be determined"))
       }
 
       if (nrow(kba) == 0) {
@@ -96,53 +96,58 @@ make_kbas <- function(
     if (inherits(kba, "SpatRaster")) {
       return(kba)
     } else {
-      # exactextractr only works with polygon information; need to deal with points
-      if (("MULTIPOINT" %in% sf::st_geometry_type(kba)) || ("POINT" %in% sf::st_geometry_type(kba))) {
-        if (buffer_points) {
-          # Buffer around "POINTS" and make them into polygons
-          kba <- convert_points_polygon(
-            sf_layer = kba,
+      # Separate polygons and points - exactextractr only works with polygons
+      geom_types <- sf::st_geometry_type(kba)
+      has_points <- any(geom_types %in% c("POINT", "MULTIPOINT"))
+      has_polygons <- any(geom_types %in% c("POLYGON", "MULTIPOLYGON"))
+
+      # Start with polygons (keep all of them regardless of area attribute)
+      polygons <- kba %>%
+        dplyr::filter(sf::st_is(., c("POLYGON", "MULTIPOLYGON")))
+
+      # Handle points if present
+      if (has_points && buffer_points) {
+        points <- kba %>%
+          dplyr::filter(sf::st_is(., c("POINT", "MULTIPOINT")))
+
+        # Only buffer points with valid area values
+        points_with_area <- points %>%
+          dplyr::filter(!is.na(.data[[area_column]]) & .data[[area_column]] > 0)
+
+        if (nrow(points_with_area) > 0) {
+          log_message("Buffering {nrow(points_with_area)} point features with area attributes...")
+          points_buffered <- convert_points_polygon(
+            sf_layer = points_with_area,
             area_crs = sf::st_crs(pus),
             area_attr = area_column,
             nQuadSegs = nQuadSegs,
             area_multiplier = 1e4,
-            append_original_polygons = TRUE
-          ) %>%
-            sf::st_transform(sf::st_crs(pus)) %>%
-            dplyr::summarise() %>%
-            sf::st_make_valid()
-
-          log_message("Rasterising and normalising sites...")
-          kba <- exactextractr::coverage_fraction(pus, kba)[[1]] %>%
-            elsar::make_normalised_raster(pus = pus, iso3 = iso3)
-
-        } else {
-          # Only keep polygon and multipolygon information
-          if (nrow(kba %>% dplyr::filter(sf::st_is(., c("POLYGON", "MULTIPOLYGON")))) > 0) {
-            kba <- kba %>%
-              sf::st_transform(sf::st_crs(pus)) %>%
-              dplyr::filter(sf::st_is(., c("POLYGON", "MULTIPOLYGON"))) %>%
-              dplyr::summarise() %>%
-              sf::st_make_valid()
-
-            log_message("Rasterising and normalising sites...")
-            kba <- exactextractr::coverage_fraction(pus, kba)[[1]] %>%
-              elsar::make_normalised_raster(pus = pus, iso3 = iso3)
-
+            append_original_polygons = FALSE
+          )
+          # Combine with polygons
+          if (nrow(polygons) > 0) {
+            polygons <- dplyr::bind_rows(polygons, points_buffered)
           } else {
-            log_message("Only 'POINT' or 'MULTIPOINT' geometry type sites found in the planning region and 'buffer_points' is set to false.")
-            log_message("Returning an empty raster.")
-
-            kba <- terra::ifel(pus == 1, 0, NA)
+            polygons <- points_buffered
           }
+        } else {
+          log_message("No point features have valid area attributes for buffering; using polygons only.")
         }
+      } else if (has_points && !buffer_points) {
+        log_message("Points present but buffer_points=FALSE; using polygons only.")
+      }
+
+      # Check if we have any polygons to rasterize
+      if (nrow(polygons) == 0) {
+        log_message("No polygon features available for rasterization. Returning empty raster.")
+        kba <- terra::ifel(pus == 1, 0, NA)
       } else {
-        kba <- kba %>%
+        log_message("Rasterising {nrow(polygons)} polygon features...")
+        kba <- polygons %>%
           sf::st_transform(sf::st_crs(pus)) %>%
           dplyr::summarise() %>%
           sf::st_make_valid()
 
-        log_message("Rasterising and normalising sites...")
         kba <- exactextractr::coverage_fraction(pus, kba)[[1]] %>%
           elsar::make_normalised_raster(pus = pus, iso3 = iso3)
       }

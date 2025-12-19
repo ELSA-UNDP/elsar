@@ -46,9 +46,9 @@ Depends:
     R (>= 3.5.0)
 Imports:
     assertthat,
-    bit64,
     dplyr,
     exactextractr,
+    future,
     ggnewscale,
     ggplot2,
     ggridges,
@@ -59,6 +59,8 @@ Imports:
     lifecycle,
     magrittr,
     plyr,
+    purrr,
+    rappdirs,
     reticulate,
     rlang,
     sf,
@@ -66,9 +68,9 @@ Imports:
     stringr,
     terra,
     tibble,
-    tidyr,
     tidyterra,
-    units
+    units,
+    xml2
 Config/testthat/edition: 3
 LazyData: true
 URL: https://elsa-undp.github.io/elsar/

@@ -10,6 +10,7 @@ make_restore_zone(
   degradation,
   human_pressure,
   forest_mask,
+  lulc_proportions = NULL,
   agricultural_areas = NULL,
   built_areas = NULL,
   lulc = NULL,
@@ -40,6 +41,10 @@ treated as degraded (e.g., SDG 15.3.1 productivity degradation layer).}
 \item{forest_mask}{SpatRaster. Raster indicating forest ecosystem extent, used
 to create the forest-only restore zone (v2). Values represent forest cover proportion.}
 
+\item{lulc_proportions}{A multi-band \code{SpatRaster} from \code{\link[=download_lulc_proportions]{download_lulc_proportions()}} containing
+pre-computed class proportions. If provided, bands named "agriculture" and "built_area" will
+be used automatically, overriding \code{agricultural_areas} and \code{built_areas}.}
+
 \item{agricultural_areas}{SpatRaster or NULL. Pre-computed raster of agricultural
 area proportions (0-1). If NULL, derived from \code{lulc}.}
 
@@ -63,6 +68,9 @@ is excluded as built-up land (default: 0.1).}
 
 \item{forest_threshold}{Numeric. Minimum forest cover proportion to include
 in restore_zone_v2 (default: 0.1).}
+
+\item{lulc_product}{Character. LULC product used for class value lookups: "esri_10m" (default),
+"dynamic_world", "esa_worldcover", or "local". When "local", explicit class values must be provided.}
 
 \item{agriculture_lulc_value}{Integer. Class value in \code{lulc} representing
 agricultural land (default: 5, for ESRI 10m LULC).}

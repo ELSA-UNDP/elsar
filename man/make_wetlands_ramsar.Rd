@@ -10,14 +10,19 @@ make_wetlands_ramsar(
   pus,
   iso3,
   buffer_points = TRUE,
-  area_column = "Area (ha)",
+  area_column = "area_ha",
   nQuadSegs = 50,
   wetland_threshold = 0.25,
   return_all = FALSE
 )
 }
 \arguments{
-\item{ramsar_in}{An \code{sf} object containing Ramsar site geometries (optional).}
+\item{ramsar_in}{Ramsar site data. Can be one of:
+\itemize{
+\item An \code{sf} object containing Ramsar site geometries (points and/or polygons)
+\item A character path to a GeoPackage file. If the gpkg contains separate "centroids" and
+"boundaries" layers, both will be read and combined automatically.
+}}
 
 \item{wetlands_in}{A \code{SpatRaster} object representing global wetlands data (optional).}
 
@@ -25,11 +30,11 @@ make_wetlands_ramsar(
 
 \item{iso3}{A character string with the ISO3 country code (e.g., "KEN").}
 
-\item{buffer_points}{Logical. Only relevant when "POINT" or "MULTIPOINT" geometries exist in \code{ramsar_in}.
-If \code{TRUE}, circular buffers are generated from the area attribute.}
+\item{buffer_points}{Logical. Only relevant when "POINT" or "MULTIPOINT" geometries exist.
+If \code{TRUE}, circular buffers are generated from the area attribute (default: TRUE).}
 
 \item{area_column}{A string indicating the name of the column containing site area (in hectares).
-Used when buffering point geometries.}
+Used when buffering point geometries (default: "area_ha").}
 
 \item{nQuadSegs}{An integer specifying the number of segments used to approximate circular buffer (default: 50).}
 

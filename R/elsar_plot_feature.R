@@ -86,7 +86,17 @@ elsar_plot_feature <- function(raster_in,
     msg = "'custom_resolution' must be a positive number."
   )
 
-  log_message("Creating feature plot...")
+
+  # Build descriptive message for logging
+
+  plot_label <- if (!is.null(legend_title) && nzchar(legend_title)) {
+    legend_title
+  } else if (!is.null(names(raster_in)) && nzchar(names(raster_in)[1])) {
+    names(raster_in)[1]
+  } else {
+    "unnamed"
+  }
+  log_message("Creating feature plot: {plot_label}...")
 
   # Prep outline
   outlines <- terra::as.polygons(pus) %>%

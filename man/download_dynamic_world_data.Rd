@@ -40,6 +40,8 @@ speeds up processing by eliminating local resampling. Default is FALSE.}
 
 \item{wait_time}{Numeric. Maximum time in minutes to wait for the GEE export
 to appear in Google Drive. Default is 5. Increase for large exports.}
+
+\item{...}{Additional arguments passed to \code{\link[=download_gee_layer]{download_gee_layer()}}.}
 }
 \value{
 A \code{SpatRaster} object of the downloaded Dynamic World data, or NULL if download failed.
@@ -65,7 +67,7 @@ Google Dynamic World class values:
 \item 8: Snow & Ice
 }
 
-Use \link{get_lulc_classes("dynamic_world")} to retrieve these mappings programmatically.
+Use \code{get_lulc_classes("dynamic_world")} to retrieve these mappings programmatically.
 }
 \examples{
 \dontrun{

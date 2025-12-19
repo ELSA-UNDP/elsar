@@ -4,6 +4,228 @@
 # and processing it into Cloud-Optimized GeoTIFFs (COGs). The functions handle authentication,
 # export management, file downloading, and data processing.
 
+#' Create temporary conda environment for GEE
+#'
+#' Creates a temporary conda environment with earthengine-api installed.
+#' Handles conda path detection and environment activation.
+#'
+#' @return Character. Name of the created environment.
+#' @keywords internal
+create_gee_conda_env <- function() {
+  temp_env <- paste0("gee_temp_env_", Sys.getpid())
+  conda_base <- find_conda_base()
+
+  if (is.null(conda_base)) {
+    stop("Could not find conda installation. Please install miniconda or anaconda.", call. = FALSE)
+  }
+
+  # Find conda/mamba executable
+  is_windows <- .Platform$OS.type == "windows"
+  conda_exe <- if (is_windows) {
+    # Windows conda locations
+    candidates <- c(
+      file.path(conda_base, "Scripts", "mamba.exe"),
+      file.path(conda_base, "Scripts", "conda.exe"),
+      file.path(conda_base, "condabin", "mamba.bat"),
+      file.path(conda_base, "condabin", "conda.bat")
+    )
+    found <- candidates[file.exists(candidates)]
+    if (length(found) > 0) found[1] else NULL
+  } else {
+    # Unix conda locations
+    candidates <- c(
+      file.path(conda_base, "bin", "mamba"),
+      file.path(conda_base, "bin", "conda")
+    )
+    found <- candidates[file.exists(candidates)]
+    if (length(found) > 0) found[1] else NULL
+  }
+
+  if (is.null(conda_exe)) {
+    stop("Could not find conda or mamba executable in conda installation.", call. = FALSE)
+  }
+
+  log_message("Using conda/mamba: {conda_exe}")
+  log_message("Creating conda environment '{temp_env}' in {conda_base}...")
+
+  # Create environment using direct system call to avoid reticulate's env caching issues
+  create_cmd <- glue::glue('"{conda_exe}" create --yes --name {temp_env} python=3.12 earthengine-api -c conda-forge --quiet')
+  log_message("Running: {create_cmd}")
+
+  result <- system(create_cmd, intern = FALSE, ignore.stdout = FALSE, ignore.stderr = FALSE)
+  if (result != 0) {
+    stop(glue::glue("Failed to create conda environment. Exit code: {result}"), call. = FALSE)
+  }
+
+  # Wait briefly for filesystem to sync
+  Sys.sleep(2)
+
+  # Check if the env directory was actually created
+  env_dir <- file.path(conda_base, "envs", temp_env)
+  if (!dir.exists(env_dir)) {
+    log_message("Environment directory not found at expected location: {env_dir}")
+    existing_envs <- list.dirs(file.path(conda_base, "envs"), full.names = FALSE, recursive = FALSE)
+    log_message("Existing envs in {conda_base}/envs: {paste(existing_envs, collapse=', ')}")
+    stop(glue::glue("Conda environment was not created at {env_dir}"), call. = FALSE)
+  }
+
+  # Find Python executable
+  env_python <- find_env_python(conda_base, temp_env)
+
+  if (is.null(env_python)) {
+    env_contents <- list.files(env_dir, recursive = FALSE)
+    log_message("Contents of {env_dir}: {paste(env_contents, collapse=', ')}")
+    stop(glue::glue("Failed to find Python in new environment at: {env_dir}"), call. = FALSE)
+  }
+
+  log_message("Using Python at: {env_python}")
+  reticulate::use_python(env_python, required = TRUE)
+  log_message("Temporary Conda environment created: {temp_env}")
+
+  temp_env
+}
+
+
+#' Find conda base directory
+#'
+#' Searches common locations for conda/miniconda/anaconda installations.
+#' Works on Windows, macOS, and Linux.
+#'
+#' @return Path to conda base directory, or NULL if not found
+#' @keywords internal
+find_conda_base <- function() {
+  is_windows <- .Platform$OS.type == "windows"
+
+  if (is_windows) {
+    # Windows conda locations
+    userprofile <- Sys.getenv("USERPROFILE")
+    localappdata <- Sys.getenv("LOCALAPPDATA")
+    conda_candidates <- c(
+      file.path(userprofile, "miniconda3"),
+      file.path(userprofile, "anaconda3"),
+      file.path(userprofile, "miniforge3"),
+      file.path(localappdata, "miniconda3"),
+      file.path(localappdata, "anaconda3"),
+      "C:/miniconda3",
+      "C:/anaconda3",
+      "C:/ProgramData/miniconda3",
+      "C:/ProgramData/anaconda3"
+    )
+  } else {
+    # Unix-like (Linux/macOS) conda locations
+    home <- Sys.getenv("HOME")
+    conda_candidates <- c(
+      file.path(home, "miniconda3"),
+      file.path(home, "anaconda3"),
+      file.path(home, "miniforge3"),
+      file.path(home, ".conda"),
+      "/opt/conda",
+      "/opt/miniconda3",
+      "/opt/anaconda3"
+    )
+  }
+
+  for (cand in conda_candidates) {
+    if (dir.exists(file.path(cand, "envs"))) {
+      return(cand)
+    }
+  }
+
+  NULL
+}
+
+
+#' Convert CRS to WKT1 format for GEE
+#'
+#' GEE requires CRS in WKT1 (OGC) format, not WKT2 or PROJ4 strings.
+#' Modern GDAL/PROJ versions output WKT2 by default, which GEE cannot parse.
+#' This helper extracts the CRS and converts it to WKT1 format using gdalsrsinfo.
+#'
+#' @param x A SpatRaster, SpatVector, or sf object
+#' @return Character string with WKT1 CRS definition
+#' @keywords internal
+get_crs_wkt <- function(x) {
+  # Extract WKT (will be WKT2 format from modern GDAL/PROJ)
+  if (inherits(x, c("SpatRaster", "SpatVector"))) {
+    wkt2 <- terra::crs(x, describe = FALSE)
+  } else if (inherits(x, c("sf", "sfc"))) {
+    wkt2 <- sf::st_crs(x)$wkt
+  } else {
+    stop("Cannot extract CRS from object of class: ", class(x)[1])
+  }
+
+  if (is.null(wkt2) || !nzchar(wkt2)) {
+    stop("Object has no CRS defined")
+  }
+
+  # Convert WKT2 to WKT1 using gdalsrsinfo
+  # GEE only accepts WKT1 (OGC) format, not the newer WKT2 format
+  tmp_file <- tempfile(fileext = ".wkt")
+  on.exit(unlink(tmp_file), add = TRUE)
+  writeLines(wkt2, tmp_file)
+
+  # Check if gdalsrsinfo is available
+  gdalsrsinfo_path <- Sys.which("gdalsrsinfo")
+  if (!nzchar(gdalsrsinfo_path)) {
+    # Fall back to WKT2 and hope GEE accepts it
+    log_message("Warning: gdalsrsinfo not found, using WKT2 format (may fail in GEE)")
+    return(wkt2)
+  }
+
+  # Convert to WKT1 format
+  wkt1 <- tryCatch({
+    result <- system2("gdalsrsinfo", args = c("-o", "wkt1", tmp_file),
+                      stdout = TRUE, stderr = TRUE)
+    if (length(result) > 0 && !any(grepl("^ERROR", result))) {
+      paste(result, collapse = "\n")
+    } else {
+      NULL
+    }
+  }, error = function(e) NULL)
+
+  if (is.null(wkt1) || !nzchar(wkt1)) {
+    log_message("Warning: Failed to convert CRS to WKT1, using WKT2 format")
+    return(wkt2)
+  }
+
+  wkt1
+}
+
+
+#' Find Python executable in conda environment
+#'
+#' Locates the Python executable for a given conda environment.
+#' Handles differences between Windows and Unix paths.
+#'
+#' @param conda_base Path to conda base directory
+#' @param env_name Name of the conda environment
+#' @return Path to Python executable, or NULL if not found
+#' @keywords internal
+find_env_python <- function(conda_base, env_name) {
+  is_windows <- .Platform$OS.type == "windows"
+
+  if (is_windows) {
+    candidates <- c(
+      file.path(conda_base, "envs", env_name, "python.exe"),
+      file.path(conda_base, "envs", env_name, "Scripts", "python.exe")
+    )
+  } else {
+    candidates <- c(
+      file.path(conda_base, "envs", env_name, "bin", "python"),
+      file.path(conda_base, "envs", env_name, "bin", "python3")
+    )
+  }
+
+  for (cand in candidates) {
+    if (file.exists(cand)) {
+      return(cand)
+    }
+  }
+
+  NULL
+}
+
+
 #' Initialize Google Earth Engine
 #'
 #' Sets up Python environment and initializes the Earth Engine API.
@@ -21,50 +243,109 @@
 #' ee <- env_info$ee
 #' }
 initialize_earthengine <- function(gee_project) {
+
   assertthat::assert_that(
     assertthat::is.string(gee_project) && nchar(gee_project) > 0,
     msg = "gee_project is required and must be a non-empty string (your GEE cloud project ID)"
   )
 
-  log_message("Checking Python environment for Earth Engine API...")
+  log_message("Initializing Earth Engine...")
 
-  # Handle Python environment setup - check if RETICULATE_PYTHON is set
-  if (Sys.getenv("RETICULATE_PYTHON") != "") {
-    reticulate::use_python(Sys.getenv("RETICULATE_PYTHON"), required = TRUE)
+  temp_env <- NULL
+  ee_env_found <- FALSE
+  conda_base <- find_conda_base()
 
-    # Check if earthengine-api is available in existing environment
-    if (reticulate::py_module_available("ee")) {
-      log_message("Using existing Python environment with Earth Engine API installed.")
-      temp_env <- NULL  # No temporary environment needed
-    } else {
-      log_message("Earth Engine not available in RETICULATE_PYTHON environment. Creating temporary conda env.")
-      temp_env <- paste0("gee_temp_env_", Sys.getpid())
-      reticulate::conda_create(temp_env, packages = c("python=3.12", "earthengine-api"))
-      reticulate::use_condaenv(temp_env, required = TRUE)
-      log_message("Temporary Conda environment created: {temp_env}")
+  # Set LD_LIBRARY_PATH for OpenSSL resolution (must be before Python init)
+  if (!is.null(conda_base) && .Platform$OS.type != "windows") {
+    for (env_name in c("ee_compat", "ee", "gee", "earthengine")) {
+      env_lib <- file.path(conda_base, "envs", env_name, "lib")
+      if (dir.exists(env_lib)) {
+        current_ld_path <- Sys.getenv("LD_LIBRARY_PATH")
+        if (!grepl(env_lib, current_ld_path, fixed = TRUE)) {
+          new_ld_path <- if (nzchar(current_ld_path)) paste0(env_lib, ":", current_ld_path) else env_lib
+          Sys.setenv(LD_LIBRARY_PATH = new_ld_path)
+        }
+        break
+      }
     }
-  } else {
-    # No RETICULATE_PYTHON set - create new temporary environment
-    log_message("RETICULATE_PYTHON not set. Creating temporary conda environment.")
-    temp_env <- paste0("gee_temp_env_", Sys.getpid())
-    reticulate::conda_create(temp_env, packages = c("python=3.12", "earthengine-api"))
-    reticulate::use_condaenv(temp_env, required = TRUE)
-    log_message("Temporary Conda environment created: {temp_env}")
   }
 
-  # Import Earth Engine module
+  # Check if reticulate already initialized with ee module
+  if (reticulate::py_available(initialize = FALSE)) {
+    if (reticulate::py_module_available("ee")) {
+      ee_env_found <- TRUE
+    } else {
+      log_message("Python initialized but missing 'ee' module. Restart R with RETICULATE_PYTHON set to ee environment.")
+    }
+  }
+
+  # Check RETICULATE_PYTHON environment variable
+  reticulate_python <- Sys.getenv("RETICULATE_PYTHON")
+  if (!ee_env_found && nzchar(reticulate_python) && file.exists(reticulate_python)) {
+    tryCatch({
+      reticulate::use_python(reticulate_python, required = TRUE)
+      if (!reticulate::py_available(initialize = FALSE)) reticulate::py_config()
+      ee_test <- tryCatch({
+        reticulate::import("ee", delay_load = FALSE)
+        TRUE
+      }, error = function(e) {
+        if (grepl("OPENSSL", e$message, ignore.case = TRUE)) {
+          env_lib <- file.path(dirname(dirname(reticulate_python)), "lib")
+          log_message("OpenSSL mismatch. Try: LD_LIBRARY_PATH={env_lib} R")
+        }
+        FALSE
+      })
+      if (ee_test) ee_env_found <- TRUE
+    }, error = function(e) NULL)
+  }
+
+  # Search for conda environments with Earth Engine
+
+  if (!ee_env_found && !is.null(conda_base)) {
+    candidate_envs <- c("ee_compat", "ee", "gee", "earthengine", "earth-engine")
+    for (env_name in candidate_envs) {
+      env_python <- find_env_python(conda_base, env_name)
+      if (!is.null(env_python)) {
+        tryCatch({
+          reticulate::use_python(env_python, required = TRUE)
+          if (!reticulate::py_available(initialize = FALSE)) reticulate::py_config()
+          ee_test <- tryCatch({
+            reticulate::import("ee", delay_load = FALSE)
+            TRUE
+          }, error = function(e) {
+            if (grepl("OPENSSL", e$message, ignore.case = TRUE)) {
+              env_lib <- file.path(conda_base, "envs", env_name, "lib")
+              log_message("OpenSSL mismatch for '{env_name}'. Try: LD_LIBRARY_PATH={env_lib} R")
+            }
+            FALSE
+          })
+          if (ee_test) {
+            log_message("Using conda environment: {env_name}")
+            ee_env_found <- TRUE
+            break
+          }
+        }, error = function(e) NULL)
+      }
+    }
+  }
+
+  # Create temporary environment if none found
+  if (!ee_env_found) {
+    log_message("Creating temporary conda environment for Earth Engine...")
+    temp_env <- create_gee_conda_env()
+  }
+
+  # Import and initialize Earth Engine
   ee <- reticulate::import("ee")
 
-  # Handle authentication - only authenticate if credentials don't exist
   cred_path <- file.path(rappdirs::user_config_dir("earthengine"), "credentials")
   if (!file.exists(cred_path)) {
-    log_message("No Earth Engine credentials found. Starting authentication...")
+    log_message("Starting Earth Engine authentication...")
     ee$Authenticate()
   }
 
-  # Initialize Earth Engine with specified project
   ee$Initialize(project = gee_project)
-  log_message("Google Earth Engine initialized.")
+  log_message("Earth Engine initialized (project: {gee_project})")
 
   return(list(ee = ee, temp_env = temp_env))
 }
@@ -369,77 +650,58 @@ download_gee_layer <- function(
   )
 
   # Validate aggregation parameters
- if (aggregate_to_pus) {
+  if (aggregate_to_pus) {
     assertthat::assert_that(
       !is.null(pus) && inherits(pus, "SpatRaster"),
       msg = "When aggregate_to_pus = TRUE, 'pus' must be a SpatRaster object"
     )
-    log_message("GEE-side aggregation enabled. Data will be exported at planning unit resolution.")
   }
 
-  # Set up folder structure
-  # NOTE: Currently exporting to Drive root to avoid GEE folder duplication bug
-  # TODO: Revert to country-specific folders when GEE bug is fixed
-  if (is.null(googledrive_folder)) {
-    export_folder <- NULL  # Export to Drive root
-    log_message("Exporting to Google Drive root (no folder) to avoid GEE folder duplication bug")
-  } else {
-    export_folder <- paste0(googledrive_folder, "_", iso3)
-    log_message("Using country-specific folder: {export_folder}")
-  }
+  # Set up folder structure (export to Drive root to avoid GEE folder duplication bug)
+  export_folder <- if (is.null(googledrive_folder)) NULL else paste0(googledrive_folder, "_", iso3)
 
   # Create temporary local directory for downloads
   temp_dir <- file.path(Sys.getenv("HOME"), glue::glue("gee_download_{iso3}_{Sys.getpid()}"))
   dir.create(temp_dir, showWarnings = FALSE)
-  log_message("Temporary directory created at: {temp_dir}")
 
   # Initialize Earth Engine
   env_info <- tryCatch({
     initialize_earthengine(gee_project)
   }, error = function(e) {
-    log_message("Failed to initialize Earth Engine: {e$message}")
     unlink(temp_dir, recursive = TRUE)
-    stop(
-      glue::glue("Earth Engine initialization failed. Check your GEE project ID and credentials. Error: {e$message}"),
-      call. = FALSE
-    )
+    stop(glue::glue("Earth Engine initialization failed: {e$message}"), call. = FALSE)
   })
   ee <- env_info$ee
 
-  # Load the dataset and find the most recent year with data
-  log_message("Loading GEE asset: {asset_id}")
+  # Ensure googledrive is authenticated before we suppress messages later
+  # This allows the account selection prompt to appear if needed
+  if (!googledrive::drive_has_token()) {
+    googledrive::drive_auth()
+  }
+
+  # Load the dataset
   ic <- tryCatch({
     ee$ImageCollection(asset_id)
   }, error = function(e) {
-    log_message("Failed to load GEE asset: {e$message}")
     cleanup_earthengine(env_info)
     unlink(temp_dir, recursive = TRUE)
-    stop(
-      glue::glue("Failed to load GEE asset '{asset_id}'. Check the asset ID is correct. Error: {e$message}"),
-      call. = FALSE
-    )
+    stop(glue::glue("Failed to load GEE asset '{asset_id}': {e$message}"), call. = FALSE)
   })
 
   # Determine year to use
   if (!is.null(year_override)) {
     year <- year_override
-    log_message("Using specified year: {year}")
   } else {
     year <- as.numeric(format(Sys.Date(), "%Y")) - 1
-
     # Search backwards for a year with data
-    log_message("Searching for most recent year with data...")
     while (ic$filterDate(ee$Date(glue::glue("{year}-01-01")), ee$Date(glue::glue("{year}-12-31")))$size()$getInfo() == 0) {
-      log_message("No valid data found for {year}, trying {year - 1}...")
       year <- year - 1
-      # Prevent infinite loop - stop if we go too far back
       if (year < 2000) {
         cleanup_earthengine(env_info)
         unlink(temp_dir, recursive = TRUE)
         stop("No data found for any recent year (back to 2000) in the collection.", call. = FALSE)
       }
     }
-    log_message("Using data for year: {year}")
   }
 
   # Build export filename and check if local file already exists
@@ -447,47 +709,41 @@ download_gee_layer <- function(
   output_file <- file.path(output_dir, glue::glue("{file_name}.tif"))
 
   if (file.exists(output_file)) {
-    log_message("File already exists locally: {output_file}")
-    log_message("Loading existing file...")
+    log_message("Using existing file: {basename(output_file)}")
     cleanup_earthengine(env_info)
     unlink(temp_dir, recursive = TRUE)
     return(terra::rast(output_file))
   }
 
-  log_message("Checking Google Drive for existing files: {file_name}*")
-
-  # Simple folder creation function (only used if not exporting to root)
-  ensure_drive_folder <- function(folder_name) {
+  # Ensure export folder exists (if not exporting to root)
+  if (!is.null(export_folder)) {
     existing_folders <- googledrive::drive_ls(path = NULL, type = "folder")
-    if (!(folder_name %in% existing_folders$name)) {
-      log_message("Folder '{folder_name}' does not exist. Creating it in Google Drive...")
-      googledrive::drive_mkdir(folder_name)
-    } else {
-      log_message("Folder '{folder_name}' already exists in Google Drive.")
+    if (!(export_folder %in% existing_folders$name)) {
+      googledrive::drive_mkdir(export_folder)
     }
   }
 
-  # Ensure export folder exists (if not exporting to root)
-  if (!is.null(export_folder)) {
-    ensure_drive_folder(export_folder)
-  }
+  # Check for existing exported files in Drive
+  exact_file <- paste0(file_name, ".tif")
+  existing_files <- tryCatch({
+    # Suppress googledrive messages about files not found
+    suppressMessages(googledrive::drive_get(exact_file))
+  }, error = function(e) {
+    data.frame(name = character(0))
+  })
 
-  # Check for existing exported files
-  if (is.null(export_folder)) {
-    # Search in Drive root
-    files <- googledrive::drive_ls(path = NULL)
-  } else {
-    # Search in specified folder
-    files <- googledrive::drive_ls(path = export_folder)
+  # If not found, try drive_find as fallback
+  if (nrow(existing_files) == 0) {
+    all_files <- suppressMessages(googledrive::drive_find(q = paste0("name contains '", file_name, "'")))
+    existing_files <- all_files[grepl(paste0("^", file_name, ".*\\.tif$"), all_files$name), ]
   }
-
-  existing_files <- files[grepl(paste0("^", file_name), files$name) & grepl("\\.tif$", files$name), ]
 
   if (nrow(existing_files) > 0) {
-    log_message("Existing files for {iso3} found on Google Drive. Downloading instead of exporting from GEE...")
+    matching_files <- existing_files
+    log_message("Found in Drive: {file_name}")
   } else {
-    log_message("No existing exported files found for {iso3} on Google Drive.")
-    log_message("Checking for existing export tasks that are still running...")
+    log_message("Not found in Drive, will export from GEE: {file_name}")
+    log_message("Preparing export task...")
 
     # Check for running export tasks with the same description
     tasks <- ee$batch$Task$list()
@@ -495,133 +751,108 @@ download_gee_layer <- function(
       t$status()$state %in% c("READY", "RUNNING") && t$status()$description == file_name
     })
 
-    if (!is.null(existing_task)) {
-      log_message("Existing export task '{file_name}' is still running. Waiting instead of starting a new one.")
-    } else {
-      log_message("No similar running tasks found. Proceeding with new GEE export.")
+    if (is.null(existing_task)) {
+      # Prepare geometry for export in WGS84
+      if (aggregate_to_pus && !is.null(pus)) {
+        pu_ext <- terra::ext(pus)
+        corners <- sf::st_sfc(
+          sf::st_point(c(pu_ext$xmin, pu_ext$ymin)),
+          sf::st_point(c(pu_ext$xmax, pu_ext$ymax)),
+          crs = terra::crs(pus, proj = TRUE)
+        )
+        corners_wgs84 <- sf::st_transform(corners, crs = 4326)
+        coords <- sf::st_coordinates(corners_wgs84)
+        ee_bounding_box <- ee$Geometry$Rectangle(
+          c(coords[1, "X"], coords[1, "Y"], coords[2, "X"], coords[2, "Y"]),
+          proj = "EPSG:4326", geodesic = FALSE
+        )
+      } else {
+        boundary_layer <- sf::st_transform(boundary_layer, crs = 4326)
+        bounding_box <- sf::st_bbox(boundary_layer)
+        ee_bounding_box <- ee$Geometry$Rectangle(
+          c(bounding_box$xmin, bounding_box$ymin, bounding_box$xmax, bounding_box$ymax),
+          proj = "EPSG:4326", geodesic = FALSE
+        )
+      }
 
-      # Prepare geometry for export - ensure it's in WGS84
-      boundary_layer <- sf::st_transform(boundary_layer, crs = 4326)
-      bounding_box <- sf::st_bbox(boundary_layer)
-      ee_bounding_box <- ee$Geometry$Rectangle(
-        c(bounding_box$xmin, bounding_box$ymin, bounding_box$xmax, bounding_box$ymax),
-        proj = "EPSG:4326",
-        geodesic = FALSE
-      )
-
-      # Filter collection to date range and geographic bounds
+      # Filter collection and create composite
       start_date <- ee$Date(glue::glue("{year}-01-01"))
       end_date <- ee$Date(glue::glue("{year}-12-31"))
       filtered_data <- ic$filterDate(start_date, end_date)$filterBounds(ee_bounding_box)
+      source_projection <- filtered_data$first()$projection()
 
-      # Create composite based on specified method
       composite <- switch(
         composite_method,
         mosaic = filtered_data$mosaic(),
         mode = filtered_data$mode(),
         median = filtered_data$median(),
         mean = filtered_data$mean(),
-        filtered_data$mosaic()  # Default fallback
+        filtered_data$mosaic()
       )
 
-      # Select specific band if requested
-      if (!is.null(band)) {
-        log_message("Selecting band: {band}")
-        composite <- composite$select(band)
-      }
+      if (!is.null(band)) composite <- composite$select(band)
 
       # Prepare export parameters
+      log_message("Building export parameters...")
+      region_coords <- ee_bounding_box$getInfo()[["coordinates"]]
       export_params <- list(
         image = composite,
         description = file_name,
         folder = export_folder,
         fileNamePrefix = file_name,
-        region = ee_bounding_box$getInfo()[["coordinates"]],
+        region = region_coords,
         maxPixels = reticulate::r_to_py(1e13),
         fileFormat = "GeoTIFF"
       )
 
       # Handle GEE-side aggregation to planning units
       if (aggregate_to_pus && !is.null(pus)) {
-        # Extract CRS from planning units
-        pu_crs <- terra::crs(pus, proj = TRUE)
-        log_message("Using PU CRS: {pu_crs}")
-
-        # Extract geotransform: [xmin, xres, 0, ymax, 0, -yres]
+        pu_crs <- get_crs_wkt(pus)
         pu_ext <- terra::ext(pus)
         pu_res <- terra::res(pus)
-        crs_transform <- c(pu_ext$xmin, pu_res[1], 0, pu_ext$ymax, 0, -pu_res[2])
-        log_message("Using CRS transform: [{paste(crs_transform, collapse=', ')}]")
-        log_message("PU resolution: {pu_res[1]}m x {pu_res[2]}m")
-
-        # Apply reduceResolution for proper aggregation of categorical data
-        gee_reducer <- switch(
-          aggregation_reducer,
-          mode = ee$Reducer$mode(),
-          mean = ee$Reducer$mean(),
-          sum = ee$Reducer$sum()
-        )
-
-        # Reduce resolution before export
-        composite_reduced <- composite$reduceResolution(
-          reducer = gee_reducer,
-          maxPixels = reticulate::r_to_py(65536L)
-        )
-
-        export_params$image <- composite_reduced
-        export_params$crs <- pu_crs
-        export_params$crsTransform <- crs_transform
-        # Don't set scale when using crsTransform
+        export_params$crs <- "EPSG:4326"
+        export_params$scale <- pu_res[1]
       } else {
-        # Use native scale
         export_params$scale <- scale
       }
 
-      # Submit export task to Google Drive
+      # Submit export task
       task <- do.call(ee$batch$Export$image$toDrive, export_params)
       task$start()
-      log_message("Export task started. Waiting for files to appear in Google Drive...")
+      log_message("Export task submitted")
     }
 
     # Wait for files to appear in Drive
+    log_message("Waiting for export to complete (this may take several minutes)...")
     start_time <- Sys.time()
     repeat {
-      # Re-check for files (handles both new exports and existing running tasks)
-      if (is.null(export_folder)) {
-        files <- googledrive::drive_ls(path = NULL)
-      } else {
-        files <- googledrive::drive_ls(path = export_folder)
-      }
+      all_tifs <- googledrive::drive_find(q = paste0("name contains '", file_name, "'"))
+      matching_files <- all_tifs[grepl(paste0("^", file_name, ".*\\.tif$"), all_tifs$name), ]
 
-      matching_files <- files[grepl(paste0("^", file_name), files$name) & grepl("\\.tif$", files$name), ]
+      if (nrow(matching_files) > 0) break
 
-      if (nrow(matching_files) > 0) {
-        log_message("Files found. Proceeding with download.")
-        break
-      }
-
-      # Check for timeout
-      if (difftime(Sys.time(), start_time, units = "mins") > wait_time) {
+      elapsed <- difftime(Sys.time(), start_time, units = "mins")
+      if (elapsed > wait_time) {
         message(glue::glue(
-          "Timeout: No files are yet available for download after {as.integer(wait_time)} minutes.\n",
-          "This is not unexpected as GEE exports can take time. You can check the status of exports via the GEE web console.\n",
-          "Please try running again later..."
+          "Timeout after {as.integer(wait_time)} min. Check: https://code.earthengine.google.com/tasks"
         ))
         cleanup_earthengine(env_info)
         unlink(temp_dir, recursive = TRUE)
         return(NULL)
       }
 
-      log_message("File not yet available, waiting 30 seconds before re-trying...")
+      if (elapsed >= 0.5) {  # Only show after 30 seconds
+        log_message("Still waiting... ({round(elapsed, 1)} min elapsed)")
+      }
       Sys.sleep(30)
     }
   }
 
-  # Download files and process into final COG
-  if (is.null(export_folder)) {
-    download_from_drive(NULL, file_name, temp_dir)  # Download from root
-  } else {
-    download_from_drive(export_folder, file_name, temp_dir)  # Download from folder
+  # Download files
+  for (i in seq_len(nrow(matching_files))) {
+    local_path <- file.path(temp_dir, matching_files$name[i])
+    googledrive::drive_download(matching_files[i, ], path = local_path, overwrite = TRUE)
+    log_message("Downloaded: {matching_files$name[i]}")
   }
 
   output_raster <- merge_tiles(temp_dir, output_file, datatype)
@@ -629,13 +860,23 @@ download_gee_layer <- function(
   # Cleanup temporary files and environments
   unlink(temp_dir, recursive = TRUE)
   cleanup_earthengine(env_info)
-  log_message("Temporary files and Conda environment deleted.")
 
-  # Add pre_aggregated attribute if GEE-side aggregation was used
+  # Reproject to PU CRS locally if GEE-side aggregation was used
+  # GEE exports in WGS84, so we reproject to PU CRS here
   if (aggregate_to_pus && !is.null(pus)) {
+    resample_method <- switch(
+      aggregation_reducer,
+      mode = "mode",
+      mean = "bilinear",
+      sum = "sum",
+      "near"  # Default fallback
+    )
+    output_raster <- terra::project(output_raster, pus, method = resample_method)
+    # Overwrite the file with reprojected version
+    terra::writeRaster(output_raster, output_file, overwrite = TRUE,
+                       filetype = "COG", gdal = c("COMPRESS=DEFLATE"))
     attr(output_raster, "pre_aggregated") <- TRUE
     attr(output_raster, "aggregation_reducer") <- aggregation_reducer
-    log_message("Raster has been pre-aggregated to planning unit resolution in GEE.")
   }
 
   return(output_raster)
@@ -649,6 +890,8 @@ download_gee_layer <- function(
 #'
 #' @inheritParams download_gee_layer
 #' @param output_dir Character. Local output directory. Defaults to project root via `here::here()`
+#' @param ... Additional arguments passed to [download_gee_layer()].
+#'
 #' @return A `SpatRaster` object of the downloaded LULC data, or NULL if download failed
 #'
 #' @seealso [download_lulc_data()], [get_lulc_classes()]
@@ -735,6 +978,8 @@ download_esri_lulc_data <- function(
 #' @param layer_type Character. One of "cultivated" (default) or "natural" to specify
 #'   which grassland probability layer to download
 #' @param output_dir Character. Local output directory. Defaults to project root via `here::here()`
+#' @param ... Additional arguments passed to [download_gee_layer()].
+#'
 #' @return A `SpatRaster` object of the downloaded grassland data, or NULL if download failed
 #' @export
 #' @examples
@@ -819,6 +1064,7 @@ download_global_pasture_data <- function(
 #' @param year Numeric or NULL. Year for the annual composite. If NULL (default),
 #'   uses the previous calendar year.
 #' @param output_dir Character. Local output directory. Defaults to project root via `here::here()`.
+#' @param ... Additional arguments passed to [download_gee_layer()].
 #'
 #' @return A `SpatRaster` object of the downloaded Dynamic World data, or NULL if download failed.
 #'
@@ -837,7 +1083,7 @@ download_global_pasture_data <- function(
 #'   \item 8: Snow & Ice
 #' }
 #'
-#' Use [get_lulc_classes("dynamic_world")] to retrieve these mappings programmatically.
+#' Use `get_lulc_classes("dynamic_world")` to retrieve these mappings programmatically.
 #'
 #' @seealso [download_lulc_data()], [get_lulc_classes()]
 #'
@@ -930,6 +1176,7 @@ download_dynamic_world_data <- function(
 #'
 #' @inheritParams download_gee_layer
 #' @param output_dir Character. Local output directory. Defaults to project root via `here::here()`.
+#' @param ... Additional arguments passed to [download_gee_layer()].
 #'
 #' @return A `SpatRaster` object of the downloaded ESA WorldCover data, or NULL if download failed.
 #'
@@ -949,7 +1196,7 @@ download_dynamic_world_data <- function(
 #'   \item 100: Moss and lichen
 #' }
 #'
-#' Use [get_lulc_classes("esa_worldcover")] to retrieve these mappings programmatically.
+#' Use `get_lulc_classes("esa_worldcover")` to retrieve these mappings programmatically.
 #'
 #' @note ESA WorldCover v200 is a static 2021 baseline product. Unlike ESRI LULC
 #'   or Dynamic World, it does not have annual updates.
@@ -1138,6 +1385,7 @@ load_local_lulc_data <- function(
 #'   If NULL, automatically determined from `lulc_product` and `class_name`.
 #' @param year Numeric or NULL. Year for LULC data. If NULL, uses most recent.
 #' @param pus SpatRaster. Planning units raster (required for aggregation).
+#' @param ... Additional arguments passed to [download_gee_layer()].
 #'
 #' @return A `SpatRaster` with class proportion values (0-1) at PU resolution,
 #'   with attribute `pre_aggregated = TRUE`.
@@ -1223,9 +1471,7 @@ download_lulc_class_proportion <- function(
     class_values <- get_lulc_class_value(lulc_product, class_name)
   }
 
-  log_message("Downloading {class_name} proportion raster for {iso3}...")
-  log_message("Using LULC product: {lulc_product}")
-  log_message("Target class value(s): {paste(class_values, collapse=', ')}")
+  log_message("Downloading {class_name} proportion ({lulc_product})")
 
   # Get asset ID for the product
  asset_id <- switch(
@@ -1260,7 +1506,7 @@ download_lulc_class_proportion <- function(
     stop("Package 'reticulate' is required but not installed.", call. = FALSE)
   }
 
-  env_info <- setup_earthengine(gee_project)
+  env_info <- initialize_earthengine(gee_project)
   ee <- env_info$ee
 
   # Create temporary directory for downloads
@@ -1271,14 +1517,21 @@ download_lulc_class_proportion <- function(
     # Load the ImageCollection
     ic <- ee$ImageCollection(asset_id)
 
-    # Transform boundary to WGS84 and get bounding box
-    boundary_layer <- sf::st_transform(boundary_layer, crs = 4326)
-    bounding_box <- sf::st_bbox(boundary_layer)
+    # Use PU extent for bounding box (more precise for aggregation)
+    pu_ext <- terra::ext(pus)
+    corners <- sf::st_sfc(
+      sf::st_point(c(pu_ext$xmin, pu_ext$ymin)),
+      sf::st_point(c(pu_ext$xmax, pu_ext$ymax)),
+      crs = terra::crs(pus, proj = TRUE)
+    )
+    corners_wgs84 <- sf::st_transform(corners, crs = 4326)
+    coords <- sf::st_coordinates(corners_wgs84)
     ee_bounding_box <- ee$Geometry$Rectangle(
-      c(bounding_box$xmin, bounding_box$ymin, bounding_box$xmax, bounding_box$ymax),
+      c(coords[1, "X"], coords[1, "Y"], coords[2, "X"], coords[2, "Y"]),
       proj = "EPSG:4326",
       geodesic = FALSE
     )
+    log_message("Using PU extent for GEE bounding box")
 
     # Filter to year and bounds
     start_date <- ee$Date(glue::glue("{year}-01-01"))
@@ -1312,19 +1565,38 @@ download_lulc_class_proportion <- function(
     # Convert to float for mean aggregation
     binary_mask <- binary_mask$toFloat()
 
-    # Extract CRS and transform from planning units
-    pu_crs <- terra::crs(pus, proj = TRUE)
+    # Extract CRS and transform from planning units (WKT format required by GEE)
+    pu_crs <- get_crs_wkt(pus)
     pu_ext <- terra::ext(pus)
     pu_res <- terra::res(pus)
     crs_transform <- c(pu_ext$xmin, pu_res[1], 0, pu_ext$ymax, 0, -pu_res[2])
 
+    # Determine native scale for the LULC product
+    native_scale <- switch(
+      lulc_product,
+      esri_10m = 10,
+      dynamic_world = 10,
+      esa_worldcover = 10
+    )
+
     log_message("Aggregating to PU resolution ({pu_res[1]}m) using mean reducer...")
 
-    # Reduce resolution using mean to get proportion
-    proportion_raster <- binary_mask$reduceResolution(
+    # Clip to PU extent first to limit data
+    # ee_bounding_box was already set to PU extent above (in WGS84)
+    binary_mask_clipped <- binary_mask$clip(ee_bounding_box)
+
+    # Reduce resolution in WGS84 at PU-equivalent scale (in meters)
+    # GEE's atScale() handles meter-to-degree conversion internally
+    intermediate_projection <- ee$Projection("EPSG:4326")$atScale(pu_res[1])
+
+    proportion_raster <- binary_mask_clipped$reproject(
+      crs = intermediate_projection
+    )$reduceResolution(
       reducer = ee$Reducer$mean(),
       maxPixels = reticulate::r_to_py(65536L)
     )
+
+    # Export will handle final reprojection to PU CRS via crs and crsTransform params
 
     # Build filename
     file_name <- glue::glue("{file_prefix}_{year}_{iso3}")
@@ -1358,6 +1630,7 @@ download_lulc_class_proportion <- function(
     task <- do.call(ee$batch$Export$image$toDrive, export_params)
     task$start()
     log_message("Export task started. Waiting for files to appear in Google Drive...")
+    log_message("Monitor task progress at: https://code.earthengine.google.com/tasks")
 
     # Wait for files to appear in Drive
     start_time <- Sys.time()
@@ -1381,12 +1654,15 @@ download_lulc_class_proportion <- function(
         cleanup_earthengine(env_info)
         unlink(temp_dir, recursive = TRUE)
         stop(
-          glue::glue("Timed out waiting for GEE export after {wait_time} minutes."),
+          glue::glue(
+            "Timed out waiting for GEE export after {wait_time} minutes.\n",
+            "Check task status at: https://code.earthengine.google.com/tasks"
+          ),
           call. = FALSE
         )
       }
 
-      log_message("Still waiting for export... ({round(elapsed, 1)} min elapsed)")
+      log_message("Still waiting for export... ({round(elapsed, 1)} min) - check: https://code.earthengine.google.com/tasks")
     }
 
     # Download files from Drive
@@ -1409,9 +1685,398 @@ download_lulc_class_proportion <- function(
     attr(output_raster, "class_name") <- class_name
     attr(output_raster, "lulc_product") <- lulc_product
 
-    log_message("Successfully downloaded {class_name} proportion raster.")
-
     return(output_raster)
+
+  }, error = function(e) {
+    cleanup_earthengine(env_info)
+    unlink(temp_dir, recursive = TRUE)
+    stop(glue::glue("GEE export failed: {e$message}"), call. = FALSE)
+  })
+}
+
+
+#' Download LULC Class Proportions from GEE
+#'
+#' Downloads individual proportion rasters from Google Earth Engine where each
+#' raster represents the proportion (0-1) of a specific LULC class within each
+#' planning unit cell. This is more efficient than downloading categorical LULC
+#' and computing proportions locally, as aggregation happens in GEE.
+#'
+#' @inheritParams download_gee_layer
+#' @param lulc_product Character. LULC product to use: "esri_10m" (default),
+#'   "dynamic_world", or "esa_worldcover".
+#' @param class_names Character vector. Names of classes to extract proportions for.
+#'   Default is c("agriculture", "built_area"). Must be valid class names for
+#'   the chosen `lulc_product` (see [get_lulc_classes()]).
+#' @param year Numeric or NULL. Year for LULC data. If NULL, uses most recent.
+#' @param pus SpatRaster. Planning units raster (required for resolution).
+#' @param force_download Logical. If TRUE, skip local and Drive cache checks and
+#'   force a new export from GEE. Default is FALSE.
+#'
+#' @return A named list of `SpatRaster` objects, one per class. Each raster contains
+#'   proportion values (0-1) at PU resolution. Files are also saved to `output_dir`
+#'   with names like `{product}_proportion_{year}_{iso3}_{class}.tif`.
+#'
+#' @details
+#' This function:
+#' 1. Loads the LULC ImageCollection in GEE
+#' 2. For each class, creates a binary mask (class = 1, other = 0)
+#' 3. Exports each class proportion as a separate GeoTIFF
+#' 4. Reprojects locally to PU CRS using bilinear interpolation
+#'
+#' The resulting rasters can be used directly in consumer functions:
+#' - Use `props$agriculture` for `agricultural_areas_input`
+#' - Use `props$built_area` for `built_areas_input`
+#' - Values are already 0-1 proportions, ready for threshold comparison
+#'
+#' @seealso [download_lulc_data()], [get_lulc_classes()], [download_lulc_class_proportion()]
+#'
+#' @export
+#' @examples
+#' \dontrun{
+#' # Download agriculture and built_area proportions
+#' props <- download_lulc_proportions(
+#'   boundary_layer = ghana_boundary,
+#'   iso3 = "GHA",
+#'   gee_project = "my-project",
+#'   lulc_product = "esri_10m",
+#'   class_names = c("agriculture", "built_area"),
+#'   pus = planning_units
+#' )
+#'
+#' # Use directly in make_protect_zone
+#' protect <- make_protect_zone(
+#'   iso3 = "GHA",
+#'   pus = planning_units,
+#'   agricultural_areas_input = props$agriculture,
+#'   built_areas_input = props$built_area,
+#'   ...
+#' )
+#' }
+download_lulc_proportions <- function(
+    boundary_layer,
+    iso3,
+    gee_project,
+    output_dir = here::here(),
+    lulc_product = c("esri_10m", "dynamic_world", "esa_worldcover"),
+    class_names = c("agriculture", "built_area"),
+    year = NULL,
+    pus,
+    wait_time = 30,
+    force_download = FALSE
+) {
+  lulc_product <- match.arg(lulc_product)
+
+  # Input validation
+  assertthat::assert_that(
+    inherits(boundary_layer, "sf"),
+    msg = "'boundary_layer' must be an sf object."
+  )
+  assertthat::assert_that(
+    is.character(iso3) && nchar(iso3) == 3,
+    msg = "'iso3' must be a 3-letter country code."
+  )
+  assertthat::assert_that(
+    !is.null(gee_project) && nchar(gee_project) > 0,
+    msg = "'gee_project' is required."
+  )
+  assertthat::assert_that(
+    inherits(pus, "SpatRaster"),
+    msg = "'pus' must be a SpatRaster object."
+  )
+  assertthat::assert_that(
+    is.character(class_names) && length(class_names) > 0,
+    msg = "'class_names' must be a non-empty character vector."
+  )
+
+  # Validate all class names exist for this product
+  available_classes <- names(get_lulc_classes(lulc_product))
+  invalid_classes <- setdiff(class_names, available_classes)
+  if (length(invalid_classes) > 0) {
+    stop(
+      glue::glue(
+        "Invalid class name(s) for product '{lulc_product}': {paste(invalid_classes, collapse=', ')}. ",
+        "Available classes: {paste(available_classes, collapse=', ')}"
+      ),
+      call. = FALSE
+    )
+  }
+
+  log_message("Downloading LULC proportions ({lulc_product}): {paste(class_names, collapse=', ')}")
+
+  # Get asset ID and band for the product
+  asset_id <- switch(
+    lulc_product,
+    esri_10m = "projects/sat-io/open-datasets/landcover/ESRI_Global-LULC_10m_TS",
+    dynamic_world = "GOOGLE/DYNAMICWORLD/V1",
+    esa_worldcover = "ESA/WorldCover/v200"
+  )
+
+  band <- switch(
+    lulc_product,
+    esri_10m = NULL,
+    dynamic_world = "label",
+    esa_worldcover = "Map"
+  )
+
+  # Default to previous year if not specified
+  if (is.null(year)) {
+    year <- as.numeric(format(Sys.Date(), "%Y")) - 1
+    if (lulc_product == "esa_worldcover") {
+      year <- 2021
+    }
+  }
+
+  # Build file prefix for individual class files
+  file_prefix <- glue::glue("{lulc_product}_proportion_{year}_{iso3}")
+
+  # Check if all class files already exist locally
+  existing_rasters <- list()
+  all_exist <- TRUE
+  for (cn in class_names) {
+    class_file <- file.path(output_dir, glue::glue("{file_prefix}_{cn}.tif"))
+    if (file.exists(class_file) && !force_download) {
+      existing_rasters[[cn]] <- class_file
+    } else {
+      all_exist <- FALSE
+    }
+  }
+
+  if (all_exist && !force_download) {
+    log_message("All {length(class_names)} class proportion files already exist locally")
+    result <- lapply(existing_rasters, function(f) {
+      r <- terra::rast(f)
+      attr(r, "pre_aggregated") <- TRUE
+      attr(r, "lulc_product") <- lulc_product
+      r
+    })
+    names(result) <- class_names
+    return(result)
+  }
+
+  # Initialize GEE
+  if (!requireNamespace("reticulate", quietly = TRUE)) {
+    stop("Package 'reticulate' is required but not installed.", call. = FALSE)
+  }
+  if (!requireNamespace("googledrive", quietly = TRUE)) {
+    stop("Package 'googledrive' is required but not installed.", call. = FALSE)
+  }
+
+  env_info <- initialize_earthengine(gee_project)
+  ee <- env_info$ee
+
+  # Ensure googledrive is authenticated before we suppress messages later
+
+  # This allows the account selection prompt to appear if needed
+  if (!googledrive::drive_has_token()) {
+    googledrive::drive_auth()
+  }
+
+  # Create temporary directory for downloads
+  temp_dir <- file.path(Sys.getenv("HOME"), glue::glue("gee_props_{iso3}_{Sys.getpid()}"))
+  dir.create(temp_dir, showWarnings = FALSE)
+
+  tryCatch({
+    # Load the ImageCollection
+    ic <- ee$ImageCollection(asset_id)
+
+    # Use PU extent for bounding box
+    pu_ext <- terra::ext(pus)
+    pu_res <- terra::res(pus)
+    corners <- sf::st_sfc(
+      sf::st_point(c(pu_ext$xmin, pu_ext$ymin)),
+      sf::st_point(c(pu_ext$xmax, pu_ext$ymax)),
+      crs = terra::crs(pus, proj = TRUE)
+    )
+    corners_wgs84 <- sf::st_transform(corners, crs = 4326)
+    coords <- sf::st_coordinates(corners_wgs84)
+    ee_bounding_box <- ee$Geometry$Rectangle(
+      c(coords[1, "X"], coords[1, "Y"], coords[2, "X"], coords[2, "Y"]),
+      proj = "EPSG:4326",
+      geodesic = FALSE
+    )
+
+    # Filter to year and bounds
+    start_date <- ee$Date(glue::glue("{year}-01-01"))
+    end_date <- ee$Date(glue::glue("{year}-12-31"))
+    filtered_data <- ic$filterDate(start_date, end_date)$filterBounds(ee_bounding_box)
+
+    # Create composite (mosaic for ESRI/ESA, mode for Dynamic World)
+    composite <- if (lulc_product == "dynamic_world") {
+      filtered_data$mode()
+    } else {
+      filtered_data$mosaic()
+    }
+
+    # Select band if needed
+    if (!is.null(band)) {
+      composite <- composite$select(band)
+    }
+
+    # Get class values for each class name
+    class_values_list <- lapply(class_names, function(cn) {
+      get_lulc_class_value(lulc_product, cn)
+    })
+    names(class_values_list) <- class_names
+
+    # Get native scale based on LULC product (known values)
+    # ESRI 10m and ESA WorldCover are 10m, Dynamic World is ~10m
+    native_scale_m <- switch(lulc_product,
+      "esri_10m" = 10,
+      "esa_worldcover" = 10,
+      "dynamic_world" = 10,
+      10  # default
+    )
+
+    # Track export tasks
+    export_tasks <- list()
+
+    for (cn in class_names) {
+      class_vals <- class_values_list[[cn]]
+
+      # Check if this class file already exists locally
+      output_file <- file.path(output_dir, glue::glue("{file_prefix}_{cn}.tif"))
+      if (file.exists(output_file) && !force_download) {
+        export_tasks[[cn]] <- list(status = "exists_local", file = output_file)
+        next
+      }
+
+      # Create binary mask for this class
+      if (length(class_vals) == 1) {
+        class_mask <- composite$eq(class_vals)$toFloat()
+      } else {
+        class_mask <- composite$eq(class_vals[1])
+        for (v in class_vals[-1]) {
+          class_mask <- class_mask$Or(composite$eq(v))
+        }
+        class_mask <- class_mask$toFloat()
+      }
+
+      # Set the default projection with EPSG:4326 and native scale
+      # This is required for reduceResolution to work properly
+      class_mask <- class_mask$setDefaultProjection(crs = "EPSG:4326", scale = native_scale_m)
+
+      # Aggregate to PU resolution using mean reducer to get true proportions
+      # This computes the fraction of source pixels that are this class
+      target_proj <- ee$Projection("EPSG:4326")$atScale(pu_res[1])
+      class_mask <- class_mask$reduceResolution(
+        reducer = ee$Reducer$mean(),
+        bestEffort = TRUE
+      )$reproject(crs = target_proj)
+
+      # File name for GEE export (without path)
+      gee_file_name <- glue::glue("{file_prefix}_{cn}")
+
+      # Check for existing file in Drive (unless force_download)
+      existing_in_drive <- data.frame(name = character(0))
+      if (!force_download) {
+        existing_in_drive <- tryCatch({
+          # Suppress googledrive messages about files not found
+          suppressMessages(googledrive::drive_get(paste0(gee_file_name, ".tif")))
+        }, error = function(e) {
+          data.frame(name = character(0))
+        })
+      }
+
+      if (nrow(existing_in_drive) > 0 && !force_download) {
+        log_message("Found '{cn}' in Drive, will download")
+        export_tasks[[cn]] <- list(status = "exists_drive", drive_file = existing_in_drive,
+                                   output_file = output_file, gee_file_name = gee_file_name)
+      } else {
+        log_message("'{cn}' not found locally or in Drive, will export from GEE")
+        # Export this class
+        export_params <- list(
+          image = class_mask,
+          description = gee_file_name,
+          folder = NULL,
+          fileNamePrefix = gee_file_name,
+          region = ee_bounding_box$getInfo()[["coordinates"]],
+          crs = "EPSG:4326",
+          scale = pu_res[1],
+          maxPixels = reticulate::r_to_py(1e13),
+          fileFormat = "GeoTIFF"
+        )
+
+        task <- do.call(ee$batch$Export$image$toDrive, export_params)
+        task$start()
+        export_tasks[[cn]] <- list(status = "exporting", task = task,
+                                   output_file = output_file, gee_file_name = gee_file_name)
+      }
+    }
+
+    # Count how many need downloading
+    need_download <- sum(sapply(export_tasks, function(x) x$status != "exists_local"))
+    if (need_download > 0) {
+      log_message("Export tasks started ({need_download} classes)")
+    }
+    start_time <- Sys.time()
+    result_rasters <- list()
+
+    for (cn in class_names) {
+      task_info <- export_tasks[[cn]]
+
+      # If already exists locally, just load it
+      if (task_info$status == "exists_local") {
+        r <- terra::rast(task_info$file)
+        attr(r, "pre_aggregated") <- TRUE
+        attr(r, "lulc_product") <- lulc_product
+        result_rasters[[cn]] <- r
+        next
+      }
+
+      output_file <- task_info$output_file
+      gee_file_name <- task_info$gee_file_name
+      temp_file <- file.path(temp_dir, paste0(gee_file_name, ".tif"))
+
+      # If exists in Drive, download it
+      if (task_info$status == "exists_drive") {
+        googledrive::drive_download(task_info$drive_file[1, ], path = temp_file, overwrite = TRUE)
+      } else {
+        # Wait for export to complete
+        repeat {
+          all_files <- googledrive::drive_find(
+            q = paste0("name contains '", gee_file_name, "'")
+          )
+          matching <- all_files[grepl(paste0("^", gee_file_name, ".*\\.tif$"), all_files$name), ]
+
+          if (nrow(matching) > 0) {
+            googledrive::drive_download(matching[1, ], path = temp_file, overwrite = TRUE)
+            break
+          }
+
+          elapsed <- difftime(Sys.time(), start_time, units = "mins")
+          if (elapsed > wait_time) {
+            cleanup_earthengine(env_info)
+            unlink(temp_dir, recursive = TRUE)
+            message(glue::glue(
+              "Timeout: '{cn}' not available after {as.integer(wait_time)} min. ",
+              "Check: https://code.earthengine.google.com/tasks"
+            ))
+            return(NULL)
+          }
+
+          log_message("Waiting for export... ({round(elapsed, 1)} min)")
+          Sys.sleep(30)
+        }
+      }
+
+      # Reproject to PU CRS and save
+      r <- terra::rast(temp_file)
+      r <- terra::project(r, pus, method = "bilinear")
+      terra::writeRaster(r, output_file, overwrite = TRUE,
+                         filetype = "COG", gdal = c("COMPRESS=DEFLATE"))
+      log_message("Downloaded: {cn}")
+
+      attr(r, "pre_aggregated") <- TRUE
+      attr(r, "lulc_product") <- lulc_product
+      result_rasters[[cn]] <- r
+    }
+
+    # Cleanup
+    unlink(temp_dir, recursive = TRUE)
+    cleanup_earthengine(env_info)
+
+    return(result_rasters)
 
   }, error = function(e) {
     cleanup_earthengine(env_info)
@@ -1535,8 +2200,6 @@ download_lulc_data <- function(
     stop("'local_file' is required when product = 'local'.", call. = FALSE)
   }
 
-  log_message("Downloading LULC data using product: {product}")
-
   # Route to appropriate handler
   result <- switch(
     product,
@@ -1608,6 +2271,9 @@ download_lulc_data <- function(
 #' @param pus SpatRaster or NULL. Planning units for GEE-side aggregation.
 #' @param aggregate_to_pus Logical. If TRUE and `pus` provided, aggregate in GEE
 #'   before download. Default is FALSE.
+#' @param skip_lulc Logical. If TRUE, skip downloading categorical LULC data.
+#'   Use when LULC proportions will be downloaded separately via
+#'   [download_lulc_proportions()]. Default is FALSE.
 #'
 #' @return Invisible NULL. Files are downloaded as a side effect.
 #' @export
@@ -1652,7 +2318,8 @@ check_and_download_required_layers <- function(
     interactive = TRUE,
     lulc_product = c("esri_10m", "dynamic_world", "esa_worldcover"),
     pus = NULL,
-    aggregate_to_pus = FALSE
+    aggregate_to_pus = FALSE,
+    skip_lulc = FALSE
 ) {
   lulc_product <- match.arg(lulc_product)
   required_layers <- unique(data_info$data_name)
@@ -1661,13 +2328,14 @@ check_and_download_required_layers <- function(
   gee_layers <- tibble::tibble(
     name = c("LULC", "Pasturelands"),
     # File patterns to search for in local directory
+    # LULC pattern matches: lulc_{ISO3}.tif, esri_10m_lulc_2023_AND.tif, dynamic_world_2023_AND.tif, etc.
     pattern = c(
-      paste0("lulc_.*_", iso3, "\\.tif$"),
-      paste0("grassland_.*_", iso3, "\\.tif$")
+      paste0("(lulc|esri_10m_lulc|dynamic_world|esa_worldcover).*", iso3, "\\.tif$"),
+      paste0("(grassland|gpw_cultiv).*", iso3, "\\.tif$")
     ),
     # Data names that require each layer
     required_if = list(
-      c("Urban Greening Opportunities", "Restoration Zone", "Protection Zone", "Agriculture Areas", "Urban Areas"),
+      c("Urban Greening Opportunities", "Restore Zone", "Protect Zone", "Agriculture Areas", "Urban Areas"),
       c("Pasturelands")
     ),
     # Download functions for each layer - now uses download_lulc_data for flexible product selection
@@ -1694,6 +2362,11 @@ check_and_download_required_layers <- function(
 
   # Check each GEE layer to see if it's required and available
   for (i in seq_len(nrow(gee_layers))) {
+    # Skip LULC if requested (when using proportions instead)
+    if (skip_lulc && gee_layers$name[i] == "LULC") {
+      next
+    }
+
     if (any(required_layers %in% gee_layers$required_if[[i]])) {
       # This layer is required - check if we have it locally
       all_dat <- list.files(input_path)
@@ -1714,7 +2387,6 @@ check_and_download_required_layers <- function(
             if (answer2 == "") answer2 <- "yes"
 
             if (answer2 %in% c("yes", "y")) {
-              log_message("Starting download of {gee_layers$name[i]} for {iso3}...")
               gee_layers$download_fun[[i]]()
             } else {
               message(glue::glue("Cannot proceed without GEE access for {gee_layers$name[i]}."))
@@ -1724,7 +2396,6 @@ check_and_download_required_layers <- function(
           }
         } else {
           # Non-interactive mode: auto-download without prompting
-          log_message("Non-interactive mode: automatically downloading {gee_layers$name[i]} for {iso3}...")
           tryCatch({
             gee_layers$download_fun[[i]]()
           }, error = function(e) {
@@ -1734,8 +2405,6 @@ check_and_download_required_layers <- function(
             )
           })
         }
-      } else {
-        log_message("Found existing {gee_layers$name[i]} data for {iso3}, skipping download.")
       }
     }
   }

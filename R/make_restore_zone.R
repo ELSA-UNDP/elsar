@@ -22,6 +22,9 @@
 #'   (e.g., Human Footprint Index). Higher values indicate greater pressure.
 #' @param forest_mask SpatRaster. Raster indicating forest ecosystem extent, used
 #'   to create the forest-only restore zone (v2). Values represent forest cover proportion.
+#' @param lulc_proportions A multi-band `SpatRaster` from [download_lulc_proportions()] containing
+#'   pre-computed class proportions. If provided, bands named "agriculture" and "built_area" will
+#'   be used automatically, overriding `agricultural_areas` and `built_areas`.
 #' @param agricultural_areas SpatRaster or NULL. Pre-computed raster of agricultural
 #'   area proportions (0-1). If NULL, derived from `lulc`.
 #' @param built_areas SpatRaster or NULL. Pre-computed raster of built-up/urban area
@@ -38,6 +41,8 @@
 #'   is excluded as built-up land (default: 0.1).
 #' @param forest_threshold Numeric. Minimum forest cover proportion to include
 #'   in restore_zone_v2 (default: 0.1).
+#' @param lulc_product Character. LULC product used for class value lookups: "esri_10m" (default),
+#'   "dynamic_world", "esa_worldcover", or "local". When "local", explicit class values must be provided.
 #' @param agriculture_lulc_value Integer. Class value in `lulc` representing
 #'   agricultural land (default: 5, for ESRI 10m LULC).
 #' @param built_area_lulc_value Integer. Class value in `lulc` representing built-up
@@ -100,6 +105,7 @@ make_restore_zone <- function(
     degradation,
     human_pressure,
     forest_mask,
+    lulc_proportions = NULL,
     agricultural_areas = NULL,
     built_areas = NULL,
     lulc = NULL,
@@ -117,23 +123,55 @@ make_restore_zone <- function(
 ) {
   lulc_product <- match.arg(lulc_product)
 
-  # Resolve LULC class values from product if not explicitly provided
-  if (is.null(agriculture_lulc_value)) {
-    if (lulc_product == "local") {
-      stop("When lulc_product = 'local', agriculture_lulc_value must be explicitly provided.", call. = FALSE)
+  # If lulc_proportions provided, extract agriculture and built_area
+  # Supports both list format (new) and SpatRaster format (legacy)
+  if (!is.null(lulc_proportions)) {
+    if (inherits(lulc_proportions, "list")) {
+      log_message("Using LULC proportions (list format): {paste(names(lulc_proportions), collapse=', ')}")
+      if ("agriculture" %in% names(lulc_proportions) && is.null(agricultural_areas)) {
+        agricultural_areas <- lulc_proportions[["agriculture"]]
+        log_message("Using 'agriculture' proportion raster")
+      }
+      if ("built_area" %in% names(lulc_proportions) && is.null(built_areas)) {
+        built_areas <- lulc_proportions[["built_area"]]
+        log_message("Using 'built_area' proportion raster")
+      }
+    } else if (inherits(lulc_proportions, "SpatRaster")) {
+      band_names <- names(lulc_proportions)
+      log_message("Using LULC proportions (SpatRaster): {paste(band_names, collapse=', ')}")
+      if ("agriculture" %in% band_names && is.null(agricultural_areas)) {
+        agricultural_areas <- lulc_proportions[["agriculture"]]
+        log_message("Extracted 'agriculture' band")
+      }
+      if ("built_area" %in% band_names && is.null(built_areas)) {
+        built_areas <- lulc_proportions[["built_area"]]
+        log_message("Extracted 'built_area' band")
+      }
+    } else {
+      stop("'lulc_proportions' must be a list or SpatRaster object.", call. = FALSE)
     }
-    agriculture_lulc_value <- get_lulc_class_value(lulc_product, "agriculture")
-  }
-  if (is.null(built_area_lulc_value)) {
-    if (lulc_product == "local") {
-      stop("When lulc_product = 'local', built_area_lulc_value must be explicitly provided.", call. = FALSE)
-    }
-    built_area_lulc_value <- get_lulc_class_value(lulc_product, "built_area")
   }
 
-  log_message("Using LULC product: {lulc_product}")
-  log_message("Agriculture class value(s): {paste(agriculture_lulc_value, collapse=', ')}")
-  log_message("Built area class value(s): {paste(built_area_lulc_value, collapse=', ')}")
+  # Resolve LULC class values from product if not explicitly provided
+  # (only needed if using lulc fallback)
+  if (is.null(agricultural_areas) || is.null(built_areas)) {
+    if (is.null(agriculture_lulc_value)) {
+      if (lulc_product == "local") {
+        stop("When lulc_product = 'local', agriculture_lulc_value must be explicitly provided.", call. = FALSE)
+      }
+      agriculture_lulc_value <- get_lulc_class_value(lulc_product, "agriculture")
+    }
+    if (is.null(built_area_lulc_value)) {
+      if (lulc_product == "local") {
+        stop("When lulc_product = 'local', built_area_lulc_value must be explicitly provided.", call. = FALSE)
+      }
+      built_area_lulc_value <- get_lulc_class_value(lulc_product, "built_area")
+    }
+
+    log_message("Using LULC product: {lulc_product}")
+    log_message("Agriculture class value(s): {paste(agriculture_lulc_value, collapse=', ')}")
+    log_message("Built area class value(s): {paste(built_area_lulc_value, collapse=', ')}")
+  }
 
   # Input validation
   assertthat::assert_that(assertthat::is.string(iso3))

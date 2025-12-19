@@ -14,7 +14,8 @@ check_and_download_required_layers(
   interactive = TRUE,
   lulc_product = c("esri_10m", "dynamic_world", "esa_worldcover"),
   pus = NULL,
-  aggregate_to_pus = FALSE
+  aggregate_to_pus = FALSE,
+  skip_lulc = FALSE
 )
 }
 \arguments{
@@ -42,6 +43,10 @@ when LULC data is required.}
 
 \item{aggregate_to_pus}{Logical. If TRUE and \code{pus} provided, aggregate in GEE
 before download. Default is FALSE.}
+
+\item{skip_lulc}{Logical. If TRUE, skip downloading categorical LULC data.
+Use when LULC proportions will be downloaded separately via
+\code{\link[=download_lulc_proportions]{download_lulc_proportions()}}. Default is FALSE.}
 }
 \value{
 Invisible NULL. Files are downloaded as a side effect.

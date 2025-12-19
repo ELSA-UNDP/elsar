@@ -8,6 +8,7 @@ make_protect_zone(
   iso3,
   pus,
   current_protected_areas,
+  lulc_proportions = NULL,
   agricultural_areas_input = NULL,
   built_areas_input = NULL,
   lulc_raster = NULL,
@@ -32,6 +33,10 @@ make_protect_zone(
 
 \item{current_protected_areas}{a \code{sf} or \code{SpatVector} object of current protected areas.
 If NULL, \code{elsar::make_protected_areas()} will be used.}
+
+\item{lulc_proportions}{A multi-band \code{SpatRaster} from \code{\link[=download_lulc_proportions]{download_lulc_proportions()}} containing
+pre-computed class proportions. If provided, bands named "agriculture" and "built_area" will
+be used automatically, overriding \code{agricultural_areas_input} and \code{built_areas_input}.}
 
 \item{agricultural_areas_input}{A \code{SpatRaster} representing binary or probabilistic agricultural areas (optional).}
 

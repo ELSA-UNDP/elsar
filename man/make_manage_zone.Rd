@@ -9,6 +9,7 @@ make_manage_zone(
   pus,
   managed_forests_input,
   raster_mf = NULL,
+  lulc_proportions = NULL,
   agricultural_areas_input = NULL,
   pasturelands_input = NULL,
   built_areas_input = NULL,
@@ -35,6 +36,10 @@ make_manage_zone(
 \item{managed_forests_input}{SpatRaster. A preprocssed raster of managed forest extent.}
 
 \item{raster_mf}{SpatRaster A raster of forest classes to identify managed forests.}
+
+\item{lulc_proportions}{A multi-band \code{SpatRaster} from \code{\link[=download_lulc_proportions]{download_lulc_proportions()}} containing
+pre-computed class proportions. If provided, bands named "agriculture" and "built_area" will
+be used automatically, overriding \code{agricultural_areas_input} and \code{built_areas_input}.}
 
 \item{agricultural_areas_input}{SpatRaster. A binary or categorical raster representing agricultural areas.}
 

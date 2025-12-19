@@ -36,6 +36,8 @@ speeds up processing by eliminating local resampling. Default is FALSE.}
 
 \item{wait_time}{Numeric. Maximum time in minutes to wait for the GEE export
 to appear in Google Drive. Default is 5. Increase for large exports.}
+
+\item{...}{Additional arguments passed to \code{\link[=download_gee_layer]{download_gee_layer()}}.}
 }
 \value{
 A \code{SpatRaster} object of the downloaded ESA WorldCover data, or NULL if download failed.
@@ -60,7 +62,7 @@ ESA WorldCover class values:
 \item 100: Moss and lichen
 }
 
-Use \link{get_lulc_classes("esa_worldcover")} to retrieve these mappings programmatically.
+Use \code{get_lulc_classes("esa_worldcover")} to retrieve these mappings programmatically.
 }
 \note{
 ESA WorldCover v200 is a static 2021 baseline product. Unlike ESRI LULC

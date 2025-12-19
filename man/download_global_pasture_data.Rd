@@ -26,6 +26,8 @@ project ID in the \href{https://code.earthengine.google.com/}{GEE Code Editor}.}
 
 \item{layer_type}{Character. One of "cultivated" (default) or "natural" to specify
 which grassland probability layer to download}
+
+\item{...}{Additional arguments passed to \code{\link[=download_gee_layer]{download_gee_layer()}}.}
 }
 \value{
 A \code{SpatRaster} object of the downloaded grassland data, or NULL if download failed

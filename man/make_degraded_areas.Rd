@@ -9,6 +9,7 @@ make_degraded_areas(
   pu,
   sdg_degradation_input = NULL,
   hii_input = NULL,
+  lulc_proportions = NULL,
   agriculture_input = NULL,
   built_areas_input = NULL,
   output_path = NULL,
@@ -24,6 +25,10 @@ make_degraded_areas(
 \item{sdg_degradation_input}{Productivity degradation layer (SpatRaster).}
 
 \item{hii_input}{Human Influence Index (HII) raster (SpatRaster).}
+
+\item{lulc_proportions}{A multi-band \code{SpatRaster} from \code{\link[=download_lulc_proportions]{download_lulc_proportions()}} containing
+pre-computed class proportions. If provided, bands named "agriculture" and "built_area" will
+be used automatically, overriding \code{agriculture_input} and \code{built_areas_input}.}
 
 \item{agriculture_input}{Agriculture layer (SpatRaster).}
 
