@@ -52,13 +52,22 @@ reference:
 - contents:
   - elsar_load_data
   - check_and_download_required_layers
+  - download_dynamic_world_data
+  - download_esa_worldcover_data
   - download_esri_lulc_data
   - download_global_pasture_data
   - download_gee_layer
+  - download_lulc_class_proportion
+  - download_lulc_data
+  - download_lulc_proportions
   - filter_sf
   - get_file_type
   - get_iucn_ecosystems
   - get_iucn_forests
+  - get_lulc_class_value
+  - get_lulc_classes
+  - list_lulc_products
+  - load_local_lulc_data
   - log_message
   - make_custom_projection
 
