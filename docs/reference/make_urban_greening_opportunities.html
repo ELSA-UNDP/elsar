@@ -54,6 +54,8 @@ and low greenness for targeted greening interventions.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">make_urban_greening_opportunities</span><span class="op">(</span></span>
 <span>  <span class="va">ndvi_raster</span>,</span>
 <span>  lulc_raster <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  lulc_product <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"esri_10m"</span>, <span class="st">"dynamic_world"</span>, <span class="st">"esa_worldcover"</span>, <span class="st">"local"</span><span class="op">)</span>,</span>
+<span>  built_area_lulc_value <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  built_areas_raster <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">sdei_statistics</span>,</span>
 <span>  threshold <span class="op">=</span> <span class="fl">0.1</span>,</span>
@@ -75,7 +77,18 @@ and low greenness for targeted greening interventions.</p>
 
 <dt id="arg-lulc-raster">lulc_raster<a class="anchor" aria-label="anchor" href="#arg-lulc-raster"></a></dt>
 <dd><p>Optional. A <code>SpatRaster</code> representing land use/land cover (LULC) classes.
-Required if <code>built_areas_raster</code> is not provided. Urban classes should be coded as <code>7</code>.</p></dd>
+Required if <code>built_areas_raster</code> is not provided.</p></dd>
+
+
+<dt id="arg-lulc-product">lulc_product<a class="anchor" aria-label="anchor" href="#arg-lulc-product"></a></dt>
+<dd><p>Character. LULC product used for class value lookups: "esri_10m" (default),
+"dynamic_world", "esa_worldcover", or "local". When "local", <code>built_area_lulc_value</code>
+must be explicitly provided.</p></dd>
+
+
+<dt id="arg-built-area-lulc-value">built_area_lulc_value<a class="anchor" aria-label="anchor" href="#arg-built-area-lulc-value"></a></dt>
+<dd><p>Integer or NULL. LULC value representing built-up/urban areas. If NULL,
+automatically determined from <code>lulc_product</code>. Default is NULL.</p></dd>
 
 
 <dt id="arg-built-areas-raster">built_areas_raster<a class="anchor" aria-label="anchor" href="#arg-built-areas-raster"></a></dt>

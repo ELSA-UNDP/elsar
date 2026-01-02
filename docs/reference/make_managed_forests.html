@@ -52,7 +52,8 @@ LULC classification values which are reclassified according to defined managed f
 <span>  <span class="va">raster_in</span>,</span>
 <span>  <span class="va">pus</span>,</span>
 <span>  <span class="va">iso3</span>,</span>
-<span>  forest_classes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">31</span>, <span class="fl">32</span>, <span class="fl">40</span>, <span class="fl">53</span><span class="op">)</span>,</span>
+<span>  lulc_product <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"esri_10m"</span>, <span class="st">"dynamic_world"</span>, <span class="st">"esa_worldcover"</span>, <span class="st">"local"</span><span class="op">)</span>,</span>
+<span>  forest_classes <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  include_disturbed_forest <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  make_productive <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  raster_npp <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -77,8 +78,14 @@ LULC classification values which are reclassified according to defined managed f
 <dd><p>A 3-letter ISO country code string.</p></dd>
 
 
+<dt id="arg-lulc-product">lulc_product<a class="anchor" aria-label="anchor" href="#arg-lulc-product"></a></dt>
+<dd><p>Character. LULC product used for class value lookups: "esri_10m" (default),
+"dynamic_world", "esa_worldcover", or "local". When "local", <code>forest_classes</code> must be explicitly provided.</p></dd>
+
+
 <dt id="arg-forest-classes">forest_classes<a class="anchor" aria-label="anchor" href="#arg-forest-classes"></a></dt>
-<dd><p>Integer vector of class codes representing managed forests (default = c(31, 32, 40, 53)).</p></dd>
+<dd><p>Integer vector or NULL. Class codes representing managed forests. If NULL,
+automatically determined from <code>lulc_product</code>. Default is NULL.</p></dd>
 
 
 <dt id="arg-include-disturbed-forest">include_disturbed_forest<a class="anchor" aria-label="anchor" href="#arg-include-disturbed-forest"></a></dt>

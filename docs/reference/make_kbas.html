@@ -101,7 +101,7 @@ It can also be used to return only AZE sites if <code>aze_only = TRUE</code>.</p
 
 
 <dt id="arg-area-column">area_column<a class="anchor" aria-label="anchor" href="#arg-area-column"></a></dt>
-<dd><p>A string indicating the name of the column containing site area (in hectares), used when buffering point geometries.</p></dd>
+<dd><p>A string indicating the name of the column containing the reported area for point geometries (in km²), used when buffering points. The default <code>"repareakm2"</code> is the KBA dataset's column for points with reported areas. Note: <code>sitareakm2</code> contains site area for polygon features but is typically NA for points.</p></dd>
 
 
 <dt id="arg-nquadsegs">nQuadSegs<a class="anchor" aria-label="anchor" href="#arg-nquadsegs"></a></dt>

@@ -57,7 +57,7 @@ thresholds. Either Ramsar or Wetlands data can be provided, or both.</p>
 <span>  <span class="va">pus</span>,</span>
 <span>  <span class="va">iso3</span>,</span>
 <span>  buffer_points <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  area_column <span class="op">=</span> <span class="st">"Area (ha)"</span>,</span>
+<span>  area_column <span class="op">=</span> <span class="st">"area_ha"</span>,</span>
 <span>  nQuadSegs <span class="op">=</span> <span class="fl">50</span>,</span>
 <span>  wetland_threshold <span class="op">=</span> <span class="fl">0.25</span>,</span>
 <span>  return_all <span class="op">=</span> <span class="cn">FALSE</span></span>
@@ -69,7 +69,10 @@ thresholds. Either Ramsar or Wetlands data can be provided, or both.</p>
 
 
 <dl><dt id="arg-ramsar-in">ramsar_in<a class="anchor" aria-label="anchor" href="#arg-ramsar-in"></a></dt>
-<dd><p>An <code>sf</code> object containing Ramsar site geometries (optional).</p></dd>
+<dd><p>Ramsar site data. Can be one of:</p><ul><li><p>An <code>sf</code> object containing Ramsar site geometries (points and/or polygons)</p></li>
+<li><p>A character path to a GeoPackage file. If the gpkg contains separate "centroids" and
+"boundaries" layers, both will be read and combined automatically.</p></li>
+</ul></dd>
 
 
 <dt id="arg-wetlands-in">wetlands_in<a class="anchor" aria-label="anchor" href="#arg-wetlands-in"></a></dt>
@@ -85,13 +88,13 @@ thresholds. Either Ramsar or Wetlands data can be provided, or both.</p>
 
 
 <dt id="arg-buffer-points">buffer_points<a class="anchor" aria-label="anchor" href="#arg-buffer-points"></a></dt>
-<dd><p>Logical. Only relevant when "POINT" or "MULTIPOINT" geometries exist in <code>ramsar_in</code>.
-If <code>TRUE</code>, circular buffers are generated from the area attribute.</p></dd>
+<dd><p>Logical. Only relevant when "POINT" or "MULTIPOINT" geometries exist.
+If <code>TRUE</code>, circular buffers are generated from the area attribute (default: TRUE).</p></dd>
 
 
 <dt id="arg-area-column">area_column<a class="anchor" aria-label="anchor" href="#arg-area-column"></a></dt>
 <dd><p>A string indicating the name of the column containing site area (in hectares).
-Used when buffering point geometries.</p></dd>
+Used when buffering point geometries (default: "area_ha").</p></dd>
 
 
 <dt id="arg-nquadsegs">nQuadSegs<a class="anchor" aria-label="anchor" href="#arg-nquadsegs"></a></dt>

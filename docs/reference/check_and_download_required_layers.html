@@ -58,7 +58,11 @@ required datasets.</p>
 <span>  <span class="va">gee_project</span>,</span>
 <span>  <span class="va">boundary_proj</span>,</span>
 <span>  wait_time <span class="op">=</span> <span class="fl">5</span>,</span>
-<span>  interactive <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  interactive <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  lulc_product <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"esri_10m"</span>, <span class="st">"dynamic_world"</span>, <span class="st">"esa_worldcover"</span><span class="op">)</span>,</span>
+<span>  pus <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  aggregate_to_pus <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  skip_lulc <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -95,6 +99,27 @@ required datasets.</p>
 If FALSE, automatically downloads missing layers without prompting. Set to
 FALSE for non-interactive sessions (e.g., batch jobs, CI/CD pipelines).</p></dd>
 
+
+<dt id="arg-lulc-product">lulc_product<a class="anchor" aria-label="anchor" href="#arg-lulc-product"></a></dt>
+<dd><p>Character. LULC product to download: "esri_10m" (default),
+"dynamic_world", or "esa_worldcover". Affects which product is downloaded
+when LULC data is required.</p></dd>
+
+
+<dt id="arg-pus">pus<a class="anchor" aria-label="anchor" href="#arg-pus"></a></dt>
+<dd><p>SpatRaster or NULL. Planning units for GEE-side aggregation.</p></dd>
+
+
+<dt id="arg-aggregate-to-pus">aggregate_to_pus<a class="anchor" aria-label="anchor" href="#arg-aggregate-to-pus"></a></dt>
+<dd><p>Logical. If TRUE and <code>pus</code> provided, aggregate in GEE
+before download. Default is FALSE.</p></dd>
+
+
+<dt id="arg-skip-lulc">skip_lulc<a class="anchor" aria-label="anchor" href="#arg-skip-lulc"></a></dt>
+<dd><p>Logical. If TRUE, skip downloading categorical LULC data.
+Use when LULC proportions will be downloaded separately via
+<code><a href="download_lulc_proportions.html">download_lulc_proportions()</a></code>. Default is FALSE.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -121,6 +146,16 @@ FALSE for non-interactive sessions (e.g., batch jobs, CI/CD pipelines).</p></dd>
 <span class="r-in"><span>  gee_project <span class="op">=</span> <span class="st">"my-project"</span>,</span></span>
 <span class="r-in"><span>  boundary_proj <span class="op">=</span> <span class="va">ghana_boundary</span>,</span></span>
 <span class="r-in"><span>  interactive <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Use Dynamic World instead of ESRI LULC</span></span></span>
+<span class="r-in"><span><span class="fu">check_and_download_required_layers</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  data_info <span class="op">=</span> <span class="va">metadata_df</span>,</span></span>
+<span class="r-in"><span>  iso3 <span class="op">=</span> <span class="st">"GHA"</span>,</span></span>
+<span class="r-in"><span>  input_path <span class="op">=</span> <span class="st">"/path/to/data"</span>,</span></span>
+<span class="r-in"><span>  gee_project <span class="op">=</span> <span class="st">"my-project"</span>,</span></span>
+<span class="r-in"><span>  boundary_proj <span class="op">=</span> <span class="va">ghana_boundary</span>,</span></span>
+<span class="r-in"><span>  lulc_product <span class="op">=</span> <span class="st">"dynamic_world"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>

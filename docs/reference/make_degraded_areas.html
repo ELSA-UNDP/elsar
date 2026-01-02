@@ -53,6 +53,7 @@ The output is a raster identifying degraded areas according to set thresholds.</
 <span>  <span class="va">pu</span>,</span>
 <span>  sdg_degradation_input <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  hii_input <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  lulc_proportions <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  agriculture_input <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  built_areas_input <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  output_path <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -79,6 +80,12 @@ The output is a raster identifying degraded areas according to set thresholds.</
 
 <dt id="arg-hii-input">hii_input<a class="anchor" aria-label="anchor" href="#arg-hii-input"></a></dt>
 <dd><p>Human Influence Index (HII) raster (SpatRaster).</p></dd>
+
+
+<dt id="arg-lulc-proportions">lulc_proportions<a class="anchor" aria-label="anchor" href="#arg-lulc-proportions"></a></dt>
+<dd><p>A multi-band <code>SpatRaster</code> from <code><a href="download_lulc_proportions.html">download_lulc_proportions()</a></code> containing
+pre-computed class proportions. If provided, bands named "agriculture" and "built_area" will
+be used automatically, overriding <code>agriculture_input</code> and <code>built_areas_input</code>.</p></dd>
 
 
 <dt id="arg-agriculture-input">agriculture_input<a class="anchor" aria-label="anchor" href="#arg-agriculture-input"></a></dt>
@@ -117,7 +124,7 @@ The output is a raster identifying degraded areas according to set thresholds.</
 <span class="r-in"><span>  <span class="va">built_areas_input</span>,</span></span>
 <span class="r-in"><span>  output_path <span class="op">=</span> <span class="st">"./output"</span></span></span>
 <span class="r-in"><span>  <span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'sdg_degradation_input' not found</span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'agriculture_input' not found</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

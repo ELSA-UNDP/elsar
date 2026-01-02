@@ -51,6 +51,7 @@ while excluding areas unsuitable for restoration (e.g., active farmland, urban a
 <span>  <span class="va">degradation</span>,</span>
 <span>  <span class="va">human_pressure</span>,</span>
 <span>  <span class="va">forest_mask</span>,</span>
+<span>  lulc_proportions <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  agricultural_areas <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  built_areas <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  lulc <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -59,8 +60,9 @@ while excluding areas unsuitable for restoration (e.g., active farmland, urban a
 <span>  agriculture_threshold <span class="op">=</span> <span class="fl">0.1</span>,</span>
 <span>  built_area_threshold <span class="op">=</span> <span class="fl">0.1</span>,</span>
 <span>  forest_threshold <span class="op">=</span> <span class="fl">0.1</span>,</span>
-<span>  agriculture_lulc_value <span class="op">=</span> <span class="fl">5</span>,</span>
-<span>  built_area_lulc_value <span class="op">=</span> <span class="fl">7</span>,</span>
+<span>  lulc_product <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"esri_10m"</span>, <span class="st">"dynamic_world"</span>, <span class="st">"esa_worldcover"</span>, <span class="st">"local"</span><span class="op">)</span>,</span>
+<span>  agriculture_lulc_value <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  built_area_lulc_value <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  filter_small_patches <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  min_patch_size <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>  output_path <span class="op">=</span> <span class="cn">NULL</span></span>
@@ -92,6 +94,12 @@ treated as degraded (e.g., SDG 15.3.1 productivity degradation layer).</p></dd>
 <dt id="arg-forest-mask">forest_mask<a class="anchor" aria-label="anchor" href="#arg-forest-mask"></a></dt>
 <dd><p>SpatRaster. Raster indicating forest ecosystem extent, used
 to create the forest-only restore zone (v2). Values represent forest cover proportion.</p></dd>
+
+
+<dt id="arg-lulc-proportions">lulc_proportions<a class="anchor" aria-label="anchor" href="#arg-lulc-proportions"></a></dt>
+<dd><p>A multi-band <code>SpatRaster</code> from <code><a href="download_lulc_proportions.html">download_lulc_proportions()</a></code> containing
+pre-computed class proportions. If provided, bands named "agriculture" and "built_area" will
+be used automatically, overriding <code>agricultural_areas</code> and <code>built_areas</code>.</p></dd>
 
 
 <dt id="arg-agricultural-areas">agricultural_areas<a class="anchor" aria-label="anchor" href="#arg-agricultural-areas"></a></dt>
@@ -132,6 +140,11 @@ is excluded as built-up land (default: 0.1).</p></dd>
 <dt id="arg-forest-threshold">forest_threshold<a class="anchor" aria-label="anchor" href="#arg-forest-threshold"></a></dt>
 <dd><p>Numeric. Minimum forest cover proportion to include
 in restore_zone_v2 (default: 0.1).</p></dd>
+
+
+<dt id="arg-lulc-product">lulc_product<a class="anchor" aria-label="anchor" href="#arg-lulc-product"></a></dt>
+<dd><p>Character. LULC product used for class value lookups: "esri_10m" (default),
+"dynamic_world", "esa_worldcover", or "local". When "local", explicit class values must be provided.</p></dd>
 
 
 <dt id="arg-agriculture-lulc-value">agriculture_lulc_value<a class="anchor" aria-label="anchor" href="#arg-agriculture-lulc-value"></a></dt>

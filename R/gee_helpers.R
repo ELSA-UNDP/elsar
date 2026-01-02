@@ -1541,6 +1541,41 @@ download_lulc_class_proportion <- function(
     end_date <- ee$Date(glue::glue("{year}-12-31"))
     filtered_data <- ic$filterDate(start_date, end_date)$filterBounds(ee_bounding_box)
 
+    # Check if any images exist for this year
+    image_count <- filtered_data$size()$getInfo()
+
+    if (image_count == 0) {
+      log_message("No {lulc_product} data available for {year}, finding most recent year...")
+
+      # Find the most recent year with data by searching backwards from current year
+      current_year <- as.integer(format(Sys.Date(), "%Y"))
+      latest_year <- NULL
+
+      for (test_year in seq(current_year, 2017, by = -1)) {
+        test_start <- ee$Date(glue::glue("{test_year}-01-01"))
+        test_end <- ee$Date(glue::glue("{test_year}-12-31"))
+        test_count <- ic$filterDate(test_start, test_end)$filterBounds(ee_bounding_box)$size()$getInfo()
+        if (test_count > 0) {
+          latest_year <- test_year
+          break
+        }
+      }
+
+      if (is.null(latest_year)) {
+        stop(glue::glue("No {lulc_product} data available for the specified region"), call. = FALSE)
+      }
+
+      log_message("Using most recent available year: {latest_year}")
+
+      # Update year
+      year <- latest_year
+
+      # Re-filter with the correct year
+      start_date <- ee$Date(glue::glue("{year}-01-01"))
+      end_date <- ee$Date(glue::glue("{year}-12-31"))
+      filtered_data <- ic$filterDate(start_date, end_date)$filterBounds(ee_bounding_box)
+    }
+
     # Create composite (mosaic for ESRI/ESA, mode for Dynamic World)
     composite <- if (lulc_product == "dynamic_world") {
       filtered_data$mode()
@@ -1548,7 +1583,7 @@ download_lulc_class_proportion <- function(
       filtered_data$mosaic()
     }
 
-    # Select band if needed
+    # Select band if needed (download_lulc_class_proportion)
     if (!is.null(band)) {
       composite <- composite$select(band)
     }
@@ -1904,6 +1939,42 @@ download_lulc_proportions <- function(
     end_date <- ee$Date(glue::glue("{year}-12-31"))
     filtered_data <- ic$filterDate(start_date, end_date)$filterBounds(ee_bounding_box)
 
+    # Check if any images exist for this year
+    image_count <- filtered_data$size()$getInfo()
+
+    if (image_count == 0) {
+      log_message("No {lulc_product} data available for {year}, finding most recent year...")
+
+      # Find the most recent year with data by searching backwards from current year
+      current_year <- as.integer(format(Sys.Date(), "%Y"))
+      latest_year <- NULL
+
+      for (test_year in seq(current_year, 2017, by = -1)) {
+        test_start <- ee$Date(glue::glue("{test_year}-01-01"))
+        test_end <- ee$Date(glue::glue("{test_year}-12-31"))
+        test_count <- ic$filterDate(test_start, test_end)$filterBounds(ee_bounding_box)$size()$getInfo()
+        if (test_count > 0) {
+          latest_year <- test_year
+          break
+        }
+      }
+
+      if (is.null(latest_year)) {
+        stop(glue::glue("No {lulc_product} data available for the specified region"), call. = FALSE)
+      }
+
+      log_message("Using most recent available year: {latest_year}")
+
+      # Update year and file prefix
+      year <- latest_year
+      file_prefix <- glue::glue("{lulc_product}_proportion_{year}_{iso3}")
+
+      # Re-filter with the correct year
+      start_date <- ee$Date(glue::glue("{year}-01-01"))
+      end_date <- ee$Date(glue::glue("{year}-12-31"))
+      filtered_data <- ic$filterDate(start_date, end_date)$filterBounds(ee_bounding_box)
+    }
+
     # Create composite (mosaic for ESRI/ESA, mode for Dynamic World)
     composite <- if (lulc_product == "dynamic_world") {
       filtered_data$mode()
@@ -1911,7 +1982,7 @@ download_lulc_proportions <- function(
       filtered_data$mosaic()
     }
 
-    # Select band if needed
+    # Select band if needed (download_lulc_proportions)
     if (!is.null(band)) {
       composite <- composite$select(band)
     }
@@ -2378,7 +2449,7 @@ check_and_download_required_layers <- function(
       has_data <- any(grepl(gee_layers$pattern[i], all_dat, ignore.case = TRUE) & grepl(iso3, all_dat, ignore.case = TRUE))
 
       if (!has_data) {
-        log_message("No {gee_layers$name[i]} data found for {iso3}.")
+        log_message("No {gee_layers$name[i]} data found locally for {iso3}. Will attempt GEE download...")
 
         if (interactive && base::interactive()) {
           # Interactive mode: prompt user for confirmation
