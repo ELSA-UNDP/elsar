@@ -20,8 +20,12 @@
 #' @param status Character vector. Which `STATUS` values to include from WDPA data.
 #'   Valid values: "Designated", "Established", "Inscribed", "Proposed", "Adopted".
 #'   Default is `c("Established", "Inscribed", "Designated")`.
-#' @param pa_def Integer vector. Values for the `PA_DEF` column (1 = Protected Area,
-#'   0 = OECM). Default is `1`.
+#' @param site_type Character vector. Values for the `SITE_TYPE` column in WDPA
+#'   data. Valid values: "PA" (Protected Area) or "OECM" (Other Effective
+#'   Area-based Conservation Measure). Default is `"PA"`. For backward
+#'   compatibility, numeric values 1 (PA) and 0 (OECM) are also accepted.
+#' @param pa_def Deprecated. Use `site_type` instead. Kept for backward
+#'   compatibility.
 #' @param include_mab_designation Logical. If `FALSE`, excludes UNESCO Man and
 #'
 #'   Biosphere (MAB) reserves. Default is `FALSE`.
@@ -58,7 +62,8 @@ make_protected_areas <- function(
     sf_in = NULL,
     download_path = NULL,
     status = c("Established", "Inscribed", "Designated"),
-    pa_def = 1,
+    site_type = "PA",
+    pa_def = deprecated(),
     include_mab_designation = FALSE,
     buffer_points = TRUE,
     area_column = "REP_AREA",
@@ -69,16 +74,37 @@ make_protected_areas <- function(
     force_update = FALSE,
     output_path = NULL
 ) {
+  # Handle deprecated pa_def parameter
+  if (lifecycle::is_present(pa_def)) {
+    lifecycle::deprecate_warn(
+      "0.0.7",
+      "make_protected_areas(pa_def)",
+      "make_protected_areas(site_type)"
+    )
+    site_type <- pa_def
+  }
+
+  # Convert old numeric site_type values to new string format
+  # 1 -> "PA", 0 -> "OECM" (backward compatibility)
+  if (is.numeric(site_type)) {
+    site_type <- dplyr::case_when(
+      site_type == 1 ~ "PA",
+      site_type == 0 ~ "OECM",
+      TRUE ~ as.character(site_type)
+    )
+  }
+
   # Input validation
   assertthat::assert_that(inherits(pus, "SpatRaster"))
   assertthat::assert_that(assertthat::is.string(iso3))
   assertthat::assert_that(
-    all(status %in% c("Designated", "Established", "Inscribed", "Proposed", "Adopted")),
+    all(status %in% c("Designated", "Established", "Inscribed",
+                      "Proposed", "Adopted")),
     msg = "status must be one of: Designated, Established, Inscribed, Proposed, Adopted"
   )
   assertthat::assert_that(
-    all(pa_def %in% c(0, 1)),
-    msg = "pa_def must be 0 (OECM) or 1 (Protected Area)"
+    all(site_type %in% c("PA", "OECM")),
+    msg = "site_type must be 'PA' (Protected Area) or 'OECM'"
   )
 
   if (from_wdpa) {
@@ -114,11 +140,26 @@ make_protected_areas <- function(
     protected_areas <- sf_in
   }
 
-  log_message("Including {glue::glue_collapse(status, sep = ', ', last = ' and ')} areas only")
+  log_message(
+    "Including {glue::glue_collapse(status, sep = ', ', last = ' and ')} areas only"
+  )
 
-  # Filter data by STATUS and PA_DEF
+  # Handle WDPA schema changes for backward compatibility:
+ # - Current WDPA uses SITE_TYPE with values "PA" or "OECM"
+  # - Older cached data uses PA_DEF with numeric values 1 (PA) or 0 (OECM)
+  if (!"SITE_TYPE" %in% names(protected_areas) &&
+      "PA_DEF" %in% names(protected_areas)) {
+    # Convert old numeric PA_DEF to new string SITE_TYPE
+    protected_areas$SITE_TYPE <- dplyr::case_when(
+      protected_areas$PA_DEF == 1 ~ "PA",
+      protected_areas$PA_DEF == 0 ~ "OECM",
+      TRUE ~ as.character(protected_areas$PA_DEF)
+    )
+  }
+
+  # Filter data by STATUS and SITE_TYPE
   protected_areas <- protected_areas %>%
-    dplyr::filter(.data$STATUS %in% status, .data$PA_DEF %in% pa_def)
+    dplyr::filter(.data$STATUS %in% status, .data$SITE_TYPE %in% site_type)
 
   # Remove MAB designated areas if specified
   if (!include_mab_designation) {

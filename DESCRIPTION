@@ -1,6 +1,6 @@
 Package: elsar
 Title: Functions and Tools For Creating ELSA Tier 1 Data Stacks
-Version: 0.0.3
+Version: 0.0.7
 Authors@R: 
     c(
     person(

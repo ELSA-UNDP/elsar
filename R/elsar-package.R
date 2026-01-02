@@ -2,7 +2,7 @@
 "_PACKAGE"
 
 ## usethis namespace: start
-#' @importFrom lifecycle deprecated
+#' @importFrom lifecycle deprecated is_present deprecate_warn
 #' @importFrom rlang :=
 #' @importFrom rlang .data
 #' @importFrom stats setNames
