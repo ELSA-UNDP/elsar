@@ -11,7 +11,7 @@ database via the wdpar package, or provided as an sf object."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">elsar</a>
 
-    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.3</small>
+    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -22,9 +22,10 @@ database via the wdpar package, or provided as an sf object."></head><body>
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/data-info.html">Processing global data in R</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/data-info.html">Global Data Processing Reference</a></li>
     <li><a class="dropdown-item" href="../articles/elsaR.html">An Example ELSA Workflow</a></li>
   </ul></li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
       </ul></div>
@@ -55,7 +56,8 @@ database via the <span class="pkg">wdpar</span> package, or provided as an <code
 <span>  sf_in <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  download_path <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  status <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Established"</span>, <span class="st">"Inscribed"</span>, <span class="st">"Designated"</span><span class="op">)</span>,</span>
-<span>  pa_def <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  site_type <span class="op">=</span> <span class="st">"PA"</span>,</span>
+<span>  pa_def <span class="op">=</span> <span class="fu">deprecated</span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  include_mab_designation <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  buffer_points <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  area_column <span class="op">=</span> <span class="st">"REP_AREA"</span>,</span>
@@ -101,9 +103,16 @@ Valid values: "Designated", "Established", "Inscribed", "Proposed", "Adopted".
 Default is <code>c("Established", "Inscribed", "Designated")</code>.</p></dd>
 
 
+<dt id="arg-site-type">site_type<a class="anchor" aria-label="anchor" href="#arg-site-type"></a></dt>
+<dd><p>Character vector. Values for the <code>SITE_TYPE</code> column in WDPA
+data. Valid values: "PA" (Protected Area) or "OECM" (Other Effective
+Area-based Conservation Measure). Default is <code>"PA"</code>. For backward
+compatibility, numeric values 1 (PA) and 0 (OECM) are also accepted.</p></dd>
+
+
 <dt id="arg-pa-def">pa_def<a class="anchor" aria-label="anchor" href="#arg-pa-def"></a></dt>
-<dd><p>Integer vector. Values for the <code>PA_DEF</code> column (1 = Protected Area,
-0 = OECM). Default is <code>1</code>.</p></dd>
+<dd><p>Deprecated. Use <code>site_type</code> instead. Kept for backward
+compatibility.</p></dd>
 
 
 <dt id="arg-include-mab-designation">include_mab_designation<a class="anchor" aria-label="anchor" href="#arg-include-mab-designation"></a></dt>

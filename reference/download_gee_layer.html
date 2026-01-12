@@ -13,7 +13,7 @@ GEE folder duplication bugs."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">elsar</a>
 
-    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.3</small>
+    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -24,9 +24,10 @@ GEE folder duplication bugs."></head><body>
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/data-info.html">Processing global data in R</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/data-info.html">Global Data Processing Reference</a></li>
     <li><a class="dropdown-item" href="../articles/elsaR.html">An Example ELSA Workflow</a></li>
   </ul></li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
       </ul></div>
@@ -61,7 +62,13 @@ GEE folder duplication bugs.</p>
 <span>  scale <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>  datatype <span class="op">=</span> <span class="st">"INT1U"</span>,</span>
 <span>  googledrive_folder <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  wait_time <span class="op">=</span> <span class="fl">5</span></span>
+<span>  wait_time <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>  band <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  composite_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mosaic"</span>, <span class="st">"mode"</span>, <span class="st">"median"</span>, <span class="st">"mean"</span><span class="op">)</span>,</span>
+<span>  year_override <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  pus <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  aggregate_to_pus <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  aggregation_reducer <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mode"</span>, <span class="st">"mean"</span>, <span class="st">"sum"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -98,7 +105,8 @@ Defaults to project root via <code><a href="https://here.r-lib.org/reference/her
 
 
 <dt id="arg-scale">scale<a class="anchor" aria-label="anchor" href="#arg-scale"></a></dt>
-<dd><p>Numeric. Resolution of the exported image in meters. Default is 10.</p></dd>
+<dd><p>Numeric. Resolution of the exported image in meters. Default is 10.
+Ignored when <code>aggregate_to_pus = TRUE</code> (uses PU resolution instead).</p></dd>
 
 
 <dt id="arg-datatype">datatype<a class="anchor" aria-label="anchor" href="#arg-datatype"></a></dt>
@@ -115,10 +123,45 @@ Currently defaults to NULL (Drive root) to avoid a GEE folder duplication bug.</
 <dd><p>Numeric. Maximum time in minutes to wait for the GEE export
 to appear in Google Drive. Default is 5. Increase for large exports.</p></dd>
 
+
+<dt id="arg-band">band<a class="anchor" aria-label="anchor" href="#arg-band"></a></dt>
+<dd><p>Character or NULL. Specific band to select from the image. If NULL,
+uses all bands. Useful for datasets like Dynamic World ("label") or
+ESA WorldCover ("Map").</p></dd>
+
+
+<dt id="arg-composite-method">composite_method<a class="anchor" aria-label="anchor" href="#arg-composite-method"></a></dt>
+<dd><p>Character. Method for creating temporal composite:
+"mosaic" (default), "mode" (most frequent value), "median", or "mean".
+Use "mode" for categorical data like Dynamic World.</p></dd>
+
+
+<dt id="arg-year-override">year_override<a class="anchor" aria-label="anchor" href="#arg-year-override"></a></dt>
+<dd><p>Numeric or NULL. If provided, use this year instead of
+automatically detecting the most recent year with data.</p></dd>
+
+
+<dt id="arg-pus">pus<a class="anchor" aria-label="anchor" href="#arg-pus"></a></dt>
+<dd><p>SpatRaster or NULL. Planning units raster for GEE-side aggregation.
+When provided with <code>aggregate_to_pus = TRUE</code>, the export will be resampled
+to match the PU resolution and projection in GEE before download.</p></dd>
+
+
+<dt id="arg-aggregate-to-pus">aggregate_to_pus<a class="anchor" aria-label="anchor" href="#arg-aggregate-to-pus"></a></dt>
+<dd><p>Logical. If TRUE and <code>pus</code> is provided, aggregate the
+data to planning unit resolution in GEE before export. This significantly
+speeds up processing by eliminating local resampling. Default is FALSE.</p></dd>
+
+
+<dt id="arg-aggregation-reducer">aggregation_reducer<a class="anchor" aria-label="anchor" href="#arg-aggregation-reducer"></a></dt>
+<dd><p>Character. Reducer to use for GEE-side aggregation:
+"mode" (default, for categorical data), "mean", or "sum".</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A <code>SpatRaster</code> object written to disk, or NULL if export timed out.</p>
+    <p>A <code>SpatRaster</code> object written to disk, or NULL if export timed out.
+When <code>aggregate_to_pus = TRUE</code>, the result has attribute <code>pre_aggregated = TRUE</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -128,7 +171,8 @@ have sensible defaults for common datasets.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="download_esri_lulc_data.html">download_esri_lulc_data()</a></code>, <code><a href="download_global_pasture_data.html">download_global_pasture_data()</a></code></p></div>
+    <div class="dont-index"><p><code><a href="download_esri_lulc_data.html">download_esri_lulc_data()</a></code>, <code><a href="download_global_pasture_data.html">download_global_pasture_data()</a></code>,
+<code><a href="download_lulc_data.html">download_lulc_data()</a></code></p></div>
     </div>
 
     <div class="section level2">
@@ -143,6 +187,18 @@ have sensible defaults for common datasets.</p>
 <span class="r-in"><span>  file_prefix <span class="op">=</span> <span class="st">"esri_10m_lulc"</span>,</span></span>
 <span class="r-in"><span>  scale <span class="op">=</span> <span class="fl">10</span>,</span></span>
 <span class="r-in"><span>  datatype <span class="op">=</span> <span class="st">"INT1U"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Download with GEE-side aggregation to planning units</span></span></span>
+<span class="r-in"><span><span class="va">lulc_agg</span> <span class="op">&lt;-</span> <span class="fu">download_gee_layer</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  boundary_layer <span class="op">=</span> <span class="va">ghana_boundary</span>,</span></span>
+<span class="r-in"><span>  iso3 <span class="op">=</span> <span class="st">"GHA"</span>,</span></span>
+<span class="r-in"><span>  gee_project <span class="op">=</span> <span class="st">"my-gee-project"</span>,</span></span>
+<span class="r-in"><span>  asset_id <span class="op">=</span> <span class="st">"projects/sat-io/open-datasets/landcover/ESRI_Global-LULC_10m_TS"</span>,</span></span>
+<span class="r-in"><span>  file_prefix <span class="op">=</span> <span class="st">"esri_10m_lulc_agg"</span>,</span></span>
+<span class="r-in"><span>  pus <span class="op">=</span> <span class="va">planning_units</span>,</span></span>
+<span class="r-in"><span>  aggregate_to_pus <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>  aggregation_reducer <span class="op">=</span> <span class="st">"mode"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
