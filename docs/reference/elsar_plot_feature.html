@@ -9,7 +9,7 @@ planning unit outlines, customizable color palette direction, and optional savin
 
     <a class="navbar-brand me-2" href="../index.html">elsar</a>
 
-    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.3</small>
+    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -23,6 +23,7 @@ planning unit outlines, customizable color palette direction, and optional savin
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/data-info.html">Global Data Processing Reference</a></li>
     <li><a class="dropdown-item" href="../articles/elsaR.html">An Example ELSA Workflow</a></li>
   </ul></li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
       </ul></div>
@@ -105,32 +106,28 @@ planning unit outlines, customizable color palette direction, and optional savin
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">boundary_proj</span> <span class="op">&lt;-</span> <span class="fu"><a href="make_boundary.html">make_boundary</a></span><span class="op">(</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span><span class="va">boundary_proj</span> <span class="op">&lt;-</span> <span class="fu"><a href="make_boundary.html">make_boundary</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  boundary_in <span class="op">=</span> <span class="va">boundary_dat</span>,</span></span>
 <span class="r-in"><span>  iso3 <span class="op">=</span> <span class="st">"NPL"</span>,</span></span>
 <span class="r-in"><span>  iso3_column <span class="op">=</span> <span class="st">"iso3cd"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> [2025-12-19 19:19:26] Creating boundary for planning region...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> [2025-12-19 19:19:26] Creating custom Mollweide projection centred on planning region...</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">pus</span> <span class="op">&lt;-</span> <span class="fu"><a href="make_planning_units.html">make_planning_units</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  boundary_proj <span class="op">=</span> <span class="va">boundary_proj</span>,</span></span>
+<span class="r-in"><span>  iso3 <span class="op">=</span> <span class="st">"NPL"</span>,</span></span>
 <span class="r-in"><span>  pu_size <span class="op">=</span> <span class="cn">NULL</span>,</span></span>
 <span class="r-in"><span>  pu_threshold <span class="op">=</span> <span class="fl">8.5e5</span>,</span></span>
 <span class="r-in"><span>  limit_to_mainland <span class="op">=</span> <span class="cn">FALSE</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in eval(assertion, env):</span> argument "iso3" is missing, with no default</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">wad_dat</span> <span class="op">&lt;-</span> <span class="fu"><a href="get_wad_data.html">get_wad_data</a></span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> [2025-12-19 19:19:26] Loading WAD subset data from package...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> [2025-12-19 19:19:26] WAD subset data loaded successfully.</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">wadOut</span> <span class="op">&lt;-</span> <span class="fu"><a href="make_normalised_raster.html">make_normalised_raster</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  raster_in <span class="op">=</span> <span class="va">wad_dat</span>,</span></span>
 <span class="r-in"><span>  pus <span class="op">=</span> <span class="va">pus</span>,</span></span>
 <span class="r-in"><span>  iso3 <span class="op">=</span> <span class="st">"NPL"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'pus' not found</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu">elsar_plot_feature</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  raster_in <span class="op">=</span> <span class="va">wadOut</span>,</span></span>
@@ -143,7 +140,7 @@ planning unit outlines, customizable color palette direction, and optional savin
 <span class="r-in"><span>  iso3 <span class="op">=</span> <span class="st">"test"</span>,</span></span>
 <span class="r-in"><span>  custom_resolution <span class="op">=</span> <span class="fl">400</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error:</span> object 'wadOut' not found</span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
