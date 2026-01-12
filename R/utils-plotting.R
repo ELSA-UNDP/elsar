@@ -19,6 +19,7 @@
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' boundary_proj <- make_boundary(
 #'   boundary_in = boundary_dat,
 #'   iso3 = "NPL",
@@ -27,6 +28,7 @@
 #'
 #' pus <- make_planning_units(
 #'   boundary_proj = boundary_proj,
+#'   iso3 = "NPL",
 #'   pu_size = NULL,
 #'   pu_threshold = 8.5e5,
 #'   limit_to_mainland = FALSE
@@ -44,6 +46,7 @@
 #'   background = wad_dat,
 #'   legend_title = "wad"
 #' ) + elsar_plot_optics()
+#' }
 elsar_plot_optics <- function(type = "ggplot",
                               theme = "default",
                               include_north_scale = FALSE,
@@ -390,6 +393,7 @@ elsar_plot_extra_data <- function(plot_type = "ggplot",
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' boundary_proj <- make_boundary(
 #'   boundary_in = boundary_dat,
 #'   iso3 = "NPL",
@@ -398,6 +402,7 @@ elsar_plot_extra_data <- function(plot_type = "ggplot",
 #'
 #' pus <- make_planning_units(
 #'   boundary_proj = boundary_proj,
+#'   iso3 = "NPL",
 #'   pu_size = NULL,
 #'   pu_threshold = 8.5e5,
 #'   limit_to_mainland = FALSE
@@ -424,6 +429,7 @@ elsar_plot_extra_data <- function(plot_type = "ggplot",
 #'   number_categories = 10,
 #'   data_layer = "wad_final_cog"
 #' ))
+#' }
 elsar_plot_background <- function(plot_type = "ggplot",
                                   background_dat = NULL,
                                   data_type = c("continuous", "discrete"),
@@ -647,6 +653,7 @@ elsar_plot_background_d <- function(plot_type = "ggplot",
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' boundary_proj <- make_boundary(
 #'   boundary_in = boundary_dat,
 #'   iso3 = "NPL",
@@ -655,6 +662,7 @@ elsar_plot_background_d <- function(plot_type = "ggplot",
 #'
 #' pus <- make_planning_units(
 #'   boundary_proj = boundary_proj,
+#'   iso3 = "NPL",
 #'   pu_size = NULL,
 #'   pu_threshold = 8.5e5,
 #'   limit_to_mainland = FALSE
@@ -673,6 +681,7 @@ elsar_plot_background_d <- function(plot_type = "ggplot",
 #'   raster_to_crop = wad_dat,
 #'   extend_by = 0.05
 #' )
+#' }
 elsar_extend <- function(raster_main = NULL,
                          raster_to_crop = NULL,
                          extend_by = 0.05 # or 1000 or
@@ -742,6 +751,7 @@ elsar_extend <- function(raster_main = NULL,
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' boundary_proj <- make_boundary(
 #'   boundary_in = boundary_dat,
 #'   iso3 = "NPL",
@@ -750,6 +760,7 @@ elsar_extend <- function(raster_main = NULL,
 #'
 #' pus <- make_planning_units(
 #'   boundary_proj = boundary_proj,
+#'   iso3 = "NPL",
 #'   pu_size = NULL,
 #'   pu_threshold = 8.5e5,
 #'   limit_to_mainland = FALSE
@@ -767,6 +778,7 @@ elsar_extend <- function(raster_main = NULL,
 #'  data_layer = "wad_final_cog",
 #'  number_categories = 10
 #' )
+#' }
 elsar_continuous_to_categorical <- function(raster_in,
                                             data_layer,
                                             number_categories,

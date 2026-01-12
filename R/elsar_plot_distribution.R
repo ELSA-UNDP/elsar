@@ -13,6 +13,7 @@
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' boundary_proj <- make_boundary(
 #'   boundary_in = boundary_dat,
 #'   iso3 = "NPL",
@@ -21,6 +22,7 @@
 #' )
 #'
 #' pus <- make_planning_units(boundary_proj = boundary_proj,
+#'                            iso3 = "NPL",
 #'                            pu_size = NULL,
 #'                            pu_threshold = 8.5e5,
 #'                            limit_to_mainland = FALSE)
@@ -66,6 +68,7 @@
 #'     top = 0.4, # needs to be changed depending on plot dimensions
 #'     align_to = "plot"
 #'   )))
+#' }
 elsar_plot_distribution <- function(type = "ggplot",
                                     categorical = TRUE,
                                     raster_df = NULL,

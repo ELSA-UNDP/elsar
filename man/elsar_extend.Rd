@@ -20,6 +20,7 @@ A \code{SpatRaster} file with the new dimensions.
 When plotting (e.g. with \code{\link[=elsar_plot_static_raster_c]{elsar_plot_static_raster_c()}}, the extent of the main data will be used. \code{elsar_extend()} allows to extract background data to be plotted with an extent that is a bit greater than the extent of the main data.
 }
 \examples{
+\dontrun{
 boundary_proj <- make_boundary(
   boundary_in = boundary_dat,
   iso3 = "NPL",
@@ -28,6 +29,7 @@ boundary_proj <- make_boundary(
 
 pus <- make_planning_units(
   boundary_proj = boundary_proj,
+  iso3 = "NPL",
   pu_size = NULL,
   pu_threshold = 8.5e5,
   limit_to_mainland = FALSE
@@ -46,4 +48,5 @@ bckgrnd_dat <- elsar_extend(
   raster_to_crop = wad_dat,
   extend_by = 0.05
 )
+}
 }

@@ -19,6 +19,7 @@
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' boundary_proj <- make_boundary(
 #'   boundary_in = boundary_dat,
 #'   iso3 = "NPL",
@@ -27,6 +28,7 @@
 #'
 #' pus <- make_planning_units(
 #'   boundary_proj = boundary_proj,
+#'   iso3 = "NPL",
 #'   pu_size = NULL,
 #'   pu_threshold = 8.5e5,
 #'   limit_to_mainland = FALSE
@@ -51,6 +53,7 @@
 #'   iso3 = "test",
 #'   custom_resolution = 400
 #' )
+#' }
 elsar_plot_feature <- function(raster_in,
                                pus,
                                legend_title = NULL,

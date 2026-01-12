@@ -156,7 +156,9 @@ get_target <- function(pu = NULL, target = NULL) {
 #'         each representing the budget as a percentage of the total PU area.
 #'
 #' @examples
+#' \dontrun{
 #' calculate_restore_and_urban_budgets("MWI", workspace_dir = "/path/to/my-data/az_uploads")
+#' }
 #'
 #' @export
 calculate_restore_and_urban_budgets <- function(iso3,

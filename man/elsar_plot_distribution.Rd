@@ -39,6 +39,7 @@ A \code{list} of a \code{ggplot} or \code{tmap} object and a \code{SpatRaster} w
 Function to create basic histogram with categorical data
 }
 \examples{
+\dontrun{
 boundary_proj <- make_boundary(
   boundary_in = boundary_dat,
   iso3 = "NPL",
@@ -47,6 +48,7 @@ boundary_proj <- make_boundary(
 )
 
 pus <- make_planning_units(boundary_proj = boundary_proj,
+                           iso3 = "NPL",
                            pu_size = NULL,
                            pu_threshold = 8.5e5,
                            limit_to_mainland = FALSE)
@@ -92,4 +94,5 @@ plot_dist_cat <- elsar_plot_distribution(
     top = 0.4, # needs to be changed depending on plot dimensions
     align_to = "plot"
   )))
+}
 }

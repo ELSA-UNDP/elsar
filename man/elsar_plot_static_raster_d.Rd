@@ -60,6 +60,7 @@ Either a \code{ggplot} object or a list with the \code{ggplot} and the \code{df}
 \code{\link[=elsar_plot_static_raster]{elsar_plot_static_raster()}} with \code{data_type = "discrete"} instead.
 }
 \examples{
+\dontrun{
 boundary_proj <- make_boundary(
   boundary_in = boundary_dat,
   iso3 = "NPL",
@@ -68,6 +69,7 @@ boundary_proj <- make_boundary(
 
 pus <- make_planning_units(
   boundary_proj = boundary_proj,
+  iso3 = "NPL",
   pu_size = NULL,
   pu_threshold = 8.5e5,
   limit_to_mainland = FALSE
@@ -88,6 +90,7 @@ background = wad_dat,
 data_layer = "wad_final_cog",
 raster_df_out = TRUE)
 )
+}
 }
 \seealso{
 \code{\link[=elsar_plot_static_raster]{elsar_plot_static_raster()}} for the unified plotting function

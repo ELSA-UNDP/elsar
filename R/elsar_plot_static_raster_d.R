@@ -14,6 +14,7 @@
 #' @keywords internal
 #'
 #' @examples
+#' \dontrun{
 #' boundary_proj <- make_boundary(
 #'   boundary_in = boundary_dat,
 #'   iso3 = "NPL",
@@ -22,6 +23,7 @@
 #'
 #' pus <- make_planning_units(
 #'   boundary_proj = boundary_proj,
+#'   iso3 = "NPL",
 #'   pu_size = NULL,
 #'   pu_threshold = 8.5e5,
 #'   limit_to_mainland = FALSE
@@ -42,6 +44,7 @@
 #' data_layer = "wad_final_cog",
 #' raster_df_out = TRUE)
 #' )
+#' }
 elsar_plot_static_raster_d <- function(raster_in,
                                        type = "ggplot_vector",
                                        categorical = FALSE,

@@ -372,7 +372,9 @@ log_msg <- function(msg, variable = NULL) {
 #' @examples
 #' get_file_type("data/boundaries.shp")     # returns "shp"
 #' get_file_type("data/vector_layers.gpkg") # returns "gpkg"
+#' \dontrun{
 #' get_file_type("data/rasters")            # scans folder for known formats
+#' }
 get_file_type <- function(path) {
   if (dir.exists(path)) {
     # Check if path itself is a .gdb folder

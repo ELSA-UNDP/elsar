@@ -48,10 +48,12 @@ tolerance (default 5\%). The finest resolution meeting this constraint is select
 and clean rounding steps. The result can optionally be saved as a Cloud Optimized GeoTIFF (.tif).
 }
 \examples{
+\dontrun{
 # Automatically estimate PU size to stay under 850,000 PUs
-boundary_proj <- make_boundary(boundary_in = boundary_data, iso3 = "ZMB", iso3_column = "iso3cd")
+boundary_proj <- make_boundary(boundary_in = boundary_dat, iso3 = "ZMB", iso3_column = "iso3cd")
 pu_raster <- make_planning_units(boundary_proj, iso3 = "ZMB")
 
 # Use a fixed PU size (e.g., 250 meters)
 pu_raster <- make_planning_units(boundary_proj, pu_size = 250, iso3 = "ZMB")
+}
 }

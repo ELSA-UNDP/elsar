@@ -42,6 +42,8 @@ fraction (default 30\%) of the coverage of its respective zone over the PU layer
 This function assumes input rasters are co-aligned and represent valid binary zone masks.
 }
 \examples{
+\dontrun{
 calculate_restore_and_urban_budgets("MWI", workspace_dir = "/path/to/my-data/az_uploads")
+}
 
 }

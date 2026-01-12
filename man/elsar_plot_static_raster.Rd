@@ -62,6 +62,7 @@ in \code{ggplot} or \code{tmap}. It can be combined with \code{\link[=elsar_plot
 to create reproducible plots.
 }
 \examples{
+\dontrun{
 boundary_proj <- make_boundary(
   boundary_in = boundary_dat,
   iso3 = "NPL",
@@ -70,6 +71,7 @@ boundary_proj <- make_boundary(
 
 pus <- make_planning_units(
   boundary_proj = boundary_proj,
+  iso3 = "NPL",
   pu_size = NULL,
   pu_threshold = 8.5e5,
   limit_to_mainland = FALSE
@@ -99,4 +101,5 @@ wadOut <- make_normalised_raster(
   background = wad_dat,
   data_layer = "wad_final_cog"
 ))
+}
 }

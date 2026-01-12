@@ -22,6 +22,7 @@
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' restore_zone <- make_degraded_areas(
 #'   "CHL",
 #'   pu,
@@ -31,6 +32,7 @@
 #'   built_areas_input,
 #'   output_path = "./output"
 #'   )
+#' }
 make_degraded_areas <- function(country_iso,
                                 pu,
                                 sdg_degradation_input = NULL,
