@@ -14,7 +14,13 @@ download_gee_layer(
   scale = 10,
   datatype = "INT1U",
   googledrive_folder = NULL,
-  wait_time = 5
+  wait_time = 5,
+  band = NULL,
+  composite_method = c("mosaic", "mode", "median", "mean"),
+  year_override = NULL,
+  pus = NULL,
+  aggregate_to_pus = FALSE,
+  aggregation_reducer = c("mode", "mean", "sum")
 )
 }
 \arguments{
@@ -34,7 +40,8 @@ project ID in the \href{https://code.earthengine.google.com/}{GEE Code Editor}.}
 \item{output_dir}{Character. Path to directory for saving the final raster file.
 Defaults to project root via \code{here::here()}.}
 
-\item{scale}{Numeric. Resolution of the exported image in meters. Default is 10.}
+\item{scale}{Numeric. Resolution of the exported image in meters. Default is 10.
+Ignored when \code{aggregate_to_pus = TRUE} (uses PU resolution instead).}
 
 \item{datatype}{Character. Output datatype (GDAL style), e.g., "INT1U" or "FLT4S".
 Default is "INT1U".}
@@ -44,9 +51,32 @@ Currently defaults to NULL (Drive root) to avoid a GEE folder duplication bug.}
 
 \item{wait_time}{Numeric. Maximum time in minutes to wait for the GEE export
 to appear in Google Drive. Default is 5. Increase for large exports.}
+
+\item{band}{Character or NULL. Specific band to select from the image. If NULL,
+uses all bands. Useful for datasets like Dynamic World ("label") or
+ESA WorldCover ("Map").}
+
+\item{composite_method}{Character. Method for creating temporal composite:
+"mosaic" (default), "mode" (most frequent value), "median", or "mean".
+Use "mode" for categorical data like Dynamic World.}
+
+\item{year_override}{Numeric or NULL. If provided, use this year instead of
+automatically detecting the most recent year with data.}
+
+\item{pus}{SpatRaster or NULL. Planning units raster for GEE-side aggregation.
+When provided with \code{aggregate_to_pus = TRUE}, the export will be resampled
+to match the PU resolution and projection in GEE before download.}
+
+\item{aggregate_to_pus}{Logical. If TRUE and \code{pus} is provided, aggregate the
+data to planning unit resolution in GEE before export. This significantly
+speeds up processing by eliminating local resampling. Default is FALSE.}
+
+\item{aggregation_reducer}{Character. Reducer to use for GEE-side aggregation:
+"mode" (default, for categorical data), "mean", or "sum".}
 }
 \value{
 A \code{SpatRaster} object written to disk, or NULL if export timed out.
+When \code{aggregate_to_pus = TRUE}, the result has attribute \code{pre_aggregated = TRUE}.
 }
 \description{
 Generic function for downloading any raster data from Google Earth Engine.
@@ -71,8 +101,21 @@ lulc <- download_gee_layer(
   scale = 10,
   datatype = "INT1U"
 )
+
+# Download with GEE-side aggregation to planning units
+lulc_agg <- download_gee_layer(
+  boundary_layer = ghana_boundary,
+  iso3 = "GHA",
+  gee_project = "my-gee-project",
+  asset_id = "projects/sat-io/open-datasets/landcover/ESRI_Global-LULC_10m_TS",
+  file_prefix = "esri_10m_lulc_agg",
+  pus = planning_units,
+  aggregate_to_pus = TRUE,
+  aggregation_reducer = "mode"
+)
 }
 }
 \seealso{
-\code{\link[=download_esri_lulc_data]{download_esri_lulc_data()}}, \code{\link[=download_global_pasture_data]{download_global_pasture_data()}}
+\code{\link[=download_esri_lulc_data]{download_esri_lulc_data()}}, \code{\link[=download_global_pasture_data]{download_global_pasture_data()}},
+\code{\link[=download_lulc_data]{download_lulc_data()}}
 }

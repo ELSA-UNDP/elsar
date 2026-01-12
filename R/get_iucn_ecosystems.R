@@ -1,5 +1,17 @@
 #' Extract and Filter IUCN GET Ecosystem Vector Layers
 #'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
+#' This function is deprecated and not recommended for current use. The IUCN GET
+#' ecosystem data has known quality issues and incomplete coverage. Users should
+#' supply their own ecosystem data to functions like [make_threatened_ecosystems_protection()]
+#' and [make_underrepresented_ecosystems()].
+#'
+#' A replacement data source from the Global Ecosystems Atlas is planned for future
+#' versions of this package.
+#'
+#' @details
 #' This function reads, intersects, reprojects, and merges `.gpkg` vector files representing IUCN Global Ecosystem Typology (GET) layers from a specified directory.
 #' It allows filtering by filename prefixes (e.g., "T1.2", "TF1.4"), excludes specific ecosystem types (e.g., intensive land-use biomes), and optionally removes features
 #' with `minor occurrence` flags. The resulting layer is cropped to a country boundary and reprojected to match a planning units raster.
@@ -52,6 +64,10 @@ get_iucn_ecosystems <- function(
   assertthat::assert_that(assertthat::is.string(iso3))
   assertthat::assert_that(inherits(pus, "SpatRaster"))
   assertthat::assert_that(inherits(boundary_layer, "sf"))
+  if (!is.null(output_path)) {
+    assertthat::assert_that(dir.exists(output_path),
+                            msg = glue::glue("'output_path' directory does not exist: {output_path}"))
+  }
 
   allowed_prefixes <- c( "F1.1", "F1.2", "F1.3", "F1.4", "F1.5", "F1.6", "F1.7", "F2.1", "F2.10", "F2.2", "F2.3", "F2.4", "F2.5", "F2.6", "F2.7", "F2.8", "F2.9", "F3.1", "F3.2", "F3.3", "F3.4", "F3.5", "FM1.1", "FM1.2", "FM1.3", "M1.1", "M1.10", "M1.2", "M1.3", "M1.4", "M1.5", "M1.6", "M1.7", "M1.8", "M1.9", "M2.1", "M2.2", "M2.3", "M2.4", "M2.5", "M3.1", "M3.2", "M3.3", "M3.4", "M3.5", "M3.6", "M3.7", "M4.1", "M4.2", "MFT1.1", "MFT1.2", "MFT1.3", "MT1.1", "MT1.2", "MT1.3", "MT1.4", "MT2.1", "MT2.2", "MT3.1", "S1.1", "S2.1", "SF1.1", "SF1.2", "SF2.1", "SF2.2", "SM1.1", "SM1.2", "SM1.3", "T1.1", "T1.2", "T1.3", "T1.4", "T2.1", "T2.2", "T2.3", "T2.4", "T2.5", "T2.6", "T3.1", "T3.2", "T3.3", "T3.4", "T4.1", "T4.2", "T4.3", "T4.4", "T4.5", "T5.1", "T5.2", "T5.3", "T5.4", "T5.5", "T6.1", "T6.2", "T6.3", "T6.4", "T6.5", "T7.1", "T7.2", "T7.3", "T7.4", "T7.5", "TF1.1", "TF1.2", "TF1.3", "TF1.4", "TF1.5", "TF1.6", "TF1.7" )
 
@@ -86,7 +102,7 @@ get_iucn_ecosystems <- function(
   excluded_matches <- all_files[grepl(paste0("^(", paste(excluded_file_prefixes, collapse = "|"), ")_"),
                                       basename(all_files))]
   if (length(excluded_matches) > 0) {
-    log_msg(glue::glue("Excluding {length(excluded_matches)} IUCN layers based on excluded_prefixes: {paste(excluded_prefixes, collapse = ', ')}"))
+    log_message("Excluding {length(excluded_matches)} IUCN layers based on excluded_prefixes: {paste(excluded_prefixes, collapse = ', ')}")
   }
 
   # Apply exclusion filter
@@ -125,7 +141,7 @@ get_iucn_ecosystems <- function(
 
   progressr::handlers("txtprogressbar")
 
-  log_msg("Reading, reprojecting, and intersecting IUCN GET ecosystem layers using parallel processing...")
+  log_message("Reading, reprojecting, and intersecting IUCN GET ecosystem layers using parallel processing...")
 
   pus_bbox_file <- tempfile(fileext = ".gpkg")
   boundary_layer_file <- tempfile(fileext = ".gpkg")
@@ -193,12 +209,12 @@ get_iucn_ecosystems <- function(
   unlink(boundary_layer_file)
   rm(pus_crs)
 
-  log_msg(glue::glue("Finished intersecting all IUCN GET features in {iso3}. Checking for any NULL features..."))
+  log_message("Finished intersecting all IUCN GET features in {iso3}. Checking for any NULL features...")
 
   iucn_list <- Filter(NROW, iucn_list)
 
   if (length(iucn_list) == 0) {
-    log_msg("No intersecting features found in any file.")
+    log_message("No intersecting features found in any file.")
     return(NULL)
   }
 
@@ -223,12 +239,12 @@ get_iucn_ecosystems <- function(
 
   # Optionally filter out minor occurrence
   if (!include_minor_occurrence) {
-    log_msg("Removing minor occurence polygons...")
+    log_message("Removing minor occurence polygons...")
     iucn_ecosystems <- dplyr::filter(iucn_ecosystems, occurrence != 1)
   }
 
   # Ensure valid geometry and select output fields
-  log_msg("Checking and repairing geometries...")
+  log_message("Checking and repairing geometries...")
   iucn_ecosystems <- sf::st_as_sf(iucn_ecosystems) %>%
     sf::st_make_valid() %>%
     dplyr::select(get_id, occurrence)
@@ -237,7 +253,7 @@ get_iucn_ecosystems <- function(
   if (!is.null(output_path)) {
     dir.create(output_path, showWarnings = FALSE, recursive = TRUE)
     out_file <- file.path(output_path, glue::glue("iucn_ecosystems_{iso3}.gpkg"))
-    log_msg(glue::glue("Saving merged vector layer to: {out_file}"))
+    log_message("Saving merged vector layer to: {out_file}")
     sf::st_write(iucn_ecosystems, out_file, delete_dsn = TRUE, quiet = TRUE)
   }
 

@@ -80,6 +80,7 @@ A \code{list} of a \code{ggplot} or \code{tmap} object and a data frame with the
 Creates a background layer for plotting, supporting both continuous and discrete data.
 }
 \examples{
+\dontrun{
 boundary_proj <- make_boundary(
   boundary_in = boundary_dat,
   iso3 = "NPL",
@@ -88,6 +89,7 @@ boundary_proj <- make_boundary(
 
 pus <- make_planning_units(
   boundary_proj = boundary_proj,
+  iso3 = "NPL",
   pu_size = NULL,
   pu_threshold = 8.5e5,
   limit_to_mainland = FALSE
@@ -115,3 +117,5 @@ wadOut <- make_normalised_raster(
   data_layer = "wad_final_cog"
 ))
 }
+}
+\keyword{internal}

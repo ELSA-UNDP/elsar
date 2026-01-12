@@ -15,6 +15,23 @@
 #' @return A `tibble` containing the adjusted target values for each zone.
 #' @export
 get_min_lockin_target <- function(lockin, input, pu) {
+  # Input validation
+  assertthat::assert_that(
+    inherits(lockin, "SpatRaster") || is.list(lockin),
+    msg = "'lockin' must be a SpatRaster or list of SpatRasters."
+  )
+
+ assertthat::assert_that(
+    is.list(input) || is.data.frame(input),
+    msg = "'input' must be a list or data frame containing zone targets."
+  )
+
+  assertthat::assert_that(
+    inherits(pu, "SpatRaster"),
+    msg = "'pu' must be a SpatRaster object."
+  )
+
+  log_message("Calculating minimum lock-in targets for zones...")
 
   # Calculate the minimum coverage of locked-in areas for each zone
   min_coverage <- get_coverage(lockin, pu)
@@ -65,6 +82,8 @@ get_min_lockin_target <- function(lockin, input, pu) {
     )
   }
 
+  log_message("Adjusted targets: zone_1={targets$zone_1_target}, zone_2={targets$zone_2_target}, zone_3={targets$zone_3_target}")
+
   # Return the tibble with the adjusted targets
   return(targets)
 }
@@ -92,6 +111,16 @@ get_min_lockin_target <- function(lockin, input, pu) {
 #' get_target(pu = my_planning_units_raster, target = 10)
 #' }
 get_target <- function(pu = NULL, target = NULL) {
+  # Input validation
+  assertthat::assert_that(
+    inherits(pu, "SpatRaster"),
+    msg = "'pu' must be a SpatRaster object."
+  )
+
+  assertthat::assert_that(
+    is.numeric(target) && target >= 0 && target <= 100,
+    msg = "'target' must be a numeric value between 0 and 100."
+  )
 
   # Calculate the total area of the planning units and determine the target based on the given percentage.
   # 'terra::global' is used to calculate the total sum of the values in the PU raster (ignoring NA values).
@@ -100,7 +129,9 @@ get_target <- function(pu = NULL, target = NULL) {
 
   # If the calculated target is zero, return a small value (1e-4) to avoid zero targets in the optimization process.
   # Otherwise, return the calculated target value.
-  ifelse(tar == 0, 1e-4, tar)
+  result <- ifelse(tar == 0, 1e-4, tar)
+  log_message("Calculated target: {result} ({target}% of total PU area)")
+  return(result)
 }
 
 #' Calculate restore and urban green zone budgets as percentages
@@ -125,7 +156,9 @@ get_target <- function(pu = NULL, target = NULL) {
 #'         each representing the budget as a percentage of the total PU area.
 #'
 #' @examples
+#' \dontrun{
 #' calculate_restore_and_urban_budgets("MWI", workspace_dir = "/path/to/my-data/az_uploads")
+#' }
 #'
 #' @export
 calculate_restore_and_urban_budgets <- function(iso3,
@@ -134,20 +167,39 @@ calculate_restore_and_urban_budgets <- function(iso3,
                                                 pu_raster = "planning_units.tif",
                                                 restore_zone_raster = "restore_zone_v1.tif",
                                                 urban_areas_raster = "urban_areas.tif") {
+  # Input validation
+  assertthat::assert_that(
+    is.character(iso3) && nchar(iso3) == 3,
+    msg = "'iso3' must be a 3-letter country code."
+  )
+
+  assertthat::assert_that(
+    !is.null(workspace_dir) && dir.exists(workspace_dir),
+    msg = "'workspace_dir' must be an existing directory path."
+  )
+
+  assertthat::assert_that(
+    is.numeric(coverage_fraction) && coverage_fraction > 0 && coverage_fraction <= 1,
+    msg = "'coverage_fraction' must be a numeric value between 0 and 1."
+  )
+
   iso3 <- toupper(iso3)
-  if (is.null(workspace_dir)) {
-    stop("Please provide a workspace_dir containing the required rasters.")
-  }
+  log_message("Calculating restore and urban green budgets for {iso3}...")
 
   # Load raster layers
+  log_message("Loading raster layers from {workspace_dir}...")
   pus <- terra::rast(file.path(workspace_dir, pu_raster))
   rest_zone <- terra::rast(file.path(workspace_dir, restore_zone_raster))
   green_zone <- terra::rast(file.path(workspace_dir, urban_areas_raster))
 
   # Calculate zone coverages
+  log_message("Calculating zone coverages with {coverage_fraction * 100}% coverage fraction...")
   restore_pct <- elsar::get_coverage(zone_layer = rest_zone, pu_layer = pus) * coverage_fraction
   green_pct <- elsar::get_coverage(zone_layer = green_zone, pu_layer = pus) * coverage_fraction
 
+  result <- round(c(restore_budget_pct = restore_pct, urban_green_budget_pct = green_pct), 2)
+  log_message("Budget results: restore={result['restore_budget_pct']}%, urban_green={result['urban_green_budget_pct']}%")
+
   # Return rounded named vector
-  round(c(restore_budget_pct = restore_pct, urban_green_budget_pct = green_pct), 2)
+  return(result)
 }

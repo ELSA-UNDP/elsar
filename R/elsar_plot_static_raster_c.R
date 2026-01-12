@@ -1,20 +1,20 @@
 #' Function to create a static plot from raster data with continuous data
 #'
-#' `elsar_plot_static_raster_c()` allows to plot continuous data from a
-#' `SpatRaster` in `ggplot` or `tmap`. It can be combined with
-#' [elsar_plot_optics()] and [elsar_plot_extra_data()] to create
-#' reproducible plots.
+#' @description
+#' `r lifecycle::badge("deprecated")`
 #'
-#' This is a convenience wrapper around [elsar_plot_static_raster()] with
-#' `data_type = "continuous"`.
+#' `elsar_plot_static_raster_c()` is deprecated. Please use
+#' [elsar_plot_static_raster()] with `data_type = "continuous"` instead.
 #'
 #' @inheritParams elsar_plot_static_raster
 #'
 #' @return A `ggplot` or `tmap` object.
 #' @export
 #' @seealso [elsar_plot_static_raster()] for the unified plotting function
+#' @keywords internal
 #'
 #' @examples
+#' \dontrun{
 #' boundary_proj <- make_boundary(
 #'   boundary_in = boundary_dat,
 #'   iso3 = "NPL",
@@ -23,6 +23,7 @@
 #'
 #' pus <- make_planning_units(
 #'   boundary_proj = boundary_proj,
+#'   iso3 = "NPL",
 #'   pu_size = NULL,
 #'   pu_threshold = 8.5e5,
 #'   limit_to_mainland = FALSE
@@ -40,6 +41,7 @@
 #'   background = wad_dat,
 #'   legend_title = "wad"
 #' ))
+#' }
 elsar_plot_static_raster_c <- function(raster_in,
                                        type = "ggplot_vector",
                                        background = NULL,
@@ -50,6 +52,7 @@ elsar_plot_static_raster_c <- function(raster_in,
                                        color_map = "viridis",
                                        expand_plot = FALSE,
                                        raster_df_out = FALSE) {
+  .Deprecated("elsar_plot_static_raster")
   elsar_plot_static_raster(
     raster_in = raster_in,
     data_type = "continuous",

@@ -30,6 +30,7 @@ A list with a \code{df} that has categories and their interval labels, as well a
 Function to create categories for plotting out of continuous data
 }
 \examples{
+\dontrun{
 boundary_proj <- make_boundary(
   boundary_in = boundary_dat,
   iso3 = "NPL",
@@ -38,6 +39,7 @@ boundary_proj <- make_boundary(
 
 pus <- make_planning_units(
   boundary_proj = boundary_proj,
+  iso3 = "NPL",
   pu_size = NULL,
   pu_threshold = 8.5e5,
   limit_to_mainland = FALSE
@@ -55,4 +57,5 @@ wad_cat <- elsar_continuous_to_categorical(
  data_layer = "wad_final_cog",
  number_categories = 10
 )
+}
 }

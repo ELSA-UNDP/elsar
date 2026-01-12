@@ -9,6 +9,9 @@ download_esri_lulc_data(
   iso3,
   gee_project,
   output_dir = here::here(),
+  pus = NULL,
+  aggregate_to_pus = FALSE,
+  wait_time = 5,
   ...
 )
 }
@@ -22,6 +25,19 @@ required and must be a valid GEE project you have access to. Find your
 project ID in the \href{https://code.earthengine.google.com/}{GEE Code Editor}.}
 
 \item{output_dir}{Character. Local output directory. Defaults to project root via \code{here::here()}}
+
+\item{pus}{SpatRaster or NULL. Planning units raster for GEE-side aggregation.
+When provided with \code{aggregate_to_pus = TRUE}, the export will be resampled
+to match the PU resolution and projection in GEE before download.}
+
+\item{aggregate_to_pus}{Logical. If TRUE and \code{pus} is provided, aggregate the
+data to planning unit resolution in GEE before export. This significantly
+speeds up processing by eliminating local resampling. Default is FALSE.}
+
+\item{wait_time}{Numeric. Maximum time in minutes to wait for the GEE export
+to appear in Google Drive. Default is 5. Increase for large exports.}
+
+\item{...}{Additional arguments passed to \code{\link[=download_gee_layer]{download_gee_layer()}}.}
 }
 \value{
 A \code{SpatRaster} object of the downloaded LULC data, or NULL if download failed
@@ -39,5 +55,17 @@ lulc <- download_esri_lulc_data(
   iso3 = "GHA",
   gee_project = "my-gee-project"
 )
+
+# Download with GEE-side aggregation to planning units
+lulc_agg <- download_esri_lulc_data(
+  boundary_layer = ghana_boundary,
+  iso3 = "GHA",
+  gee_project = "my-gee-project",
+  pus = planning_units,
+  aggregate_to_pus = TRUE
+)
 }
+}
+\seealso{
+\code{\link[=download_lulc_data]{download_lulc_data()}}, \code{\link[=get_lulc_classes]{get_lulc_classes()}}
 }

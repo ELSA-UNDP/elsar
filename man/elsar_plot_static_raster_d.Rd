@@ -54,16 +54,13 @@ Needed for \code{elsar_plot_distribution()}.}
 Either a \code{ggplot} object or a list with the \code{ggplot} and the \code{df}.
 }
 \description{
-\code{elsar_plot_static_raster_d()} allows to plot discrete data from a
-\code{SpatRaster} in \code{ggplot} or \code{tmap}. It can be combined with
-\code{\link[=elsar_plot_optics]{elsar_plot_optics()}} and \code{\link[=elsar_plot_extra_data]{elsar_plot_extra_data()}} to create
-reproducible plots.
-}
-\details{
-This is a convenience wrapper around \code{\link[=elsar_plot_static_raster]{elsar_plot_static_raster()}} with
-\code{data_type = "discrete"}.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+\code{elsar_plot_static_raster_d()} is deprecated. Please use
+\code{\link[=elsar_plot_static_raster]{elsar_plot_static_raster()}} with \code{data_type = "discrete"} instead.
 }
 \examples{
+\dontrun{
 boundary_proj <- make_boundary(
   boundary_in = boundary_dat,
   iso3 = "NPL",
@@ -72,6 +69,7 @@ boundary_proj <- make_boundary(
 
 pus <- make_planning_units(
   boundary_proj = boundary_proj,
+  iso3 = "NPL",
   pu_size = NULL,
   pu_threshold = 8.5e5,
   limit_to_mainland = FALSE
@@ -93,6 +91,8 @@ data_layer = "wad_final_cog",
 raster_df_out = TRUE)
 )
 }
+}
 \seealso{
 \code{\link[=elsar_plot_static_raster]{elsar_plot_static_raster()}} for the unified plotting function
 }
+\keyword{internal}

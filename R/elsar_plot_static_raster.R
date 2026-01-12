@@ -26,6 +26,7 @@
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' boundary_proj <- make_boundary(
 #'   boundary_in = boundary_dat,
 #'   iso3 = "NPL",
@@ -34,6 +35,7 @@
 #'
 #' pus <- make_planning_units(
 #'   boundary_proj = boundary_proj,
+#'   iso3 = "NPL",
 #'   pu_size = NULL,
 #'   pu_threshold = 8.5e5,
 #'   limit_to_mainland = FALSE
@@ -63,6 +65,7 @@
 #'   background = wad_dat,
 #'   data_layer = "wad_final_cog"
 #' ))
+#' }
 elsar_plot_static_raster <- function(raster_in,
                                      data_type = c("continuous", "discrete"),
                                      type = "ggplot_vector",
@@ -79,25 +82,54 @@ elsar_plot_static_raster <- function(raster_in,
                                      raster_df_out = FALSE) {
   data_type <- match.arg(data_type)
 
-  # Assertions
+  # Input validation
   assertthat::assert_that(
     inherits(raster_in, "SpatRaster"),
-    msg = "Input must be `SpatRaster`"
+    msg = "'raster_in' must be a SpatRaster object."
   )
 
   assertthat::assert_that(
-    ((grepl("[ggplot]", type)) || (type == "tmap")),
-    msg = "Mapping a raster is only supported in tmap or ggplot."
+    grepl("ggplot", type) || type == "tmap",
+    msg = "'type' must be 'ggplot_vector', 'ggplot_raster', or 'tmap'."
   )
+
+  assertthat::assert_that(
+    is.logical(categorical),
+    msg = "'categorical' must be TRUE or FALSE."
+  )
+
+  assertthat::assert_that(
+    is.numeric(number_categories) && number_categories > 0,
+    msg = "'number_categories' must be a positive integer."
+  )
+
+  assertthat::assert_that(
+    is.logical(expand_plot),
+    msg = "'expand_plot' must be TRUE or FALSE."
+  )
+
+  assertthat::assert_that(
+    is.logical(raster_df_out),
+    msg = "'raster_df_out' must be TRUE or FALSE."
+  )
+
+  if (!is.null(background)) {
+    assertthat::assert_that(
+      inherits(background, "SpatRaster"),
+      msg = "'background' must be a SpatRaster object when provided."
+    )
+  }
+
+  log_message("Creating static raster plot ({data_type}, {type})...")
 
   # Process discrete data
   if (data_type == "discrete") {
     if (categorical) {
-      message("Plotting input data that is already categorical.")
+      log_message("Processing categorical data...")
 
       assertthat::assert_that(
         terra::is.factor(raster_in),
-        msg = "Input is not a factor."
+        msg = "'raster_in' must be a factor raster when categorical = TRUE."
       )
 
       number_categories <- length(terra::levels(raster_in)[[1]][[1]])
@@ -107,7 +139,7 @@ elsar_plot_static_raster <- function(raster_in,
         dplyr::rename(interval = .data[[data_layer]]) %>%
         dplyr::mutate(interval = as.factor(.data$interval))
     } else {
-      message("Plotting input data that is continuous and will be split into categories.")
+      log_message("Converting continuous data to {number_categories} discrete categories...")
 
       assertthat::assert_that(
         !is.null(number_categories),
@@ -292,7 +324,7 @@ elsar_plot_static_raster <- function(raster_in,
         ggplot2::scale_y_continuous(expand = c(0, 0))
     }
   } else if (type == "tmap") {
-    message("TBA")
+    log_message("tmap support not yet implemented.")
   }
 
   if (raster_df_out) {

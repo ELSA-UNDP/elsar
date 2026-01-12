@@ -59,13 +59,23 @@ make_threatened_ecosystems_protection <- function(
 ) {
   integrity_type <- match.arg(integrity_type)
 
-  stopifnot(inherits(ecosystems_sf, "sf"))
-  stopifnot(group_attribute %in% colnames(ecosystems_sf))
-  stopifnot(inherits(pus, "SpatRaster"))
-  stopifnot(inherits(boundary_layer, "sf"))
-  stopifnot(inherits(integrity_raster, "SpatRaster"))
+  # Input validation
+ assertthat::assert_that(inherits(ecosystems_sf, "sf"),
+                          msg = "'ecosystems_sf' must be an sf object.")
+  assertthat::assert_that(group_attribute %in% colnames(ecosystems_sf),
+                          msg = glue::glue("'{group_attribute}' not found in 'ecosystems_sf' columns."))
+  assertthat::assert_that(inherits(pus, "SpatRaster"),
+                          msg = "'pus' must be a SpatRaster object.")
+  assertthat::assert_that(inherits(boundary_layer, "sf"),
+                          msg = "'boundary_layer' must be an sf object.")
+  assertthat::assert_that(inherits(integrity_raster, "SpatRaster"),
+                          msg = "'integrity_raster' must be a SpatRaster object.")
+  if (!is.null(output_path)) {
+    assertthat::assert_that(dir.exists(output_path),
+                            msg = glue::glue("'output_path' directory does not exist: {output_path}"))
+  }
 
-  message(glue::glue("Calculating ecosystem threat using ecosystem integrity data type: {integrity_type}"))
+  log_message("Calculating ecosystem threat using integrity data type: {integrity_type}")
 
   # Align and normalize integrity raster to match planning units
   integrity_aligned <- elsar::make_normalised_raster(
@@ -76,7 +86,9 @@ make_threatened_ecosystems_protection <- function(
   # Create binary mask of intact areas
   if (integrity_type == "eii") {
     med_val <- median_from_rast(integrity_raster) # Median calculated from pre-computed histogram
-    message(glue::glue("The global median intactness value ({med_val}) for the {integrity_type} input is used to define intact areas"))
+    log_message(
+      "Global median intactness value ({med_val}) used to define intact areas."
+    )
     mask <- terra::ifel(integrity_aligned >= med_val, 1, 0)
   } else {
     mask <- terra::ifel(integrity_aligned == 0, 1, 0)
@@ -91,7 +103,7 @@ make_threatened_ecosystems_protection <- function(
     sf::st_set_crs(sf::st_crs(ecosystems_sf)) %>%
     sf::st_cast("POLYGON")
 
-  message("Calculating intact areas within each ecosystem...")
+  log_message("Calculating intact areas within each ecosystem...")
 
   # Setup parallel processing
   if (!requireNamespace("future.apply", quietly = TRUE)) stop("Please install the 'future.apply' package.")
@@ -141,7 +153,7 @@ make_threatened_ecosystems_protection <- function(
     dplyr::summarise(area_intact = sum(area_intact, na.rm = TRUE), .groups = "drop")
 
   # Summarize total area and compute threat score
-  message("Summarising total ecosystem area and computing threat scores...")
+  log_message("Summarising total ecosystem area and computing threat scores...")
 
   eco_summary <- ecosystems_sf %>%
     dplyr::group_by(.data[[group_attribute]]) %>%
@@ -153,7 +165,7 @@ make_threatened_ecosystems_protection <- function(
     )
 
   # Rasterize threat scores
-  message("Rasterizing threat score per planning unit...")
+  log_message("Rasterizing threat score per planning unit...")
   threat_raster <- elsar::exact_rasterise(
     features = eco_summary,
     pus = pus,

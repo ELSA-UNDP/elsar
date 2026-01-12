@@ -51,6 +51,7 @@ For \code{ggplot} returns a list that can simply be added to a \code{ggplot}, e.
 \code{elsar_plot_optics()} allows to use specific themes for plotting and add north arrows and scales if wanted.
 }
 \examples{
+\dontrun{
 boundary_proj <- make_boundary(
   boundary_in = boundary_dat,
   iso3 = "NPL",
@@ -59,6 +60,7 @@ boundary_proj <- make_boundary(
 
 pus <- make_planning_units(
   boundary_proj = boundary_proj,
+  iso3 = "NPL",
   pu_size = NULL,
   pu_threshold = 8.5e5,
   limit_to_mainland = FALSE
@@ -76,4 +78,5 @@ wad_plot <- testPlot <- elsar_plot_static_raster_c(
   background = wad_dat,
   legend_title = "wad"
 ) + elsar_plot_optics()
+}
 }

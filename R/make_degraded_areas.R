@@ -9,6 +9,9 @@
 #' @param pu Planning units raster (SpatRaster).
 #' @param sdg_degradation_input Productivity degradation layer (SpatRaster).
 #' @param hii_input Human Influence Index (HII) raster (SpatRaster).
+#' @param lulc_proportions A multi-band `SpatRaster` from [download_lulc_proportions()] containing
+#'   pre-computed class proportions. If provided, bands named "agriculture" and "built_area" will
+#'   be used automatically, overriding `agriculture_input` and `built_areas_input`.
 #' @param agriculture_input Agriculture layer (SpatRaster).
 #' @param built_areas_input Built-up areas layer (SpatRaster).
 #' @param output_path Directory to save output rasters. If NULL, output is not saved.
@@ -19,6 +22,7 @@
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' restore_zone <- make_degraded_areas(
 #'   "CHL",
 #'   pu,
@@ -28,19 +32,54 @@
 #'   built_areas_input,
 #'   output_path = "./output"
 #'   )
+#' }
 make_degraded_areas <- function(country_iso,
                                 pu,
                                 sdg_degradation_input = NULL,
                                 hii_input = NULL,
+                                lulc_proportions = NULL,
                                 agriculture_input = NULL,
                                 built_areas_input = NULL,
                                 output_path = NULL,
                                 hii_threshold = 4,
                                 lulc_threshold = 0.1) {
 
+  # If lulc_proportions provided, extract agriculture and built_area
+  # Supports both list format (new) and SpatRaster format (legacy)
+  if (!is.null(lulc_proportions)) {
+    if (inherits(lulc_proportions, "list")) {
+      log_message("Using LULC proportions (list format): {paste(names(lulc_proportions), collapse=', ')}")
+      if ("agriculture" %in% names(lulc_proportions) && is.null(agriculture_input)) {
+        agriculture_input <- lulc_proportions[["agriculture"]]
+        log_message("Using 'agriculture' proportion raster")
+      }
+      if ("built_area" %in% names(lulc_proportions) && is.null(built_areas_input)) {
+        built_areas_input <- lulc_proportions[["built_area"]]
+        log_message("Using 'built_area' proportion raster")
+      }
+    } else if (inherits(lulc_proportions, "SpatRaster")) {
+      band_names <- names(lulc_proportions)
+      log_message("Using LULC proportions (SpatRaster): {paste(band_names, collapse=', ')}")
+      if ("agriculture" %in% band_names && is.null(agriculture_input)) {
+        agriculture_input <- lulc_proportions[["agriculture"]]
+        log_message("Extracted 'agriculture' band")
+      }
+      if ("built_area" %in% band_names && is.null(built_areas_input)) {
+        built_areas_input <- lulc_proportions[["built_area"]]
+        log_message("Extracted 'built_area' band")
+      }
+    } else {
+      stop("'lulc_proportions' must be a list or SpatRaster object.", call. = FALSE)
+    }
+  }
+
   # Ensure necessary inputs are provided
   if (is.null(sdg_degradation_input) || is.null(hii_input) || is.null(agriculture_input) || is.null(built_areas_input)) {
     stop("All required input rasters (sdg_degradation_input, hii_input, agriculture_input, built_areas_input) must be provided.")
+  }
+  if (!is.null(output_path)) {
+    assertthat::assert_that(dir.exists(output_path),
+                            msg = glue::glue("'output_path' directory does not exist: {output_path}"))
   }
 
   # Resample and align SDG degradation layer to the planning units (PU) raster
@@ -128,7 +167,7 @@ make_degraded_areas <- function(country_iso,
     )
   }
 
-  log_msg(glue::glue("Degraded areas/Restore Zone layer created for {country_iso}"))
+  log_message("Degraded areas/Restore Zone layer created for {country_iso}")
 
   return(restore_zone)  # Return the final restoration zone raster
 }

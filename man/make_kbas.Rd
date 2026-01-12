@@ -32,7 +32,7 @@ make_kbas(
 
 \item{buffer_points}{Logical. If \code{TRUE}, circular buffers are generated around point geometries using the \code{area_column} attribute (default is \code{TRUE}).}
 
-\item{area_column}{A string indicating the name of the column containing site area (in hectares), used when buffering point geometries.}
+\item{area_column}{A string indicating the name of the column containing the reported area for point geometries (in km²), used when buffering points. The default \code{"repareakm2"} is the KBA dataset's column for points with reported areas. Note: \code{sitareakm2} contains site area for polygon features but is typically NA for points.}
 
 \item{nQuadSegs}{An integer specifying the number of segments used to approximate circular buffers (default: 50).}
 

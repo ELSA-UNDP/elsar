@@ -36,11 +36,21 @@ get_iucn_ecosystems(
 An \code{sf} object of the merged, reprojected, valid IUCN GET ecosystem features intersecting the target boundary.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+This function is deprecated and not recommended for current use. The IUCN GET
+ecosystem data has known quality issues and incomplete coverage. Users should
+supply their own ecosystem data to functions like \code{\link[=make_threatened_ecosystems_protection]{make_threatened_ecosystems_protection()}}
+and \code{\link[=make_underrepresented_ecosystems]{make_underrepresented_ecosystems()}}.
+
+A replacement data source from the Global Ecosystems Atlas is planned for future
+versions of this package.
+}
+\details{
 This function reads, intersects, reprojects, and merges \code{.gpkg} vector files representing IUCN Global Ecosystem Typology (GET) layers from a specified directory.
 It allows filtering by filename prefixes (e.g., "T1.2", "TF1.4"), excludes specific ecosystem types (e.g., intensive land-use biomes), and optionally removes features
 with \verb{minor occurrence} flags. The resulting layer is cropped to a country boundary and reprojected to match a planning units raster.
-}
-\details{
+
 The ecosystem layer ID (e.g., "F1.1") is extracted from the source filename and added to each feature as the \code{get_id} column for tracking.
 
 If \code{output_path} is specified, the final filtered and valid \code{sf} object is saved as a GeoPackage.

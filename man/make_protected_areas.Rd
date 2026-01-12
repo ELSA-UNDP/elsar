@@ -11,7 +11,8 @@ make_protected_areas(
   sf_in = NULL,
   download_path = NULL,
   status = c("Established", "Inscribed", "Designated"),
-  pa_def = 1,
+  site_type = "PA",
+  pa_def = deprecated(),
   include_mab_designation = FALSE,
   buffer_points = TRUE,
   area_column = "REP_AREA",
@@ -42,8 +43,13 @@ or loaded from. Required if \code{from_wdpa = TRUE}.}
 Valid values: "Designated", "Established", "Inscribed", "Proposed", "Adopted".
 Default is \code{c("Established", "Inscribed", "Designated")}.}
 
-\item{pa_def}{Integer vector. Values for the \code{PA_DEF} column (1 = Protected Area,
-0 = OECM). Default is \code{1}.}
+\item{site_type}{Character vector. Values for the \code{SITE_TYPE} column in WDPA
+data. Valid values: "PA" (Protected Area) or "OECM" (Other Effective
+Area-based Conservation Measure). Default is \code{"PA"}. For backward
+compatibility, numeric values 1 (PA) and 0 (OECM) are also accepted.}
+
+\item{pa_def}{Deprecated. Use \code{site_type} instead. Kept for backward
+compatibility.}
 
 \item{include_mab_designation}{Logical. If \code{FALSE}, excludes UNESCO Man and
 

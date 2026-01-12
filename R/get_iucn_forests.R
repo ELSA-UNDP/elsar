@@ -1,8 +1,19 @@
 #' Extract and Rasterise IUCN Forest Ecosystems from Preloaded Layer
 #'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
+#' This function is deprecated and not recommended for current use. The IUCN GET
+#' ecosystem data has known quality issues and incomplete coverage. Users should
+#' supply their own forest ecosystem data.
+#'
+#' A replacement data source from the Global Ecosystems Atlas is planned for future
+#' versions of this package.
+#'
+#' @details
 #' This function filters IUCN GET polygons (already loaded as `sf`) to include only forest
 #' ecosystems, merges them, and calculates proportional coverage across each planning unit.
-#' The result is normalized to a 0–1 scale using `elsar::make_normalised_raster()`.
+#' The result is normalized to a 0-1 scale using `elsar::make_normalised_raster()`.
 #'
 #' Optionally, the result can be written to a Cloud-Optimized GeoTIFF file.
 #'
@@ -69,7 +80,7 @@ get_iucn_forests <- function(
       dplyr::summarise()
 
     # Compute coverage fraction
-    log_msg("Calculating forest coverage fractions...")
+    log_message("Calculating forest coverage fractions...")
     forest_raster <- exactextractr::coverage_fraction(pus, iucn_get_sf)[[1]] %>%
       elsar::make_normalised_raster(
         pus = pus,

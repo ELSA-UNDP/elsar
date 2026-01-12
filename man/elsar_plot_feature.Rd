@@ -43,6 +43,7 @@ Creates a ggplot2 map of a single feature represented by a \code{SpatRaster}, wi
 planning unit outlines, customizable color palette direction, and optional saving to disk.
 }
 \examples{
+\dontrun{
 boundary_proj <- make_boundary(
   boundary_in = boundary_dat,
   iso3 = "NPL",
@@ -51,6 +52,7 @@ boundary_proj <- make_boundary(
 
 pus <- make_planning_units(
   boundary_proj = boundary_proj,
+  iso3 = "NPL",
   pu_size = NULL,
   pu_threshold = 8.5e5,
   limit_to_mainland = FALSE
@@ -75,4 +77,5 @@ elsar_plot_feature(
   iso3 = "test",
   custom_resolution = 400
 )
+}
 }

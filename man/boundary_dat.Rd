@@ -3,17 +3,18 @@
 \docType{data}
 \name{boundary_dat}
 \alias{boundary_dat}
-\title{Data used to extract the Nepal boundary}
+\title{Boundary data for Southern Asia}
 \format{
-An object of class \code{sf} (inherits from \code{data.frame}) with 4 rows and 21 columns.
+An \code{sf} data frame with polygon geometries.
 }
 \source{
-https:// add link here
+GADM database \url{https://gadm.org/}
 }
 \usage{
 boundary_dat
 }
 \description{
-\code{sf} file containing the Southern Asia boundary information
+An \code{sf} object containing boundary information for Southern Asia,
+used for extracting country boundaries (e.g., Nepal).
 }
 \keyword{datasets}

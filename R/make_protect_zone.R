@@ -12,14 +12,21 @@
 #' @param pus A `SpatRaster` defining the planning units.
 #' @param current_protected_areas a `sf` or `SpatVector` object of current protected areas.
 #'        If NULL, `elsar::make_protected_areas()` will be used.
+#' @param lulc_proportions A multi-band `SpatRaster` from [download_lulc_proportions()] containing
+#'   pre-computed class proportions. If provided, bands named "agriculture" and "built_area" will
+#'   be used automatically, overriding `agricultural_areas_input` and `built_areas_input`.
 #' @param agricultural_areas_input A `SpatRaster` representing binary or probabilistic agricultural areas (optional).
 #' @param built_areas_input A `SpatRaster` representing binary or probabilistic built-up areas (optional).
 #' @param lulc_raster A `SpatRaster` LULC map used to extract agriculture/built-up areas if not already provided (default: NULL).
 #' @param hii_input A `SpatRaster` of the Human Footprint Index.
 #' @param hii_threshold A fixed numeric HII threshold. If NULL, `hii_quantile` is used to estimate it.
 #' @param hii_quantile A quantile threshold (e.g., 0.95) used to calculate the HII threshold within protected areas if `hii_threshold` is NULL.
-#' @param agriculture_lulc_value LULC value representing agriculture (default: 4).
-#' @param built_area_lulc_value LULC value representing built-up areas (default: 7).
+#' @param lulc_product Character. LULC product used for class value lookups: "esri_10m" (default),
+#'   "dynamic_world", "esa_worldcover", or "local". When "local", explicit class values must be provided.
+#' @param agriculture_lulc_value Integer or NULL. LULC value representing agriculture. If NULL,
+#'   automatically determined from `lulc_product`. Default is NULL.
+#' @param built_area_lulc_value Integer or NULL. LULC value representing built-up areas. If NULL,
+#'   automatically determined from `lulc_product`. Default is NULL.
 #' @param agriculture_threshold Minimum fraction for agriculture to exclude a cell (default: 0.1).
 #' @param built_areas_threshold Minimum fraction for built-up area to exclude a cell (default: 0.1).
 #' @param filter_patch_size Logical. Whether to remove small isolated patches (default: TRUE).
@@ -48,14 +55,16 @@ make_protect_zone <- function(
     iso3,
     pus,
     current_protected_areas,
+    lulc_proportions = NULL,
     agricultural_areas_input = NULL,
     built_areas_input = NULL,
     lulc_raster = NULL,
     hii_input,
     hii_threshold = NULL,
     hii_quantile = 0.95,
-    agriculture_lulc_value = 5,
-    built_area_lulc_value = 7,
+    lulc_product = c("esri_10m", "dynamic_world", "esa_worldcover", "local"),
+    agriculture_lulc_value = NULL,
+    built_area_lulc_value = NULL,
     agriculture_threshold = 0.1,
     built_areas_threshold = 0.1,
     filter_patch_size = TRUE,
@@ -63,10 +72,68 @@ make_protect_zone <- function(
     make_locked_out = FALSE,
     output_path = NULL
 ) {
+  lulc_product <- match.arg(lulc_product)
+
+  # If lulc_proportions provided, extract agriculture and built_area
+  # Supports both list format (new) and SpatRaster format (legacy)
+  if (!is.null(lulc_proportions)) {
+    if (inherits(lulc_proportions, "list")) {
+      # New format: named list of SpatRasters
+      log_message("Using LULC proportions (list format): {paste(names(lulc_proportions), collapse=', ')}")
+      if ("agriculture" %in% names(lulc_proportions) && is.null(agricultural_areas_input)) {
+        agricultural_areas_input <- lulc_proportions[["agriculture"]]
+        log_message("Using 'agriculture' proportion raster")
+      }
+      if ("built_area" %in% names(lulc_proportions) && is.null(built_areas_input)) {
+        built_areas_input <- lulc_proportions[["built_area"]]
+        log_message("Using 'built_area' proportion raster")
+      }
+    } else if (inherits(lulc_proportions, "SpatRaster")) {
+      # Legacy format: multi-band SpatRaster
+      band_names <- names(lulc_proportions)
+      log_message("Using LULC proportions (SpatRaster): {paste(band_names, collapse=', ')}")
+      if ("agriculture" %in% band_names && is.null(agricultural_areas_input)) {
+        agricultural_areas_input <- lulc_proportions[["agriculture"]]
+        log_message("Extracted 'agriculture' band")
+      }
+      if ("built_area" %in% band_names && is.null(built_areas_input)) {
+        built_areas_input <- lulc_proportions[["built_area"]]
+        log_message("Extracted 'built_area' band")
+      }
+    } else {
+      stop("'lulc_proportions' must be a list or SpatRaster object.", call. = FALSE)
+    }
+  }
+
+  # Resolve LULC class values from product if not explicitly provided
+  # (only needed if using lulc_raster fallback)
+  if (is.null(agricultural_areas_input) || is.null(built_areas_input)) {
+    if (is.null(agriculture_lulc_value)) {
+      if (lulc_product == "local") {
+        stop("When lulc_product = 'local', agriculture_lulc_value must be explicitly provided.", call. = FALSE)
+      }
+      agriculture_lulc_value <- get_lulc_class_value(lulc_product, "agriculture")
+    }
+    if (is.null(built_area_lulc_value)) {
+      if (lulc_product == "local") {
+        stop("When lulc_product = 'local', built_area_lulc_value must be explicitly provided.", call. = FALSE)
+      }
+      built_area_lulc_value <- get_lulc_class_value(lulc_product, "built_area")
+    }
+
+    log_message("Using LULC product: {lulc_product}")
+    log_message("Agriculture class value(s): {paste(agriculture_lulc_value, collapse=', ')}")
+    log_message("Built area class value(s): {paste(built_area_lulc_value, collapse=', ')}")
+  }
+
   # Validate protected areas input or load default
   assertthat::assert_that(
       inherits(current_protected_areas, "sf") || inherits(current_protected_areas, "SpatVector"),
       msg = "'current_protected_areas' must be an 'sf' or 'SpatVector' object.")
+  if (!is.null(output_path)) {
+    assertthat::assert_that(dir.exists(output_path),
+                            msg = glue::glue("'output_path' directory does not exist: {output_path}"))
+  }
 
   if (nrow(current_protected_areas) > 1){
     current_protected_areas <- current_protected_areas %>%
@@ -75,12 +142,19 @@ make_protect_zone <- function(
     }
 
   # Process agriculture
-  log_msg("Processing agricultural areas...")
+  log_message("Processing agricultural areas...")
   if (!is.null(agricultural_areas_input)) {
-    agricultural_areas <- agricultural_areas_input
+    log_message("Aligning provided agricultural areas raster to planning units...")
+    agricultural_areas <- elsar::make_normalised_raster(
+      raster_in = agricultural_areas_input,
+      pus = pus,
+      iso3 = iso3,
+      rescaled = FALSE,
+      method_override = "mean"
+    )
   } else {
     assertthat::assert_that(!is.null(lulc_raster), msg = "If 'agricultural_areas_input' is NULL, 'lulc_raster' must be provided.")
-    log_msg("Extracting agricultural areas from LULC raster...")
+    log_message("Extracting agricultural areas from LULC raster...")
     agricultural_areas <- elsar::make_normalised_raster(
       raster_in = lulc_raster,
       pus = pus,
@@ -92,12 +166,19 @@ make_protect_zone <- function(
     }
 
   # Process built-up areas
-  log_msg("Processing built-up areas...")
+  log_message("Processing built-up areas...")
   if (!is.null(built_areas_input)) {
-    built_areas <- built_areas_input
+    log_message("Aligning provided built areas raster to planning units...")
+    built_areas <- elsar::make_normalised_raster(
+      raster_in = built_areas_input,
+      pus = pus,
+      iso3 = iso3,
+      rescaled = FALSE,
+      method_override = "mean"
+    )
   } else {
     assertthat::assert_that(!is.null(lulc_raster), msg = "If 'built_areas_input' is NULL, 'lulc_raster' must be provided.")
-    log_msg("Extracting built areas from LULC raster...")
+    log_message("Extracting built areas from LULC raster...")
     built_areas <-  elsar::make_normalised_raster(
       raster_in = lulc_raster,
       pus = pus,
@@ -109,19 +190,19 @@ make_protect_zone <- function(
     }
 
   # Normalize HII
-  log_msg("Processing HII raster...")
+  log_message("Processing HII raster...")
   hii_resampled <- elsar::make_normalised_raster(
     raster_in = hii_input,
     pus = pus,
     iso3 = iso3,
-    rescale = FALSE,
+    rescaled = FALSE,
     method_override = "mean"
     )
 
   # Determine threshold from fixed value or quantile
   if (!is.null(hii_threshold)) {
     breaks <- hii_threshold
-    log_msg(glue::glue("Using fixed HII threshold: {breaks}"))
+    log_message("Using fixed HII threshold: {breaks}")
   } else {
     breaks <- exactextractr::exact_extract(
       x = hii_resampled,
@@ -129,15 +210,15 @@ make_protect_zone <- function(
       fun = "quantile",
       quantiles = hii_quantile
     )
-    log_msg(glue::glue("HII threshold calculated from quantile {hii_quantile}: {breaks}"))
+    log_message("HII threshold calculated from quantile {hii_quantile}: {breaks}")
   }
 
   # Base zone: where HII is low
-  log_msg("Creating initial protect zone based on HII values...")
+  log_message("Creating initial protect zone based on HII values...")
   protect_zone <- terra::ifel(hii_resampled < breaks, 1, 0)
 
   # Exclude agriculture and built-up areas
-  log_msg("Removing built and agricultural areas...")
+  log_message("Removing built and agricultural areas...")
   if (!is.null(built_areas) && is.null(agricultural_areas)) {
     protect_zone <- terra::ifel(built_areas > built_areas_threshold, 0, protect_zone)
   } else if (is.null(built_areas) && !is.null(agricultural_areas)) {
@@ -145,12 +226,12 @@ make_protect_zone <- function(
   } else if (!is.null(built_areas) && !is.null(agricultural_areas)) {
     protect_zone <- terra::ifel(built_areas > built_areas_threshold | agricultural_areas > agriculture_threshold, 0, protect_zone)
   } else {
-    log_msg("No building or agricultural area found - Protection zone based on HII only.")
+    log_message("No building or agricultural area found - Protection zone based on HII only.")
   }
 
   # Optionally filter out small patches
   if (filter_patch_size) {
-    log_msg(glue::glue("Sieving out patch sizes smaller than {min_patch_size} planning units..."))
+    log_message("Sieving out patch sizes smaller than {min_patch_size} planning units...")
     protect_zone <- terra::sieve(protect_zone, threshold = min_patch_size)
   }
 

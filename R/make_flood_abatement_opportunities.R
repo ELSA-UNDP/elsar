@@ -35,8 +35,13 @@ make_flood_abatement_opportunities <- function(
     output_path = NULL,
     threads = TRUE) {
 
+  if (!is.null(output_path)) {
+    assertthat::assert_that(dir.exists(output_path),
+                            msg = glue::glue("'output_path' directory does not exist: {output_path}"))
+  }
+
   # Normalize NDVI
-  log_msg("Normalizing NDVI raster and removing negative (e.g., water) values...")
+  log_message("Normalizing NDVI raster and removing negative (e.g., water) values...")
   ndvi <- elsar::make_normalised_raster(
     raster_in = ndvi_raster,
     pus = pus,
@@ -45,7 +50,7 @@ make_flood_abatement_opportunities <- function(
   )
 
   # Normalize Global Flood Database
-  log_msg("Normalizing Global Flood Database...")
+  log_message("Normalizing Global Flood Database...")
   gfd_risk <- elsar::make_normalised_raster(
     raster_in = gfd_raster,
     pus = pus,

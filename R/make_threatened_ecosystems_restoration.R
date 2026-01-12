@@ -32,25 +32,46 @@ make_threatened_ecosystems_restoration <- function(
     degradation_input = NULL,
     output_path = NULL
 ) {
-  assertthat::assert_that(inherits(pus, "SpatRaster"))
-  assertthat::assert_that(assertthat::is.string(iso3))
-  assertthat::assert_that(inherits(threatened_ecosystems_input, "SpatRaster"),
-                          msg = "'threatened_ecosystems_input' must be a SpatRaster.")
-  assertthat::assert_that(inherits(degradation_input, "SpatRaster"),
-                          msg = "'degradation_input' must be a SpatRaster.")
+  # Input validation
+  assertthat::assert_that(
+    assertthat::is.string(iso3) && nchar(iso3) == 3,
+    msg = "'iso3' must be a 3-letter country code."
+  )
+
+  assertthat::assert_that(
+    inherits(pus, "SpatRaster"),
+    msg = "'pus' must be a SpatRaster object."
+  )
+
+  assertthat::assert_that(
+    inherits(threatened_ecosystems_input, "SpatRaster"),
+    msg = "'threatened_ecosystems_input' must be a SpatRaster."
+  )
+
+  assertthat::assert_that(
+    inherits(degradation_input, "SpatRaster"),
+    msg = "'degradation_input' must be a SpatRaster."
+  )
+
+  log_message("Creating threatened ecosystems restoration layer for {iso3}...")
 
   # Retain threat values only where degraded areas exist
-  log_msg("Finding overlap of threatened ecosystems and degraded areas...")
-  threatened_ecosystems_for_restoration <- threatened_ecosystems_input * degradation_input %>%
-    make_normalised_raster(
-      pus = pus,
-      iso3 = iso3
-      )
+  log_message("Finding overlap of threatened ecosystems and degraded areas...")
+  threatened_degraded <- threatened_ecosystems_input * degradation_input
+
+  threatened_ecosystems_for_restoration <- make_normalised_raster(
+    raster_in = threatened_degraded,
+    pus = pus,
+    iso3 = iso3
+  )
 
   names(threatened_ecosystems_for_restoration) <- "threatened_ecosystems_for_restoration"
 
   if (!is.null(output_path)) {
-    assertthat::assert_that(dir.exists(output_path), msg = "'output_path' does not exist.")
+    assertthat::assert_that(
+      dir.exists(output_path),
+      msg = "'output_path' does not exist."
+    )
     out_file <- glue::glue("{output_path}/threatened_ecosystems_for_restoration_{iso3}.tif")
 
     elsar::save_raster(
@@ -60,5 +81,6 @@ make_threatened_ecosystems_restoration <- function(
     )
   }
 
+  log_message("Threatened ecosystems restoration layer created successfully.")
   return(threatened_ecosystems_for_restoration)
 }

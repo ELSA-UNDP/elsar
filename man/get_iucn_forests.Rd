@@ -37,11 +37,20 @@ get_iucn_forests(
 A normalized \code{SpatRaster} showing fractional IUCN forest coverage across PUs.
 }
 \description{
-This function filters IUCN GET polygons (already loaded as \code{sf}) to include only forest
-ecosystems, merges them, and calculates proportional coverage across each planning unit.
-The result is normalized to a 0–1 scale using \code{elsar::make_normalised_raster()}.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+This function is deprecated and not recommended for current use. The IUCN GET
+ecosystem data has known quality issues and incomplete coverage. Users should
+supply their own forest ecosystem data.
+
+A replacement data source from the Global Ecosystems Atlas is planned for future
+versions of this package.
 }
 \details{
+This function filters IUCN GET polygons (already loaded as \code{sf}) to include only forest
+ecosystems, merges them, and calculates proportional coverage across each planning unit.
+The result is normalized to a 0-1 scale using \code{elsar::make_normalised_raster()}.
+
 Optionally, the result can be written to a Cloud-Optimized GeoTIFF file.
 }
 \examples{

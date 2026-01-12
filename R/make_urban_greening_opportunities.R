@@ -12,7 +12,12 @@
 #'
 #' @param ndvi_raster A `SpatRaster` representing NDVI values.
 #' @param lulc_raster Optional. A `SpatRaster` representing land use/land cover (LULC) classes.
-#'                   Required if `built_areas_raster` is not provided. Urban classes should be coded as `7`.
+#'                   Required if `built_areas_raster` is not provided.
+#' @param lulc_product Character. LULC product used for class value lookups: "esri_10m" (default),
+#'                     "dynamic_world", "esa_worldcover", or "local". When "local", `built_area_lulc_value`
+#'                     must be explicitly provided.
+#' @param built_area_lulc_value Integer or NULL. LULC value representing built-up/urban areas. If NULL,
+#'                              automatically determined from `lulc_product`. Default is NULL.
 #' @param built_areas_raster Optional. A `SpatRaster` representing pre-classified binary built areas
 #'                           (1 = built, 0 = non-built). Skips internal classification from `lulc_raster`.
 #'                           Required if `lulc_raster` is not provided.
@@ -45,6 +50,8 @@
 make_urban_greening_opportunities <- function(
     ndvi_raster,
     lulc_raster = NULL,
+    lulc_product = c("esri_10m", "dynamic_world", "esa_worldcover", "local"),
+    built_area_lulc_value = NULL,
     built_areas_raster = NULL,
     sdei_statistics,
     threshold = 0.10,
@@ -54,6 +61,19 @@ make_urban_greening_opportunities <- function(
     output_path = NULL,
     cores = 4
 ) {
+  lulc_product <- match.arg(lulc_product)
+
+  # Resolve LULC class values from product if not explicitly provided
+  if (is.null(built_area_lulc_value)) {
+    if (lulc_product == "local") {
+      stop("When lulc_product = 'local', built_area_lulc_value must be explicitly provided.", call. = FALSE)
+    }
+    built_area_lulc_value <- get_lulc_class_value(lulc_product, "built_area")
+  }
+
+  log_message("Using LULC product: {lulc_product}")
+  log_message("Built area class value(s): {paste(built_area_lulc_value, collapse=', ')}")
+
   # Validate inputs
   assertthat::assert_that(inherits(ndvi_raster, "SpatRaster"), msg = "ndvi_raster must be a SpatRaster object.")
   if (!is.null(lulc_raster)) {
@@ -66,9 +86,13 @@ make_urban_greening_opportunities <- function(
   if (is.null(lulc_raster) && is.null(built_areas_raster)) {
     stop("You must provide either `lulc_raster` or `built_areas_raster` to classify urban areas.")
   }
+  if (!is.null(output_path)) {
+    assertthat::assert_that(dir.exists(output_path),
+                            msg = glue::glue("'output_path' directory does not exist: {output_path}"))
+  }
 
   # Normalize NDVI — invert to reflect greening need, and remove negative values (water or invalid)
-  log_msg("Normalizing NDVI: removing negatives and inverting to reflect greening need...")
+  log_message("Normalizing NDVI: removing negatives and inverting to reflect greening need...")
   rev_ndvi <- make_normalised_raster(
     raster_in = ndvi_raster,
     pus = pus,
@@ -79,7 +103,7 @@ make_urban_greening_opportunities <- function(
 
   # Handle urban area detection
   if (!is.null(built_areas_raster)) {
-    log_msg("Using precomputed built areas raster...")
+    log_message("Using precomputed built areas raster...")
     urban_areas <- make_normalised_raster(
       raster_in = built_areas_raster,
       pus = pus,
@@ -87,14 +111,14 @@ make_urban_greening_opportunities <- function(
       method_override = "mean"
     )
   } else {
-    log_msg("Classifying built areas from LULC raster...")
+    log_message("Classifying built areas from LULC raster...")
     urban_areas <- make_normalised_raster(
       raster_in = lulc_raster,
       pus = pus,
       iso3 = iso3,
       method_override = "mean",
       crop_global_input = FALSE,
-      input_raster_conditional_expression = function(x) terra::ifel(x == 7, 1, 0)
+      input_raster_conditional_expression = function(x) terra::ifel(x == built_area_lulc_value, 1, 0)
     )
   }
 
@@ -104,7 +128,7 @@ make_urban_greening_opportunities <- function(
   names(urban_areas) <- "built_areas"
 
   # Process urban heat exposure from SDEI
-  log_msg("Rasterizing urban heat exposure from SDEI...")
+  log_message("Rasterizing urban heat exposure from SDEI...")
   pu_proj <- terra::as.polygons(pus) %>%
     sf::st_as_sf() %>%
     dplyr::filter(`Planning Units` == 1) %>%
@@ -119,7 +143,7 @@ make_urban_greening_opportunities <- function(
     sf::st_as_sf()
 
   if (!"ID_HDC_G0" %in% names(sdei_filtered) || !"avg_intens" %in% names(sdei_filtered)) {
-    log_msg("No usable heat exposure data: generating empty raster.")
+    log_message("No usable heat exposure data: generating empty raster.")
     urban_extreme_heat <- terra::ifel(pus == 1, 0, NA)
   } else {
     sdei_summary <- sdei_filtered %>%
@@ -128,7 +152,7 @@ make_urban_greening_opportunities <- function(
       dplyr::filter(!is.na(avg_intens))
 
     if (nrow(sdei_summary) == 0) {
-      log_msg("No non-NA values in urban heat: generating empty raster.")
+      log_message("No non-NA values in urban heat: generating empty raster.")
       urban_extreme_heat <- terra::ifel(pus == 1, 0, NA)
     } else {
       urban_extreme_heat <- exact_rasterise(
@@ -143,7 +167,7 @@ make_urban_greening_opportunities <- function(
   }
 
   # Combine layers: areas with low NDVI, high heat, and urban presence
-  log_msg("Combining NDVI, heat, and urban data into final greening opportunities raster...")
+  log_message("Combining NDVI, heat, and urban data into final greening opportunities raster...")
   urban_greening_opportunities <- ((rev_ndvi + urban_extreme_heat) / 2 * urban_areas) %>%
     elsar::make_normalised_raster(pus = pus, iso3 = iso3)
 
@@ -157,7 +181,7 @@ make_urban_greening_opportunities <- function(
       filename = output_file,
       datatype = "FLT4S"
     )
-    log_msg(glue::glue("Urban greening raster saved to: {output_file}"))
+    log_message("Urban greening raster saved to: {output_file}")
   }
 
   # Optionally return both layers

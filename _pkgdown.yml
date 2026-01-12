@@ -1,6 +1,7 @@
 url: https://elsa-undp.github.io/elsar/
 template:
   bootstrap: 5
+llm-docs: false
 articles:
 development:
   destination:
@@ -40,17 +41,6 @@ reference:
   - make_restore_zone
   - make_manage_zone
 
-- title: Post-hoc analysis for ELSA framework
-  desc: Functions to help formulate a conservation problem for an ELSA analysis
-- contents:
-  - calc_feat_rep
-
-- title: ELSA-specific plotting functions
-  desc: Functions to help visualise ELSA output
-- contents:
-  - elsa_plot_output_map
-  - elsa_plot_representation
-
 - title: ELSA-specific utilities functions
   desc: Functions to help ELSA analysis
 - contents:
@@ -61,14 +51,24 @@ reference:
 - title: Helper Functions
 - contents:
   - elsar_load_data
+  - check_and_download_required_layers
+  - download_dynamic_world_data
+  - download_esa_worldcover_data
   - download_esri_lulc_data
   - download_global_pasture_data
   - download_gee_layer
+  - download_lulc_class_proportion
+  - download_lulc_data
+  - download_lulc_proportions
   - filter_sf
   - get_file_type
   - get_iucn_ecosystems
   - get_iucn_forests
-  - log_msg
+  - get_lulc_class_value
+  - get_lulc_classes
+  - list_lulc_products
+  - load_local_lulc_data
+  - log_message
   - make_custom_projection
 
 - title: Utilities
@@ -77,6 +77,7 @@ reference:
   - crop_global_raster
   - extract_filename_filetype
   - exact_rasterise
+  - get_binary_layers
   - get_coverage
   - median_from_rast
   - rescale_raster
@@ -84,30 +85,21 @@ reference:
   - conditionally_subdivide_bbox
   - save_raster
 
-- title: Plotting function
+- title: Plotting functions
   desc: Functions to plot input and output data of an ELSA workflow
 - contents:
   - elsar_plot_distribution
   - elsar_plot_feature
   - elsar_plot_static_raster
-  - elsar_plot_static_raster_c
-  - elsar_plot_static_raster_d
 
-- title: Utilities plotting
-  desc:
+- title: Plotting utilities
+  desc: Helper functions for plotting
 - contents:
   - elsar_continuous_to_categorical
   - elsar_extend
   - elsar_plot_background
-  - elsar_plot_background_c
-  - elsar_plot_background_d
   - elsar_plot_extra_data
   - elsar_plot_optics
-
-- title: Utilities pipeline
-  desc:
-- contents:
-  - get_binary_layers
 
 - title: Datasets
 - contents:

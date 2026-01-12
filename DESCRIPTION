@@ -1,6 +1,6 @@
 Package: elsar
-Title: Functions and Tools For Creating ELSA Tier 1 Data Stacks
-Version: 0.0.3
+Title: Functions and Tools For Creating ELSA Data Stacks
+Version: 0.0.7
 Authors@R: 
     c(
     person(
@@ -17,7 +17,11 @@ Authors@R:
       comment = c(ORCID = "0000-0002-3112-4116")
       )
     )
-Description: What the package does (one paragraph).
+Description: Provides tools and data pipelines to support Essential Life Support
+    Areas (ELSA) conservation planning. Includes functions to load and harmonize
+    global spatial datasets, prepare raster layers for spatial prioritization,
+    create zone layers (protect, restore, manage), and calculate coverage metrics
+    over planning units.
 License: CC BY 4.0
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -40,11 +44,11 @@ Suggests:
 VignetteBuilder: knitr
 Depends:
     R (>= 3.5.0)
-Imports: 
+Imports:
     assertthat,
-    bit64,
     dplyr,
     exactextractr,
+    future,
     ggnewscale,
     ggplot2,
     ggridges,
@@ -52,8 +56,11 @@ Imports:
     googledrive,
     glue,
     here,
+    lifecycle,
     magrittr,
     plyr,
+    purrr,
+    rappdirs,
     reticulate,
     rlang,
     sf,
@@ -61,9 +68,9 @@ Imports:
     stringr,
     terra,
     tibble,
-    tidyr,
     tidyterra,
-    units
+    units,
+    xml2
 Config/testthat/edition: 3
 LazyData: true
 URL: https://elsa-undp.github.io/elsar/

@@ -4,9 +4,9 @@
 \name{elsar-package}
 \alias{elsar}
 \alias{elsar-package}
-\title{elsar: Functions and Tools For Creating ELSA Tier 1 Data Stacks}
+\title{elsar: Functions and Tools For Creating ELSA Data Stacks}
 \description{
-What the package does (one paragraph).
+Provides tools and data pipelines to support Essential Life Support Areas (ELSA) conservation planning. Includes functions to load and harmonize global spatial datasets, prepare raster layers for spatial prioritization, create zone layers (protect, restore, manage), and calculate coverage metrics over planning units.
 }
 \seealso{
 Useful links:

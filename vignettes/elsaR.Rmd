@@ -91,7 +91,8 @@ pus <- make_planning_units(
   boundary_proj = boundary_proj,
   pu_size = NULL,
   pu_threshold = 8.5e5,
-  limit_to_mainland = FALSE
+  limit_to_mainland = FALSE,
+  iso3 = "NPL"
 )
 ```
 
@@ -117,16 +118,16 @@ wadOut <- make_normalised_raster(
 terra::plot(wadOut)
 ```
 
-Instead of only having a quick look at the data by using the `terra` package's `plot` function, we can also create a plot using the plotting options integrated in the `elsar` package, such as `elsar_plot_static_raster_c()`, which allows to plot continuous raster data with `ggplot`.
+Instead of only having a quick look at the data by using the `terra` package's `plot` function, we can also create a plot using the plotting options integrated in the `elsar` package, such as `elsar_plot_static_raster()`, which allows to plot continuous raster data with `ggplot`.
 
 ```{r, fig.width = 7, fig.height = 4}
-(plot_wad <- elsar_plot_static_raster_c(
-  raster_in = wadOut, type = "ggplot_raster",
+(plot_wad <- elsar_plot_static_raster(
+  raster_in = wadOut,
   legend_title = "WAD"
 ))
 ```
 
-We can also add background data to the plot and add additional properties to change the appearance of the plot by using the `elsar_plot_optics()` function that allows to specify a specifc `ggplot` them. We can also change the colour palette to be something other than the default "viridis".
+We can also add background data to the plot and add additional properties to change the appearance of the plot by using the `elsar_plot_optics()` function that allows to specify a specific `ggplot` theme. We can also change the colour palette to be something other than the default "viridis".
 
 ```{r, fig.width = 8, fig.height = 6}
 custom_p <- ggplot2::scale_fill_distiller(
@@ -136,8 +137,8 @@ custom_p <- ggplot2::scale_fill_distiller(
   oob = scales::squish
 )
 
-(plot_wad <- elsar_plot_static_raster_c(
-  raster_in = wadOut, type = "ggplot_raster",
+(plot_wad <- elsar_plot_static_raster(
+  raster_in = wadOut,
   custom_palette = custom_p,
   background = wad_subset
 ) +
@@ -160,27 +161,27 @@ img_ymin <- img_ymax * 0.8
 
 img_pos <- c(img_xmin, img_xmax, img_ymin, img_ymax)
 
-(plot_out <- elsar_plot_static_raster_c(
-  raster_in = wadOut, type = "ggplot_raster",
+(plot_out <- elsar_plot_static_raster(
+  raster_in = wadOut,
   background = wad_subset,
-  legend_title = "WAD", 
+  legend_title = "WAD",
   expand_plot = TRUE
 ) +
-  elsar_plot_optics(include_logo = TRUE, 
+  elsar_plot_optics(include_logo = TRUE,
                       logo_path = "figures/elsaR_hex_sticker.png", #change to logo later
-                      logo_pos = img_pos, 
+                      logo_pos = img_pos,
                       logo_dim = c(50, 60)))
 
 ```
 
-If we are interested in the distribution, we can also plot the distribution on the plots. For this, we need to create two separate plots that we then put together: 
+If we are interested in the distribution, we can also plot the distribution on the plots. For this, we need to create two separate plots that we then put together:
 
 ```{r eval=FALSE, fig.height=6, fig.width=8, include=FALSE}
-plot_out <- elsar_plot_static_raster_c(
-  raster_in = wadOut, type = "ggplot_raster",
+plot_out <- elsar_plot_static_raster(
+  raster_in = wadOut,
   background = wad_subset,
   raster_df_out = TRUE,
-  legend_title = "WAD", 
+  legend_title = "WAD",
   expand_plot = TRUE
 )
 
@@ -216,14 +217,14 @@ plot_dist <- elsar_plot_distribution(
 We can also transform the data into categories and plot the main plot and the inset that way.
 
 ```{r eval=FALSE, fig.height=6, fig.width=8, include=FALSE}
-plot_cat <- elsar_plot_static_raster_d(
-  raster_in = wadOut, type = "ggplot_raster",
+plot_cat <- elsar_plot_static_raster(
+  raster_in = wadOut,
   categorical = FALSE,
   background = wad_subset,
   number_categories = 10,
   data_layer = "wad_final_cog",
   raster_df_out = TRUE,
-  legend_title = "WAD", 
+  legend_title = "WAD",
   expand_plot = TRUE
 )
 
@@ -257,13 +258,13 @@ plot_dist_cat <- elsar_plot_distribution(
 
 ## Existing Protected Area
 
-ADD TEXT LATER
+Protected areas can be overlaid on feature maps to visualize their spatial relationship with biodiversity values.
 
 ```{r, fig.width = 7, fig.height = 5}
 current_pas <- current_pas_sf
 
-(plot_wad_pas <- elsar_plot_static_raster_c(
-  raster_in = wadOut, type = "ggplot_raster",
+(plot_wad_pas <- elsar_plot_static_raster(
+  raster_in = wadOut,
   background = wad_subset,
   legend_title = "WAD"
 ) +
@@ -272,8 +273,8 @@ current_pas <- current_pas_sf
 ```
 
 ```{r, fig.width = 7, fig.height = 5}
-(plot_wad_pas2 <- elsar_plot_static_raster_c(
-  raster_in = wadOut, type = "ggplot_raster",
+(plot_wad_pas2 <- elsar_plot_static_raster(
+  raster_in = wadOut,
   background = wad_subset,
   legend_title = "WAD"
 ) +

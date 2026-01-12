@@ -19,6 +19,7 @@
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' boundary_proj <- make_boundary(
 #'   boundary_in = boundary_dat,
 #'   iso3 = "NPL",
@@ -27,6 +28,7 @@
 #'
 #' pus <- make_planning_units(
 #'   boundary_proj = boundary_proj,
+#'   iso3 = "NPL",
 #'   pu_size = NULL,
 #'   pu_threshold = 8.5e5,
 #'   limit_to_mainland = FALSE
@@ -51,6 +53,7 @@
 #'   iso3 = "test",
 #'   custom_resolution = 400
 #' )
+#' }
 elsar_plot_feature <- function(raster_in,
                                pus,
                                legend_title = NULL,
@@ -60,6 +63,44 @@ elsar_plot_feature <- function(raster_in,
                                iso3 = NULL,
                                no_legend = FALSE,
                                custom_resolution = 200) {
+  # Input validation
+  assertthat::assert_that(
+    inherits(raster_in, "SpatRaster"),
+    msg = "'raster_in' must be a SpatRaster object."
+  )
+
+  assertthat::assert_that(
+    inherits(pus, c("SpatRaster", "SpatVector")),
+    msg = "'pus' must be a SpatRaster or SpatVector object."
+  )
+
+  assertthat::assert_that(
+    is.logical(invert_palette),
+    msg = "'invert_palette' must be TRUE or FALSE."
+  )
+
+  assertthat::assert_that(
+    is.logical(no_legend),
+    msg = "'no_legend' must be TRUE or FALSE."
+  )
+
+  assertthat::assert_that(
+    is.numeric(custom_resolution) && custom_resolution > 0,
+    msg = "'custom_resolution' must be a positive number."
+  )
+
+
+  # Build descriptive message for logging
+
+  plot_label <- if (!is.null(legend_title) && nzchar(legend_title)) {
+    legend_title
+  } else if (!is.null(names(raster_in)) && nzchar(names(raster_in)[1])) {
+    names(raster_in)[1]
+  } else {
+    "unnamed"
+  }
+  log_message("Creating feature plot: {plot_label}...")
+
   # Prep outline
   outlines <- terra::as.polygons(pus) %>%
     # And convert to lines
@@ -119,7 +160,18 @@ elsar_plot_feature <- function(raster_in,
   }
 
   if (!is.null(figure_path)) {
-    ggplot2::ggsave(file.path(glue::glue("{figure_path}/{legend_title}_{iso3}.png")),
+    # Clean filename: replace spaces/special chars, collapse underscores, lowercase
+    clean_title <- gsub("[^a-zA-Z0-9_-]", "_", legend_title)
+    clean_title <- gsub("-", "_", clean_title)
+    clean_title <- gsub("_+", "_", clean_title)
+    clean_title <- gsub("^_|_$", "", clean_title)
+    clean_title <- tolower(clean_title)
+
+    clean_iso3 <- if (!is.null(iso3)) tolower(iso3) else "unknown"
+
+    output_file <- file.path(figure_path, paste0(clean_title, "_", clean_iso3, ".png"))
+    log_message("Saving plot to '{output_file}'...")
+    ggplot2::ggsave(output_file,
       plot = gg_feature,
       device = "png",
       width = 8, height = 6,
@@ -127,5 +179,6 @@ elsar_plot_feature <- function(raster_in,
     )
   }
 
+  log_message("Feature plot created successfully.")
   return(gg_feature)
 }
