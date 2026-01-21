@@ -39,8 +39,7 @@ Suggests:
     rmarkdown,
     scales,
     RPostgres,
-    testthat (>= 3.0.0),
-    wdpar
+    testthat (>= 3.0.0)
 VignetteBuilder: knitr
 Depends:
     R (>= 3.5.0)
@@ -70,6 +69,7 @@ Imports:
     tibble,
     tidyterra,
     units,
+    wdpar,
     xml2
 Config/testthat/edition: 3
 LazyData: true
