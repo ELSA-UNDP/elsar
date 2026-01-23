@@ -28,6 +28,8 @@
 
 * Fixed "[subset] no (valid) layer selected" error in `get_binary_layers()` when raster stack has zero layers or when subsetting returns empty indices
 
+* Fixed "Python int too large to convert to C long" error on Windows when accessing GEE task status (timestamps exceed 32-bit integer range)
+
 * Fixed curve geometry handling in `make_ramsar_sites()` for improved gpkg support
 
 * Fixed KBA geometry handling issues

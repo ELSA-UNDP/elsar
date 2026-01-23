@@ -226,6 +226,71 @@ find_env_python <- function(conda_base, env_name) {
 }
 
 
+#' Safely get info from GEE objects (Windows compatibility)
+#'
+#' Wraps getInfo() calls to handle Python integer overflow on Windows.
+#' On Windows, C long is 32-bit even on 64-bit systems, causing overflow
+#' for integers > 2^31-1 (e.g., timestamps, large counts).
+#'
+#' @param gee_obj A GEE object with a getInfo() method
+#' @return The result of getInfo(), with large integers safely converted
+#' @keywords internal
+safe_gee_getinfo <- function(gee_obj) {
+  tryCatch({
+    gee_obj$getInfo()
+  }, error = function(e) {
+    if (grepl("too large to convert to C long", e$message, fixed = TRUE)) {
+      # On Windows, convert via JSON string to avoid integer overflow
+      # This handles timestamps and large counts that exceed 32-bit int range
+      json_str <- tryCatch(gee_obj$serialize(), error = function(e2) NULL)
+      if (!is.null(json_str)) {
+        return(jsonlite::fromJSON(json_str))
+      }
+      # Fallback: return NA and warn
+      warning("GEE integer overflow - returning NA. Consider updating reticulate.", call. = FALSE)
+      return(NA)
+    }
+    stop(e)
+  })
+}
+
+
+#' Safely get task status (Windows compatibility)
+#'
+#' Wraps task status() calls to handle Python integer overflow on Windows.
+#' Task status contains timestamps that can exceed 32-bit integer range.
+#'
+#' @param task A GEE task object
+#' @return List with state and description fields, or NULL on error
+#' @keywords internal
+safe_task_status <- function(task) {
+  tryCatch({
+    status <- task$status()
+    # Access only the fields we need to avoid triggering overflow on timestamps
+    list(
+      state = tryCatch(as.character(status$state), error = function(e) NA_character_),
+      description = tryCatch(as.character(status$description), error = function(e) NA_character_)
+    )
+  }, error = function(e) {
+    if (grepl("too large to convert to C long", e$message, fixed = TRUE)) {
+      # Try accessing fields individually with conversion
+      tryCatch({
+        list(
+          state = as.character(reticulate::py_to_r(task$status()$state)),
+          description = as.character(reticulate::py_to_r(task$status()$description))
+        )
+      }, error = function(e2) {
+        warning("Could not retrieve task status due to integer overflow.", call. = FALSE)
+        NULL
+      })
+    } else {
+      warning(paste("Error getting task status:", e$message), call. = FALSE)
+      NULL
+    }
+  })
+}
+
+
 #' Initialize Google Earth Engine
 #'
 #' Sets up Python environment and initializes the Earth Engine API.
@@ -748,7 +813,9 @@ download_gee_layer <- function(
     # Check for running export tasks with the same description
     tasks <- ee$batch$Task$list()
     existing_task <- purrr::detect(tasks, function(t) {
-      t$status()$state %in% c("READY", "RUNNING") && t$status()$description == file_name
+      status <- safe_task_status(t)
+      if (is.null(status)) return(FALSE)
+      status$state %in% c("READY", "RUNNING") && status$description == file_name
     })
 
     if (is.null(existing_task)) {
