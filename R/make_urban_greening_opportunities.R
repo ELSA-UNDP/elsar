@@ -131,13 +131,13 @@ make_urban_greening_opportunities <- function(
   log_message("Rasterizing urban heat exposure from SDEI...")
   pu_proj <- terra::as.polygons(pus) %>%
     sf::st_as_sf() %>%
-    dplyr::filter(`Planning Units` == 1) %>%
+    dplyr::filter(!is.na(`Planning Units`) & `Planning Units` == 1) %>%
     sf::st_transform(sf::st_crs(sdei_statistics)) %>%
     sf::st_make_valid() %>%
     terra::vect()
 
   sdei_filtered <- sdei_statistics %>%
-    dplyr::filter(CTR_MN_ISO == iso3) %>%
+    dplyr::filter(!is.na(CTR_MN_ISO) & CTR_MN_ISO == iso3) %>%
     terra::vect() %>%
     terra::intersect(y = pu_proj) %>%
     sf::st_as_sf()

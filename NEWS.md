@@ -22,6 +22,12 @@
 
 ## Bug Fixes
 
+* Fixed "missing value where TRUE/FALSE needed" error in `make_urban_greening_opportunities()` when input data contains NA values in filter columns
+
+* Fixed "missing value where TRUE/FALSE needed" error in `make_normalised_raster()` when checking for empty raster values
+
+* Fixed "[subset] no (valid) layer selected" error in `get_binary_layers()` when raster stack has zero layers or when subsetting returns empty indices
+
 * Fixed curve geometry handling in `make_ramsar_sites()` for improved gpkg support
 
 * Fixed KBA geometry handling issues

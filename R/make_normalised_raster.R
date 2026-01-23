@@ -135,7 +135,8 @@ make_normalised_raster <- function(raster_in,
     # Just align and mask to PUs
     dat_aligned <- terra::project(raster_in, y = pus, threads = threads)
 
-    if (is.null(dat_aligned) || isTRUE(is.na(suppressWarnings(terra::minmax(dat_aligned)[2]))) || terra::minmax(dat_aligned)[2] == 0) {
+    max_val <- suppressWarnings(terra::minmax(dat_aligned)[2])
+    if (is.null(dat_aligned) || isTRUE(is.na(max_val)) || isTRUE(max_val == 0)) {
       log_message("No valid raster values found: returning empty raster.")
       return(terra::ifel(pus == 1, 0, NA))
     }
@@ -176,7 +177,8 @@ make_normalised_raster <- function(raster_in,
     # Reproject and align raster to match PUs
     dat_aligned <- terra::project(raster_in, y = pus, threads = threads)
 
-    if (is.null(dat_aligned) || isTRUE(is.na(suppressWarnings(terra::minmax(dat_aligned)[2]))) || terra::minmax(dat_aligned)[2] == 0) {
+    max_val <- suppressWarnings(terra::minmax(dat_aligned)[2])
+    if (is.null(dat_aligned) || isTRUE(is.na(max_val)) || isTRUE(max_val == 0)) {
       log_message("No valid raster values found: returning empty raster.")
       return(terra::ifel(pus == 1, 0, NA))
     }

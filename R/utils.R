@@ -720,6 +720,13 @@ get_binary_layers <- function(raster_stack) {
     msg = "'raster_stack' must be a SpatRaster object."
   )
 
+  # Handle empty raster stacks
+
+  if (terra::nlyr(raster_stack) == 0) {
+    log_message("Raster stack has 0 layers - returning empty result.")
+    return(list(NULL, NULL))
+  }
+
   log_message("Analyzing {terra::nlyr(raster_stack)} layer(s) for binary values...")
 
   # get frequency of values per raster layer
@@ -735,8 +742,12 @@ get_binary_layers <- function(raster_stack) {
 
   # Subset only if binary layers were found
   if (any(binary_mask, na.rm = TRUE)) {
-    int_layers <- raster_stack[[which(binary_mask)]]
-    float_layers <- raster_stack[[which(!binary_mask)]]
+    binary_idx <- which(binary_mask)
+    float_idx <- which(!binary_mask)
+
+    int_layers <- if (length(binary_idx) > 0) raster_stack[[binary_idx]] else NULL
+    float_layers <- if (length(float_idx) > 0) raster_stack[[float_idx]] else NULL
+
     log_message("Found {sum(binary_mask)} binary layer(s) and {sum(!binary_mask)} float layer(s).")
   } else {
     log_message("No binary layers found in raster stack.")
