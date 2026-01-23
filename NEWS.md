@@ -30,6 +30,8 @@
 
 * Fixed "Python int too large to convert to C long" error on Windows when accessing GEE task status (timestamps exceed 32-bit integer range)
 
+* Fixed GEE multi-tile export bug where only some tiles were downloaded for large areas (e.g., Chile pasturelands). Now waits for all tiles to appear before downloading
+
 * Fixed curve geometry handling in `make_ramsar_sites()` for improved gpkg support
 
 * Fixed KBA geometry handling issues

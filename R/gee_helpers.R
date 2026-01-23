@@ -892,14 +892,46 @@ download_gee_layer <- function(
     # Wait for files to appear in Drive
     log_message("Waiting for export to complete (this may take several minutes)...")
     start_time <- Sys.time()
-    repeat {
-      all_tifs <- googledrive::drive_find(q = paste0("name contains '", file_name, "'"))
-      matching_files <- all_tifs[grepl(paste0("^", file_name, ".*\\.tif$"), all_tifs$name), ]
+    prev_file_count <- 0
+    stable_count <- 0
 
-      if (nrow(matching_files) > 0) break
+    repeat {
+      all_tifs <- suppressMessages(googledrive::drive_find(
+        q = paste0("name contains '", file_name, "'"),
+        n_max = 500  # Ensure we get all tiles for large exports
+      ))
+      matching_files <- all_tifs[grepl(paste0("^", file_name, ".*\\.tif$"), all_tifs$name), ]
+      current_count <- nrow(matching_files)
 
       elapsed <- difftime(Sys.time(), start_time, units = "mins")
+
+      # Check if file count has stabilized (same count for 2 consecutive checks)
+      # This handles multi-tile exports where tiles appear gradually
+      if (current_count > 0) {
+        if (current_count == prev_file_count) {
+          stable_count <- stable_count + 1
+          if (stable_count >= 2) {
+            log_message("Found {current_count} tile(s) ready for download")
+            break
+          }
+        } else {
+          stable_count <- 0
+          log_message("Export in progress: {current_count} tile(s) found so far...")
+        }
+        prev_file_count <- current_count
+      }
+
       if (elapsed > wait_time) {
+        # If we have some files but timed out waiting for more, use what we have
+        if (current_count > 0) {
+          log_message("Timeout reached with {current_count} tile(s) - proceeding with available files")
+          warning(
+            "GEE export may be incomplete. Found ", current_count, " tiles but more may exist.\n",
+            "Check https://code.earthengine.google.com/tasks for task status.",
+            call. = FALSE
+          )
+          break
+        }
         cleanup_earthengine(env_info)
         unlink(temp_dir, recursive = TRUE)
         stop(glue::glue(
@@ -911,7 +943,7 @@ download_gee_layer <- function(
         ), call. = FALSE)
       }
 
-      if (elapsed >= 0.5) {  # Only show after 30 seconds
+      if (elapsed >= 0.5 && current_count == 0) {  # Only show after 30 seconds if no files yet
         log_message("Still waiting... ({round(elapsed, 1)} min elapsed)")
       }
       Sys.sleep(30)
