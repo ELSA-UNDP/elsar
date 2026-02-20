@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>An Example ELSA Workflow • elsar</title>
-<script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
@@ -16,11 +16,11 @@
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top " aria-label="Site navigation"><div class="container">
 
     <a class="navbar-brand me-2" href="../index.html">elsar</a>
 
-    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.7</small>
+    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,6 +44,14 @@
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
 </form></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
+  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch">
+<li><button class="dropdown-item" data-bs-theme-value="light"><span class="fa fa-sun"></span> Light</button></li>
+    <li><button class="dropdown-item" data-bs-theme-value="dark"><span class="fa fa-moon"></span> Dark</button></li>
+    <li><button class="dropdown-item" data-bs-theme-value="auto"><span class="fa fa-adjust"></span> Auto</button></li>
+  </ul>
+</li>
       </ul>
 </div>
 
@@ -109,7 +117,7 @@ use a pre-saved dataset.</p>
 <span>  iso3_column <span class="op">=</span> <span class="st">"iso3cd"</span>,</span>
 <span>  custom_projection <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; [2026-02-20 03:51:40] Creating boundary for planning region...</span></span>
+<span><span class="co">#&gt; [2026-02-20 04:11:44] Creating boundary for planning region...</span></span>
 <span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">boundary</span><span class="op">)</span></span></code></pre></div>
@@ -126,12 +134,12 @@ the <code><a href="../reference/make_boundary.html">make_boundary()</a></code> f
 <span>  iso3_column <span class="op">=</span> <span class="st">"iso3cd"</span>,</span>
 <span>  custom_projection <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; [2026-02-20 03:51:41] Creating boundary for planning region...</span></span>
-<span><span class="co">#&gt; [2026-02-20 03:51:41] Creating custom Mollweide projection centred on planning region...</span></span>
+<span><span class="co">#&gt; [2026-02-20 04:11:44] Creating boundary for planning region...</span></span>
+<span><span class="co">#&gt; [2026-02-20 04:11:44] Creating custom Mollweide projection centred on planning region...</span></span>
 <span></span>
 <span><span class="co"># create custom projection and apply it to boundary</span></span>
 <span><span class="va">wkt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/make_custom_projection.html">make_custom_projection</a></span><span class="op">(</span>boundary <span class="op">=</span> <span class="va">boundary</span>, iso3 <span class="op">=</span> <span class="st">"NPL"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [2026-02-20 03:51:41] Creating custom Mollweide projection centred on planning region...</span></span>
+<span><span class="co">#&gt; [2026-02-20 04:11:44] Creating custom Mollweide projection centred on planning region...</span></span>
 <span><span class="va">boundary_proj2</span> <span class="op">&lt;-</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_transform.html" class="external-link">st_transform</a></span><span class="op">(</span><span class="va">boundary</span>, crs <span class="op">=</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_crs.html" class="external-link">st_crs</a></span><span class="op">(</span><span class="va">wkt</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>We can test whether the two crs of the boundaries match.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
@@ -159,12 +167,12 @@ planning units, which is based on previous experience with run time.</p>
 <span>  limit_to_mainland <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  iso3 <span class="op">=</span> <span class="st">"NPL"</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; [2026-02-20 03:51:41] pu_size not provided: estimating size to target &lt;= 850000 PUs (allowing 5% tolerance).</span></span>
-<span><span class="co">#&gt; [2026-02-20 03:51:41] Iteration 1: 741036 PUs at resolution 450 m</span></span>
-<span><span class="co">#&gt; [2026-02-20 03:51:41] Iteration 2: 830662 PUs at resolution 425 m</span></span>
-<span><span class="co">#&gt; [2026-02-20 03:51:41] Iteration 3: 937494 PUs at resolution 400 m</span></span>
-<span><span class="co">#&gt; [2026-02-20 03:51:41] Exceeded soft threshold (892500); using best previous result.</span></span>
-<span><span class="co">#&gt; [2026-02-20 03:51:41] Final PU layer: 830662 PUs at 425 m resolution.</span></span></code></pre></div>
+<span><span class="co">#&gt; [2026-02-20 04:11:44] pu_size not provided: estimating size to target &lt;= 850000 PUs (allowing 5% tolerance).</span></span>
+<span><span class="co">#&gt; [2026-02-20 04:11:44] Iteration 1: 741036 PUs at resolution 450 m</span></span>
+<span><span class="co">#&gt; [2026-02-20 04:11:45] Iteration 2: 830662 PUs at resolution 425 m</span></span>
+<span><span class="co">#&gt; [2026-02-20 04:11:45] Iteration 3: 937494 PUs at resolution 400 m</span></span>
+<span><span class="co">#&gt; [2026-02-20 04:11:45] Exceeded soft threshold (892500); using best previous result.</span></span>
+<span><span class="co">#&gt; [2026-02-20 04:11:45] Final PU layer: 830662 PUs at 425 m resolution.</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="features">Features<a class="anchor" aria-label="anchor" href="#features"></a>
@@ -180,8 +188,8 @@ already saved in the package; change later).</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># get feature data</span></span>
 <span><span class="va">wad_subset</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_wad_data.html">get_wad_data</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [2026-02-20 03:51:41] Loading WAD subset data from package...</span></span>
-<span><span class="co">#&gt; [2026-02-20 03:51:41] WAD subset data loaded successfully.</span></span></code></pre></div>
+<span><span class="co">#&gt; [2026-02-20 04:11:45] Loading WAD subset data from package...</span></span>
+<span><span class="co">#&gt; [2026-02-20 04:11:45] WAD subset data loaded successfully.</span></span></code></pre></div>
 <p>The data then needs to be re-projected and re-sampled to exactly
 match the resolution and extent of the previously created planning
 units. We also normalise the data to only have values within the range
@@ -207,7 +215,7 @@ raster data with <code>ggplot</code>.</p>
 <span>  raster_in <span class="op">=</span> <span class="va">wadOut</span>,</span>
 <span>  legend_title <span class="op">=</span> <span class="st">"WAD"</span></span>
 <span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [2026-02-20 03:51:44] Creating static raster plot (continuous, ggplot_vector)...</span></span></code></pre></div>
+<span><span class="co">#&gt; [2026-02-20 04:11:47] Creating static raster plot (continuous, ggplot_vector)...</span></span></code></pre></div>
 <p><img src="elsaR_files/figure-html/unnamed-chunk-9-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
 <p>We can also add background data to the plot and add additional
 properties to change the appearance of the plot by using the
@@ -228,9 +236,9 @@ palette to be something other than the default “viridis”.</p>
 <span>  background <span class="op">=</span> <span class="va">wad_subset</span></span>
 <span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/elsar_plot_optics.html">elsar_plot_optics</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [2026-02-20 03:51:50] Creating static raster plot (continuous, ggplot_vector)...</span></span>
-<span><span class="co">#&gt; [2026-02-20 03:51:50] Adding background layer (continuous)...</span></span>
-<span><span class="co">#&gt; [2026-02-20 03:51:53] Extending based on ratio (5%)...</span></span></code></pre></div>
+<span><span class="co">#&gt; [2026-02-20 04:11:54] Creating static raster plot (continuous, ggplot_vector)...</span></span>
+<span><span class="co">#&gt; [2026-02-20 04:11:54] Adding background layer (continuous)...</span></span>
+<span><span class="co">#&gt; [2026-02-20 04:11:57] Extending based on ratio (5%)...</span></span></code></pre></div>
 <p><img src="elsaR_files/figure-html/unnamed-chunk-10-1.png" class="r-plt" alt="" width="768" style="display: block; margin: auto;"></p>
 <p>If needed, logos can be included on the map. The location is
 dependent on the plot dimensions and therefore needs to be adjusted
@@ -259,9 +267,9 @@ based on the figure, for example by using <code><a href="https://rspatial.github
 <span>                      logo_path <span class="op">=</span> <span class="st">"figures/elsaR_hex_sticker.png"</span>, <span class="co">#change to logo later</span></span>
 <span>                      logo_pos <span class="op">=</span> <span class="va">img_pos</span>,</span>
 <span>                      logo_dim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">50</span>, <span class="fl">60</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [2026-02-20 03:52:01] Creating static raster plot (continuous, ggplot_vector)...</span></span>
-<span><span class="co">#&gt; [2026-02-20 03:52:01] Adding background layer (continuous)...</span></span>
-<span><span class="co">#&gt; [2026-02-20 03:52:05] Extending based on ratio (5%)...</span></span></code></pre></div>
+<span><span class="co">#&gt; [2026-02-20 04:12:07] Creating static raster plot (continuous, ggplot_vector)...</span></span>
+<span><span class="co">#&gt; [2026-02-20 04:12:07] Adding background layer (continuous)...</span></span>
+<span><span class="co">#&gt; [2026-02-20 04:12:10] Extending based on ratio (5%)...</span></span></code></pre></div>
 <p><img src="elsaR_files/figure-html/unnamed-chunk-11-1.png" class="r-plt" alt="" width="768" style="display: block; margin: auto;"></p>
 <p>If we are interested in the distribution, we can also plot the
 distribution on the plots. For this, we need to create two separate
@@ -284,10 +292,10 @@ spatial relationship with biodiversity values.</p>
 <span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/elsar_plot_extra_data.html">elsar_plot_extra_data</a></span><span class="op">(</span>include_pas <span class="op">=</span> <span class="va">current_pas</span>, color_pa <span class="op">=</span> <span class="st">"red"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/elsar_plot_optics.html">elsar_plot_optics</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [2026-02-20 03:52:13] Creating static raster plot (continuous, ggplot_vector)...</span></span>
-<span><span class="co">#&gt; [2026-02-20 03:52:13] Adding background layer (continuous)...</span></span>
-<span><span class="co">#&gt; [2026-02-20 03:52:17] Extending based on ratio (5%)...</span></span>
-<span><span class="co">#&gt; [2026-02-20 03:52:17] Adding PA layer with 'contours' style...</span></span>
+<span><span class="co">#&gt; [2026-02-20 04:12:20] Creating static raster plot (continuous, ggplot_vector)...</span></span>
+<span><span class="co">#&gt; [2026-02-20 04:12:20] Adding background layer (continuous)...</span></span>
+<span><span class="co">#&gt; [2026-02-20 04:12:23] Extending based on ratio (5%)...</span></span>
+<span><span class="co">#&gt; [2026-02-20 04:12:24] Adding PA layer with 'contours' style...</span></span>
 <span><span class="co">#&gt; Coordinate system already present.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Adding new coordinate system, which will replace the existing one.</span></span></code></pre></div>
 <p><img src="elsaR_files/figure-html/unnamed-chunk-14-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
@@ -299,10 +307,10 @@ spatial relationship with biodiversity values.</p>
 <span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/elsar_plot_extra_data.html">elsar_plot_extra_data</a></span><span class="op">(</span>include_pas <span class="op">=</span> <span class="va">current_pas</span>, pas_look <span class="op">=</span> <span class="st">"area"</span>, color_pa <span class="op">=</span> <span class="st">"grey"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/elsar_plot_optics.html">elsar_plot_optics</a></span><span class="op">(</span>include_north_scale <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [2026-02-20 03:52:24] Creating static raster plot (continuous, ggplot_vector)...</span></span>
-<span><span class="co">#&gt; [2026-02-20 03:52:24] Adding background layer (continuous)...</span></span>
-<span><span class="co">#&gt; [2026-02-20 03:52:27] Extending based on ratio (5%)...</span></span>
-<span><span class="co">#&gt; [2026-02-20 03:52:28] Adding PA layer with 'area' style...</span></span>
+<span><span class="co">#&gt; [2026-02-20 04:12:31] Creating static raster plot (continuous, ggplot_vector)...</span></span>
+<span><span class="co">#&gt; [2026-02-20 04:12:31] Adding background layer (continuous)...</span></span>
+<span><span class="co">#&gt; [2026-02-20 04:12:35] Extending based on ratio (5%)...</span></span>
+<span><span class="co">#&gt; [2026-02-20 04:12:35] Adding PA layer with 'area' style...</span></span>
 <span><span class="co">#&gt; Coordinate system already present.</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Adding new coordinate system, which will replace the existing one.</span></span></code></pre></div>
 <p><img src="elsaR_files/figure-html/unnamed-chunk-15-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
