@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Global Data Processing Reference • elsar</title>
-<script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
@@ -16,11 +16,11 @@
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top " aria-label="Site navigation"><div class="container">
 
     <a class="navbar-brand me-2" href="../index.html">elsar</a>
 
-    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.7</small>
+    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,6 +44,14 @@
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
 </form></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
+  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch">
+<li><button class="dropdown-item" data-bs-theme-value="light"><span class="fa fa-sun"></span> Light</button></li>
+    <li><button class="dropdown-item" data-bs-theme-value="dark"><span class="fa fa-moon"></span> Dark</button></li>
+    <li><button class="dropdown-item" data-bs-theme-value="auto"><span class="fa fa-adjust"></span> Auto</button></li>
+  </ul>
+</li>
       </ul>
 </div>
 
@@ -69,7 +77,7 @@
 <div class="section level2">
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
-<p>The <code>elsar</code> package provides functions to process various global datasets for use in ELSA (Essential Life Support Areas) conservation planning. This reference table summarizes the available datasets, their corresponding R functions, and processing notes.</p>
+<p>The <code>elsar</code> package provides functions to process various global datasets for use in ELSA (Essential Life Support Areas) conservation planning. This reference table summarises the available datasets, their corresponding R functions, and processing notes.</p>
 </div>
 <div class="section level2">
 <h2 id="dataset-reference">Dataset Reference<a class="anchor" aria-label="anchor" href="#dataset-reference"></a>
@@ -94,30 +102,13 @@ Comments
 <th style="text-align:left;">
 Tested
 </th>
+<th style="text-align:left;">
+Since
+</th>
 </tr></thead>
 <tbody>
 <tr>
-<td style="text-align:left;width: 6cm; font-weight: bold;">
-Certified Forests
-</td>
-<td style="text-align:left;width: 4cm; ">
-NA (deprecated)
-</td>
-<td style="text-align:left;width: 4cm; ">
-NA
-</td>
-<td style="text-align:left;width: 4cm; ">
-NA
-</td>
-<td style="text-align:left;width: 4cm; ">
-NA
-</td>
-<td style="text-align:left;width: 4cm; ">
-NA
-</td>
-</tr>
-<tr>
-<td style="text-align:left;width: 6cm; font-weight: bold;">
+<td style="text-align:left;width: 5cm; font-weight: bold;">
 Crop Suitability Difference
 </td>
 <td style="text-align:left;width: 4cm; ">
@@ -126,18 +117,44 @@ overall_cropsuit_i_diff_19812010_20712100
 <td style="text-align:left;width: 4cm; ">
 make_normalised_raster()
 </td>
-<td style="text-align:left;width: 4cm; ">
+<td style="text-align:left;width: 3cm; ">
 inverse = TRUE
 </td>
 <td style="text-align:left;width: 4cm; ">
 OG code: all vals &gt; 0 = 0; vals = -vals
 </td>
-<td style="text-align:left;width: 4cm; ">
+<td style="text-align:left;width: 2cm; ">
 Y
+</td>
+<td style="text-align:left;width: 2cm; ">
+0.0.1
 </td>
 </tr>
 <tr>
-<td style="text-align:left;width: 6cm; font-weight: bold;">
+<td style="text-align:left;width: 5cm; font-weight: bold;">
+Degraded Areas
+</td>
+<td style="text-align:left;width: 4cm; ">
+NA
+</td>
+<td style="text-align:left;width: 4cm; ">
+make_degraded_areas()
+</td>
+<td style="text-align:left;width: 3cm; ">
+default
+</td>
+<td style="text-align:left;width: 4cm; ">
+NA
+</td>
+<td style="text-align:left;width: 2cm; ">
+Y
+</td>
+<td style="text-align:left;width: 2cm; ">
+0.0.7
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 5cm; font-weight: bold;">
 Drought Risk
 </td>
 <td style="text-align:left;width: 4cm; ">
@@ -146,18 +163,67 @@ gDH19_oct2015
 <td style="text-align:left;width: 4cm; ">
 make_normalised_raster()
 </td>
-<td style="text-align:left;width: 4cm; ">
+<td style="text-align:left;width: 3cm; ">
 default
 </td>
 <td style="text-align:left;width: 4cm; ">
 none
 </td>
-<td style="text-align:left;width: 4cm; ">
+<td style="text-align:left;width: 2cm; ">
 Y
+</td>
+<td style="text-align:left;width: 2cm; ">
+0.0.1
 </td>
 </tr>
 <tr>
-<td style="text-align:left;width: 6cm; font-weight: bold;">
+<td style="text-align:left;width: 5cm; font-weight: bold;">
+Existing Protected Areas
+</td>
+<td style="text-align:left;width: 4cm; ">
+Pulled from wdpar package
+</td>
+<td style="text-align:left;width: 4cm; ">
+make_protected_areas()
+</td>
+<td style="text-align:left;width: 3cm; ">
+default
+</td>
+<td style="text-align:left;width: 4cm; ">
+buffer_points = TRUE needed when POINT geometry exists
+</td>
+<td style="text-align:left;width: 2cm; ">
+Y
+</td>
+<td style="text-align:left;width: 2cm; ">
+0.0.1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 5cm; font-weight: bold;">
+Flood Abatement Opportunities
+</td>
+<td style="text-align:left;width: 4cm; ">
+NA
+</td>
+<td style="text-align:left;width: 4cm; ">
+make_flood_abatement_opportunities()
+</td>
+<td style="text-align:left;width: 3cm; ">
+default
+</td>
+<td style="text-align:left;width: 4cm; ">
+NA
+</td>
+<td style="text-align:left;width: 2cm; ">
+Y
+</td>
+<td style="text-align:left;width: 2cm; ">
+0.0.5
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 5cm; font-weight: bold;">
 Flood Risk
 </td>
 <td style="text-align:left;width: 4cm; ">
@@ -166,18 +232,21 @@ flood_risk_opportunities_global
 <td style="text-align:left;width: 4cm; ">
 make_normalised_raster()
 </td>
-<td style="text-align:left;width: 4cm; ">
+<td style="text-align:left;width: 3cm; ">
 default
 </td>
 <td style="text-align:left;width: 4cm; ">
 none
 </td>
-<td style="text-align:left;width: 4cm; ">
+<td style="text-align:left;width: 2cm; ">
 Y
+</td>
+<td style="text-align:left;width: 2cm; ">
+0.0.1
 </td>
 </tr>
 <tr>
-<td style="text-align:left;width: 6cm; font-weight: bold;">
+<td style="text-align:left;width: 5cm; font-weight: bold;">
 Forest Integrity Index
 </td>
 <td style="text-align:left;width: 4cm; ">
@@ -186,18 +255,44 @@ flii_earth-001_cog, global_fsii_2023
 <td style="text-align:left;width: 4cm; ">
 make_forest_integrity()
 </td>
-<td style="text-align:left;width: 4cm; ">
+<td style="text-align:left;width: 3cm; ">
 NA
 </td>
 <td style="text-align:left;width: 4cm; ">
 OG code: all vals &lt; 0 = 0
 </td>
-<td style="text-align:left;width: 4cm; ">
+<td style="text-align:left;width: 2cm; ">
 Y
+</td>
+<td style="text-align:left;width: 2cm; ">
+0.0.1
 </td>
 </tr>
 <tr>
-<td style="text-align:left;width: 6cm; font-weight: bold;">
+<td style="text-align:left;width: 5cm; font-weight: bold;">
+Indigenous Managed Lands
+</td>
+<td style="text-align:left;width: 4cm; ">
+NA
+</td>
+<td style="text-align:left;width: 4cm; ">
+make_indigenous_managed_lands()
+</td>
+<td style="text-align:left;width: 3cm; ">
+default
+</td>
+<td style="text-align:left;width: 4cm; ">
+NA
+</td>
+<td style="text-align:left;width: 2cm; ">
+Y
+</td>
+<td style="text-align:left;width: 2cm; ">
+0.0.5
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 5cm; font-weight: bold;">
 Intact Wilderness Area
 </td>
 <td style="text-align:left;width: 4cm; ">
@@ -206,18 +301,21 @@ NA
 <td style="text-align:left;width: 4cm; ">
 make_normalised_raster()
 </td>
-<td style="text-align:left;width: 4cm; ">
+<td style="text-align:left;width: 3cm; ">
 default
 </td>
 <td style="text-align:left;width: 4cm; ">
 none
 </td>
-<td style="text-align:left;width: 4cm; ">
+<td style="text-align:left;width: 2cm; ">
 N
+</td>
+<td style="text-align:left;width: 2cm; ">
+0.0.1
 </td>
 </tr>
 <tr>
-<td style="text-align:left;width: 6cm; font-weight: bold;">
+<td style="text-align:left;width: 5cm; font-weight: bold;">
 Irrecoverable Carbon
 </td>
 <td style="text-align:left;width: 4cm; ">
@@ -226,198 +324,21 @@ NA
 <td style="text-align:left;width: 4cm; ">
 make_normalised_raster()
 </td>
-<td style="text-align:left;width: 4cm; ">
+<td style="text-align:left;width: 3cm; ">
 default
 </td>
 <td style="text-align:left;width: 4cm; ">
 OG code: all vals &lt; 0 = 0
 </td>
-<td style="text-align:left;width: 4cm; ">
+<td style="text-align:left;width: 2cm; ">
 N
 </td>
-</tr>
-<tr>
-<td style="text-align:left;width: 6cm; font-weight: bold;">
-Live Biomass Carbon
-</td>
-<td style="text-align:left;width: 4cm; ">
-NA
-</td>
-<td style="text-align:left;width: 4cm; ">
-make_normalised_raster()
-</td>
-<td style="text-align:left;width: 4cm; ">
-default
-</td>
-<td style="text-align:left;width: 4cm; ">
-OG code: all vals &lt; 0 = 0
-</td>
-<td style="text-align:left;width: 4cm; ">
-N
+<td style="text-align:left;width: 2cm; ">
+0.0.1
 </td>
 </tr>
 <tr>
-<td style="text-align:left;width: 6cm; font-weight: bold;">
-Vulnerable Soil Organic Carbon Difference
-</td>
-<td style="text-align:left;width: 4cm; ">
-soc-at-risk-V11
-</td>
-<td style="text-align:left;width: 4cm; ">
-make_normalised_raster()
-</td>
-<td style="text-align:left;width: 4cm; ">
-default
-</td>
-<td style="text-align:left;width: 4cm; ">
-none
-</td>
-<td style="text-align:left;width: 4cm; ">
-Y
-</td>
-</tr>
-<tr>
-<td style="text-align:left;width: 6cm; font-weight: bold;">
-Threatened Species Richness
-</td>
-<td style="text-align:left;width: 4cm; ">
-NA
-</td>
-<td style="text-align:left;width: 4cm; ">
-make_normalised_raster()
-</td>
-<td style="text-align:left;width: 4cm; ">
-default
-</td>
-<td style="text-align:left;width: 4cm; ">
-none
-</td>
-<td style="text-align:left;width: 4cm; ">
-N
-</td>
-</tr>
-<tr>
-<td style="text-align:left;width: 6cm; font-weight: bold;">
-Urban Extreme Heat
-</td>
-<td style="text-align:left;width: 4cm; ">
-NA
-</td>
-<td style="text-align:left;width: 4cm; ">
-make_urban_extreme_heat()
-</td>
-<td style="text-align:left;width: 4cm; ">
-NA
-</td>
-<td style="text-align:left;width: 4cm; ">
-NA
-</td>
-<td style="text-align:left;width: 4cm; ">
-N
-</td>
-</tr>
-<tr>
-<td style="text-align:left;width: 6cm; font-weight: bold;">
-Velocity of Climate Change
-</td>
-<td style="text-align:left;width: 4cm; ">
-NA
-</td>
-<td style="text-align:left;width: 4cm; ">
-make_normalised_raster()
-</td>
-<td style="text-align:left;width: 4cm; ">
-default
-</td>
-<td style="text-align:left;width: 4cm; ">
-none
-</td>
-<td style="text-align:left;width: 4cm; ">
-N
-</td>
-</tr>
-<tr>
-<td style="text-align:left;width: 6cm; font-weight: bold;">
-WAD convergence evidence
-</td>
-<td style="text-align:left;width: 4cm; ">
-wad_final_cog
-</td>
-<td style="text-align:left;width: 4cm; ">
-make_normalised_raster()
-</td>
-<td style="text-align:left;width: 4cm; ">
-default
-</td>
-<td style="text-align:left;width: 4cm; ">
-none
-</td>
-<td style="text-align:left;width: 4cm; ">
-Y
-</td>
-</tr>
-<tr>
-<td style="text-align:left;width: 6cm; font-weight: bold;">
-Yield Gap
-</td>
-<td style="text-align:left;width: 4cm; ">
-NA
-</td>
-<td style="text-align:left;width: 4cm; ">
-make_normalised_raster()
-</td>
-<td style="text-align:left;width: 4cm; ">
-NA
-</td>
-<td style="text-align:left;width: 4cm; ">
-100 - vals
-</td>
-<td style="text-align:left;width: 4cm; ">
-N
-</td>
-</tr>
-<tr>
-<td style="text-align:left;width: 6cm; font-weight: bold;">
-Landcover Layers
-</td>
-<td style="text-align:left;width: 4cm; ">
-NA
-</td>
-<td style="text-align:left;width: 4cm; ">
-make_landcover_layers()
-</td>
-<td style="text-align:left;width: 4cm; ">
-NA
-</td>
-<td style="text-align:left;width: 4cm; ">
-NA
-</td>
-<td style="text-align:left;width: 4cm; ">
-N
-</td>
-</tr>
-<tr>
-<td style="text-align:left;width: 6cm; font-weight: bold;">
-Landmark Areas
-</td>
-<td style="text-align:left;width: 4cm; ">
-NA
-</td>
-<td style="text-align:left;width: 4cm; ">
-make_normalised_raster() with addition
-</td>
-<td style="text-align:left;width: 4cm; ">
-NA
-</td>
-<td style="text-align:left;width: 4cm; ">
-NA
-</td>
-<td style="text-align:left;width: 4cm; ">
-N
-</td>
-</tr>
-<tr>
-<td style="text-align:left;width: 6cm; font-weight: bold;">
+<td style="text-align:left;width: 5cm; font-weight: bold;">
 Key Biodiversity Areas
 </td>
 <td style="text-align:left;width: 4cm; ">
@@ -426,18 +347,44 @@ NA
 <td style="text-align:left;width: 4cm; ">
 make_kbas()
 </td>
-<td style="text-align:left;width: 4cm; ">
+<td style="text-align:left;width: 3cm; ">
 NA
 </td>
 <td style="text-align:left;width: 4cm; ">
 NA
 </td>
-<td style="text-align:left;width: 4cm; ">
-N
+<td style="text-align:left;width: 2cm; ">
+Y
+</td>
+<td style="text-align:left;width: 2cm; ">
+0.0.1
 </td>
 </tr>
 <tr>
-<td style="text-align:left;width: 6cm; font-weight: bold;">
+<td style="text-align:left;width: 5cm; font-weight: bold;">
+Live Biomass Carbon
+</td>
+<td style="text-align:left;width: 4cm; ">
+NA
+</td>
+<td style="text-align:left;width: 4cm; ">
+make_normalised_raster()
+</td>
+<td style="text-align:left;width: 3cm; ">
+default
+</td>
+<td style="text-align:left;width: 4cm; ">
+OG code: all vals &lt; 0 = 0
+</td>
+<td style="text-align:left;width: 2cm; ">
+N
+</td>
+<td style="text-align:left;width: 2cm; ">
+0.0.1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 5cm; font-weight: bold;">
 Managed Forests
 </td>
 <td style="text-align:left;width: 4cm; ">
@@ -446,18 +393,21 @@ FML_v3.2_near_cog
 <td style="text-align:left;width: 4cm; ">
 make_managed_forests()
 </td>
-<td style="text-align:left;width: 4cm; ">
+<td style="text-align:left;width: 3cm; ">
 default
 </td>
 <td style="text-align:left;width: 4cm; ">
-predefined categories: 11: undisturbed forest (NOT managed), 20: disturbed forest (can be considered managed), rest (31, 32, 40, 53): managed (palm oil, etc.)
+Categories: 11=undisturbed (NOT managed), 20=disturbed (managed), 31/32/40/53=managed (palm oil, etc.)
 </td>
-<td style="text-align:left;width: 4cm; ">
+<td style="text-align:left;width: 2cm; ">
 Y
+</td>
+<td style="text-align:left;width: 2cm; ">
+0.0.1
 </td>
 </tr>
 <tr>
-<td style="text-align:left;width: 6cm; font-weight: bold;">
+<td style="text-align:left;width: 5cm; font-weight: bold;">
 Mangroves
 </td>
 <td style="text-align:left;width: 4cm; ">
@@ -466,154 +416,224 @@ gmw_v3_2020_vec
 <td style="text-align:left;width: 4cm; ">
 make_mangroves()
 </td>
-<td style="text-align:left;width: 4cm; ">
+<td style="text-align:left;width: 3cm; ">
 default
 </td>
 <td style="text-align:left;width: 4cm; ">
 NA
 </td>
-<td style="text-align:left;width: 4cm; ">
+<td style="text-align:left;width: 2cm; ">
 Y
 </td>
-</tr>
-<tr>
-<td style="text-align:left;width: 6cm; font-weight: bold;">
-Mountains/Glaciers
-</td>
-<td style="text-align:left;width: 4cm; ">
-NA
-</td>
-<td style="text-align:left;width: 4cm; ">
-make_mountains_glaciers()
-</td>
-<td style="text-align:left;width: 4cm; ">
-NA
-</td>
-<td style="text-align:left;width: 4cm; ">
-NA
-</td>
-<td style="text-align:left;width: 4cm; ">
-N
+<td style="text-align:left;width: 2cm; ">
+0.0.1
 </td>
 </tr>
 <tr>
-<td style="text-align:left;width: 6cm; font-weight: bold;">
-Existing PAs
+<td style="text-align:left;width: 5cm; font-weight: bold;">
+Threatened Ecosystems (Protection)
 </td>
 <td style="text-align:left;width: 4cm; ">
-Pulled from wdpar package
+NA
 </td>
 <td style="text-align:left;width: 4cm; ">
-make_protected_areas()
+make_threatened_ecosystems_protection()
+</td>
+<td style="text-align:left;width: 3cm; ">
+NA
 </td>
 <td style="text-align:left;width: 4cm; ">
+Split from original make_threatened_ecosystems()
+</td>
+<td style="text-align:left;width: 2cm; ">
+Y
+</td>
+<td style="text-align:left;width: 2cm; ">
+0.0.7
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 5cm; font-weight: bold;">
+Threatened Ecosystems (Restoration)
+</td>
+<td style="text-align:left;width: 4cm; ">
+NA
+</td>
+<td style="text-align:left;width: 4cm; ">
+make_threatened_ecosystems_restoration()
+</td>
+<td style="text-align:left;width: 3cm; ">
+NA
+</td>
+<td style="text-align:left;width: 4cm; ">
+Split from original make_threatened_ecosystems()
+</td>
+<td style="text-align:left;width: 2cm; ">
+Y
+</td>
+<td style="text-align:left;width: 2cm; ">
+0.0.7
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 5cm; font-weight: bold;">
+Threatened Species Richness
+</td>
+<td style="text-align:left;width: 4cm; ">
+NA
+</td>
+<td style="text-align:left;width: 4cm; ">
+make_normalised_raster()
+</td>
+<td style="text-align:left;width: 3cm; ">
 default
 </td>
 <td style="text-align:left;width: 4cm; ">
-buffer_points = TRUE needed when “POINT” information exists in geometry
+none
+</td>
+<td style="text-align:left;width: 2cm; ">
+N
+</td>
+<td style="text-align:left;width: 2cm; ">
+0.0.1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 5cm; font-weight: bold;">
+Underrepresented Ecosystems
 </td>
 <td style="text-align:left;width: 4cm; ">
+NA
+</td>
+<td style="text-align:left;width: 4cm; ">
+make_underrepresented_ecosystems()
+</td>
+<td style="text-align:left;width: 3cm; ">
+NA
+</td>
+<td style="text-align:left;width: 4cm; ">
+NA
+</td>
+<td style="text-align:left;width: 2cm; ">
 Y
 </td>
-</tr>
-<tr>
-<td style="text-align:left;width: 6cm; font-weight: bold;">
-Productive Managed Forests
-</td>
-<td style="text-align:left;width: 4cm; ">
-NA
-</td>
-<td style="text-align:left;width: 4cm; ">
-make_productive_managed_forests()
-</td>
-<td style="text-align:left;width: 4cm; ">
-NA
-</td>
-<td style="text-align:left;width: 4cm; ">
-NA
-</td>
-<td style="text-align:left;width: 4cm; ">
-N
+<td style="text-align:left;width: 2cm; ">
+0.0.1
 </td>
 </tr>
 <tr>
-<td style="text-align:left;width: 6cm; font-weight: bold;">
-Threatened Ecosystems
-</td>
-<td style="text-align:left;width: 4cm; ">
-NA (TBA at a later date)
-</td>
-<td style="text-align:left;width: 4cm; ">
-make_threatened_ecosystems()
+<td style="text-align:left;width: 5cm; font-weight: bold;">
+Urban Greening Opportunities
 </td>
 <td style="text-align:left;width: 4cm; ">
 NA
 </td>
 <td style="text-align:left;width: 4cm; ">
+make_urban_greening_opportunities()
+</td>
+<td style="text-align:left;width: 3cm; ">
 NA
 </td>
 <td style="text-align:left;width: 4cm; ">
-N
+NA
+</td>
+<td style="text-align:left;width: 2cm; ">
+Y
+</td>
+<td style="text-align:left;width: 2cm; ">
+0.0.3
 </td>
 </tr>
 <tr>
-<td style="text-align:left;width: 6cm; font-weight: bold;">
-Underepresented Ecosystems
+<td style="text-align:left;width: 5cm; font-weight: bold;">
+Velocity of Climate Change
 </td>
 <td style="text-align:left;width: 4cm; ">
 NA
 </td>
 <td style="text-align:left;width: 4cm; ">
-make_underepresented_ecosystems()
+make_normalised_raster()
+</td>
+<td style="text-align:left;width: 3cm; ">
+default
 </td>
 <td style="text-align:left;width: 4cm; ">
-NA
+none
 </td>
-<td style="text-align:left;width: 4cm; ">
-NA
-</td>
-<td style="text-align:left;width: 4cm; ">
+<td style="text-align:left;width: 2cm; ">
 N
+</td>
+<td style="text-align:left;width: 2cm; ">
+0.0.1
 </td>
 </tr>
 <tr>
-<td style="text-align:left;width: 6cm; font-weight: bold;">
-Urban Greening Zones
+<td style="text-align:left;width: 5cm; font-weight: bold;">
+Vulnerable Soil Organic Carbon Difference
 </td>
 <td style="text-align:left;width: 4cm; ">
-NA
+soc-at-risk-V11
 </td>
 <td style="text-align:left;width: 4cm; ">
-make_urban_greening_zones()
+make_normalised_raster()
+</td>
+<td style="text-align:left;width: 3cm; ">
+default
 </td>
 <td style="text-align:left;width: 4cm; ">
-NA
+none
 </td>
-<td style="text-align:left;width: 4cm; ">
-NA
+<td style="text-align:left;width: 2cm; ">
+Y
 </td>
-<td style="text-align:left;width: 4cm; ">
-N
+<td style="text-align:left;width: 2cm; ">
+0.0.1
 </td>
 </tr>
 <tr>
-<td style="text-align:left;width: 6cm; font-weight: bold;">
-Ramsar Wetlands
+<td style="text-align:left;width: 5cm; font-weight: bold;">
+WAD Convergence Evidence
+</td>
+<td style="text-align:left;width: 4cm; ">
+wad_final_cog
+</td>
+<td style="text-align:left;width: 4cm; ">
+make_normalised_raster()
+</td>
+<td style="text-align:left;width: 3cm; ">
+default
+</td>
+<td style="text-align:left;width: 4cm; ">
+none
+</td>
+<td style="text-align:left;width: 2cm; ">
+Y
+</td>
+<td style="text-align:left;width: 2cm; ">
+0.0.1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 5cm; font-weight: bold;">
+Wetlands (Ramsar)
 </td>
 <td style="text-align:left;width: 4cm; ">
 NA
 </td>
 <td style="text-align:left;width: 4cm; ">
-make_ramsar_wetlands()
+make_wetlands_ramsar()
+</td>
+<td style="text-align:left;width: 3cm; ">
+default
 </td>
 <td style="text-align:left;width: 4cm; ">
 NA
 </td>
-<td style="text-align:left;width: 4cm; ">
-NA
+<td style="text-align:left;width: 2cm; ">
+Y
 </td>
-<td style="text-align:left;width: 4cm; ">
-N
+<td style="text-align:left;width: 2cm; ">
+0.0.3
 </td>
 </tr>
 </tbody>
@@ -624,10 +644,33 @@ N
 </h2>
 <ul>
 <li>
-<strong>Tested</strong>: Indicates whether the function has been tested with real data (Y = Yes, N = No)</li>
-<li>Most datasets use <code><a href="../reference/make_normalised_raster.html">make_normalised_raster()</a></code> for standard processing</li>
-<li>Some datasets require specialized functions (e.g., <code><a href="../reference/make_kbas.html">make_kbas()</a></code>, <code><a href="../reference/make_mangroves.html">make_mangroves()</a></code>)</li>
-<li>Datasets marked as “NA” or “deprecated” are not currently available</li>
+<strong>Tested</strong>: Indicates whether the function has been tested with real data (Y = Yes, N = No).</li>
+<li>
+<strong>Since</strong>: The <code>elsar</code> version in which the function was first available.</li>
+<li>Most datasets use <code><a href="../reference/make_normalised_raster.html">make_normalised_raster()</a></code> for standard processing with optional parameters (e.g., <code>inverse = TRUE</code>).</li>
+<li>Some datasets require specialised functions (e.g., <code><a href="../reference/make_kbas.html">make_kbas()</a></code>, <code><a href="../reference/make_mangroves.html">make_mangroves()</a></code>, <code><a href="../reference/make_forest_integrity.html">make_forest_integrity()</a></code>).</li>
+<li>Datasets with “NA” as the dataset name do not have a fixed global source file and may vary by country or analysis.</li>
+</ul>
+</div>
+<div class="section level2">
+<h2 id="removed-datasets">Removed Datasets<a class="anchor" aria-label="anchor" href="#removed-datasets"></a>
+</h2>
+<p>The following datasets were previously listed but have been removed or are no longer supported:</p>
+<ul>
+<li>
+<strong>Certified Forests</strong> — deprecated, no replacement.</li>
+<li>
+<strong>Landcover Layers</strong> — replaced by LULC download functions (<code><a href="../reference/download_lulc_data.html">download_lulc_data()</a></code>, <code><a href="../reference/download_lulc_proportions.html">download_lulc_proportions()</a></code>).</li>
+<li>
+<strong>Mountains/Glaciers</strong> — not currently implemented.</li>
+<li>
+<strong>Productive Managed Forests</strong> — not currently implemented.</li>
+<li>
+<strong>Urban Extreme Heat</strong> — not currently implemented.</li>
+<li>
+<strong>Yield Gap</strong> — not currently implemented.</li>
+<li>
+<strong>Landmark Areas</strong> — not currently implemented.</li>
 </ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

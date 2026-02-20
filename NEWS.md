@@ -1,3 +1,31 @@
+# elsar 0.1.0
+
+## New Features
+
+* Added file naming conventions vignette documenting standardised naming
+  patterns for ELSA pipeline inputs, outputs, and figures.
+
+* Added dark mode toggle to the pkgdown website.
+
+* Added `make_urban_greening_zone()` to the pkgdown reference index.
+
+## Improvements
+
+* Updated Global Data Processing Reference vignette:
+  - Fixed stale and incorrect function names.
+  - Added missing datasets (degraded areas, flood abatement, indigenous managed
+    lands).
+  - Added "Since" column tracking which version introduced each function.
+  - Documented removed/deprecated datasets in a dedicated section.
+
+* Added version tracking column to the dataset reference table.
+
+## Internal Changes
+
+* Bumped version to 0.1.0 to reflect API stability.
+
+---
+
 # elsar 0.0.7
 
 ## New Features

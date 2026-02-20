@@ -16,7 +16,10 @@ knitr::opts_chunk$set(
 
 ## Overview
 
-The `elsar` package provides functions to process various global datasets for use in ELSA (Essential Life Support Areas) conservation planning. This reference table summarizes the available datasets, their corresponding R functions, and processing notes.
+The `elsar` package provides functions to process various global datasets for
+use in ELSA (Essential Life Support Areas) conservation planning. This reference
+table summarises the available datasets, their corresponding R functions, and
+processing notes.
 
 ## Dataset Reference
 
@@ -29,16 +32,41 @@ library(kableExtra)
 
 ```{r, echo = FALSE, message=FALSE, warning=FALSE}
 data_summary <- read_delim("data_summary.csv", delim = ";", show_col_types = FALSE) %>%
-  kable(col.names = c("Dataset", "Dataset Name", "R Function", "Specifics", "Comments", "Tested")) %>%
+  kable(col.names = c("Dataset", "Dataset Name", "R Function", "Specifics",
+                       "Comments", "Tested", "Since")) %>%
   kable_styling("hover", full_width = FALSE, font_size = 10) %>%
-  column_spec(1, width = "6cm", bold = TRUE) %>%
-  column_spec(2:6, width = "4cm")
+  column_spec(1, width = "5cm", bold = TRUE) %>%
+  column_spec(2, width = "4cm") %>%
+  column_spec(3, width = "4cm") %>%
+  column_spec(4, width = "3cm") %>%
+  column_spec(5, width = "4cm") %>%
+  column_spec(6, width = "2cm") %>%
+  column_spec(7, width = "2cm")
 data_summary
 ```
 
 ## Notes
 
-- **Tested**: Indicates whether the function has been tested with real data (Y = Yes, N = No)
-- Most datasets use `make_normalised_raster()` for standard processing
-- Some datasets require specialized functions (e.g., `make_kbas()`, `make_mangroves()`)
-- Datasets marked as "NA" or "deprecated" are not currently available
+- **Tested**: Indicates whether the function has been tested with real data
+  (Y = Yes, N = No).
+- **Since**: The `elsar` version in which the function was first available.
+- Most datasets use `make_normalised_raster()` for standard processing with
+  optional parameters (e.g., `inverse = TRUE`).
+- Some datasets require specialised functions (e.g., `make_kbas()`,
+  `make_mangroves()`, `make_forest_integrity()`).
+- Datasets with "NA" as the dataset name do not have a fixed global source file
+  and may vary by country or analysis.
+
+## Removed Datasets
+
+The following datasets were previously listed but have been removed or are no
+longer supported:
+
+- **Certified Forests** — deprecated, no replacement.
+- **Landcover Layers** — replaced by LULC download functions
+  (`download_lulc_data()`, `download_lulc_proportions()`).
+- **Mountains/Glaciers** — not currently implemented.
+- **Productive Managed Forests** — not currently implemented.
+- **Urban Extreme Heat** — not currently implemented.
+- **Yield Gap** — not currently implemented.
+- **Landmark Areas** — not currently implemented.

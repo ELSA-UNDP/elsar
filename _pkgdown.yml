@@ -1,6 +1,7 @@
 url: https://elsa-undp.github.io/elsar/
 template:
   bootstrap: 5
+  light-switch: true
 llm-docs: false
 articles:
 development:
