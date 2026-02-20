@@ -40,6 +40,7 @@ reference:
   - make_protect_zone
   - make_restore_zone
   - make_manage_zone
+  - make_urban_greening_zone
 
 - title: ELSA-specific utilities functions
   desc: Functions to help ELSA analysis
