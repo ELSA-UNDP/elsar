@@ -216,7 +216,7 @@ make_protect_zone <- function(
         y = current_protected_areas,
         fun = "mean"
       )
-      if (hii_pa_mean >= 4) {
+      if (!is.na(hii_pa_mean) && hii_pa_mean >= 4) {
         breaks <- hii_pa_mean
         log_message("Mean HII inside protected areas ({round(hii_pa_mean, 2)}) >= 4 - using PA mean as threshold")
       } else {
