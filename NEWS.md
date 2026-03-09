@@ -9,6 +9,11 @@
 
 * Added `make_urban_greening_zone()` to the pkgdown reference index.
 
+* `make_protect_zone()` now adapts the HII threshold when mean HII inside
+  protected areas is high (>= 4). Uses the PA mean as the threshold instead
+  of the quantile-based approach to avoid excluding nearly all areas in
+  high-HFI countries (#79). `hii_input` is now optional.
+
 ## Improvements
 
 * Updated Global Data Processing Reference vignette:

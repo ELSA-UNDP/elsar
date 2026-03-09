@@ -18,7 +18,9 @@
 #' @param agricultural_areas_input A `SpatRaster` representing binary or probabilistic agricultural areas (optional).
 #' @param built_areas_input A `SpatRaster` representing binary or probabilistic built-up areas (optional).
 #' @param lulc_raster A `SpatRaster` LULC map used to extract agriculture/built-up areas if not already provided (default: NULL).
-#' @param hii_input A `SpatRaster` of the Human Footprint Index.
+#' @param hii_input A `SpatRaster` of the Human Footprint Index, or NULL. If NULL,
+#'   the protect zone starts with all planning units eligible and applies only
+#'   agriculture and built-area exclusions.
 #' @param hii_threshold A fixed numeric HII threshold. If NULL, `hii_quantile` is used to estimate it.
 #' @param hii_quantile A quantile threshold (e.g., 0.95) used to calculate the HII threshold within protected areas if `hii_threshold` is NULL.
 #' @param lulc_product Character. LULC product used for class value lookups: "esri_10m" (default),
@@ -59,7 +61,7 @@ make_protect_zone <- function(
     agricultural_areas_input = NULL,
     built_areas_input = NULL,
     lulc_raster = NULL,
-    hii_input,
+    hii_input = NULL,
     hii_threshold = NULL,
     hii_quantile = 0.95,
     lulc_product = c("esri_10m", "dynamic_world", "esa_worldcover", "local"),
@@ -189,33 +191,53 @@ make_protect_zone <- function(
       )
     }
 
-  # Normalize HII
-  log_message("Processing HII raster...")
-  hii_resampled <- elsar::make_normalised_raster(
-    raster_in = hii_input,
-    pus = pus,
-    iso3 = iso3,
-    rescaled = FALSE,
-    method_override = "mean"
+  # Create base protect zone from HII or start with all eligible
+
+  if (!is.null(hii_input)) {
+    # Normalize HII
+    log_message("Processing HII raster...")
+    hii_resampled <- elsar::make_normalised_raster(
+      raster_in = hii_input,
+      pus = pus,
+      iso3 = iso3,
+      rescaled = FALSE,
+      method_override = "mean"
     )
 
-  # Determine threshold from fixed value or quantile
-  if (!is.null(hii_threshold)) {
-    breaks <- hii_threshold
-    log_message("Using fixed HII threshold: {breaks}")
+    # Determine threshold from fixed value, quantile, or PA mean (issue #79)
+    # If mean HII inside PAs >= 4, the quantile-based threshold may exclude
+    # nearly everything. In that case, use the PA mean as the threshold instead.
+    if (!is.null(hii_threshold)) {
+      breaks <- hii_threshold
+      log_message("Using fixed HII threshold: {breaks}")
+    } else {
+      hii_pa_mean <- exactextractr::exact_extract(
+        x = hii_resampled,
+        y = current_protected_areas,
+        fun = "mean"
+      )
+      if (!is.na(hii_pa_mean) && hii_pa_mean >= 4) {
+        breaks <- hii_pa_mean
+        log_message("Mean HII inside protected areas ({round(hii_pa_mean, 2)}) >= 4 - using PA mean as threshold")
+      } else {
+        breaks <- exactextractr::exact_extract(
+          x = hii_resampled,
+          y = current_protected_areas,
+          fun = "quantile",
+          quantiles = hii_quantile
+        )
+        log_message("HII threshold calculated from quantile {hii_quantile}: {breaks}")
+      }
+    }
+
+    # Base zone: where HII is low
+    log_message("Creating initial protect zone based on HII values...")
+    protect_zone <- terra::ifel(hii_resampled < breaks, 1, 0)
   } else {
-    breaks <- exactextractr::exact_extract(
-      x = hii_resampled,
-      y = current_protected_areas,
-      fun = "quantile",
-      quantiles = hii_quantile
-    )
-    log_message("HII threshold calculated from quantile {hii_quantile}: {breaks}")
+    # No HII input — start with all planning units eligible
+    log_message("No HII input provided - protect zone based on agriculture and built area exclusions only")
+    protect_zone <- terra::setValues(pus, 1)
   }
-
-  # Base zone: where HII is low
-  log_message("Creating initial protect zone based on HII values...")
-  protect_zone <- terra::ifel(hii_resampled < breaks, 1, 0)
 
   # Exclude agriculture and built-up areas
   log_message("Removing built and agricultural areas...")
