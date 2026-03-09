@@ -85,6 +85,8 @@
 <url><loc>https://elsa-undp.github.io/elsar/reference/merge_tiles.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/reference/pipe.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/reference/rescale_raster.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/safe_gee_getinfo.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/reference/safe_task_status.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/reference/save_raster.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/reference/split_bbox_into_tiles.html</loc></url>
 </urlset>

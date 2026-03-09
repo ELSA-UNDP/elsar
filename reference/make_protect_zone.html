@@ -67,7 +67,7 @@ for spatial prioritization tools such as <code>prioritizr</code>.</p>
 <span>  agricultural_areas_input <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  built_areas_input <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  lulc_raster <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  <span class="va">hii_input</span>,</span>
+<span>  hii_input <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  hii_threshold <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  hii_quantile <span class="op">=</span> <span class="fl">0.95</span>,</span>
 <span>  lulc_product <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"esri_10m"</span>, <span class="st">"dynamic_world"</span>, <span class="st">"esa_worldcover"</span>, <span class="st">"local"</span><span class="op">)</span>,</span>
@@ -118,7 +118,9 @@ be used automatically, overriding <code>agricultural_areas_input</code> and <cod
 
 
 <dt id="arg-hii-input">hii_input<a class="anchor" aria-label="anchor" href="#arg-hii-input"></a></dt>
-<dd><p>A <code>SpatRaster</code> of the Human Footprint Index.</p></dd>
+<dd><p>A <code>SpatRaster</code> of the Human Footprint Index, or NULL. If NULL,
+the protect zone starts with all planning units eligible and applies only
+agriculture and built-area exclusions.</p></dd>
 
 
 <dt id="arg-hii-threshold">hii_threshold<a class="anchor" aria-label="anchor" href="#arg-hii-threshold"></a></dt>

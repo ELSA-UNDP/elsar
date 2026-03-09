@@ -50,6 +50,7 @@
 <ul><li><p>Added file naming conventions vignette documenting standardised naming patterns for ELSA pipeline inputs, outputs, and figures.</p></li>
 <li><p>Added dark mode toggle to the pkgdown website.</p></li>
 <li><p>Added <code><a href="../reference/make_urban_greening_zone.html">make_urban_greening_zone()</a></code> to the pkgdown reference index.</p></li>
+<li><p><code><a href="../reference/make_protect_zone.html">make_protect_zone()</a></code> now adapts the HII threshold when mean HII inside protected areas is high (&gt;= 4). Uses the PA mean as the threshold instead of the quantile-based approach to avoid excluding nearly all areas in high-HFI countries (#79). <code>hii_input</code> is now optional.</p></li>
 </ul></div>
 <div class="section level3">
 <h3 id="improvements-0-1-0">Improvements<a class="anchor" aria-label="anchor" href="#improvements-0-1-0"></a></h3>
