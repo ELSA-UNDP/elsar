@@ -12,7 +12,7 @@ make_protect_zone(
   agricultural_areas_input = NULL,
   built_areas_input = NULL,
   lulc_raster = NULL,
-  hii_input,
+  hii_input = NULL,
   hii_threshold = NULL,
   hii_quantile = 0.95,
   lulc_product = c("esri_10m", "dynamic_world", "esa_worldcover", "local"),
@@ -44,7 +44,9 @@ be used automatically, overriding \code{agricultural_areas_input} and \code{buil
 
 \item{lulc_raster}{A \code{SpatRaster} LULC map used to extract agriculture/built-up areas if not already provided (default: NULL).}
 
-\item{hii_input}{A \code{SpatRaster} of the Human Footprint Index.}
+\item{hii_input}{A \code{SpatRaster} of the Human Footprint Index, or NULL. If NULL,
+the protect zone starts with all planning units eligible and applies only
+agriculture and built-area exclusions.}
 
 \item{hii_threshold}{A fixed numeric HII threshold. If NULL, \code{hii_quantile} is used to estimate it.}
 
