@@ -1,0 +1,129 @@
+url: https://elsa-undp.github.io/elsar/fr/
+lang: fr
+template:
+  bootstrap: 5
+  light-switch: true
+llm-docs: false
+navbar:
+  structure:
+    right: [search, language, github, lightswitch]
+  components:
+    language:
+      icon: fa-globe
+      aria-label: "Changer de langue"
+      menu:
+        - text: "English"
+          href: https://elsa-undp.github.io/elsar/
+        - text: "Español"
+          href: https://elsa-undp.github.io/elsar/es/
+        - text: "Français"
+          href: https://elsa-undp.github.io/elsar/fr/
+        - text: "Português"
+          href: https://elsa-undp.github.io/elsar/pt/
+        - text: "Русский"
+          href: https://elsa-undp.github.io/elsar/ru/
+articles:
+development:
+  destination:
+  version_label: info
+  version_tooltip: "Le paquet est aux premiers stades de développement. À utiliser avec prudence."
+reference:
+
+- title: Préparer la Région de Planification
+  desc: Fonctions pour préparer la région de planification pour le flux de travail ELSA
+- contents:
+  - make_boundary
+  - make_planning_units
+
+- title: Préparer les Données Caractéristiques
+  desc: Fonctions pour préparer les jeux de données mondiaux pour le flux de travail ELSA
+- contents:
+  - get_all_features
+  - make_degraded_areas
+  - make_flood_abatement_opportunities
+  - make_forest_integrity
+  - make_indigenous_managed_lands
+  - make_kbas
+  - make_managed_forests
+  - make_mangroves
+  - make_normalised_raster
+  - make_protected_areas
+  - make_threatened_ecosystems_protection
+  - make_threatened_ecosystems_restoration
+  - make_underrepresented_ecosystems
+  - make_urban_greening_opportunities
+  - make_wetlands_ramsar
+
+- title: Configurer l'Analyse ELSA
+  desc: Fonctions pour formuler un problème de conservation pour une analyse ELSA
+- contents:
+  - make_protect_zone
+  - make_restore_zone
+  - make_manage_zone
+  - make_urban_greening_zone
+
+- title: Fonctions Utilitaires ELSA
+  desc: Fonctions pour aider à l'analyse ELSA
+- contents:
+  - calculate_restore_and_urban_budgets
+  - get_min_lockin_target
+  - get_target
+
+- title: Fonctions Auxiliaires
+- contents:
+  - elsar_load_data
+  - check_and_download_required_layers
+  - download_dynamic_world_data
+  - download_esa_worldcover_data
+  - download_esri_lulc_data
+  - download_global_pasture_data
+  - download_gee_layer
+  - download_lulc_class_proportion
+  - download_lulc_data
+  - download_lulc_proportions
+  - filter_sf
+  - get_file_type
+  - get_iucn_ecosystems
+  - get_iucn_forests
+  - get_lulc_class_value
+  - get_lulc_classes
+  - list_lulc_products
+  - load_local_lulc_data
+  - log_message
+  - make_custom_projection
+
+- title: Utilitaires
+- contents:
+  - convert_points_polygon
+  - crop_global_raster
+  - extract_filename_filetype
+  - exact_rasterise
+  - get_binary_layers
+  - get_coverage
+  - median_from_rast
+  - rescale_raster
+  - split_bbox_into_tiles
+  - conditionally_subdivide_bbox
+  - save_raster
+
+- title: Fonctions de Visualisation
+  desc: Fonctions pour visualiser les données d'entrée et de sortie du flux de travail ELSA
+- contents:
+  - elsar_plot_distribution
+  - elsar_plot_feature
+  - elsar_plot_static_raster
+
+- title: Utilitaires de Visualisation
+  desc: Fonctions auxiliaires pour la visualisation
+- contents:
+  - elsar_continuous_to_categorical
+  - elsar_extend
+  - elsar_plot_background
+  - elsar_plot_extra_data
+  - elsar_plot_optics
+
+- title: Jeux de Données
+- contents:
+  - boundary_dat
+  - current_pas_sf
+  - get_wad_data

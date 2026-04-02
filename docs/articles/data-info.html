@@ -45,6 +45,16 @@
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
 </form></li>
 <li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Switch language"><span class="fa fa-globe"></span></button>
+  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-">
+<li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/">English</a></li>
+    <li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/es/">Español</a></li>
+    <li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/fr/">Français</a></li>
+    <li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/pt/">Português</a></li>
+    <li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/ru/">Русский</a></li>
+  </ul>
+</li>
+<li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch">
 <li><button class="dropdown-item" data-bs-theme-value="light"><span class="fa fa-sun"></span> Light</button></li>
@@ -61,7 +71,7 @@
 
 
 
-<script src="data-info_files/accessible-code-block-0.0.1/empty-anchor.js"></script><script src="data-info_files/kePrint-0.0.1/kePrint.js"></script><link href="data-info_files/lightable-0.0.1/lightable.css" rel="stylesheet">
+<script src="data-info_files/kePrint-0.0.1/kePrint.js"></script><link href="data-info_files/lightable-0.0.1/lightable.css" rel="stylesheet">
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
@@ -77,7 +87,10 @@
 <div class="section level2">
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
-<p>The <code>elsar</code> package provides functions to process various global datasets for use in ELSA (Essential Life Support Areas) conservation planning. This reference table summarises the available datasets, their corresponding R functions, and processing notes.</p>
+<p>The <code>elsar</code> package provides functions to process various
+global datasets for use in ELSA (Essential Life Support Areas)
+conservation planning. This reference table summarises the available
+datasets, their corresponding R functions, and processing notes.</p>
 </div>
 <div class="section level2">
 <h2 id="dataset-reference">Dataset Reference<a class="anchor" aria-label="anchor" href="#dataset-reference"></a>
@@ -397,7 +410,8 @@ make_managed_forests()
 default
 </td>
 <td style="text-align:left;width: 4cm; ">
-Categories: 11=undisturbed (NOT managed), 20=disturbed (managed), 31/32/40/53=managed (palm oil, etc.)
+Categories: 11=undisturbed (NOT managed), 20=disturbed (managed),
+31/32/40/53=managed (palm oil, etc.)
 </td>
 <td style="text-align:left;width: 2cm; ">
 Y
@@ -644,29 +658,43 @@ Y
 </h2>
 <ul>
 <li>
-<strong>Tested</strong>: Indicates whether the function has been tested with real data (Y = Yes, N = No).</li>
+<strong>Tested</strong>: Indicates whether the function has been
+tested with real data (Y = Yes, N = No).</li>
 <li>
-<strong>Since</strong>: The <code>elsar</code> version in which the function was first available.</li>
-<li>Most datasets use <code><a href="../reference/make_normalised_raster.html">make_normalised_raster()</a></code> for standard processing with optional parameters (e.g., <code>inverse = TRUE</code>).</li>
-<li>Some datasets require specialised functions (e.g., <code><a href="../reference/make_kbas.html">make_kbas()</a></code>, <code><a href="../reference/make_mangroves.html">make_mangroves()</a></code>, <code><a href="../reference/make_forest_integrity.html">make_forest_integrity()</a></code>).</li>
-<li>Datasets with “NA” as the dataset name do not have a fixed global source file and may vary by country or analysis.</li>
+<strong>Since</strong>: The <code>elsar</code> version in which the
+function was first available.</li>
+<li>Most datasets use <code><a href="../reference/make_normalised_raster.html">make_normalised_raster()</a></code> for standard
+processing with optional parameters (e.g.,
+<code>inverse = TRUE</code>).</li>
+<li>Some datasets require specialised functions (e.g.,
+<code><a href="../reference/make_kbas.html">make_kbas()</a></code>, <code><a href="../reference/make_mangroves.html">make_mangroves()</a></code>,
+<code><a href="../reference/make_forest_integrity.html">make_forest_integrity()</a></code>).</li>
+<li>Datasets with “NA” as the dataset name do not have a fixed global
+source file and may vary by country or analysis.</li>
 </ul>
 </div>
 <div class="section level2">
 <h2 id="removed-datasets">Removed Datasets<a class="anchor" aria-label="anchor" href="#removed-datasets"></a>
 </h2>
-<p>The following datasets were previously listed but have been removed or are no longer supported:</p>
+<p>The following datasets were previously listed but have been removed
+or are no longer supported:</p>
 <ul>
 <li>
-<strong>Certified Forests</strong> — deprecated, no replacement.</li>
+<strong>Certified Forests</strong> — deprecated, no
+replacement.</li>
 <li>
-<strong>Landcover Layers</strong> — replaced by LULC download functions (<code><a href="../reference/download_lulc_data.html">download_lulc_data()</a></code>, <code><a href="../reference/download_lulc_proportions.html">download_lulc_proportions()</a></code>).</li>
+<strong>Landcover Layers</strong> — replaced by LULC download
+functions (<code><a href="../reference/download_lulc_data.html">download_lulc_data()</a></code>,
+<code><a href="../reference/download_lulc_proportions.html">download_lulc_proportions()</a></code>).</li>
 <li>
-<strong>Mountains/Glaciers</strong> — not currently implemented.</li>
+<strong>Mountains/Glaciers</strong> — not currently
+implemented.</li>
 <li>
-<strong>Productive Managed Forests</strong> — not currently implemented.</li>
+<strong>Productive Managed Forests</strong> — not currently
+implemented.</li>
 <li>
-<strong>Urban Extreme Heat</strong> — not currently implemented.</li>
+<strong>Urban Extreme Heat</strong> — not currently
+implemented.</li>
 <li>
 <strong>Yield Gap</strong> — not currently implemented.</li>
 <li>

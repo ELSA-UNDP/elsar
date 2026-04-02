@@ -1,0 +1,144 @@
+---
+title: "Conventions de Nommage des Fichiers"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Conventions de Nommage des Fichiers}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+> *Cette traduction a ete generee par IA. Veuillez consulter la [version anglaise](https://elsa-undp.github.io/elsar/articles/naming_conventions.html) comme reference principale.*
+
+## Apercu General
+
+Ce document decrit les conventions de nommage standardisees pour les jeux de
+donnees d'entree et de sortie utilises dans les analyses ELSA. Un nommage
+coherent ameliore l'organisation des fichiers, facilite l'identification des
+jeux de donnees et assure la reproductibilite entre differents pays et niveaux
+d'analyse.
+
+## Regles Generales
+
+- **Tout en minuscules** -- les noms de fichiers doivent utiliser uniquement des lettres minuscules.
+- **Tirets bas pour les espaces** -- utilisez des tirets bas (`_`) pour separer les mots.
+- **Pas de caracteres speciaux** -- evitez les traits d'union, les points (sauf avant l'extension du fichier), ou d'autres caracteres speciaux.
+- **Soyez descriptif** -- le nom du fichier doit transmettre le contenu, la portee geographique et le niveau d'analyse en un coup d'oeil.
+
+## Niveaux d'Analyse
+
+Les analyses ELSA sont organisees en trois niveaux bases sur la source et la
+resolution des donnees d'entree :
+
+| Niveau | Code | Description |
+|--------|------|-------------|
+| Niveau 1 | `t1` | Analyse globale utilisant des jeux de donnees standard disponibles mondialement |
+| Niveau 2 | `t2` | Analyse nationale incorporant des donnees de niveau national |
+| Niveau 3 | `t3` | Analyse sous-nationale utilisant des donnees localement specifiques |
+
+Le code de niveau est ajoute aux noms de fichiers produits par le pipeline
+`elsar` pour indiquer quel niveau d'analyse a genere la sortie.
+
+## Structure du Nom de Fichier
+
+### Sorties du pipeline
+
+Les sorties des fonctions `elsar` suivent ce modele :
+
+```
+<description>_<iso3>_<niveau>.<ext>
+```
+
+| Composant | Description | Exemple |
+|-----------|-------------|---------|
+| `<description>` | Breve description du jeu de donnees | `protect_zone`, `restore_zone` |
+| `<iso3>` | Code pays ISO 3166-1 alpha-3 (ou `global`) | `hti`, `zaf`, `kaz` |
+| `<niveau>` | Niveau d'analyse (`t1`, `t2`, `t3`) | `t2` |
+| `<ext>` | Extension de fichier | `.tif`, `.gpkg`, `.png` |
+
+**Exemples :**
+
+```
+protect_zone_hti_t2.tif
+restore_zone_zaf_t1.tif
+planning_units_kaz_t3.tif
+protected_areas_dom_t2.tif
+```
+
+### Jeux de donnees temporels
+
+Les jeux de donnees qui varient dans le temps (par ex., occupation/couverture des sols) incluent l'annee :
+
+```
+<description>_<annee>_<iso3>_<niveau>.<ext>
+```
+
+**Exemples :**
+
+```
+esri_10m_proportion_2023_gha_t2.tif
+deforestation_risk_2020_dom_t2.tif
+```
+
+### Couches de classes LULC
+
+Les couches de proportion LULC incluent en plus la classe de couverture des sols :
+
+```
+<produit>_proportion_<annee>_<iso3>_<classe>.<ext>
+```
+
+**Exemples :**
+
+```
+esri_10m_proportion_2023_gha_agriculture.tif
+dynamic_world_proportion_2023_ken_built_area.tif
+```
+
+### Figures
+
+Les sorties graphiques suivent la meme convention avec une extension `.png` :
+
+```
+<description>_<iso3>.png
+```
+
+**Exemples :**
+
+```
+protect_zone_hti.png
+forest_integrity_zaf.png
+```
+
+## Formats de Fichiers Preferes
+
+| Type | Format | Extension | Notes |
+|------|--------|-----------|-------|
+| Raster | GeoTIFF optimise pour le cloud | `.tif` | Compression ZSTD, utilise par toutes les sorties raster `elsar` |
+| Vecteur | GeoPackage | `.gpkg` | Prefere aux Shapefiles -- pas de limite de taille, fichier unique |
+| Graphiques | PNG | `.png` | Images raster pour les figures |
+| Tabulaire | CSV | `.csv` | Texte brut, largement compatible |
+
+## Structure des Dossiers
+
+Une disposition recommandee pour organiser les sorties d'analyse ELSA :
+
+```
+elsa_<iso3>/
++-- inputs/
+|   +-- rasters/
+|   +-- vectors/
++-- outputs/
+|   +-- rasters/
+|   +-- vectors/
+|   +-- figures/
++-- reports/
+```
+
+- **`inputs/`** -- jeux de donnees bruts et pre-traites.
+- **`outputs/`** -- toutes les sorties generees par le pipeline `elsar`.
+- **`reports/`** -- rapports finaux, resumes et documentation.
+
+## Versionnage et Horodatage
+
+- **Versionnage** -- si plusieurs versions d'un jeu de donnees existent, ajoutez un numero de version a la description, ou un terme specifique pour le projet, par ex., restoring_hope : `protect_zone_v2_dom_t2.tif`, `protect_zone_restoring_hope_dom_t1.tif`
+- **Horodatage** -- si necessaire, ajoutez une date au format `AAAAMMJJ` : `protect_zone_20240601_dom_t2.tif`.
