@@ -1,0 +1,68 @@
+# Check if translated content is out of sync with English sources
+name: Translation staleness check
+
+on:
+  pull_request:
+    branches: [main, master]
+    paths:
+      - 'vignettes/**'
+      - 'README.md'
+      - '_pkgdown.yml'
+
+jobs:
+  check-translations:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check translation staleness
+        run: |
+          stale=()
+          languages=("es" "fr" "pt" "ru")
+
+          # Files to track: English source -> translation path pattern
+          sources=(
+            "vignettes/elsaR.Rmd"
+            "vignettes/naming_conventions.Rmd"
+            "vignettes/data-info.Rmd"
+            "README.md"
+            "_pkgdown.yml"
+          )
+
+          for src in "${sources[@]}"; do
+            src_time=$(git log -1 --format="%ct" -- "$src" 2>/dev/null || echo "0")
+
+            for lang in "${languages[@]}"; do
+              if [[ "$src" == _pkgdown.yml || "$src" == README.md ]]; then
+                trans="translations/${lang}/${src}"
+              else
+                trans="translations/${lang}/${src}"
+              fi
+
+              if [ ! -f "$trans" ]; then
+                stale+=("MISSING: ${trans}")
+                continue
+              fi
+
+              trans_time=$(git log -1 --format="%ct" -- "$trans" 2>/dev/null || echo "0")
+
+              if [ "$src_time" -gt "$trans_time" ]; then
+                stale+=("STALE: ${trans} (English source updated more recently)")
+              fi
+            done
+          done
+
+          if [ ${#stale[@]} -gt 0 ]; then
+            echo "::warning::The following translations may be out of date:"
+            for item in "${stale[@]}"; do
+              echo "  - $item"
+              echo "::warning::$item"
+            done
+            echo ""
+            echo "Please update the translations to match the latest English content."
+            echo "You can ask Claude to re-translate the changed files."
+          else
+            echo "All translations are up to date."
+          fi

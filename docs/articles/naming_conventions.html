@@ -45,6 +45,16 @@
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
 </form></li>
 <li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Switch language"><span class="fa fa-globe"></span></button>
+  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-">
+<li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/">English</a></li>
+    <li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/es/">Español</a></li>
+    <li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/fr/">Français</a></li>
+    <li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/pt/">Português</a></li>
+    <li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/ru/">Русский</a></li>
+  </ul>
+</li>
+<li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch">
 <li><button class="dropdown-item" data-bs-theme-value="light"><span class="fa fa-sun"></span> Light</button></li>
@@ -61,7 +71,8 @@
 
 
 
-<script src="naming_conventions_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
+
+<div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>File Naming Conventions</h1>
@@ -76,27 +87,40 @@
 <div class="section level2">
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
-<p>This document describes the standardised naming conventions for input and output datasets used in ELSA analyses. Consistent naming improves file organisation, makes datasets easier to identify, and ensures reproducibility across different countries and analysis tiers.</p>
+<p>This document describes the standardised naming conventions for input
+and output datasets used in ELSA analyses. Consistent naming improves
+file organisation, makes datasets easier to identify, and ensures
+reproducibility across different countries and analysis tiers.</p>
 </div>
 <div class="section level2">
 <h2 id="general-rules">General Rules<a class="anchor" aria-label="anchor" href="#general-rules"></a>
 </h2>
 <ul>
 <li>
-<strong>All lowercase</strong> — file names should use only lowercase letters.</li>
+<strong>All lowercase</strong> — file names should use only
+lowercase letters.</li>
 <li>
-<strong>Underscores for spaces</strong> — use underscores (<code>_</code>) to separate words.</li>
+<strong>Underscores for spaces</strong> — use underscores
+(<code>_</code>) to separate words.</li>
 <li>
-<strong>No special characters</strong> — avoid hyphens, periods (except before the file extension), or other special characters.</li>
+<strong>No special characters</strong> — avoid hyphens, periods
+(except before the file extension), or other special characters.</li>
 <li>
-<strong>Be descriptive</strong> — the file name should convey the content, geographic scope, and analysis tier at a glance.</li>
+<strong>Be descriptive</strong> — the file name should convey the
+content, geographic scope, and analysis tier at a glance.</li>
 </ul>
 </div>
 <div class="section level2">
 <h2 id="analysis-tiers">Analysis Tiers<a class="anchor" aria-label="anchor" href="#analysis-tiers"></a>
 </h2>
-<p>ELSA analyses are organised into three tiers based on the source and resolution of input data:</p>
+<p>ELSA analyses are organised into three tiers based on the source and
+resolution of input data:</p>
 <table class="table">
+<colgroup>
+<col width="24%">
+<col width="24%">
+<col width="52%">
+</colgroup>
 <thead><tr class="header">
 <th>Tier</th>
 <th>Code</th>
@@ -120,7 +144,9 @@
 </tr>
 </tbody>
 </table>
-<p>The tier code is appended to filenames produced by the <code>elsar</code> pipeline to indicate which level of analysis generated the output.</p>
+<p>The tier code is appended to filenames produced by the
+<code>elsar</code> pipeline to indicate which level of analysis
+generated the output.</p>
 </div>
 <div class="section level2">
 <h2 id="file-name-structure">File Name Structure<a class="anchor" aria-label="anchor" href="#file-name-structure"></a>
@@ -131,6 +157,11 @@
 <p>Outputs from <code>elsar</code> functions follow this pattern:</p>
 <pre><code>&lt;description&gt;_&lt;iso3&gt;_&lt;tier&gt;.&lt;ext&gt;</code></pre>
 <table class="table">
+<colgroup>
+<col width="33%">
+<col width="39%">
+<col width="27%">
+</colgroup>
 <thead><tr class="header">
 <th>Component</th>
 <th>Description</th>
@@ -153,7 +184,8 @@
 </tr>
 <tr class="odd">
 <td><code>&lt;tier&gt;</code></td>
-<td>Analysis tier (<code>t1</code>, <code>t2</code>, <code>t3</code>)</td>
+<td>Analysis tier (<code>t1</code>, <code>t2</code>,
+<code>t3</code>)</td>
 <td><code>t2</code></td>
 </tr>
 <tr class="even">
@@ -174,7 +206,8 @@
 <div class="section level3">
 <h3 id="temporal-datasets">Temporal datasets<a class="anchor" aria-label="anchor" href="#temporal-datasets"></a>
 </h3>
-<p>Datasets that vary over time (e.g., land use/land cover) include the year:</p>
+<p>Datasets that vary over time (e.g., land use/land cover) include the
+year:</p>
 <pre><code>&lt;description&gt;_&lt;year&gt;_&lt;iso3&gt;_&lt;tier&gt;.&lt;ext&gt;</code></pre>
 <p><strong>Examples:</strong></p>
 <pre><code><span><span class="va">esri_10m_proportion_2023_gha_t2.tif</span></span>
@@ -192,7 +225,8 @@
 <div class="section level3">
 <h3 id="figures">Figures<a class="anchor" aria-label="anchor" href="#figures"></a>
 </h3>
-<p>Plot outputs follow the same convention with a <code>.png</code> extension:</p>
+<p>Plot outputs follow the same convention with a <code>.png</code>
+extension:</p>
 <pre><code>&lt;description&gt;_&lt;iso3&gt;.png</code></pre>
 <p><strong>Examples:</strong></p>
 <pre><code><span><span class="va">protect_zone_hti.png</span></span>
@@ -258,11 +292,14 @@
 └── reports/</code></pre>
 <ul>
 <li>
-<strong><code>inputs/</code></strong> — raw and preprocessed input datasets.</li>
+<strong><code>inputs/</code></strong> — raw and preprocessed input
+datasets.</li>
 <li>
-<strong><code>outputs/</code></strong> — all outputs generated by the <code>elsar</code> pipeline.</li>
+<strong><code>outputs/</code></strong> — all outputs generated by
+the <code>elsar</code> pipeline.</li>
 <li>
-<strong><code>reports/</code></strong> — final reports, summaries, and documentation.</li>
+<strong><code>reports/</code></strong> — final reports, summaries,
+and documentation.</li>
 </ul>
 </div>
 <div class="section level2">
@@ -270,10 +307,16 @@
 </h2>
 <ul>
 <li>
-<strong>Versioning</strong> — if multiple versions of a dataset exist, append a version number to the description, or a specific term for the project, e.g., restoring_hope: <code>protect_zone_v2_dom_t2.tif</code>, <code>protect_zone_restoring_hope_dom_t1.tif</code>
+<strong>Versioning</strong> — if multiple versions of a dataset
+exist, append a version number to the description, or a specific term
+for the project, e.g., restoring_hope:
+<code>protect_zone_v2_dom_t2.tif</code>,
+<code>protect_zone_restoring_hope_dom_t1.tif</code>
 </li>
 <li>
-<strong>Date stamps</strong> — if needed, append a date in <code>YYYYMMDD</code> format: <code>protect_zone_20240601_dom_t2.tif</code>.</li>
+<strong>Date stamps</strong> — if needed, append a date in
+<code>YYYYMMDD</code> format:
+<code>protect_zone_20240601_dom_t2.tif</code>.</li>
 </ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -1,0 +1,70 @@
+---
+title: "Reference de Traitement des Donnees Globales"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Reference de Traitement des Donnees Globales}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+> *Cette traduction a ete generee par IA. Veuillez consulter la [version anglaise](https://elsa-undp.github.io/elsar/articles/data-info.html) comme reference principale.*
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = FALSE
+)
+```
+
+## Apercu General
+
+Le paquet `elsar` fournit des fonctions pour traiter divers jeux de donnees
+globaux destines a la planification de conservation ELSA (Essential Life Support
+Areas). Ce tableau de reference resume les jeux de donnees disponibles, leurs
+fonctions R correspondantes et les notes de traitement.
+
+## Reference des Jeux de Donnees
+
+```{r setup, message=FALSE, echo=FALSE}
+library(elsar)
+library(readr)
+library(dplyr)
+library(kableExtra)
+```
+
+```{r, echo = FALSE, message=FALSE, warning=FALSE}
+data_summary <- read_delim("data_summary.csv", delim = ";", show_col_types = FALSE) %>%
+  kable(col.names = c("Jeu de Donnees", "Nom du Jeu", "Fonction R", "Specifications",
+                       "Commentaires", "Teste", "Depuis")) %>%
+  kable_styling("hover", full_width = FALSE, font_size = 10) %>%
+  column_spec(1, width = "5cm", bold = TRUE) %>%
+  column_spec(2, width = "4cm") %>%
+  column_spec(3, width = "4cm") %>%
+  column_spec(4, width = "3cm") %>%
+  column_spec(5, width = "4cm") %>%
+  column_spec(6, width = "2cm") %>%
+  column_spec(7, width = "2cm")
+data_summary
+```
+
+## Notes
+
+- **Teste** : Indique si la fonction a ete testee avec des donnees reelles (O = Oui, N = Non).
+- **Depuis** : La version d'`elsar` dans laquelle la fonction a ete disponible pour la premiere fois.
+- La plupart des jeux de donnees utilisent `make_normalised_raster()` pour le traitement standard avec des parametres optionnels (par ex., `inverse = TRUE`).
+- Certains jeux de donnees necessitent des fonctions specialisees (par ex., `make_kbas()`, `make_mangroves()`, `make_forest_integrity()`).
+- Les jeux de donnees avec \"NA\" comme nom de jeu de donnees n'ont pas de fichier source global fixe et peuvent varier selon le pays ou l'analyse.
+
+## Jeux de Donnees Supprimes
+
+Les jeux de donnees suivants etaient precedemment listes mais ont ete supprimes
+ou ne sont plus pris en charge :
+
+- **Forets Certifiees** -- obsolete, pas de remplacement.
+- **Couches d'Occupation des Sols** -- remplacees par les fonctions de telechargement LULC (`download_lulc_data()`, `download_lulc_proportions()`).
+- **Montagnes/Glaciers** -- pas actuellement implemente.
+- **Forets Gerees Productives** -- pas actuellement implemente.
+- **Chaleur Extreme Urbaine** -- pas actuellement implemente.
+- **Ecart de Rendement** -- pas actuellement implemente.
+- **Zones Remarquables** -- pas actuellement implemente.

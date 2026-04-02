@@ -26,6 +26,14 @@
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
 <li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Switch language"><span class="fa fa-globe"></span></button>
+  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-"><li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/">English</a></li>
+    <li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/es/">Español</a></li>
+    <li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/fr/">Français</a></li>
+    <li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/pt/">Português</a></li>
+    <li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/ru/">Русский</a></li>
+  </ul></li>
+<li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch"><li><button class="dropdown-item" data-bs-theme-value="light"><span class="fa fa-sun"></span> Light</button></li>
     <li><button class="dropdown-item" data-bs-theme-value="dark"><span class="fa fa-moon"></span> Dark</button></li>
@@ -50,10 +58,12 @@
 <ul><li><p>Added file naming conventions vignette documenting standardised naming patterns for ELSA pipeline inputs, outputs, and figures.</p></li>
 <li><p>Added dark mode toggle to the pkgdown website.</p></li>
 <li><p>Added <code><a href="../reference/make_urban_greening_zone.html">make_urban_greening_zone()</a></code> to the pkgdown reference index.</p></li>
+<li><p><code><a href="../reference/make_protect_zone.html">make_protect_zone()</a></code> now adapts the HII threshold when mean HII inside protected areas is high (&gt;= 4). Uses the PA mean as the threshold instead of the quantile-based approach to avoid excluding nearly all areas in high-HFI countries (#79). <code>hii_input</code> is now optional.</p></li>
 </ul></div>
 <div class="section level3">
 <h3 id="improvements-0-1-0">Improvements<a class="anchor" aria-label="anchor" href="#improvements-0-1-0"></a></h3>
-<ul><li>Updated Global Data Processing Reference vignette:<ul><li>Fixed stale and incorrect function names.</li>
+<ul><li>Updated Global Data Processing Reference vignette:
+<ul><li>Fixed stale and incorrect function names.</li>
 <li>Added missing datasets (degraded areas, flood abatement, indigenous managed lands).</li>
 <li>Added “Since” column tracking which version introduced each function.</li>
 <li>Documented removed/deprecated datasets in a dedicated section.</li>
@@ -62,7 +72,8 @@
 </ul></div>
 <div class="section level3">
 <h3 id="internal-changes-0-1-0">Internal Changes<a class="anchor" aria-label="anchor" href="#internal-changes-0-1-0"></a></h3>
-<ul><li>Bumped version to 0.1.0 to reflect API stability.</li></ul><hr></div>
+<ul><li>Bumped version to 0.1.0 to reflect API stability.</li>
+</ul><hr></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.0.7" id="elsar-007">elsar 0.0.7<a class="anchor" aria-label="anchor" href="#elsar-007"></a></h2>

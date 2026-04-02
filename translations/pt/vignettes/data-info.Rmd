@@ -1,0 +1,76 @@
+---
+title: "Referência de Processamento de Dados Globais"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Referência de Processamento de Dados Globais}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+> *Esta tradução foi gerada por IA. Consulte a [versão em inglês](https://elsa-undp.github.io/elsar/articles/data-info.html) como referência principal.*
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = FALSE
+)
+```
+
+## Visão Geral
+
+O pacote `elsar` fornece funções para processar diversos conjuntos de dados
+globais para uso no planejamento de conservação ELSA (Essential Life Support
+Areas). Esta tabela de referência resume os conjuntos de dados disponíveis,
+suas funções R correspondentes e notas de processamento.
+
+## Referência de Conjuntos de Dados
+
+```{r setup, message=FALSE, echo=FALSE, eval = FALSE}
+library(elsar)
+library(readr)
+library(dplyr)
+library(kableExtra)
+```
+
+```{r, echo = FALSE, message=FALSE, warning=FALSE, eval = FALSE}
+data_summary <- read_delim("data_summary.csv", delim = ";", show_col_types = FALSE) %>%
+  kable(col.names = c("Conjunto de Dados", "Nome do Conjunto", "Função R", "Especificações",
+                       "Comentários", "Testado", "Desde")) %>%
+  kable_styling("hover", full_width = FALSE, font_size = 10) %>%
+  column_spec(1, width = "5cm", bold = TRUE) %>%
+  column_spec(2, width = "4cm") %>%
+  column_spec(3, width = "4cm") %>%
+  column_spec(4, width = "3cm") %>%
+  column_spec(5, width = "4cm") %>%
+  column_spec(6, width = "2cm") %>%
+  column_spec(7, width = "2cm")
+data_summary
+```
+
+## Notas
+
+- **Testado**: Indica se a função foi testada com dados reais
+  (S = Sim, N = Não).
+- **Desde**: A versão do `elsar` na qual a função foi disponibilizada pela
+  primeira vez.
+- A maioria dos conjuntos de dados utiliza `make_normalised_raster()` para
+  processamento padrão com parâmetros opcionais (por exemplo, `inverse = TRUE`).
+- Alguns conjuntos de dados requerem funções especializadas (por exemplo,
+  `make_kbas()`, `make_mangroves()`, `make_forest_integrity()`).
+- Conjuntos de dados com "NA" como nome do conjunto não possuem um arquivo
+  fonte global fixo e podem variar por país ou análise.
+
+## Conjuntos de Dados Removidos
+
+Os seguintes conjuntos de dados foram listados anteriormente, mas foram
+removidos ou não são mais suportados:
+
+- **Florestas Certificadas** — descontinuado, sem substituto.
+- **Camadas de Cobertura do Solo** — substituídas pelas funções de download LULC
+  (`download_lulc_data()`, `download_lulc_proportions()`).
+- **Montanhas/Glaciares** — não implementado atualmente.
+- **Florestas Produtivas Manejadas** — não implementado atualmente.
+- **Calor Extremo Urbano** — não implementado atualmente.
+- **Lacuna de Rendimento** — não implementado atualmente.
+- **Áreas de Referência** — não implementado atualmente.

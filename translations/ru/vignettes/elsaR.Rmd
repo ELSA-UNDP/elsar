@@ -1,0 +1,285 @@
+---
+title: "Пример Рабочего Процесса ELSA"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Пример Рабочего Процесса ELSA}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+> *Этот перевод был создан с помощью ИИ. Обращайтесь к [английской версии](https://elsa-undp.github.io/elsar/articles/elsaR.html) как к основному источнику.*
+
+```{r, include = FALSE}
+h <- 3.5
+w <- 3.5
+
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  warning = FALSE,
+  cache = FALSE,
+  eval = FALSE,
+  fig.align = "center"
+)
+```
+
+# Обзор
+
+## Введение
+
+## Начало Работы
+
+```{r, message = FALSE}
+# load packages
+library(elsar)
+library(prioritizr)
+library(dplyr)
+library(ggplot2)
+library(sf)
+library(terra)
+
+# set seed for reproducibility
+set.seed(500)
+```
+
+## Регион Планирования
+
+В начале анализа необходимо определить регион планирования и создать единицы планирования. В этом примере мы используем Непал в качестве учебного случая для демонстрации функций данного пакета.
+
+Для этого мы сначала получаем границу Непала, используя его код iso3 («NPL»). Обычно вам потребуется предоставить собственный набор данных с границами стран для фильтрации. Данные могут быть загружены с локальных машин в векторном или растровом формате, или с использованием удалённого подключения через postgres с помощью функции `elsar_load_data()`. Здесь мы используем предварительно сохранённый набор данных.
+
+```{r, fig.width = w, fig.height = h}
+# create boundary for Nepal
+boundary <- make_boundary(
+  boundary_in = boundary_dat,
+  iso3 = "NPL",
+  iso3_column = "iso3cd",
+  custom_projection = FALSE
+)
+
+ggplot() +
+  geom_sf(data = boundary)
+```
+
+Функция `make_boundary()` также предоставляет возможность создания пользовательской проекции, центрированной на регионе планирования. Это также может быть сделано отдельными шагами с использованием функции `make_custom_projection()`, которая интегрирована в функцию `make_boundary()`.
+
+```{r, fig.width = w, fig.height = h}
+boundary_proj <- make_boundary(
+  boundary_in = boundary_dat,
+  iso3 = "NPL",
+  iso3_column = "iso3cd",
+  custom_projection = TRUE
+)
+
+# create custom projection and apply it to boundary
+wkt <- make_custom_projection(boundary = boundary, iso3 = "NPL")
+boundary_proj2 <- sf::st_transform(boundary, crs = sf::st_crs(wkt))
+```
+
+Мы можем проверить, совпадают ли две CRS границ.
+
+```{r}
+# test crs
+print(sf::st_crs(boundary_proj) == sf::st_crs(boundary_proj2))
+```
+
+## Единицы Планирования
+
+Для определения задачи планирования охраны природы нам необходимо разделить регион планирования на более мелкие единицы планирования, которые могут быть выбраны или нет при последующей приоритизации и к которым может быть привязана информация о характеристиках. Функция имеет опцию добавления желаемого размера единицы планирования. Если размер не указан, функция стремится сделать единицы планирования как можно меньше, сохраняя при этом вычислительную эффективность. Значение по умолчанию составляет 850 000 единиц планирования, основанное на предыдущем опыте работы.
+
+```{r}
+# make planning units
+pus <- make_planning_units(
+  boundary_proj = boundary_proj,
+  pu_size = NULL,
+  pu_threshold = 8.5e5,
+  limit_to_mainland = FALSE,
+  iso3 = "NPL"
+)
+```
+
+## Характеристики
+
+Характеристики биоразнообразия являются неотъемлемой частью планирования охраны природы. Характеристики могут варьироваться от распределения видов до более общих наборов данных, таких как Ключевые Территории Биоразнообразия (KBA). В нашем примере мы будем использовать только один набор данных — *Convergence of Global Change Issues* из Мирового Атласа Опустынивания (WAD; см. <https://wad.jrc.ec.europa.eu/>). Входные данные могут быть сначала загружены с помощью функции `elsar_load_data()` (здесь набор данных уже сохранён в пакете).
+
+```{r}
+# get feature data
+wad_subset <- get_wad_data()
+```
+
+Затем данные необходимо перепроецировать и пересемплировать, чтобы они точно соответствовали разрешению и охвату ранее созданных единиц планирования. Мы также нормализуем данные, чтобы значения находились в диапазоне 0-1.
+
+```{r, fig.width = w, fig.height = h}
+# crop and normalise data
+wadOut <- make_normalised_raster(
+  raster_in = wad_subset,
+  pus = pus,
+  iso3 = "NPL"
+)
+
+terra::plot(wadOut)
+```
+
+Вместо того чтобы просто бегло посмотреть на данные с помощью функции `plot` пакета `terra`, мы также можем создать график, используя параметры визуализации, встроенные в пакет `elsar`, например `elsar_plot_static_raster()`, который позволяет строить графики непрерывных растровых данных с помощью `ggplot`.
+
+```{r, fig.width = 7, fig.height = 4}
+(plot_wad <- elsar_plot_static_raster(
+  raster_in = wadOut,
+  legend_title = "WAD"
+))
+```
+
+Мы также можем добавить фоновые данные к графику и дополнительные свойства для изменения внешнего вида графика с помощью функции `elsar_plot_optics()`, которая позволяет указать конкретную тему `ggplot`. Мы также можем изменить цветовую палитру на другую, отличную от стандартной «viridis».
+
+```{r, fig.width = 8, fig.height = 6}
+custom_p <- ggplot2::scale_fill_distiller(
+  name = "WAD",
+  palette = "YlGnBu",
+  aesthetics = c("fill"),
+  oob = scales::squish
+)
+
+(plot_wad <- elsar_plot_static_raster(
+  raster_in = wadOut,
+  custom_palette = custom_p,
+  background = wad_subset
+) +
+  elsar_plot_optics())
+```
+
+При необходимости на карту можно добавить логотипы. Расположение зависит от размеров графика и поэтому должно быть скорректировано в зависимости от фигуры, например, с помощью `terra::ext()`.
+
+```{r, fig.width = 8, fig.height = 6}
+#topRight
+x_min <- terra::ext(wadOut)[1][[1]]
+x_max <- terra::ext(wadOut)[2][[1]]
+y_min <- terra::ext(wadOut)[3][[1]]
+y_max <- terra::ext(wadOut)[4][[1]]
+
+img_xmax <- x_max + x_max * 0.09
+img_xmin <- img_xmax * 0.8
+img_ymax <- y_max + y_max * 0.102
+img_ymin <- img_ymax * 0.8
+
+img_pos <- c(img_xmin, img_xmax, img_ymin, img_ymax)
+
+(plot_out <- elsar_plot_static_raster(
+  raster_in = wadOut,
+  background = wad_subset,
+  legend_title = "WAD",
+  expand_plot = TRUE
+) +
+  elsar_plot_optics(include_logo = TRUE,
+                      logo_path = "figures/elsaR_hex_sticker.png", #change to logo later
+                      logo_pos = img_pos,
+                      logo_dim = c(50, 60)))
+
+```
+
+Если нас интересует распределение, мы также можем построить график распределения. Для этого нам нужно создать два отдельных графика, которые затем объединяем:
+
+```{r, eval=FALSE, fig.height=6, fig.width=8, include=FALSE}
+plot_out <- elsar_plot_static_raster(
+  raster_in = wadOut,
+  background = wad_subset,
+  raster_df_out = TRUE,
+  legend_title = "WAD",
+  expand_plot = TRUE
+)
+
+plot_wad <- plot_out[[1]]
+raster_df <- plot_out[[2]]
+
+plot_dist <- elsar_plot_distribution(
+  raster_df = raster_df,
+  categorical = FALSE,
+  col_interest = "wad_final_cog"
+)
+
+(plot_wad_inset  <- patchwork::wrap_plots((plot_wad +
+  elsar_plot_optics()) +
+  patchwork::inset_element(
+    (plot_dist +
+      elsar_plot_optics(include_text = FALSE) +
+      ggplot2::theme(
+        axis.title = ggplot2::element_blank(),
+        axis.text.x = ggplot2::element_blank(),
+        axis.ticks.x = ggplot2::element_blank()
+      )
+    ),
+    left = 0.1, # needs to be changed depending on plot dimensions
+    bottom = 0.08, # needs to be changed depending on plot dimensions
+    right = 0.35, # needs to be changed depending on plot dimensions
+    top = 0.4, # needs to be changed depending on plot dimensions
+    align_to = "plot"
+  )))
+
+```
+
+Мы также можем преобразовать данные в категории и построить основной график и вставку таким образом.
+
+```{r, eval=FALSE, fig.height=6, fig.width=8, include=FALSE}
+plot_cat <- elsar_plot_static_raster(
+  raster_in = wadOut,
+  categorical = FALSE,
+  background = wad_subset,
+  number_categories = 10,
+  data_layer = "wad_final_cog",
+  raster_df_out = TRUE,
+  legend_title = "WAD",
+  expand_plot = TRUE
+)
+
+plot_wad_cat <- plot_cat[[1]]
+raster_df_cat <- plot_cat[[2]]
+
+
+plot_dist_cat <- elsar_plot_distribution(
+  raster_df = raster_df_cat,
+  categorical = TRUE
+)
+
+(plot_wad_cat_inset <- patchwork::wrap_plots((plot_wad_cat +
+  elsar_plot_optics()) +
+  patchwork::inset_element(
+    (plot_dist_cat +
+      elsar_plot_optics(include_text = FALSE) +
+      ggplot2::theme(
+        axis.title = ggplot2::element_blank(),
+        axis.text.x = ggplot2::element_blank(),
+        axis.ticks.x = ggplot2::element_blank()
+      )
+    ),
+    left = 0.1, # needs to be changed depending on plot dimensions
+    bottom = 0.08, # needs to be changed depending on plot dimensions
+    right = 0.35, # needs to be changed depending on plot dimensions
+    top = 0.4, # needs to be changed depending on plot dimensions
+    align_to = "plot"
+  )))
+```
+
+## Существующие Охраняемые Территории
+
+Охраняемые территории могут быть наложены на карты характеристик для визуализации их пространственной связи с показателями биоразнообразия.
+
+```{r, fig.width = 7, fig.height = 5}
+current_pas <- current_pas_sf
+
+(plot_wad_pas <- elsar_plot_static_raster(
+  raster_in = wadOut,
+  background = wad_subset,
+  legend_title = "WAD"
+) +
+  elsar_plot_extra_data(include_pas = current_pas, color_pa = "red") +
+  elsar_plot_optics())
+```
+
+```{r, fig.width = 7, fig.height = 5}
+(plot_wad_pas2 <- elsar_plot_static_raster(
+  raster_in = wadOut,
+  background = wad_subset,
+  legend_title = "WAD"
+) +
+  elsar_plot_extra_data(include_pas = current_pas, pas_look = "area", color_pa = "grey") +
+  elsar_plot_optics(include_north_scale = TRUE))
+```

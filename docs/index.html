@@ -47,6 +47,16 @@
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="search.json">
 </form></li>
 <li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Switch language"><span class="fa fa-globe"></span></button>
+  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-">
+<li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/">English</a></li>
+    <li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/es/">Español</a></li>
+    <li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/fr/">Français</a></li>
+    <li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/pt/">Português</a></li>
+    <li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/ru/">Русский</a></li>
+  </ul>
+</li>
+<li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch">
 <li><button class="dropdown-item" data-bs-theme-value="light"><span class="fa fa-sun"></span> Light</button></li>
@@ -65,6 +75,7 @@
 <div class="page-header"><h1 id="elsar-">elsar <img src="reference/figures/elsaR_hex_sticker.png" align="right" style="width:140px"><a class="anchor" aria-label="anchor" href="#elsar-"></a>
 </h1></div>
 <!-- badges: start -->
+
 <p>The <strong>elsar</strong> package provides tools and data pipelines to support <em>Essential Life Support Areas (ELSA)</em> conservation planning. It is designed to assist in spatial prioritization and scenario development using globally standardized geospatial data layers.</p>
 <div class="section level2">
 <h2 id="what-does-elsar-do">What does elsar do?<a class="anchor" aria-label="anchor" href="#what-does-elsar-do"></a>
@@ -133,36 +144,36 @@
 <col width="47%">
 <col width="52%">
 </colgroup>
-<thead><tr class="header">
+<thead><tr>
 <th>Category</th>
 <th>Functions</th>
 </tr></thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>Planning Region</td>
 <td>
 <code><a href="reference/make_boundary.html">make_boundary()</a></code>, <code><a href="reference/make_planning_units.html">make_planning_units()</a></code>
 </td>
 </tr>
-<tr class="even">
+<tr>
 <td>Feature Data</td>
 <td>
 <code><a href="reference/make_normalised_raster.html">make_normalised_raster()</a></code>, <code><a href="reference/make_kbas.html">make_kbas()</a></code>, <code><a href="reference/make_protected_areas.html">make_protected_areas()</a></code>, <code><a href="reference/make_mangroves.html">make_mangroves()</a></code>, <code><a href="reference/make_wetlands_ramsar.html">make_wetlands_ramsar()</a></code>
 </td>
 </tr>
-<tr class="odd">
+<tr>
 <td>Zone Layers</td>
 <td>
 <code><a href="reference/make_protect_zone.html">make_protect_zone()</a></code>, <code><a href="reference/make_restore_zone.html">make_restore_zone()</a></code>, <code><a href="reference/make_manage_zone.html">make_manage_zone()</a></code>
 </td>
 </tr>
-<tr class="even">
+<tr>
 <td>Utilities</td>
 <td>
 <code><a href="reference/get_coverage.html">get_coverage()</a></code>, <code><a href="reference/rescale_raster.html">rescale_raster()</a></code>, <code><a href="reference/save_raster.html">save_raster()</a></code>
 </td>
 </tr>
-<tr class="odd">
+<tr>
 <td>Plotting</td>
 <td>
 <code><a href="reference/elsar_plot_static_raster.html">elsar_plot_static_raster()</a></code>, <code><a href="reference/elsar_plot_feature.html">elsar_plot_feature()</a></code>

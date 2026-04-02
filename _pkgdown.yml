@@ -3,6 +3,24 @@ template:
   bootstrap: 5
   light-switch: true
 llm-docs: false
+navbar:
+  structure:
+    right: [search, language, github, lightswitch]
+  components:
+    language:
+      icon: fa-globe
+      aria-label: "Switch language"
+      menu:
+        - text: "English"
+          href: https://elsa-undp.github.io/elsar/
+        - text: "Español"
+          href: https://elsa-undp.github.io/elsar/es/
+        - text: "Français"
+          href: https://elsa-undp.github.io/elsar/fr/
+        - text: "Português"
+          href: https://elsa-undp.github.io/elsar/pt/
+        - text: "Русский"
+          href: https://elsa-undp.github.io/elsar/ru/
 articles:
 development:
   destination:

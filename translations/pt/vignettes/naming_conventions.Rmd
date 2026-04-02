@@ -1,0 +1,151 @@
+---
+title: "Convenções de Nomenclatura de Arquivos"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Convenções de Nomenclatura de Arquivos}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+> *Esta tradução foi gerada por IA. Consulte a [versão em inglês](https://elsa-undp.github.io/elsar/articles/naming_conventions.html) como referência principal.*
+
+## Visão Geral
+
+Este documento descreve as convenções de nomenclatura padronizadas para conjuntos
+de dados de entrada e saída utilizados nas análises ELSA. A nomenclatura
+consistente melhora a organização dos arquivos, facilita a identificação dos
+conjuntos de dados e garante a reprodutibilidade entre diferentes países e
+níveis de análise.
+
+## Regras Gerais
+
+- **Tudo em minúsculas** — os nomes dos arquivos devem usar apenas letras minúsculas.
+- **Underscores para espaços** — use underscores (`_`) para separar palavras.
+- **Sem caracteres especiais** — evite hífens, pontos (exceto antes da extensão
+  do arquivo) ou outros caracteres especiais.
+- **Seja descritivo** — o nome do arquivo deve transmitir o conteúdo, o escopo
+  geográfico e o nível de análise de forma clara.
+
+## Níveis de Análise
+
+As análises ELSA são organizadas em três níveis com base na fonte e resolução
+dos dados de entrada:
+
+| Nível | Código | Descrição |
+|-------|--------|-----------|
+| Nível 1 | `t1` | Análise global usando conjuntos de dados padrão disponíveis globalmente |
+| Nível 2 | `t2` | Análise nacional incorporando dados de nível nacional |
+| Nível 3 | `t3` | Análise subnacional usando dados específicos locais |
+
+O código do nível é adicionado aos nomes de arquivos produzidos pelo pipeline
+`elsar` para indicar qual nível de análise gerou a saída.
+
+## Estrutura do Nome do Arquivo
+
+### Saídas do pipeline
+
+As saídas das funções `elsar` seguem este padrão:
+
+```
+<descrição>_<iso3>_<nível>.<ext>
+```
+
+| Componente | Descrição | Exemplo |
+|------------|-----------|---------|
+| `<descrição>` | Breve descrição do conjunto de dados | `protect_zone`, `restore_zone` |
+| `<iso3>` | Código de país ISO 3166-1 alfa-3 (ou `global`) | `hti`, `zaf`, `kaz` |
+| `<nível>` | Nível de análise (`t1`, `t2`, `t3`) | `t2` |
+| `<ext>` | Extensão do arquivo | `.tif`, `.gpkg`, `.png` |
+
+**Exemplos:**
+
+```
+protect_zone_hti_t2.tif
+restore_zone_zaf_t1.tif
+planning_units_kaz_t3.tif
+protected_areas_dom_t2.tif
+```
+
+### Conjuntos de dados temporais
+
+Conjuntos de dados que variam ao longo do tempo (por exemplo, uso e cobertura
+do solo) incluem o ano:
+
+```
+<descrição>_<ano>_<iso3>_<nível>.<ext>
+```
+
+**Exemplos:**
+
+```
+esri_10m_proportion_2023_gha_t2.tif
+deforestation_risk_2020_dom_t2.tif
+```
+
+### Camadas de classes LULC
+
+As camadas de proporção LULC incluem adicionalmente a classe de cobertura do solo:
+
+```
+<produto>_proportion_<ano>_<iso3>_<classe>.<ext>
+```
+
+**Exemplos:**
+
+```
+esri_10m_proportion_2023_gha_agriculture.tif
+dynamic_world_proportion_2023_ken_built_area.tif
+```
+
+### Figuras
+
+As saídas de gráficos seguem a mesma convenção com extensão `.png`:
+
+```
+<descrição>_<iso3>.png
+```
+
+**Exemplos:**
+
+```
+protect_zone_hti.png
+forest_integrity_zaf.png
+```
+
+## Formatos de Arquivo Preferidos
+
+| Tipo | Formato | Extensão | Observações |
+|------|---------|----------|-------------|
+| Raster | Cloud-Optimized GeoTIFF | `.tif` | Compressão ZSTD, usado por todas as saídas raster do `elsar` |
+| Vetor | GeoPackage | `.gpkg` | Preferido em relação a Shapefiles — sem limites de tamanho de arquivo, arquivo único |
+| Gráficos | PNG | `.png` | Imagens raster para figuras |
+| Tabular | CSV | `.csv` | Texto simples, amplamente compatível |
+
+## Estrutura de Pastas
+
+Um layout recomendado para organizar as saídas de análise ELSA:
+
+```
+elsa_<iso3>/
+├── inputs/
+│   ├── rasters/
+│   └── vectors/
+├── outputs/
+│   ├── rasters/
+│   ├── vectors/
+│   └── figures/
+└── reports/
+```
+
+- **`inputs/`** — conjuntos de dados brutos e pré-processados de entrada.
+- **`outputs/`** — todas as saídas geradas pelo pipeline `elsar`.
+- **`reports/`** — relatórios finais, resumos e documentação.
+
+## Versionamento e Carimbos de Data
+
+- **Versionamento** — se existirem múltiplas versões de um conjunto de dados,
+  adicione um número de versão à descrição, ou um termo específico para o
+  projeto, por exemplo, restoring_hope: `protect_zone_v2_dom_t2.tif`,
+  `protect_zone_restoring_hope_dom_t1.tif`
+- **Carimbos de data** — se necessário, adicione uma data no formato `AAAAMMDD`:
+  `protect_zone_20240601_dom_t2.tif`.
