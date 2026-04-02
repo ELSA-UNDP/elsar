@@ -35,9 +35,9 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="articles/data-info.html">Reference de Traitement des Donnees Globales</a></li>
-    <li><a class="dropdown-item" href="articles/elsaR.html">Un Exemple de Flux de Travail ELSA</a></li>
-    <li><a class="dropdown-item" href="articles/naming_conventions.html">Conventions de Nommage des Fichiers</a></li>
+<li><a class="dropdown-item" href="articles/data-info.html">Global Data Processing Reference</a></li>
+    <li><a class="dropdown-item" href="articles/elsaR.html">An Example ELSA Workflow</a></li>
+    <li><a class="dropdown-item" href="articles/naming_conventions.html">File Naming Conventions</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changements</a></li>
@@ -47,13 +47,13 @@
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Rechercher sur le site" placeholder="Rechercher" data-search-index="search.json">
 </form></li>
 <li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Changer de langue"><span class="fa fa-globe"></span></button>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Switch language"><span class="fa fa-globe"></span></button>
   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-">
-<li><a class="external-link dropdown-item" href="https://elsa-undp.github.io/elsar/">English</a></li>
-    <li><a class="external-link dropdown-item" href="https://elsa-undp.github.io/elsar/es/">Español</a></li>
+<li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/">English</a></li>
+    <li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/es/">Español</a></li>
     <li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/fr/">Français</a></li>
-    <li><a class="external-link dropdown-item" href="https://elsa-undp.github.io/elsar/pt/">Português</a></li>
-    <li><a class="external-link dropdown-item" href="https://elsa-undp.github.io/elsar/ru/">Русский</a></li>
+    <li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/pt/">Português</a></li>
+    <li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/ru/">Русский</a></li>
   </ul>
 </li>
 <li class="nav-item dropdown">
@@ -74,42 +74,38 @@
   <main id="main" class="col-md-9"><div class="section level1">
 <div class="page-header"><h1 id="elsar-">elsar <img src="reference/figures/elsaR_hex_sticker.png" align="right" style="width:140px"><a class="anchor" aria-label="anchor" href="#elsar-"></a>
 </h1></div>
-<blockquote>
-<p><em>Cette traduction a été générée par IA. Veuillez consulter la <a href="https://elsa-undp.github.io/elsar/" class="external-link">version anglaise</a> comme référence principale.</em></p>
-</blockquote>
 <!-- badges: start -->
-
-<p>Le paquet <strong>elsar</strong> fournit des outils et des pipelines de données pour soutenir la planification de conservation des <em>Zones Essentielles de Support à la Vie (ELSA)</em>. Il est conçu pour aider à la priorisation spatiale et au développement de scénarios en utilisant des couches de données géospatiales standardisées à l’échelle mondiale.</p>
+<p>The <strong>elsar</strong> package provides tools and data pipelines to support <em>Essential Life Support Areas (ELSA)</em> conservation planning. It is designed to assist in spatial prioritization and scenario development using globally standardized geospatial data layers.</p>
 <div class="section level2">
-<h2 id="que-fait-elsar-">Que fait elsar ?<a class="anchor" aria-label="anchor" href="#que-fait-elsar-"></a>
+<h2 id="what-does-elsar-do">What does elsar do?<a class="anchor" aria-label="anchor" href="#what-does-elsar-do"></a>
 </h2>
 <ul>
 <li>
-<strong>Préparer les régions de planification</strong> : Créer des limites et des unités de planification pour n’importe quel pays</li>
+<strong>Prepare planning regions</strong>: Create boundaries and planning units for any country</li>
 <li>
-<strong>Traiter les jeux de données mondiaux</strong> : Charger et harmoniser les jeux de données spatiales (WDPA, KBA, LANDMark, ICCA, etc.)</li>
+<strong>Process global datasets</strong>: Load and harmonize spatial datasets (WDPCA, KBA, LANDMark, ICCA, etc.)</li>
 <li>
-<strong>Créer des couches de zones</strong> : Générer des rasters de zones de protection, restauration et gestion</li>
+<strong>Create zone layers</strong>: Generate protect, restore, and manage zone rasters</li>
 <li>
-<strong>Calculer des métriques</strong> : Calculer la couverture spatiale sur les unités de planification</li>
+<strong>Calculate metrics</strong>: Compute spatial coverage over planning units</li>
 <li>
-<strong>Visualiser les résultats</strong> : Tracer des données raster avec un style personnalisable</li>
+<strong>Visualize results</strong>: Plot raster data with customizable styling</li>
 </ul>
 </div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Installer la version de développement depuis GitHub</span></span>
+<code class="sourceCode R"><span><span class="co"># Install the development version from GitHub</span></span>
 <span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"ELSA-UNDP/elsar"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="démarrage-rapide">Démarrage Rapide<a class="anchor" aria-label="anchor" href="#d%C3%A9marrage-rapide"></a>
+<h2 id="quick-start">Quick Start<a class="anchor" aria-label="anchor" href="#quick-start"></a>
 </h2>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://elsa-undp.github.io/elsar/" class="external-link">elsar</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://elsa-undp.github.io/elsar/">elsar</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Créer une limite pour le Népal</span></span>
+<span><span class="co"># Create a boundary for Nepal</span></span>
 <span><span class="va">boundary</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/make_boundary.html">make_boundary</a></span><span class="op">(</span></span>
 <span></span>
 <span>  boundary_in <span class="op">=</span> <span class="va">boundary_dat</span>,</span>
@@ -118,14 +114,14 @@
 <span>  custom_projection <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Créer des unités de planification</span></span>
+<span><span class="co"># Create planning units</span></span>
 <span><span class="va">pus</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/make_planning_units.html">make_planning_units</a></span><span class="op">(</span></span>
 <span> boundary_proj <span class="op">=</span> <span class="va">boundary</span>,</span>
 <span>  pu_threshold <span class="op">=</span> <span class="fl">8.5e5</span>,</span>
 <span>  iso3 <span class="op">=</span> <span class="st">"NPL"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Charger et normaliser une couche de caractéristiques</span></span>
+<span><span class="co"># Load and normalize a feature layer</span></span>
 <span><span class="va">wad</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/get_wad_data.html">get_wad_data</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">wad_norm</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/make_normalised_raster.html">make_normalised_raster</a></span><span class="op">(</span></span>
 <span>  raster_in <span class="op">=</span> <span class="va">wad</span>,</span>
@@ -133,51 +129,51 @@
 <span>  iso3 <span class="op">=</span> <span class="st">"NPL"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Tracer le résultat</span></span>
+<span><span class="co"># Plot the result</span></span>
 <span><span class="fu"><a href="reference/elsar_plot_static_raster.html">elsar_plot_static_raster</a></span><span class="op">(</span></span>
 <span>  raster_in <span class="op">=</span> <span class="va">wad_norm</span>,</span>
 <span>  legend_title <span class="op">=</span> <span class="st">"WAD"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="fonctions-principales">Fonctions Principales<a class="anchor" aria-label="anchor" href="#fonctions-principales"></a>
+<h2 id="key-functions">Key Functions<a class="anchor" aria-label="anchor" href="#key-functions"></a>
 </h2>
 <table class="table">
 <colgroup>
 <col width="47%">
 <col width="52%">
 </colgroup>
-<thead><tr>
-<th>Catégorie</th>
-<th>Fonctions</th>
+<thead><tr class="header">
+<th>Category</th>
+<th>Functions</th>
 </tr></thead>
 <tbody>
-<tr>
-<td>Région de Planification</td>
+<tr class="odd">
+<td>Planning Region</td>
 <td>
 <code><a href="reference/make_boundary.html">make_boundary()</a></code>, <code><a href="reference/make_planning_units.html">make_planning_units()</a></code>
 </td>
 </tr>
-<tr>
-<td>Données Caractéristiques</td>
+<tr class="even">
+<td>Feature Data</td>
 <td>
 <code><a href="reference/make_normalised_raster.html">make_normalised_raster()</a></code>, <code><a href="reference/make_kbas.html">make_kbas()</a></code>, <code><a href="reference/make_protected_areas.html">make_protected_areas()</a></code>, <code><a href="reference/make_mangroves.html">make_mangroves()</a></code>, <code><a href="reference/make_wetlands_ramsar.html">make_wetlands_ramsar()</a></code>
 </td>
 </tr>
-<tr>
-<td>Couches de Zones</td>
+<tr class="odd">
+<td>Zone Layers</td>
 <td>
 <code><a href="reference/make_protect_zone.html">make_protect_zone()</a></code>, <code><a href="reference/make_restore_zone.html">make_restore_zone()</a></code>, <code><a href="reference/make_manage_zone.html">make_manage_zone()</a></code>
 </td>
 </tr>
-<tr>
-<td>Utilitaires</td>
+<tr class="even">
+<td>Utilities</td>
 <td>
 <code><a href="reference/get_coverage.html">get_coverage()</a></code>, <code><a href="reference/rescale_raster.html">rescale_raster()</a></code>, <code><a href="reference/save_raster.html">save_raster()</a></code>
 </td>
 </tr>
-<tr>
-<td>Visualisation</td>
+<tr class="odd">
+<td>Plotting</td>
 <td>
 <code><a href="reference/elsar_plot_static_raster.html">elsar_plot_static_raster()</a></code>, <code><a href="reference/elsar_plot_feature.html">elsar_plot_feature()</a></code>
 </td>
@@ -189,12 +185,12 @@
 <h2 id="documentation">Documentation<a class="anchor" aria-label="anchor" href="#documentation"></a>
 </h2>
 <ul>
-<li><a href="https://elsa-undp.github.io/elsar/fr/">Site web du paquet</a></li>
-<li><a href="https://elsa-undp.github.io/elsar/fr/articles/elsaR.html">Guide de démarrage</a></li>
+<li><a href="https://elsa-undp.github.io/elsar/">Package website</a></li>
+<li><a href="https://elsa-undp.github.io/elsar/articles/elsaR.html">Getting started vignette</a></li>
 </ul>
 </div>
 <div class="section level2">
-<h2 id="licence">Licence<a class="anchor" aria-label="anchor" href="#licence"></a>
+<h2 id="license">License<a class="anchor" aria-label="anchor" href="#license"></a>
 </h2>
 <p>CC BY 4.0</p>
 </div>

@@ -22,20 +22,20 @@ database via the wdpar package, or provided as an sf object."></head><body>
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Índice</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-art-culos" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Artículos</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-art-culos"><li><a class="dropdown-item" href="../articles/data-info.html">Referencia de Procesamiento de Datos Globales</a></li>
-    <li><a class="dropdown-item" href="../articles/elsaR.html">Un Ejemplo de Flujo de Trabajo ELSA</a></li>
-    <li><a class="dropdown-item" href="../articles/naming_conventions.html">Convenciones de Nomenclatura de Archivos</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-art-culos"><li><a class="dropdown-item" href="../articles/data-info.html">Global Data Processing Reference</a></li>
+    <li><a class="dropdown-item" href="../articles/elsaR.html">An Example ELSA Workflow</a></li>
+    <li><a class="dropdown-item" href="../articles/naming_conventions.html">File Naming Conventions</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Registro de cambios</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Buscar en el sitio" placeholder="Buscar" data-search-index="../search.json"></form></li>
 <li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Cambiar idioma"><span class="fa fa-globe"></span></button>
-  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-"><li><a class="external-link dropdown-item" href="https://elsa-undp.github.io/elsar/">English</a></li>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Switch language"><span class="fa fa-globe"></span></button>
+  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-"><li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/">English</a></li>
     <li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/es/">Español</a></li>
-    <li><a class="external-link dropdown-item" href="https://elsa-undp.github.io/elsar/fr/">Français</a></li>
-    <li><a class="external-link dropdown-item" href="https://elsa-undp.github.io/elsar/pt/">Português</a></li>
-    <li><a class="external-link dropdown-item" href="https://elsa-undp.github.io/elsar/ru/">Русский</a></li>
+    <li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/fr/">Français</a></li>
+    <li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/pt/">Português</a></li>
+    <li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/ru/">Русский</a></li>
   </ul></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Interruptor de color"><span class="fa fa-sun"></span></button>
@@ -67,7 +67,7 @@ database via the <span class="pkg">wdpar</span> package, or provided as an <code
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">make_protected_areas</span><span class="op">(</span></span>
 <span>  <span class="va">pus</span>,</span>
 <span>  <span class="va">iso3</span>,</span>
-<span>  from_wdpa <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  from_wdpca <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  sf_in <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  download_path <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  status <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Established"</span>, <span class="st">"Inscribed"</span>, <span class="st">"Designated"</span><span class="op">)</span>,</span>
@@ -97,29 +97,29 @@ database via the <span class="pkg">wdpar</span> package, or provided as an <code
 <dd><p>Character. ISO3 country code (e.g., "CHL").</p></dd>
 
 
-<dt id="arg-from-wdpa">from_wdpa<a class="anchor" aria-label="anchor" href="#arg-from-wdpa"></a></dt>
+<dt id="arg-from-wdpca">from_wdpca<a class="anchor" aria-label="anchor" href="#arg-from-wdpca"></a></dt>
 <dd><p>Logical. If <code>TRUE</code>, downloads protected area data using the
 <span class="pkg">wdpar</span> package. If <code>FALSE</code>, uses <code>sf_in</code>. Default is <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-sf-in">sf_in<a class="anchor" aria-label="anchor" href="#arg-sf-in"></a></dt>
 <dd><p>sf object or NULL. Protected area geometries to use when</p>
-<p><code>from_wdpa = FALSE</code>. Required if <code>from_wdpa = FALSE</code>.</p></dd>
+<p><code>from_wdpca = FALSE</code>. Required if <code>from_wdpca = FALSE</code>.</p></dd>
 
 
 <dt id="arg-download-path">download_path<a class="anchor" aria-label="anchor" href="#arg-download-path"></a></dt>
-<dd><p>Character or NULL. Directory where WDPA data will be saved
-or loaded from. Required if <code>from_wdpa = TRUE</code>.</p></dd>
+<dd><p>Character or NULL. Directory where WDPCA data will be saved
+or loaded from. Required if <code>from_wdpca = TRUE</code>.</p></dd>
 
 
 <dt id="arg-status">status<a class="anchor" aria-label="anchor" href="#arg-status"></a></dt>
-<dd><p>Character vector. Which <code>STATUS</code> values to include from WDPA data.
+<dd><p>Character vector. Which <code>STATUS</code> values to include from WDPCA data.
 Valid values: "Designated", "Established", "Inscribed", "Proposed", "Adopted".
 Default is <code>c("Established", "Inscribed", "Designated")</code>.</p></dd>
 
 
 <dt id="arg-site-type">site_type<a class="anchor" aria-label="anchor" href="#arg-site-type"></a></dt>
-<dd><p>Character vector. Values for the <code>SITE_TYPE</code> column in WDPA
+<dd><p>Character vector. Values for the <code>SITE_TYPE</code> column in WDPCA
 data. Valid values: "PA" (Protected Area) or "OECM" (Other Effective
 Area-based Conservation Measure). Default is <code>"PA"</code>. For backward
 compatibility, numeric values 1 (PA) and 0 (OECM) are also accepted.</p></dd>
@@ -167,7 +167,7 @@ Only used when <code>binary = TRUE</code>. Default is <code>0.10</code>.</p></dd
 
 
 <dt id="arg-force-update">force_update<a class="anchor" aria-label="anchor" href="#arg-force-update"></a></dt>
-<dd><p>Logical. If <code>TRUE</code>, forces re-download of WDPA data even
+<dd><p>Logical. If <code>TRUE</code>, forces re-download of WDPCA data even
 if cached. Default is <code>FALSE</code>.</p></dd>
 
 
@@ -178,8 +178,8 @@ If NULL, the raster is returned but not saved.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="valor">Valor<a class="anchor" aria-label="anchor" href="#valor"></a></h2>
-    <p>If <code>sf_in</code> was provided (i.e., <code>from_wdpa = FALSE</code>), returns a SpatRaster.
-If data was downloaded from WDPA (<code>from_wdpa = TRUE</code>), returns a list with:</p><dl><dt>raster</dt>
+    <p>If <code>sf_in</code> was provided (i.e., <code>from_wdpca = FALSE</code>), returns a SpatRaster.
+If data was downloaded from WDPCA (<code>from_wdpca = TRUE</code>), returns a list with:</p><dl><dt>raster</dt>
 <dd><p>SpatRaster of protected areas</p></dd>
 
 <dt>sf</dt>

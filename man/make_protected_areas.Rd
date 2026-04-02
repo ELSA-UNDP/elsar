@@ -7,7 +7,7 @@
 make_protected_areas(
   pus,
   iso3,
-  from_wdpa = TRUE,
+  from_wdpca = TRUE,
   sf_in = NULL,
   download_path = NULL,
   status = c("Established", "Inscribed", "Designated"),
@@ -29,21 +29,21 @@ make_protected_areas(
 
 \item{iso3}{Character. ISO3 country code (e.g., "CHL").}
 
-\item{from_wdpa}{Logical. If \code{TRUE}, downloads protected area data using the
+\item{from_wdpca}{Logical. If \code{TRUE}, downloads protected area data using the
 \pkg{wdpar} package. If \code{FALSE}, uses \code{sf_in}. Default is \code{TRUE}.}
 
 \item{sf_in}{sf object or NULL. Protected area geometries to use when
 
-\code{from_wdpa = FALSE}. Required if \code{from_wdpa = FALSE}.}
+\code{from_wdpca = FALSE}. Required if \code{from_wdpca = FALSE}.}
 
-\item{download_path}{Character or NULL. Directory where WDPA data will be saved
-or loaded from. Required if \code{from_wdpa = TRUE}.}
+\item{download_path}{Character or NULL. Directory where WDPCA data will be saved
+or loaded from. Required if \code{from_wdpca = TRUE}.}
 
-\item{status}{Character vector. Which \code{STATUS} values to include from WDPA data.
+\item{status}{Character vector. Which \code{STATUS} values to include from WDPCA data.
 Valid values: "Designated", "Established", "Inscribed", "Proposed", "Adopted".
 Default is \code{c("Established", "Inscribed", "Designated")}.}
 
-\item{site_type}{Character vector. Values for the \code{SITE_TYPE} column in WDPA
+\item{site_type}{Character vector. Values for the \code{SITE_TYPE} column in WDPCA
 data. Valid values: "PA" (Protected Area) or "OECM" (Other Effective
 Area-based Conservation Measure). Default is \code{"PA"}. For backward
 compatibility, numeric values 1 (PA) and 0 (OECM) are also accepted.}
@@ -74,15 +74,15 @@ If \code{FALSE}, returns fractional coverage. Default is \code{TRUE}.}
 Planning units with coverage above this value are classified as protected.
 Only used when \code{binary = TRUE}. Default is \code{0.10}.}
 
-\item{force_update}{Logical. If \code{TRUE}, forces re-download of WDPA data even
+\item{force_update}{Logical. If \code{TRUE}, forces re-download of WDPCA data even
 if cached. Default is \code{FALSE}.}
 
 \item{output_path}{Character or NULL. Directory to save the output raster.
 If NULL, the raster is returned but not saved.}
 }
 \value{
-If \code{sf_in} was provided (i.e., \code{from_wdpa = FALSE}), returns a SpatRaster.
-If data was downloaded from WDPA (\code{from_wdpa = TRUE}), returns a list with:
+If \code{sf_in} was provided (i.e., \code{from_wdpca = FALSE}), returns a SpatRaster.
+If data was downloaded from WDPCA (\code{from_wdpca = TRUE}), returns a list with:
 \describe{
 \item{raster}{SpatRaster of protected areas}
 \item{sf}{sf object of dissolved protected area polygons for reuse}

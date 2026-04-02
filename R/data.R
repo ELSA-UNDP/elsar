@@ -41,10 +41,10 @@ get_wad_data <- function() {
 #' Current Protected Areas
 #'
 #' An `sf` object containing current protected areas from the
-#' World Database on Protected Areas (WDPA).
+#' World Database on Protected and Conserved Areas (WDPCA).
 #'
 #' @format An `sf` data frame with polygon geometries.
-#' @source UNEP-WCMC and IUCN WDPA <https://www.protectedplanet.net/>
+#' @source UNEP-WCMC and IUCN WDPCA <https://www.protectedplanet.net/>
 "current_pas_sf"
 
 

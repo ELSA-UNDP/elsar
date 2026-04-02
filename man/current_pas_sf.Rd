@@ -8,13 +8,13 @@
 An \code{sf} data frame with polygon geometries.
 }
 \source{
-UNEP-WCMC and IUCN WDPA \url{https://www.protectedplanet.net/}
+UNEP-WCMC and IUCN WDPCA \url{https://www.protectedplanet.net/}
 }
 \usage{
 current_pas_sf
 }
 \description{
 An \code{sf} object containing current protected areas from the
-World Database on Protected Areas (WDPA).
+World Database on Protected and Conserved Areas (WDPCA).
 }
 \keyword{datasets}

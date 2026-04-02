@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">elsar</a>
 
-    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -75,7 +75,6 @@
 <div class="page-header"><h1 id="elsar-">elsar <img src="reference/figures/elsaR_hex_sticker.png" align="right" style="width:140px"><a class="anchor" aria-label="anchor" href="#elsar-"></a>
 </h1></div>
 <!-- badges: start -->
-
 <p>The <strong>elsar</strong> package provides tools and data pipelines to support <em>Essential Life Support Areas (ELSA)</em> conservation planning. It is designed to assist in spatial prioritization and scenario development using globally standardized geospatial data layers.</p>
 <div class="section level2">
 <h2 id="what-does-elsar-do">What does elsar do?<a class="anchor" aria-label="anchor" href="#what-does-elsar-do"></a>
@@ -84,7 +83,7 @@
 <li>
 <strong>Prepare planning regions</strong>: Create boundaries and planning units for any country</li>
 <li>
-<strong>Process global datasets</strong>: Load and harmonize spatial datasets (WDPA, KBA, LANDMark, ICCA, etc.)</li>
+<strong>Process global datasets</strong>: Load and harmonize spatial datasets (WDPCA, KBA, LANDMark, ICCA, etc.)</li>
 <li>
 <strong>Create zone layers</strong>: Generate protect, restore, and manage zone rasters</li>
 <li>
@@ -144,36 +143,36 @@
 <col width="47%">
 <col width="52%">
 </colgroup>
-<thead><tr>
+<thead><tr class="header">
 <th>Category</th>
 <th>Functions</th>
 </tr></thead>
 <tbody>
-<tr>
+<tr class="odd">
 <td>Planning Region</td>
 <td>
 <code><a href="reference/make_boundary.html">make_boundary()</a></code>, <code><a href="reference/make_planning_units.html">make_planning_units()</a></code>
 </td>
 </tr>
-<tr>
+<tr class="even">
 <td>Feature Data</td>
 <td>
 <code><a href="reference/make_normalised_raster.html">make_normalised_raster()</a></code>, <code><a href="reference/make_kbas.html">make_kbas()</a></code>, <code><a href="reference/make_protected_areas.html">make_protected_areas()</a></code>, <code><a href="reference/make_mangroves.html">make_mangroves()</a></code>, <code><a href="reference/make_wetlands_ramsar.html">make_wetlands_ramsar()</a></code>
 </td>
 </tr>
-<tr>
+<tr class="odd">
 <td>Zone Layers</td>
 <td>
 <code><a href="reference/make_protect_zone.html">make_protect_zone()</a></code>, <code><a href="reference/make_restore_zone.html">make_restore_zone()</a></code>, <code><a href="reference/make_manage_zone.html">make_manage_zone()</a></code>
 </td>
 </tr>
-<tr>
+<tr class="even">
 <td>Utilities</td>
 <td>
 <code><a href="reference/get_coverage.html">get_coverage()</a></code>, <code><a href="reference/rescale_raster.html">rescale_raster()</a></code>, <code><a href="reference/save_raster.html">save_raster()</a></code>
 </td>
 </tr>
-<tr>
+<tr class="odd">
 <td>Plotting</td>
 <td>
 <code><a href="reference/elsar_plot_static_raster.html">elsar_plot_static_raster()</a></code>, <code><a href="reference/elsar_plot_feature.html">elsar_plot_feature()</a></code>

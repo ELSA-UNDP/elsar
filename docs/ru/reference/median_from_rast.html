@@ -22,19 +22,19 @@ by finding the bucket midpoint where the cumulative count reaches 50%."></head><
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/data-info.html">Справочник по Обработке Глобальных Данных</a></li>
-    <li><a class="dropdown-item" href="../articles/elsaR.html">Пример Рабочего Процесса ELSA</a></li>
-    <li><a class="dropdown-item" href="../articles/naming_conventions.html">Соглашения об Именовании Файлов</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/data-info.html">Global Data Processing Reference</a></li>
+    <li><a class="dropdown-item" href="../articles/elsaR.html">An Example ELSA Workflow</a></li>
+    <li><a class="dropdown-item" href="../articles/naming_conventions.html">File Naming Conventions</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
 <li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Сменить язык"><span class="fa fa-globe"></span></button>
-  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-"><li><a class="external-link dropdown-item" href="https://elsa-undp.github.io/elsar/">English</a></li>
-    <li><a class="external-link dropdown-item" href="https://elsa-undp.github.io/elsar/es/">Español</a></li>
-    <li><a class="external-link dropdown-item" href="https://elsa-undp.github.io/elsar/fr/">Français</a></li>
-    <li><a class="external-link dropdown-item" href="https://elsa-undp.github.io/elsar/pt/">Português</a></li>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Switch language"><span class="fa fa-globe"></span></button>
+  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-"><li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/">English</a></li>
+    <li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/es/">Español</a></li>
+    <li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/fr/">Français</a></li>
+    <li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/pt/">Português</a></li>
     <li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/ru/">Русский</a></li>
   </ul></li>
 <li class="nav-item dropdown">
@@ -84,7 +84,7 @@ a GDAL PAM side-car XML (e.g. <code>raster.tif.aux.xml</code>).</p></dd>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Before running this function, you must generate the histogram side‑car:
 in a terminal, run:</p>
-<p></p><div class="sourceCode bash"><pre><code><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="ex">gdalinfo</span> <span class="at">-hist</span> /path/to/your.tif</span></code></pre><p></p></div>
+<p></p><div class="sourceCode bash"><pre><code><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="ex">gdalinfo</span> -hist /path/to/your.tif</span></code></pre><p></p></div>
 <p>This computes and stores the histogram in <code>/path/to/your.tif.aux.xml</code>.
 Once the side-car exists, calling this function reads the stored
 <code>&lt;Histogram&gt;</code> data without re-scanning pixel values and returns

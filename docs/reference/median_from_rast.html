@@ -11,7 +11,7 @@ by finding the bucket midpoint where the cumulative count reaches 50%."></head><
 
     <a class="navbar-brand me-2" href="../index.html">elsar</a>
 
-    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -84,7 +84,7 @@ a GDAL PAM side-car XML (e.g. <code>raster.tif.aux.xml</code>).</p></dd>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Before running this function, you must generate the histogram side‑car:
 in a terminal, run:</p>
-<p></p><div class="sourceCode bash"><pre><code><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="ex">gdalinfo</span> <span class="at">-hist</span> /path/to/your.tif</span></code></pre><p></p></div>
+<p></p><div class="sourceCode bash"><pre><code><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="ex">gdalinfo</span> -hist /path/to/your.tif</span></code></pre><p></p></div>
 <p>This computes and stores the histogram in <code>/path/to/your.tif.aux.xml</code>.
 Once the side-car exists, calling this function reads the stored
 <code>&lt;Histogram&gt;</code> data without re-scanning pixel values and returns

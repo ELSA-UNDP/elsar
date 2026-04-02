@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Un Ejemplo de Flujo de Trabajo ELSA • elsar</title>
+<title>An Example ELSA Workflow • elsar</title>
 <script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Un Ejemplo de Flujo de Trabajo ELSA">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="An Example ELSA Workflow">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Ir al contenido</a>
@@ -33,9 +33,9 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-art-culos" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Artículos</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-art-culos">
-<li><a class="dropdown-item" href="../articles/data-info.html">Referencia de Procesamiento de Datos Globales</a></li>
-    <li><a class="dropdown-item" href="../articles/elsaR.html">Un Ejemplo de Flujo de Trabajo ELSA</a></li>
-    <li><a class="dropdown-item" href="../articles/naming_conventions.html">Convenciones de Nomenclatura de Archivos</a></li>
+<li><a class="dropdown-item" href="../articles/data-info.html">Global Data Processing Reference</a></li>
+    <li><a class="dropdown-item" href="../articles/elsaR.html">An Example ELSA Workflow</a></li>
+    <li><a class="dropdown-item" href="../articles/naming_conventions.html">File Naming Conventions</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Registro de cambios</a></li>
@@ -45,13 +45,13 @@
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Buscar en el sitio" placeholder="Buscar" data-search-index="../search.json">
 </form></li>
 <li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Cambiar idioma"><span class="fa fa-globe"></span></button>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Switch language"><span class="fa fa-globe"></span></button>
   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-">
-<li><a class="external-link dropdown-item" href="https://elsa-undp.github.io/elsar/">English</a></li>
+<li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/">English</a></li>
     <li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/es/">Español</a></li>
-    <li><a class="external-link dropdown-item" href="https://elsa-undp.github.io/elsar/fr/">Français</a></li>
-    <li><a class="external-link dropdown-item" href="https://elsa-undp.github.io/elsar/pt/">Português</a></li>
-    <li><a class="external-link dropdown-item" href="https://elsa-undp.github.io/elsar/ru/">Русский</a></li>
+    <li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/fr/">Français</a></li>
+    <li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/pt/">Português</a></li>
+    <li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/ru/">Русский</a></li>
   </ul>
 </li>
 <li class="nav-item dropdown">
@@ -71,11 +71,10 @@
 
 
 
-
-<div class="row">
+<script src="elsaR_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Un Ejemplo de Flujo de Trabajo ELSA</h1>
+      <h1>An Example ELSA Workflow</h1>
             
       
 
@@ -84,62 +83,47 @@
 
     
     
-<blockquote>
-<p><em>Esta traduccion fue generada mediante IA. Consulte la <a href="https://elsa-undp.github.io/elsar/articles/elsaR.html" class="external-link">version en
-ingles</a> como referencia principal.</em></p>
-</blockquote>
 <div class="section level2">
-<h2 id="descripcion-general">Descripcion General<a class="anchor" aria-label="anchor" href="#descripcion-general"></a>
+<h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
 <div class="section level3">
-<h3 id="introduccion">Introduccion<a class="anchor" aria-label="anchor" href="#introduccion"></a>
+<h3 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h3>
 </div>
 <div class="section level3">
-<h3 id="primeros-pasos">Primeros Pasos<a class="anchor" aria-label="anchor" href="#primeros-pasos"></a>
+<h3 id="get-started">Get started<a class="anchor" aria-label="anchor" href="#get-started"></a>
 </h3>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># cargar paquetes</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://elsa-undp.github.io/elsar/" class="external-link">elsar</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="co"># load packages</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://elsa-undp.github.io/elsar/">elsar</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://prioritizr.net" class="external-link">prioritizr</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-spatial.github.io/sf/" class="external-link">sf</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://rspatial.org/" class="external-link">terra</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># establecer semilla para reproducibilidad</span></span>
+<span><span class="co"># set seed for reproducibility</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">500</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="region-de-planificacion">Region de Planificacion<a class="anchor" aria-label="anchor" href="#region-de-planificacion"></a>
+<h3 id="planning-region">Planning Region<a class="anchor" aria-label="anchor" href="#planning-region"></a>
 </h3>
-<p>Al inicio del analisis, es necesario definir la region de
-planificacion y crear unidades de planificacion para dicha region. En
-este ejemplo, utilizamos Nepal como caso de estudio para demostrar las
-funciones de este paquete.</p>
-<p>Para ello, primero obtenemos el limite del pais de Nepal utilizando
-su codigo iso3 (“NPL”). Normalmente, seria necesario proporcionar su
-propio conjunto de datos con los limites del pais para filtrar. Los
-datos pueden cargarse desde maquinas locales en formato vectorial o
-raster, o mediante una conexion remota a traves de postgres utilizando
-la funcion <code><a href="../reference/elsar_load_data.html">elsar_load_data()</a></code>. Aqui utilizamos un conjunto
-de datos previamente guardado.</p>
+<p>At the start of the analysis, the planning region needs to be defined and planning units need to be created for the planning region. In this example, we use Nepal as our case study to demonstrate the functions within this package.</p>
+<p>For this, we first obtain the country boundary of Nepal by using its iso3 string (“NPL”). Normally, you would need to provide your own data set with country boundaries to filter from. Data can be loaded from local machines in vector or raster format, or using a remote connection via postgres using the <code><a href="../reference/elsar_load_data.html">elsar_load_data()</a></code> function. Here, we use a pre-saved dataset.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># crear limite para Nepal</span></span>
+<code class="sourceCode R"><span><span class="co"># create boundary for Nepal</span></span>
 <span><span class="va">boundary</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/make_boundary.html">make_boundary</a></span><span class="op">(</span></span>
 <span>  boundary_in <span class="op">=</span> <span class="va">boundary_dat</span>,</span>
 <span>  iso3 <span class="op">=</span> <span class="st">"NPL"</span>,</span>
 <span>  iso3_column <span class="op">=</span> <span class="st">"iso3cd"</span>,</span>
 <span>  custom_projection <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
+<span><span class="co">#&gt; [2026-04-03 09:15:52] Creating boundary for planning region...</span></span>
 <span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggsf.html" class="external-link">geom_sf</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">boundary</span><span class="op">)</span></span></code></pre></div>
-<p>La funcion <code><a href="../reference/make_boundary.html">make_boundary()</a></code> tambien ofrece la opcion de
-crear una proyeccion personalizada centrada en la region de
-planificacion. Esto tambien puede hacerse en pasos separados utilizando
-la funcion <code><a href="../reference/make_custom_projection.html">make_custom_projection()</a></code>, que esta integrada en
-la funcion <code><a href="../reference/make_boundary.html">make_boundary()</a></code>.</p>
+<p><img src="elsaR_files/figure-html/unnamed-chunk-3-1.png" class="r-plt" alt="" width="336" style="display: block; margin: auto;"></p>
+<p>The <code><a href="../reference/make_boundary.html">make_boundary()</a></code> function also provides the option to create a custom projection centred on the planning region. This can also be done in separate steps using the <code><a href="../reference/make_custom_projection.html">make_custom_projection()</a></code> function, which is integrated in the <code><a href="../reference/make_boundary.html">make_boundary()</a></code> function.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">boundary_proj</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/make_boundary.html">make_boundary</a></span><span class="op">(</span></span>
 <span>  boundary_in <span class="op">=</span> <span class="va">boundary_dat</span>,</span>
@@ -147,59 +131,51 @@ la funcion <code><a href="../reference/make_boundary.html">make_boundary()</a></
 <span>  iso3_column <span class="op">=</span> <span class="st">"iso3cd"</span>,</span>
 <span>  custom_projection <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
+<span><span class="co">#&gt; [2026-04-03 09:15:53] Creating boundary for planning region...</span></span>
+<span><span class="co">#&gt; [2026-04-03 09:15:53] Creating custom Mollweide projection centred on planning region...</span></span>
 <span></span>
-<span><span class="co"># crear proyeccion personalizada y aplicarla al limite</span></span>
+<span><span class="co"># create custom projection and apply it to boundary</span></span>
 <span><span class="va">wkt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/make_custom_projection.html">make_custom_projection</a></span><span class="op">(</span>boundary <span class="op">=</span> <span class="va">boundary</span>, iso3 <span class="op">=</span> <span class="st">"NPL"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [2026-04-03 09:15:53] Creating custom Mollweide projection centred on planning region...</span></span>
 <span><span class="va">boundary_proj2</span> <span class="op">&lt;-</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_transform.html" class="external-link">st_transform</a></span><span class="op">(</span><span class="va">boundary</span>, crs <span class="op">=</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_crs.html" class="external-link">st_crs</a></span><span class="op">(</span><span class="va">wkt</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p>Podemos verificar si los dos CRS de los limites coinciden.</p>
+<p>We can test whether the two crs of the boundaries match.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># verificar crs</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_crs.html" class="external-link">st_crs</a></span><span class="op">(</span><span class="va">boundary_proj</span><span class="op">)</span> <span class="op">==</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_crs.html" class="external-link">st_crs</a></span><span class="op">(</span><span class="va">boundary_proj2</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="co"># test crs</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_crs.html" class="external-link">st_crs</a></span><span class="op">(</span><span class="va">boundary_proj</span><span class="op">)</span> <span class="op">==</span> <span class="fu">sf</span><span class="fu">::</span><span class="fu"><a href="https://r-spatial.github.io/sf/reference/st_crs.html" class="external-link">st_crs</a></span><span class="op">(</span><span class="va">boundary_proj2</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="unidades-de-planificacion">Unidades de Planificacion<a class="anchor" aria-label="anchor" href="#unidades-de-planificacion"></a>
+<h3 id="planning-units">Planning Units<a class="anchor" aria-label="anchor" href="#planning-units"></a>
 </h3>
-<p>Para definir un problema de planificacion de conservacion,
-necesitamos subdividir la region de planificacion en unidades mas
-pequenas que pueden ser seleccionadas o no en la priorizacion posterior
-y a las cuales se puede atribuir la informacion de caracteristicas. La
-funcion tiene la opcion de agregar un tamano deseado de unidad de
-planificacion. Si no se proporciona ninguno, la funcion busca hacer las
-unidades de planificacion lo mas pequenas posible manteniendo la
-eficiencia computacional. El valor predeterminado es de 850.000 unidades
-de planificacion, basado en experiencia previa con tiempos de
-ejecucion.</p>
+<p>For defining a conservation planning problem, we need to subdivide the planning region into smaller planning units which can either be selected or not in the downstream prioritization and which the feature information can be attributed to. The function has an option to add a desired planning unit size. If none is provided, the function aims to make planning units as small as possible whilst still being computationally efficient. The default for this is set to 850,000 planning units, which is based on previous experience with run time.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># crear unidades de planificacion</span></span>
+<code class="sourceCode R"><span><span class="co"># make planning units</span></span>
 <span><span class="va">pus</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/make_planning_units.html">make_planning_units</a></span><span class="op">(</span></span>
 <span>  boundary_proj <span class="op">=</span> <span class="va">boundary_proj</span>,</span>
 <span>  pu_size <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  pu_threshold <span class="op">=</span> <span class="fl">8.5e5</span>,</span>
 <span>  limit_to_mainland <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  iso3 <span class="op">=</span> <span class="st">"NPL"</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt; [2026-04-03 09:15:53] pu_size not provided: estimating size to target &lt;= 850000 PUs (allowing 5% tolerance).</span></span>
+<span><span class="co">#&gt; [2026-04-03 09:15:53] Iteration 1: 741036 PUs at resolution 450 m</span></span>
+<span><span class="co">#&gt; [2026-04-03 09:15:53] Iteration 2: 830662 PUs at resolution 425 m</span></span>
+<span><span class="co">#&gt; [2026-04-03 09:15:53] Iteration 3: 937494 PUs at resolution 400 m</span></span>
+<span><span class="co">#&gt; [2026-04-03 09:15:53] Exceeded soft threshold (892500); using best previous result.</span></span>
+<span><span class="co">#&gt; [2026-04-03 09:15:53] Final PU layer: 830662 PUs at 425 m resolution.</span></span></code></pre></div>
 </div>
 <div class="section level3">
-<h3 id="caracteristicas">Caracteristicas<a class="anchor" aria-label="anchor" href="#caracteristicas"></a>
+<h3 id="features">Features<a class="anchor" aria-label="anchor" href="#features"></a>
 </h3>
-<p>Las caracteristicas de biodiversidad son una parte integral de la
-planificacion de conservacion. Las caracteristicas pueden abarcar desde
-distribuciones de especies hasta conjuntos de datos mas generales como
-las Areas Clave para la Biodiversidad (KBA). En nuestro ejemplo,
-utilizaremos solo un conjunto de datos, el <em>Convergence of Global
-Change Issues</em> del Atlas Mundial de la Desertificacion (WAD; ver <a href="https://wad.jrc.ec.europa.eu/" class="external-link uri">https://wad.jrc.ec.europa.eu/</a>). De nuevo, los datos de
-entrada pueden cargarse primero utilizando la funcion
-<code><a href="../reference/elsar_load_data.html">elsar_load_data()</a></code> (aqui ya tenemos el conjunto de datos
-guardado en el paquete).</p>
+<p>Biodiversity features are an integral part of conservation planning. Features can range from species distributions, to more general over-arching datasets such as Key Biodiversity Areas (ref). In our example, we will use only one dataset, the World Atlas of Desertification’s (WAD; see <a href="https://wad.jrc.ec.europa.eu/" class="external-link uri">https://wad.jrc.ec.europa.eu/</a>) <em>Convergence of Global Change Issues</em> dataset. Again, input data can first be loaded using the <code><a href="../reference/elsar_load_data.html">elsar_load_data()</a></code> function (here we have the dataset already saved in the package; change later).</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># obtener datos de caracteristicas</span></span>
-<span><span class="va">wad_subset</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_wad_data.html">get_wad_data</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p>Los datos luego necesitan ser reproyectados y remuestreados para
-coincidir exactamente con la resolucion y extension de las unidades de
-planificacion previamente creadas. Tambien normalizamos los datos para
-que solo tengan valores dentro del rango 0-1.</p>
+<code class="sourceCode R"><span><span class="co"># get feature data</span></span>
+<span><span class="va">wad_subset</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_wad_data.html">get_wad_data</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [2026-04-03 09:15:53] Loading WAD subset data from package...</span></span>
+<span><span class="co">#&gt; [2026-04-03 09:15:53] WAD subset data loaded successfully.</span></span></code></pre></div>
+<p>The data then needs to be re-projected and re-sampled to exactly match the resolution and extent of the previously created planning units. We also normalise the data to only have values within the range 0-1.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># recortar y normalizar datos</span></span>
+<code class="sourceCode R"><span><span class="co"># crop and normalise data</span></span>
 <span><span class="va">wadOut</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/make_normalised_raster.html">make_normalised_raster</a></span><span class="op">(</span></span>
 <span>  raster_in <span class="op">=</span> <span class="va">wad_subset</span>,</span>
 <span>  pus <span class="op">=</span> <span class="va">pus</span>,</span>
@@ -207,23 +183,16 @@ que solo tengan valores dentro del rango 0-1.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">terra</span><span class="fu">::</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/plot.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">wadOut</span><span class="op">)</span></span></code></pre></div>
-<p>En lugar de solo echar un vistazo rapido a los datos usando la
-funcion <code>plot</code> del paquete <code>terra</code>, tambien
-podemos crear un grafico utilizando las opciones de visualizacion
-integradas en el paquete <code>elsar</code>, como
-<code><a href="../reference/elsar_plot_static_raster.html">elsar_plot_static_raster()</a></code>, que permite graficar datos
-raster continuos con <code>ggplot</code>.</p>
+<p><img src="elsaR_files/figure-html/unnamed-chunk-8-1.png" class="r-plt" alt="" width="336" style="display: block; margin: auto;"></p>
+<p>Instead of only having a quick look at the data by using the <code>terra</code> package’s <code>plot</code> function, we can also create a plot using the plotting options integrated in the <code>elsar</code> package, such as <code><a href="../reference/elsar_plot_static_raster.html">elsar_plot_static_raster()</a></code>, which allows to plot continuous raster data with <code>ggplot</code>.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="va">plot_wad</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/elsar_plot_static_raster.html">elsar_plot_static_raster</a></span><span class="op">(</span></span>
 <span>  raster_in <span class="op">=</span> <span class="va">wadOut</span>,</span>
 <span>  legend_title <span class="op">=</span> <span class="st">"WAD"</span></span>
-<span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p>Tambien podemos agregar datos de fondo al grafico y anadir
-propiedades adicionales para cambiar la apariencia del grafico
-utilizando la funcion <code><a href="../reference/elsar_plot_optics.html">elsar_plot_optics()</a></code> que permite
-especificar un tema <code>ggplot</code> especifico. Tambien podemos
-cambiar la paleta de colores para que sea diferente de la predeterminada
-“viridis”.</p>
+<span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [2026-04-03 09:15:55] Creating static raster plot (continuous, ggplot_vector)...</span></span></code></pre></div>
+<p><img src="elsaR_files/figure-html/unnamed-chunk-9-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
+<p>We can also add background data to the plot and add additional properties to change the appearance of the plot by using the <code><a href="../reference/elsar_plot_optics.html">elsar_plot_optics()</a></code> function that allows to specify a specific <code>ggplot</code> theme. We can also change the colour palette to be something other than the default “viridis”.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">custom_p</span> <span class="op">&lt;-</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_brewer.html" class="external-link">scale_fill_distiller</a></span><span class="op">(</span></span>
 <span>  name <span class="op">=</span> <span class="st">"WAD"</span>,</span>
@@ -237,12 +206,14 @@ cambiar la paleta de colores para que sea diferente de la predeterminada
 <span>  custom_palette <span class="op">=</span> <span class="va">custom_p</span>,</span>
 <span>  background <span class="op">=</span> <span class="va">wad_subset</span></span>
 <span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="../reference/elsar_plot_optics.html">elsar_plot_optics</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p>Si es necesario, se pueden incluir logotipos en el mapa. La ubicacion
-depende de las dimensiones del grafico y por lo tanto necesita ajustarse
-segun la figura, por ejemplo utilizando <code><a href="https://rspatial.github.io/terra/reference/ext.html" class="external-link">terra::ext()</a></code>.</p>
+<span>  <span class="fu"><a href="../reference/elsar_plot_optics.html">elsar_plot_optics</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [2026-04-03 09:16:00] Creating static raster plot (continuous, ggplot_vector)...</span></span>
+<span><span class="co">#&gt; [2026-04-03 09:16:00] Adding background layer (continuous)...</span></span>
+<span><span class="co">#&gt; [2026-04-03 09:16:03] Extending based on ratio (5%)...</span></span></code></pre></div>
+<p><img src="elsaR_files/figure-html/unnamed-chunk-10-1.png" class="r-plt" alt="" width="768" style="display: block; margin: auto;"></p>
+<p>If needed, logos can be included on the map. The location is dependent on the plot dimensions and therefore needs to be adjusted based on the figure, for example by using <code><a href="https://rspatial.github.io/terra/reference/ext.html" class="external-link">terra::ext()</a></code>.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co">#esquinaSuperiorDerecha</span></span>
+<code class="sourceCode R"><span><span class="co">#topRight</span></span>
 <span><span class="va">x_min</span> <span class="op">&lt;-</span> <span class="fu">terra</span><span class="fu">::</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/ext.html" class="external-link">ext</a></span><span class="op">(</span><span class="va">wadOut</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span>
 <span><span class="va">x_max</span> <span class="op">&lt;-</span> <span class="fu">terra</span><span class="fu">::</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/ext.html" class="external-link">ext</a></span><span class="op">(</span><span class="va">wadOut</span><span class="op">)</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span>
 <span><span class="va">y_min</span> <span class="op">&lt;-</span> <span class="fu">terra</span><span class="fu">::</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/ext.html" class="external-link">ext</a></span><span class="op">(</span><span class="va">wadOut</span><span class="op">)</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span>
@@ -262,21 +233,20 @@ segun la figura, por ejemplo utilizando <code><a href="https://rspatial.github.i
 <span>  expand_plot <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/elsar_plot_optics.html">elsar_plot_optics</a></span><span class="op">(</span>include_logo <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>                      logo_path <span class="op">=</span> <span class="st">"figures/elsaR_hex_sticker.png"</span>,</span>
+<span>                      logo_path <span class="op">=</span> <span class="st">"figures/elsaR_hex_sticker.png"</span>, <span class="co">#change to logo later</span></span>
 <span>                      logo_pos <span class="op">=</span> <span class="va">img_pos</span>,</span>
-<span>                      logo_dim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">50</span>, <span class="fl">60</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p>Si estamos interesados en la distribucion, tambien podemos graficar
-la distribucion en los graficos. Para esto, necesitamos crear dos
-graficos separados que luego combinamos:</p>
-<p>Tambien podemos transformar los datos en categorias y graficar el
-grafico principal y el recuadro de esa manera.</p>
+<span>                      logo_dim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">50</span>, <span class="fl">60</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [2026-04-03 09:16:10] Creating static raster plot (continuous, ggplot_vector)...</span></span>
+<span><span class="co">#&gt; [2026-04-03 09:16:10] Adding background layer (continuous)...</span></span>
+<span><span class="co">#&gt; [2026-04-03 09:16:13] Extending based on ratio (5%)...</span></span></code></pre></div>
+<p><img src="elsaR_files/figure-html/unnamed-chunk-11-1.png" class="r-plt" alt="" width="768" style="display: block; margin: auto;"></p>
+<p>If we are interested in the distribution, we can also plot the distribution on the plots. For this, we need to create two separate plots that we then put together:</p>
+<p>We can also transform the data into categories and plot the main plot and the inset that way.</p>
 </div>
 <div class="section level3">
-<h3 id="areas-protegidas-existentes">Areas Protegidas Existentes<a class="anchor" aria-label="anchor" href="#areas-protegidas-existentes"></a>
+<h3 id="existing-protected-area">Existing Protected Area<a class="anchor" aria-label="anchor" href="#existing-protected-area"></a>
 </h3>
-<p>Las areas protegidas pueden superponerse en mapas de caracteristicas
-para visualizar su relacion espacial con los valores de
-biodiversidad.</p>
+<p>Protected areas can be overlaid on feature maps to visualize their spatial relationship with biodiversity values.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">current_pas</span> <span class="op">&lt;-</span> <span class="va">current_pas_sf</span></span>
 <span></span>
@@ -286,7 +256,14 @@ biodiversidad.</p>
 <span>  legend_title <span class="op">=</span> <span class="st">"WAD"</span></span>
 <span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/elsar_plot_extra_data.html">elsar_plot_extra_data</a></span><span class="op">(</span>include_pas <span class="op">=</span> <span class="va">current_pas</span>, color_pa <span class="op">=</span> <span class="st">"red"</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="../reference/elsar_plot_optics.html">elsar_plot_optics</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="../reference/elsar_plot_optics.html">elsar_plot_optics</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [2026-04-03 09:16:21] Creating static raster plot (continuous, ggplot_vector)...</span></span>
+<span><span class="co">#&gt; [2026-04-03 09:16:21] Adding background layer (continuous)...</span></span>
+<span><span class="co">#&gt; [2026-04-03 09:16:24] Extending based on ratio (5%)...</span></span>
+<span><span class="co">#&gt; [2026-04-03 09:16:24] Adding PA layer with 'contours' style...</span></span>
+<span><span class="co">#&gt; Coordinate system already present.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Adding new coordinate system, which will replace the existing one.</span></span></code></pre></div>
+<p><img src="elsaR_files/figure-html/unnamed-chunk-14-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="va">plot_wad_pas2</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/elsar_plot_static_raster.html">elsar_plot_static_raster</a></span><span class="op">(</span></span>
 <span>  raster_in <span class="op">=</span> <span class="va">wadOut</span>,</span>
@@ -294,7 +271,14 @@ biodiversidad.</p>
 <span>  legend_title <span class="op">=</span> <span class="st">"WAD"</span></span>
 <span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/elsar_plot_extra_data.html">elsar_plot_extra_data</a></span><span class="op">(</span>include_pas <span class="op">=</span> <span class="va">current_pas</span>, pas_look <span class="op">=</span> <span class="st">"area"</span>, color_pa <span class="op">=</span> <span class="st">"grey"</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="../reference/elsar_plot_optics.html">elsar_plot_optics</a></span><span class="op">(</span>include_north_scale <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="../reference/elsar_plot_optics.html">elsar_plot_optics</a></span><span class="op">(</span>include_north_scale <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [2026-04-03 09:16:30] Creating static raster plot (continuous, ggplot_vector)...</span></span>
+<span><span class="co">#&gt; [2026-04-03 09:16:30] Adding background layer (continuous)...</span></span>
+<span><span class="co">#&gt; [2026-04-03 09:16:33] Extending based on ratio (5%)...</span></span>
+<span><span class="co">#&gt; [2026-04-03 09:16:33] Adding PA layer with 'area' style...</span></span>
+<span><span class="co">#&gt; Coordinate system already present.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Adding new coordinate system, which will replace the existing one.</span></span></code></pre></div>
+<p><img src="elsaR_files/figure-html/unnamed-chunk-15-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Índice de contenidos"><h2>En esta página</h2>

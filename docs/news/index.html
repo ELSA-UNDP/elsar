@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">elsar</a>
 
-    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -52,18 +52,20 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.1.0" id="elsar-010">elsar 0.1.0<a class="anchor" aria-label="anchor" href="#elsar-010"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.2.0" id="elsar-020">elsar 0.2.0<a class="anchor" aria-label="anchor" href="#elsar-020"></a></h2>
 <div class="section level3">
-<h3 id="new-features-0-1-0">New Features<a class="anchor" aria-label="anchor" href="#new-features-0-1-0"></a></h3>
+<h3 id="breaking-changes-0-2-0">Breaking Changes<a class="anchor" aria-label="anchor" href="#breaking-changes-0-2-0"></a></h3>
+<ul><li>Renamed <code>from_wdpa</code> parameter to <code>from_wdpca</code> in <code><a href="../reference/make_protected_areas.html">make_protected_areas()</a></code> to reflect the rename of the World Database on Protected Areas (WDPA) to the World Database on Protected and Conserved Areas (WDPCA).</li></ul></div>
+<div class="section level3">
+<h3 id="new-features-0-2-0">New Features<a class="anchor" aria-label="anchor" href="#new-features-0-2-0"></a></h3>
 <ul><li><p>Added file naming conventions vignette documenting standardised naming patterns for ELSA pipeline inputs, outputs, and figures.</p></li>
 <li><p>Added dark mode toggle to the pkgdown website.</p></li>
 <li><p>Added <code><a href="../reference/make_urban_greening_zone.html">make_urban_greening_zone()</a></code> to the pkgdown reference index.</p></li>
 <li><p><code><a href="../reference/make_protect_zone.html">make_protect_zone()</a></code> now adapts the HII threshold when mean HII inside protected areas is high (&gt;= 4). Uses the PA mean as the threshold instead of the quantile-based approach to avoid excluding nearly all areas in high-HFI countries (#79). <code>hii_input</code> is now optional.</p></li>
 </ul></div>
 <div class="section level3">
-<h3 id="improvements-0-1-0">Improvements<a class="anchor" aria-label="anchor" href="#improvements-0-1-0"></a></h3>
-<ul><li>Updated Global Data Processing Reference vignette:
-<ul><li>Fixed stale and incorrect function names.</li>
+<h3 id="improvements-0-2-0">Improvements<a class="anchor" aria-label="anchor" href="#improvements-0-2-0"></a></h3>
+<ul><li>Updated Global Data Processing Reference vignette:<ul><li>Fixed stale and incorrect function names.</li>
 <li>Added missing datasets (degraded areas, flood abatement, indigenous managed lands).</li>
 <li>Added “Since” column tracking which version introduced each function.</li>
 <li>Documented removed/deprecated datasets in a dedicated section.</li>
@@ -71,9 +73,8 @@
 <li>Added version tracking column to the dataset reference table.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="internal-changes-0-1-0">Internal Changes<a class="anchor" aria-label="anchor" href="#internal-changes-0-1-0"></a></h3>
-<ul><li>Bumped version to 0.1.0 to reflect API stability.</li>
-</ul><hr></div>
+<h3 id="internal-changes-0-2-0">Internal Changes<a class="anchor" aria-label="anchor" href="#internal-changes-0-2-0"></a></h3>
+<ul><li>Bumped version to 0.1.0 to reflect API stability.</li></ul><hr></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.0.7" id="elsar-007">elsar 0.0.7<a class="anchor" aria-label="anchor" href="#elsar-007"></a></h2>
@@ -116,7 +117,7 @@
 </ul></div>
 <div class="section level3">
 <h3 id="improvements-0-0-7">Improvements<a class="anchor" aria-label="anchor" href="#improvements-0-0-7"></a></h3>
-<ul><li><p>Updated <code><a href="../reference/make_protected_areas.html">make_protected_areas()</a></code> for WDPA schema changes</p></li>
+<ul><li><p>Updated <code><a href="../reference/make_protected_areas.html">make_protected_areas()</a></code> for WDPCA schema changes</p></li>
 <li><p>Standardized logging and input validation across all functions</p></li>
 <li><p>Improved package documentation and README</p></li>
 <li><p>Sanitized filenames for saved plots</p></li>

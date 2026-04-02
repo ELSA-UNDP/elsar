@@ -11,7 +11,7 @@ O pacote **elsar** fornece ferramentas e pipelines de dados para apoiar o planej
 ## O que o elsar faz?
 
 - **Preparar regiões de planejamento**: Criar limites e unidades de planejamento para qualquer país
-- **Processar conjuntos de dados globais**: Carregar e harmonizar conjuntos de dados espaciais (WDPA, KBA, LANDMark, ICCA, etc.)
+- **Processar conjuntos de dados globais**: Carregar e harmonizar conjuntos de dados espaciais (WDPCA, KBA, LANDMark, ICCA, etc.)
 - **Criar camadas de zonas**: Gerar rasters de zonas de proteção, restauração e gestão
 - **Calcular métricas**: Calcular a cobertura espacial sobre unidades de planejamento
 - **Visualizar resultados**: Plotar dados raster com estilos personalizáveis

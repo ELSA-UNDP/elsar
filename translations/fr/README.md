@@ -11,7 +11,7 @@ Le paquet **elsar** fournit des outils et des pipelines de données pour souteni
 ## Que fait elsar ?
 
 - **Préparer les régions de planification** : Créer des limites et des unités de planification pour n'importe quel pays
-- **Traiter les jeux de données mondiaux** : Charger et harmoniser les jeux de données spatiales (WDPA, KBA, LANDMark, ICCA, etc.)
+- **Traiter les jeux de données mondiaux** : Charger et harmoniser les jeux de données spatiales (WDPCA, KBA, LANDMark, ICCA, etc.)
 - **Créer des couches de zones** : Générer des rasters de zones de protection, restauration et gestion
 - **Calculer des métriques** : Calculer la couverture spatiale sur les unités de planification
 - **Visualiser les résultats** : Tracer des données raster avec un style personnalisable

@@ -9,7 +9,7 @@ The **elsar** package provides tools and data pipelines to support *Essential Li
 ## What does elsar do?
 
 - **Prepare planning regions**: Create boundaries and planning units for any country
-- **Process global datasets**: Load and harmonize spatial datasets (WDPA, KBA, LANDMark, ICCA, etc.)
+- **Process global datasets**: Load and harmonize spatial datasets (WDPCA, KBA, LANDMark, ICCA, etc.)
 - **Create zone layers**: Generate protect, restore, and manage zone rasters
 - **Calculate metrics**: Compute spatial coverage over planning units
 - **Visualize results**: Plot raster data with customizable styling

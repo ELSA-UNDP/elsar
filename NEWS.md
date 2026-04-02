@@ -1,4 +1,10 @@
-# elsar 0.1.0
+# elsar 0.2.0
+
+## Breaking Changes
+
+* Renamed `from_wdpa` parameter to `from_wdpca` in `make_protected_areas()` to
+  reflect the rename of the World Database on Protected Areas (WDPA) to the
+  World Database on Protected and Conserved Areas (WDPCA).
 
 ## New Features
 
@@ -77,7 +83,7 @@
 
 ## Improvements
 
-* Updated `make_protected_areas()` for WDPA schema changes
+* Updated `make_protected_areas()` for WDPCA schema changes
 
 * Standardized logging and input validation across all functions
 
