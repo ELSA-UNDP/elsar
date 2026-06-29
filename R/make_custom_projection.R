@@ -34,11 +34,16 @@ make_custom_projection <- function(boundary,
 
   log_message("Creating custom Mollweide projection centred on planning region...")
 
+  # Label for the projection name / output file. iso3 is optional (a custom
+  # boundary may not have one); fall back to a generic label so glue() does not
+  # collapse the WKT string to length zero when iso3 is NULL.
+  iso3_label <- if (is.null(iso3)) "region" else iso3
+
   xmid <- mean(c(sf::st_bbox(boundary)$xmin, sf::st_bbox(boundary)$xmax))
   ymid <- mean(c(sf::st_bbox(boundary)$ymin, sf::st_bbox(boundary)$ymax))
 
   # Create WKT projection string
-  wkt <- glue::glue('PROJCS["Mollweide_{iso3}",GEOGCS["GCS_unknown",
+  wkt <- glue::glue('PROJCS["Mollweide_{iso3_label}",GEOGCS["GCS_unknown",
                   DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,
                   AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],
                   PRIMEM["Greenwich",0],UNIT["Degree",0.0174532925199433]],
@@ -49,7 +54,7 @@ make_custom_projection <- function(boundary,
   # note: for marine it's not this straight forward if EEZ goes across date line
 
   if (!is.null(output_path)) {
-    writeLines(wkt, glue::glue("{output_path}/Mollweide_{toupper(iso3)}.wkt")) # save wkt
+    writeLines(wkt, glue::glue("{output_path}/Mollweide_{toupper(iso3_label)}.wkt")) # save wkt
   }
 
   return(wkt)
