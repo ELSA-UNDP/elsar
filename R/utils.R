@@ -1,3 +1,23 @@
+#' Validate an ISO3-style region code
+#'
+#' Accepts a standard 3-letter ISO3 country code (e.g. `"ECU"`) or a regional
+#' variant with a suffix used for sub-national runs (e.g. `"ECU_REG"`,
+#' `"ECU-GEF8"`). The code must begin with three letters; an optional suffix of
+#' letters, digits, underscores or hyphens may follow.
+#'
+#' Used by functions that take an `iso3` for filtering or output naming, so that
+#' a custom regional code (relying on a supplied boundary rather than ISO lookup)
+#' is not rejected.
+#'
+#' @param iso3 Character. The code to validate.
+#'
+#' @return `TRUE`/`FALSE`.
+#' @keywords internal
+is_valid_iso3 <- function(iso3) {
+  is.character(iso3) && length(iso3) == 1 && !is.na(iso3) &&
+    grepl("^[A-Za-z]{3}([_-][A-Za-z0-9]+)*$", iso3)
+}
+
 #' Rescale Raster to 0-1 Range
 #'
 #' This function rescales values in a raster to a range between 0 and 1.
@@ -214,8 +234,8 @@ exact_rasterise <- function(
   )
 
   assertthat::assert_that(
-    is.character(iso3) && nchar(iso3) == 3,
-    msg = "'iso3' must be a 3-letter country code string."
+    is_valid_iso3(iso3),
+    msg = "'iso3' must be a 3-letter ISO3 code, optionally with a regional suffix (e.g. ECU_REG)."
   )
 
   # Initialize an empty raster stack

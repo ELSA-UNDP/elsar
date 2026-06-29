@@ -169,8 +169,8 @@ calculate_restore_and_urban_budgets <- function(iso3,
                                                 urban_areas_raster = "urban_areas.tif") {
   # Input validation
   assertthat::assert_that(
-    is.character(iso3) && nchar(iso3) == 3,
-    msg = "'iso3' must be a 3-letter country code."
+    is_valid_iso3(iso3),
+    msg = "'iso3' must be a 3-letter ISO3 code, optionally with a regional suffix (e.g. ECU_REG)."
   )
 
   assertthat::assert_that(

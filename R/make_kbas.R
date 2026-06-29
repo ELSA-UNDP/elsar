@@ -46,7 +46,7 @@ make_kbas <- function(
   # Validate inputs
   assertthat::assert_that(inherits(kba_in, "sf"), msg = "kba_in must be an sf object.")
   assertthat::assert_that(inherits(pus, "SpatRaster"), msg = "pus must be a SpatRaster object.")
-  assertthat::assert_that(is.character(iso3) && nchar(iso3) == 3, msg = "iso3 must be a 3-character country code.")
+  assertthat::assert_that(is_valid_iso3(iso3), msg = "iso3 must be a 3-letter ISO3 code, optionally with a regional suffix (e.g. ECU_REG).")
   if (!is.null(output_path)) {
     assertthat::assert_that(dir.exists(output_path),
                             msg = glue::glue("'output_path' directory does not exist: {output_path}"))
