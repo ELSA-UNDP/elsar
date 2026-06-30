@@ -4,7 +4,7 @@
 \alias{save_raster}
 \title{Save a Raster as a Cloud Optimized GeoTIFF (COG)}
 \usage{
-save_raster(raster, filename, datatype = "FLT4S")
+save_raster(raster, filename, datatype = "FLT4S", resampling = NULL)
 }
 \arguments{
 \item{raster}{A \code{SpatRaster} object to be saved.}
@@ -12,6 +12,8 @@ save_raster(raster, filename, datatype = "FLT4S")
 \item{filename}{Character. Full file path (including \code{.tif} extension) where the raster will be saved.}
 
 \item{datatype}{Character. GDAL data type to use for saving the raster (e.g. \code{"FLT4S"} for float, \code{"INT1U"} for unsigned byte). Default is \code{"FLT4S"}.}
+
+\item{resampling}{Character or NULL. Overview resampling method (e.g. \code{"average"}, \code{"nearest"}, \code{"mode"}). If \code{NULL} (default), it is chosen from \code{datatype}: \code{"average"} for float, \code{"nearest"} for integer. Use \code{"mode"} for multi-class categorical layers such as land cover so overviews keep the dominant class.}
 }
 \value{
 None. The function is called for its side effect of saving the raster to disk.
