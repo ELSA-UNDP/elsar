@@ -628,7 +628,13 @@ save_raster <- function(raster, filename, datatype = "FLT4S") {
   # Define nodata value: NaN for float, 255 for integer (common convention)
   nodata_value <- if (datatype == "FLT4S") NaN else 255
 
-  # Write raster to disk as Cloud Optimized GeoTIFF (COG)
+  # Overview resampling: AVERAGE for continuous (float), NEAREST for integer
+  # (categorical/binary, so class values are preserved rather than smeared).
+  resampling_value <- ifelse(datatype == "FLT4S", "AVERAGE", "NEAREST")
+
+  # Write raster to disk as Cloud Optimized GeoTIFF (COG). Overviews are built
+  # (OVERVIEWS=AUTO) so the output is a fully valid COG - required by strict COG
+  # readers/servers such as TiTiler/rio-cogeo, which reject COGs without them.
   terra::writeRaster(
     raster,
     filename = filename,
@@ -639,7 +645,8 @@ save_raster <- function(raster, filename, datatype = "FLT4S") {
       "COMPRESS=ZSTD",
       glue::glue("PREDICTOR={predictor_value}"),
       "NUM_THREADS=ALL_CPUS",
-      "OVERVIEWS=NONE"
+      "OVERVIEWS=AUTO",
+      glue::glue("OVERVIEW_RESAMPLING={resampling_value}")
     ),
     overwrite = TRUE
   )
