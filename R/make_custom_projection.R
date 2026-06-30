@@ -39,6 +39,17 @@ make_custom_projection <- function(boundary,
   # collapse the WKT string to length zero when iso3 is NULL.
   iso3_label <- if (is.null(iso3)) "region" else iso3
 
+  # The Mollweide central meridian is a longitude in DEGREES, so the centre must
+  # be computed from geographic coordinates. If the boundary is in a projected
+  # CRS (e.g. UTM, metres), transform to WGS84 first - otherwise xmid/ymid would
+  # be eastings/northings in metres and the projection would be nonsensical
+  # (e.g. central_meridian = 674875 instead of -79).
+  if (!is.na(sf::st_crs(boundary)) && !sf::st_is_longlat(boundary)) {
+    boundary <- sf::st_transform(boundary, 4326)
+  } else if (is.na(sf::st_crs(boundary))) {
+    log_message("Warning: boundary has no CRS; assuming geographic (WGS84) coordinates.")
+  }
+
   xmid <- mean(c(sf::st_bbox(boundary)$xmin, sf::st_bbox(boundary)$xmax))
   ymid <- mean(c(sf::st_bbox(boundary)$ymin, sf::st_bbox(boundary)$ymax))
 
