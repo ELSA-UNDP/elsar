@@ -451,6 +451,24 @@ filter_sf <- function(file_path,
     layer_name <- layer_info$name[1]
   }
 
+  # Reproject a spatial-filter geometry into the layer's CRS before use. GDAL
+  # applies a spatial filter in the layer's own CRS, so a filter supplied in a
+  # different CRS (e.g. a pre-projected input) would otherwise match nothing.
+  # (A filter passed as a ready WKT string is used as-is.)
+  if (!is.null(wkt_filter) && !is.character(wkt_filter)) {
+    layer_crs <- tryCatch({
+      li <- sf::st_layers(file_path)
+      idx <- match(layer_name, li$name)
+      if (!is.na(idx)) li$crs[[idx]] else NA
+    }, error = function(e) NA)
+    fg <- sf::st_geometry(wkt_filter)
+    if (!is.na(sf::st_crs(layer_crs)) && !is.na(sf::st_crs(fg)) &&
+        sf::st_crs(fg) != sf::st_crs(layer_crs)) {
+      fg <- sf::st_transform(fg, layer_crs)
+    }
+    wkt_filter <- sf::st_as_text(fg)
+  }
+
   # Build SQL query for attribute filtering if needed
   query <- if (!is.null(iso3) && !is.null(iso3_column) && !is.null(layer_name)) {
     log_message("Building SQL query to filter layer {layer_name} by ISO3 code...")
