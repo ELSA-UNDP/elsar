@@ -610,6 +610,7 @@ conditionally_subdivide_bbox <- function(bbox_sf,
 #' @param raster A `SpatRaster` object to be saved.
 #' @param filename Character. Full file path (including `.tif` extension) where the raster will be saved.
 #' @param datatype Character. GDAL data type to use for saving the raster (e.g. `"FLT4S"` for float, `"INT1U"` for unsigned byte). Default is `"FLT4S"`.
+#' @param resampling Character or NULL. Overview resampling method (e.g. `"average"`, `"nearest"`, `"mode"`). If `NULL` (default), it is chosen from `datatype`: `"average"` for float, `"nearest"` for integer. Use `"mode"` for multi-class categorical layers such as land cover so overviews keep the dominant class.
 #'
 #' @return None. The function is called for its side effect of saving the raster to disk.
 #'
@@ -621,16 +622,25 @@ conditionally_subdivide_bbox <- function(bbox_sf,
 #' save_raster(my_raster, "output/my_raster_float.tif", datatype = "FLT4S")
 #' }
 #'
-save_raster <- function(raster, filename, datatype = "FLT4S") {
+save_raster <- function(raster, filename, datatype = "FLT4S", resampling = NULL) {
   # Determine GDAL predictor: 3 for float (better for continuous), 2 for integer (better for categorical)
   predictor_value <- ifelse(datatype == "FLT4S", "3", "2")
 
   # Define nodata value: NaN for float, 255 for integer (common convention)
   nodata_value <- if (datatype == "FLT4S") NaN else 255
 
-  # Overview resampling: AVERAGE for continuous (float), NEAREST for integer
-  # (categorical/binary, so class values are preserved rather than smeared).
-  resampling_value <- ifelse(datatype == "FLT4S", "AVERAGE", "NEAREST")
+  # Overview resampling. Caller may override; otherwise default by datatype:
+  #   - float    -> AVERAGE  (smooth downsampling of continuous values)
+  #   - integer  -> NEAREST  (preserves binary/presence values)
+  # For multi-class categorical layers (e.g. land cover) pass resampling = "mode"
+  # so overviews keep the dominant class instead of an arbitrary pixel.
+  resampling_value <- if (!is.null(resampling)) {
+    toupper(resampling)
+  } else if (datatype == "FLT4S") {
+    "AVERAGE"
+  } else {
+    "NEAREST"
+  }
 
   # Write raster to disk as Cloud Optimized GeoTIFF (COG). Overviews are built
   # (OVERVIEWS=AUTO) so the output is a fully valid COG - required by strict COG
