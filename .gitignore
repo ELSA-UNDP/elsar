@@ -9,3 +9,7 @@ inst/doc
 /doc/
 /Meta/
 spat*
+
+# Rendered pkgdown site — built and deployed by CI to the gh-pages branch;
+# GitHub Pages serves from gh-pages (root), so the built site must not be tracked here.
+docs/
