@@ -55,6 +55,7 @@ Imports:
     googledrive,
     glue,
     here,
+    jsonlite,
     lifecycle,
     magrittr,
     plyr,
