@@ -192,10 +192,13 @@ make_normalised_raster <- function(raster_in,
   # filled with the datatype extreme (e.g. -2147483648 for INT32). Left in, that
   # value dominates the min-max rescale and flattens every real value to ~1.
   # These sentinels are not plausible data, so mask them to NA and warn.
+  # Covers the INT32 extreme used as a reprojection fill (-2147483648), the
+  # common GDAL Int32 NoData (-2147483647), the positive extreme, and absurd
+  # float sentinels (e.g. -3.4e38). None are plausible data values.
   n_before <- suppressWarnings(terra::global(dat_aligned, "notNA")[[1]])
   dat_aligned <- terra::ifel(
-    dat_aligned == -2147483648 | dat_aligned == 2147483647 |
-      abs(dat_aligned) > 1e30,
+    dat_aligned == -2147483648 | dat_aligned == -2147483647 |
+      dat_aligned == 2147483647 | abs(dat_aligned) > 1e30,
     NA, dat_aligned
   )
   n_after <- suppressWarnings(terra::global(dat_aligned, "notNA")[[1]])
