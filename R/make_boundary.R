@@ -97,7 +97,7 @@ make_boundary <- function(boundary_in,
   }
 
   if (custom_projection) {
-    wkt <- make_custom_projection(
+    wkt <- make_custom_mollweide_projection(
       boundary = nb,
       output_path = output_path,
       iso3_column = iso3_column,

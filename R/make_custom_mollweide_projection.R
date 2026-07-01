@@ -1,11 +1,16 @@
-#' Create a custom projection based on the planning region
+#' Create a custom Mollweide projection centred on the planning region
+#'
+#' Builds an equal-area \strong{Mollweide} projection whose central meridian is
+#' the longitude of the planning region's centre, and returns it as a WKT CRS
+#' string. The boundary is transformed to WGS84 internally to compute the centre,
+#' so any input CRS is handled correctly.
 #'
 #' @param boundary `sf` object of the boundary of the planning region. Should match iso3 country code.
 #' @param output_path An optional output path for the created file.
 #' @param iso3_column A string of the name of where iso3 information can be found in a dataset.
-#' @param iso3 The iso3 country code (character) of the country of interest.
+#' @param iso3 The iso3 country code (character) of the country of interest. Used only to name the projection / output file; the projection maths uses the boundary geometry.
 #'
-#' @return A `wkt` file centred on the planning region
+#' @return A `wkt` CRS string for a Mollweide projection centred on the planning region
 #' @export
 #'
 #' @examples
@@ -15,11 +20,11 @@
 #'   iso3_column = "iso3cd"
 #' )
 #'
-#' wkt <- make_custom_projection(boundary = boundary, iso3 = "NPL")
-make_custom_projection <- function(boundary,
-                                   output_path = NULL,
-                                   iso3_column = "iso3cd",
-                                   iso3 = NULL) {
+#' wkt <- make_custom_mollweide_projection(boundary = boundary, iso3 = "NPL")
+make_custom_mollweide_projection <- function(boundary,
+                                             output_path = NULL,
+                                             iso3_column = "iso3cd",
+                                             iso3 = NULL) {
   # Input validation
   assertthat::assert_that(inherits(boundary, "sf"),
                           msg = "'boundary' must be an sf object.")
@@ -69,4 +74,23 @@ make_custom_projection <- function(boundary,
   }
 
   return(wkt)
+}
+
+#' @rdname make_custom_mollweide_projection
+#' @description
+#' `make_custom_projection()` is a deprecated alias for
+#' `make_custom_mollweide_projection()` - the projection has always been
+#' Mollweide; the clearer name should be preferred.
+#' @export
+make_custom_projection <- function(boundary,
+                                   output_path = NULL,
+                                   iso3_column = "iso3cd",
+                                   iso3 = NULL) {
+  .Deprecated("make_custom_mollweide_projection")
+  make_custom_mollweide_projection(
+    boundary = boundary,
+    output_path = output_path,
+    iso3_column = iso3_column,
+    iso3 = iso3
+  )
 }
