@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Functions and Tools For Creating ELSA Data Stacks • elsar</title>
 <script src="lightswitch.js"></script><script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Functions and Tools For Creating ELSA Data Stacks">
 <meta name="description" content="Provides tools and data pipelines to support Essential Life Support Areas (ELSA) conservation planning. Includes functions to load and harmonize global spatial datasets, prepare raster layers for spatial prioritization, create zone layers (protect, restore, manage), and calculate coverage metrics over planning units.">
@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">elsar</a>
 
-    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -147,36 +147,36 @@
 <col width="47%">
 <col width="52%">
 </colgroup>
-<thead><tr class="header">
+<thead><tr>
 <th>Categoría</th>
 <th>Funciones</th>
 </tr></thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td>Región de Planificación</td>
 <td>
 <code><a href="reference/make_boundary.html">make_boundary()</a></code>, <code><a href="reference/make_planning_units.html">make_planning_units()</a></code>
 </td>
 </tr>
-<tr class="even">
+<tr>
 <td>Datos de Características</td>
 <td>
 <code><a href="reference/make_normalised_raster.html">make_normalised_raster()</a></code>, <code><a href="reference/make_kbas.html">make_kbas()</a></code>, <code><a href="reference/make_protected_areas.html">make_protected_areas()</a></code>, <code><a href="reference/make_mangroves.html">make_mangroves()</a></code>, <code><a href="reference/make_wetlands_ramsar.html">make_wetlands_ramsar()</a></code>
 </td>
 </tr>
-<tr class="odd">
+<tr>
 <td>Capas de Zonas</td>
 <td>
 <code><a href="reference/make_protect_zone.html">make_protect_zone()</a></code>, <code><a href="reference/make_restore_zone.html">make_restore_zone()</a></code>, <code><a href="reference/make_manage_zone.html">make_manage_zone()</a></code>
 </td>
 </tr>
-<tr class="even">
+<tr>
 <td>Utilidades</td>
 <td>
 <code><a href="reference/get_coverage.html">get_coverage()</a></code>, <code><a href="reference/rescale_raster.html">rescale_raster()</a></code>, <code><a href="reference/save_raster.html">save_raster()</a></code>
 </td>
 </tr>
-<tr class="odd">
+<tr>
 <td>Visualización</td>
 <td>
 <code><a href="reference/elsar_plot_static_raster.html">elsar_plot_static_raster()</a></code>, <code><a href="reference/elsar_plot_feature.html">elsar_plot_feature()</a></code>
