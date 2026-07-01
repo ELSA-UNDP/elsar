@@ -187,6 +187,32 @@ make_normalised_raster <- function(raster_in,
     dat_aligned <- exactextractr::exact_resample(x = dat_aligned, y = pus, fun = method)
   }
 
+  # Guard against unflagged NoData sentinels. An input with no proper NoData set
+  # (e.g. an integer raster with NAflag unset) has its reprojected/edge cells
+  # filled with the datatype extreme (e.g. -2147483648 for INT32). Left in, that
+  # value dominates the min-max rescale and flattens every real value to ~1.
+  # These sentinels are not plausible data, so mask them to NA and warn.
+  n_before <- suppressWarnings(terra::global(dat_aligned, "notNA")[[1]])
+  dat_aligned <- terra::ifel(
+    dat_aligned == -2147483648 | dat_aligned == 2147483647 |
+      abs(dat_aligned) > 1e30,
+    NA, dat_aligned
+  )
+  n_after <- suppressWarnings(terra::global(dat_aligned, "notNA")[[1]])
+  if (isTRUE(n_after < n_before)) {
+    warning("make_normalised_raster: masked ", n_before - n_after,
+            " cell(s) holding a NoData sentinel (e.g. -2147483648). Check the ",
+            "input's NoData/NAflag - such values otherwise flatten the rescale.",
+            call. = FALSE)
+  }
+  rng <- suppressWarnings(terra::minmax(dat_aligned))
+  if (all(is.finite(rng)) && (rng[2] - rng[1]) > 1e9) {
+    warning("make_normalised_raster: input value range is very large (",
+            signif(rng[1], 4), " to ", signif(rng[2], 4), "); a stray sentinel ",
+            "or bad NoData can flatten the 0-1 rescale - verify the input.",
+            call. = FALSE)
+  }
+
   if (!is.null(conditional_expression)) {
     dat_aligned <- conditional_expression(dat_aligned)
   }
