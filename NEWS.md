@@ -12,6 +12,49 @@
   pass; the exact per-feature coverage path is retained for smaller layers. A
   large layer with a non-standard `fun` now warns before falling back.
 
+# elsar 0.3.0
+
+## Deprecations
+
+* `make_custom_projection()` is renamed to `make_custom_mollweide_projection()`
+  (the projection has always been Mollweide). The old name still works as a
+  deprecated alias that warns.
+
+## New Features
+
+* Regional / sub-national planning runs: `iso3` may carry a suffix (e.g.
+  `"ECU_REG"`, `"ECU-GEF8"`). `is_valid_iso3()` and the functions that validate
+  it now accept these custom regional codes, which rely on a supplied boundary
+  rather than an ISO lookup.
+
+* `make_boundary()` and `make_custom_mollweide_projection()` support whole-file
+  regional boundaries: use a custom boundary with no ISO3 column, dissolving
+  multiple features into a single planning region.
+
+* `save_raster()` now builds overviews (`OVERVIEWS=AUTO`) so outputs are fully
+  valid Cloud Optimized GeoTIFFs, and gains an overview-resampling override
+  (`resampling=`, e.g. `"mode"` for categorical layers).
+
+* `make_protected_areas()` tolerates custom local protected-area layers that
+  lack the WDPCA schema (STATUS / SITE_TYPE / MAB filters apply only when those
+  columns exist).
+
+## Bug Fixes
+
+* `make_custom_mollweide_projection()` computes the projection centre in WGS84,
+  fixing a wrong central meridian when the input boundary is in a projected CRS
+  (e.g. UTM); it also tolerates a `NULL` iso3.
+
+* CRS-aware spatial filter: `elsar_load_data()` / `filter_sf()` reproject the
+  `wkt_filter` geometry into each layer's own CRS before filtering, so a filter
+  built in one CRS no longer returns zero features against a layer stored in
+  another (e.g. a Mollweide gpkg vs planning units on a different central
+  meridian).
+
+* `make_normalised_raster()` masks unflagged NoData sentinels (e.g.
+  `-2147483648`, `-2147483647`) that would otherwise dominate the 0-1 rescale
+  and flatten real values to ~1; it warns when it does.
+
 # elsar 0.2.0
 
 ## Breaking Changes
