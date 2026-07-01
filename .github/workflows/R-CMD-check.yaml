@@ -22,9 +22,11 @@ jobs:
         config:
           - {os: macos-latest,   r: 'release'}
           - {os: windows-latest, r: 'release'}
-          - {os: ubuntu-latest,  r: 'devel', http-user-agent: 'release'}
           - {os: ubuntu-latest,  r: 'release'}
           - {os: ubuntu-latest,  r: 'oldrel-1'}
+          # R-devel omitted: Posit Package Manager ships no binaries for
+          # devel, so the heavy geospatial Imports (sf, terra, exactextractr,
+          # ...) compile from source and the job runs 30+ minutes.
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
