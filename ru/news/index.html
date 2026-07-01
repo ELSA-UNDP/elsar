@@ -60,6 +60,27 @@
 </ul></div>
 </div>
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.0" id="elsar-030">elsar 0.3.0<a class="anchor" aria-label="anchor" href="#elsar-030"></a></h2>
+<div class="section level3">
+<h3 id="deprecations-0-3-0">Deprecations<a class="anchor" aria-label="anchor" href="#deprecations-0-3-0"></a></h3>
+<ul><li>
+<code><a href="../reference/make_custom_mollweide_projection.html">make_custom_projection()</a></code> is renamed to <code><a href="../reference/make_custom_mollweide_projection.html">make_custom_mollweide_projection()</a></code> (the projection has always been Mollweide). The old name still works as a deprecated alias that warns.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="new-features-0-3-0">New Features<a class="anchor" aria-label="anchor" href="#new-features-0-3-0"></a></h3>
+<ul><li><p>Regional / sub-national planning runs: <code>iso3</code> may carry a suffix (e.g. <code>"ECU_REG"</code>, <code>"ECU-GEF8"</code>). <code>is_valid_iso3()</code> and the functions that validate it now accept these custom regional codes, which rely on a supplied boundary rather than an ISO lookup.</p></li>
+<li><p><code><a href="../reference/make_boundary.html">make_boundary()</a></code> and <code><a href="../reference/make_custom_mollweide_projection.html">make_custom_mollweide_projection()</a></code> support whole-file regional boundaries: use a custom boundary with no ISO3 column, dissolving multiple features into a single planning region.</p></li>
+<li><p><code><a href="../reference/save_raster.html">save_raster()</a></code> now builds overviews (<code>OVERVIEWS=AUTO</code>) so outputs are fully valid Cloud Optimized GeoTIFFs, and gains an overview-resampling override (<code>resampling=</code>, e.g. <code>"mode"</code> for categorical layers).</p></li>
+<li><p><code><a href="../reference/make_protected_areas.html">make_protected_areas()</a></code> tolerates custom local protected-area layers that lack the WDPCA schema (STATUS / SITE_TYPE / MAB filters apply only when those columns exist).</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-0-3-0">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-3-0"></a></h3>
+<ul><li><p><code><a href="../reference/make_custom_mollweide_projection.html">make_custom_mollweide_projection()</a></code> computes the projection centre in WGS84, fixing a wrong central meridian when the input boundary is in a projected CRS (e.g. UTM); it also tolerates a <code>NULL</code> iso3.</p></li>
+<li><p>CRS-aware spatial filter: <code><a href="../reference/elsar_load_data.html">elsar_load_data()</a></code> / <code><a href="../reference/filter_sf.html">filter_sf()</a></code> reproject the <code>wkt_filter</code> geometry into each layer’s own CRS before filtering, so a filter built in one CRS no longer returns zero features against a layer stored in another (e.g. a Mollweide gpkg vs planning units on a different central meridian).</p></li>
+<li><p><code><a href="../reference/make_normalised_raster.html">make_normalised_raster()</a></code> masks unflagged NoData sentinels (e.g. <code>-2147483648</code>, <code>-2147483647</code>) that would otherwise dominate the 0-1 rescale and flatten real values to ~1; it warns when it does.</p></li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.0" id="elsar-020">elsar 0.2.0<a class="anchor" aria-label="anchor" href="#elsar-020"></a></h2>
 <div class="section level3">
 <h3 id="breaking-changes-0-2-0">Breaking Changes<a class="anchor" aria-label="anchor" href="#breaking-changes-0-2-0"></a></h3>
