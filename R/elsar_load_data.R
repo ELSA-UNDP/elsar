@@ -89,21 +89,22 @@ elsar_load_data <- function(file_name = NULL,
     msg = "'drop3d' must be TRUE or FALSE."
   )
 
-  # Prepare spatial filter (WKT) if needed
-  wkt_str <- NULL
+  # Prepare spatial filter as a geometry (keep its CRS). filter_sf reprojects
+  # it into each layer's CRS before applying, since GDAL applies a spatial
+  # filter in the layer's own CRS - a filter in another CRS would match nothing.
+  filter_geom <- NULL
   if (!is.null(wkt_filter)) {
     assertthat::assert_that(
       inherits(wkt_filter, c("sf", "SpatRaster", "SpatVector")),
       msg = "'wkt_filter' must be an sf, SpatRaster, or SpatVector object."
     )
     log_message("Preparing spatial filter from input extent...")
-    wkt_str <- terra::ext(wkt_filter) %>%
+    filter_geom <- terra::ext(wkt_filter) %>%
       terra::as.polygons() %>%
       sf::st_as_sf() %>%
       sf::st_set_crs(terra::crs(wkt_filter)) %>%
       sf::st_transform("EPSG:4326") %>%
-      sf::st_geometry() %>%
-      sf::st_as_text()
+      sf::st_geometry()
   }
 
   # Handle PostGIS
@@ -164,7 +165,7 @@ elsar_load_data <- function(file_name = NULL,
     }
     log_message("Loading {length(shapefiles)} shapefile(s)...")
     all_data <- lapply(shapefiles, function(f)
-      filter_sf(f, iso3, iso3_column, drop3d = drop3d, wkt_filter = wkt_str, file_type = file_type))
+      filter_sf(f, iso3, iso3_column, drop3d = drop3d, wkt_filter = filter_geom, file_type = file_type))
     all_data <- Filter(Negate(is.null), all_data)
     all_cols <- unique(unlist(lapply(all_data, names)))
     all_data <- lapply(all_data, function(x) {
@@ -183,7 +184,7 @@ elsar_load_data <- function(file_name = NULL,
     all_layers <- sf::st_layers(input_path)$name
     log_message("Loading all {length(all_layers)} layers from '{file_type}' file...")
     all_data <- lapply(all_layers, function(lyr)
-      filter_sf(input_path, iso3, iso3_column, lyr, drop3d, wkt_str, file_type))
+      filter_sf(input_path, iso3, iso3_column, lyr, drop3d, filter_geom, file_type))
     all_data <- Filter(Negate(is.null), all_data)
     all_cols <- unique(unlist(lapply(all_data, names)))
     all_data <- lapply(all_data, function(x) {
@@ -199,7 +200,7 @@ elsar_load_data <- function(file_name = NULL,
 
   # Single vector layer
   log_message("Loading vector data from '{input_path}'...")
-  result <- filter_sf(input_path, iso3, iso3_column, layer_name = file_lyr, drop3d = drop3d, wkt_filter = wkt_str, file_type = file_type)
+  result <- filter_sf(input_path, iso3, iso3_column, layer_name = file_lyr, drop3d = drop3d, wkt_filter = filter_geom, file_type = file_type)
   if (!is.null(result)) {
     log_message("Loaded {nrow(result)} features.")
   }

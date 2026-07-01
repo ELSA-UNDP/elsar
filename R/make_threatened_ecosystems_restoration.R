@@ -34,8 +34,8 @@ make_threatened_ecosystems_restoration <- function(
 ) {
   # Input validation
   assertthat::assert_that(
-    assertthat::is.string(iso3) && nchar(iso3) == 3,
-    msg = "'iso3' must be a 3-letter country code."
+    is_valid_iso3(iso3),
+    msg = "'iso3' must be a 3-letter ISO3 code, optionally with a regional suffix (e.g. ECU_REG)."
   )
 
   assertthat::assert_that(

@@ -157,19 +157,35 @@ make_protected_areas <- function(
     )
   }
 
-  # Filter data by STATUS and SITE_TYPE
-  protected_areas <- protected_areas %>%
-    dplyr::filter(.data$STATUS %in% status, .data$SITE_TYPE %in% site_type)
+  # Filter data by STATUS and SITE_TYPE, but only on columns that exist. A
+  # custom local PA layer (from_wdpca = FALSE) may not follow the WDPCA schema;
+  # in that case all supplied features are treated as protected areas.
+  if ("STATUS" %in% names(protected_areas)) {
+    protected_areas <- protected_areas %>% dplyr::filter(.data$STATUS %in% status)
+  } else {
+    log_message("No STATUS column found - keeping all features (custom PA layer).")
+  }
+  if ("SITE_TYPE" %in% names(protected_areas)) {
+    protected_areas <- protected_areas %>% dplyr::filter(.data$SITE_TYPE %in% site_type)
+  }
 
   # Remove MAB designated areas if specified
   # Use DESIG_ENG (English designation) when available in newer WDPCA data,
-
-  # falling back to DESIG (original language) for older cached data
+  # falling back to DESIG (original language) for older cached data. Skip when
+  # no designation column is present (custom PA layer).
   if (!include_mab_designation) {
-    log_message("Excluding UNESCO Man and Biosphere (MAB) reserve areas")
-    desig_col <- if ("DESIG_ENG" %in% names(protected_areas)) "DESIG_ENG" else "DESIG"
-    protected_areas <- protected_areas %>%
-      dplyr::filter(!stringr::str_detect(.data[[desig_col]], "MAB"))
+    desig_col <- if ("DESIG_ENG" %in% names(protected_areas)) {
+      "DESIG_ENG"
+    } else if ("DESIG" %in% names(protected_areas)) {
+      "DESIG"
+    } else {
+      NULL
+    }
+    if (!is.null(desig_col)) {
+      log_message("Excluding UNESCO Man and Biosphere (MAB) reserve areas")
+      protected_areas <- protected_areas %>%
+        dplyr::filter(!stringr::str_detect(.data[[desig_col]], "MAB"))
+    }
   }
 
   # If geometry includes POINT/MULTIPOINT, buffer or filter

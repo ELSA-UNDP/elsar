@@ -13,6 +13,8 @@ make_boundary(
   custom_projection = TRUE,
   iso3 = NULL,
   iso3_column = NULL,
+  filter_by_iso3 = TRUE,
+  dissolve = FALSE,
   output_path = NULL
 )
 }
@@ -32,6 +34,16 @@ make_boundary(
 \item{iso3}{The iso3 country code (character) of the country of interest.}
 
 \item{iso3_column}{Only relevant when \code{iso3} != NULL. A string of the name of where iso3 information can be found in a dataset.}
+
+\item{filter_by_iso3}{Logical. When \code{TRUE} (default) and \code{iso3} is supplied, the
+boundary is filtered to the feature(s) where \code{iso3_column == iso3}. Set
+\code{FALSE} to use the whole input (e.g. a custom regional boundary already
+clipped to the study area) while still passing \code{iso3} for the projection name.}
+
+\item{dissolve}{Logical. When \code{TRUE}, dissolve the (optionally filtered)
+features into a single geometry so the whole input is treated as one
+planning region. Useful for multi-feature regional boundaries (e.g. several
+provinces). Default \code{FALSE}.}
 
 \item{output_path}{An optional output path for the created file. Only needed when custom_projection = TRUE.}
 }

@@ -1034,8 +1034,8 @@ download_esri_lulc_data <- function(
   )
 
   assertthat::assert_that(
-    is.character(iso3) && nchar(iso3) == 3,
-    msg = "'iso3' must be a 3-letter country code."
+    is_valid_iso3(iso3),
+    msg = "'iso3' must be a 3-letter ISO3 code, optionally with a regional suffix (e.g. ECU_REG)."
   )
 
   assertthat::assert_that(
@@ -1111,8 +1111,8 @@ download_global_pasture_data <- function(
   )
 
   assertthat::assert_that(
-    is.character(iso3) && nchar(iso3) == 3,
-    msg = "'iso3' must be a 3-letter country code."
+    is_valid_iso3(iso3),
+    msg = "'iso3' must be a 3-letter ISO3 code, optionally with a regional suffix (e.g. ECU_REG)."
   )
 
   assertthat::assert_that(
@@ -1227,8 +1227,8 @@ download_dynamic_world_data <- function(
   )
 
   assertthat::assert_that(
-    is.character(iso3) && nchar(iso3) == 3,
-    msg = "'iso3' must be a 3-letter country code."
+    is_valid_iso3(iso3),
+    msg = "'iso3' must be a 3-letter ISO3 code, optionally with a regional suffix (e.g. ECU_REG)."
   )
 
   assertthat::assert_that(
@@ -1341,8 +1341,8 @@ download_esa_worldcover_data <- function(
   )
 
   assertthat::assert_that(
-    is.character(iso3) && nchar(iso3) == 3,
-    msg = "'iso3' must be a 3-letter country code."
+    is_valid_iso3(iso3),
+    msg = "'iso3' must be a 3-letter ISO3 code, optionally with a regional suffix (e.g. ECU_REG)."
   )
 
   assertthat::assert_that(
@@ -1556,8 +1556,8 @@ download_lulc_class_proportion <- function(
     msg = "'boundary_layer' must be an sf object."
   )
   assertthat::assert_that(
-    is.character(iso3) && nchar(iso3) == 3,
-    msg = "'iso3' must be a 3-letter country code."
+    is_valid_iso3(iso3),
+    msg = "'iso3' must be a 3-letter ISO3 code, optionally with a regional suffix (e.g. ECU_REG)."
   )
   assertthat::assert_that(
     !is.null(gee_project) && nchar(gee_project) > 0,
@@ -1910,8 +1910,8 @@ download_lulc_proportions <- function(
     msg = "'boundary_layer' must be an sf object."
   )
   assertthat::assert_that(
-    is.character(iso3) && nchar(iso3) == 3,
-    msg = "'iso3' must be a 3-letter country code."
+    is_valid_iso3(iso3),
+    msg = "'iso3' must be a 3-letter ISO3 code, optionally with a regional suffix (e.g. ECU_REG)."
   )
   assertthat::assert_that(
     !is.null(gee_project) && nchar(gee_project) > 0,
@@ -2358,8 +2358,8 @@ download_lulc_data <- function(
     msg = "'boundary_layer' must be an sf object."
   )
   assertthat::assert_that(
-    is.character(iso3) && nchar(iso3) == 3,
-    msg = "'iso3' must be a 3-letter country code."
+    is_valid_iso3(iso3),
+    msg = "'iso3' must be a 3-letter ISO3 code, optionally with a regional suffix (e.g. ECU_REG)."
   )
 
   # Validate GEE project for GEE-based products

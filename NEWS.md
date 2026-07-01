@@ -1,3 +1,17 @@
+# elsar 0.3.1
+
+## Bug Fixes
+
+* `exact_rasterise()` no longer exhausts the OS open-file limit or crawls on
+  vector layers with very many features. Previously it built one
+  coverage-fraction raster per feature and stacked them, which is
+  `O(nfeatures)` in both open file handles and time - wall-to-wall class maps
+  with tens of thousands of polygons failed with "cannot open N files". A new
+  `max_exact_features` argument (default 1000) switches large layers with a
+  standard `fun` (`mean`/`sum`/`max`/`min`) to a single `terra::rasterize()`
+  pass; the exact per-feature coverage path is retained for smaller layers. A
+  large layer with a non-standard `fun` now warns before falling back.
+
 # elsar 0.2.0
 
 ## Breaking Changes

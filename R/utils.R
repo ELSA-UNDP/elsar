@@ -1,3 +1,23 @@
+#' Validate an ISO3-style region code
+#'
+#' Accepts a standard 3-letter ISO3 country code (e.g. `"ECU"`) or a regional
+#' variant with a suffix used for sub-national runs (e.g. `"ECU_REG"`,
+#' `"ECU-GEF8"`). The code must begin with three letters; an optional suffix of
+#' letters, digits, underscores or hyphens may follow.
+#'
+#' Used by functions that take an `iso3` for filtering or output naming, so that
+#' a custom regional code (relying on a supplied boundary rather than ISO lookup)
+#' is not rejected.
+#'
+#' @param iso3 Character. The code to validate.
+#'
+#' @return `TRUE`/`FALSE`.
+#' @keywords internal
+is_valid_iso3 <- function(iso3) {
+  is.character(iso3) && length(iso3) == 1 && !is.na(iso3) &&
+    grepl("^[A-Za-z]{3}([_-][A-Za-z0-9]+)*$", iso3)
+}
+
 #' Rescale Raster to 0-1 Range
 #'
 #' This function rescales values in a raster to a range between 0 and 1.
@@ -175,6 +195,13 @@ get_coverage <- function(zone_layer, pu_layer) {
 #' @param rescaled Logical. If `TRUE`, rescales the output to 0-1 using `make_normalised_raster()` (default: `TRUE`).
 #' @param fun Function. Aggregation function applied across overlapping rasterized features (default: `mean`).
 #' @param cores Integer. Number of CPU cores to use for multi-core processing (default: 4).
+#' @param max_exact_features Integer. Above this feature count the per-feature
+#'   coverage-fraction stack (which needs one raster and one open file handle per
+#'   feature) is skipped in favour of a single `terra::rasterize()` pass, provided
+#'   `fun` is a standard aggregation (`mean`/`sum`/`max`/`min`). This keeps
+#'   wall-to-wall class maps with tens of thousands of polygons from exhausting the
+#'   OS open-file limit and crawling. Set to `Inf` to always use the exact path
+#'   (default: 1000).
 #'
 #' @return A `SpatRaster` object representing the attribute-weighted rasterization of the input features.
 #'
@@ -186,6 +213,18 @@ get_coverage <- function(zone_layer, pu_layer) {
 #' result <- exact_rasterise(features = my_polygons, attribute = "score", pus = my_raster, fun = sum)
 #' }
 
+# Map an aggregation `fun` (a function like mean/max, or a string) to the
+# equivalent terra::rasterize() `fun` name, or NA if it has no direct equivalent.
+.terra_fun_name <- function(fun) {
+  if (is.character(fun)) {
+    return(if (fun %in% c("mean", "sum", "max", "min", "modal", "first", "last")) fun else NA_character_)
+  }
+  for (nm in c("mean", "sum", "max", "min")) {
+    if (identical(fun, match.fun(nm))) return(nm)
+  }
+  NA_character_
+}
+
 exact_rasterise <- function(
     features,
     attribute,
@@ -194,7 +233,8 @@ exact_rasterise <- function(
     invert = FALSE,
     rescaled = TRUE,
     fun = mean,
-    cores = 4
+    cores = 4,
+    max_exact_features = 1000
 ) {
 
   # Validate inputs
@@ -214,15 +254,41 @@ exact_rasterise <- function(
   )
 
   assertthat::assert_that(
-    is.character(iso3) && nchar(iso3) == 3,
-    msg = "'iso3' must be a 3-letter country code string."
+    is_valid_iso3(iso3),
+    msg = "'iso3' must be a 3-letter ISO3 code, optionally with a regional suffix (e.g. ECU_REG)."
   )
 
   # Initialize an empty raster stack
   r_stack <- terra::rast()
 
-  # Handle multiple features by rasterizing each individually and stacking
-  if (nrow(features) > 1) {
+  nfeat <- nrow(features)
+  terra_fun <- .terra_fun_name(fun)
+  use_fast <- nfeat > max_exact_features && !is.na(terra_fun)
+
+  if (nfeat > max_exact_features && is.na(terra_fun)) {
+    warning(
+      glue::glue(
+        "exact_rasterise: {nfeat} features with a non-standard `fun`; falling back to ",
+        "the per-feature coverage stack, which needs one open file handle per feature ",
+        "and may hit the OS file-descriptor limit and run slowly. Pass fun = mean/sum/max/min ",
+        "to use the single-pass terra::rasterize path."
+      ),
+      call. = FALSE
+    )
+  }
+
+  if (use_fast) {
+    # Single-pass rasterisation for large feature counts: O(1) file handles and
+    # far faster than stacking one coverage raster per feature. `fun` aggregates
+    # polygons that share a cell. (Sub-cell coverage weighting is dropped here;
+    # it is negligible for the wall-to-wall class maps that reach this path.)
+    log_message("exact_rasterise: {nfeat} features (> {max_exact_features}); using single-pass terra::rasterize (fun = {terra_fun}).")
+    v <- if (inherits(features, "SpatVector")) features else terra::vect(features)
+    if (!terra::same.crs(v, pus)) v <- terra::project(v, pus)
+    r_stack <- terra::rasterize(v, pus, field = attribute, fun = terra_fun, background = NA)
+
+  } else if (nfeat > 1) {
+    # Handle multiple features by rasterizing each individually and stacking
     for (i in 1:nrow(features)) {
       f <- dplyr::slice(features, i)
       attr_val <- dplyr::pull(f, attribute)        # Get attribute value directly
@@ -431,6 +497,24 @@ filter_sf <- function(file_path,
     layer_name <- layer_info$name[1]
   }
 
+  # Reproject a spatial-filter geometry into the layer's CRS before use. GDAL
+  # applies a spatial filter in the layer's own CRS, so a filter supplied in a
+  # different CRS (e.g. a pre-projected input) would otherwise match nothing.
+  # (A filter passed as a ready WKT string is used as-is.)
+  if (!is.null(wkt_filter) && !is.character(wkt_filter)) {
+    layer_crs <- tryCatch({
+      li <- sf::st_layers(file_path)
+      idx <- match(layer_name, li$name)
+      if (!is.na(idx)) li$crs[[idx]] else NA
+    }, error = function(e) NA)
+    fg <- sf::st_geometry(wkt_filter)
+    if (!is.na(sf::st_crs(layer_crs)) && !is.na(sf::st_crs(fg)) &&
+        sf::st_crs(fg) != sf::st_crs(layer_crs)) {
+      fg <- sf::st_transform(fg, layer_crs)
+    }
+    wkt_filter <- sf::st_as_text(fg)
+  }
+
   # Build SQL query for attribute filtering if needed
   query <- if (!is.null(iso3) && !is.null(iso3_column) && !is.null(layer_name)) {
     log_message("Building SQL query to filter layer {layer_name} by ISO3 code...")
@@ -590,6 +674,7 @@ conditionally_subdivide_bbox <- function(bbox_sf,
 #' @param raster A `SpatRaster` object to be saved.
 #' @param filename Character. Full file path (including `.tif` extension) where the raster will be saved.
 #' @param datatype Character. GDAL data type to use for saving the raster (e.g. `"FLT4S"` for float, `"INT1U"` for unsigned byte). Default is `"FLT4S"`.
+#' @param resampling Character or NULL. Overview resampling method (e.g. `"average"`, `"nearest"`, `"mode"`). If `NULL` (default), it is chosen from `datatype`: `"average"` for float, `"nearest"` for integer. Use `"mode"` for multi-class categorical layers such as land cover so overviews keep the dominant class.
 #'
 #' @return None. The function is called for its side effect of saving the raster to disk.
 #'
@@ -601,14 +686,29 @@ conditionally_subdivide_bbox <- function(bbox_sf,
 #' save_raster(my_raster, "output/my_raster_float.tif", datatype = "FLT4S")
 #' }
 #'
-save_raster <- function(raster, filename, datatype = "FLT4S") {
+save_raster <- function(raster, filename, datatype = "FLT4S", resampling = NULL) {
   # Determine GDAL predictor: 3 for float (better for continuous), 2 for integer (better for categorical)
   predictor_value <- ifelse(datatype == "FLT4S", "3", "2")
 
   # Define nodata value: NaN for float, 255 for integer (common convention)
   nodata_value <- if (datatype == "FLT4S") NaN else 255
 
-  # Write raster to disk as Cloud Optimized GeoTIFF (COG)
+  # Overview resampling. Caller may override; otherwise default by datatype:
+  #   - float    -> AVERAGE  (smooth downsampling of continuous values)
+  #   - integer  -> NEAREST  (preserves binary/presence values)
+  # For multi-class categorical layers (e.g. land cover) pass resampling = "mode"
+  # so overviews keep the dominant class instead of an arbitrary pixel.
+  resampling_value <- if (!is.null(resampling)) {
+    toupper(resampling)
+  } else if (datatype == "FLT4S") {
+    "AVERAGE"
+  } else {
+    "NEAREST"
+  }
+
+  # Write raster to disk as Cloud Optimized GeoTIFF (COG). Overviews are built
+  # (OVERVIEWS=AUTO) so the output is a fully valid COG - required by strict COG
+  # readers/servers such as TiTiler/rio-cogeo, which reject COGs without them.
   terra::writeRaster(
     raster,
     filename = filename,
@@ -619,7 +719,8 @@ save_raster <- function(raster, filename, datatype = "FLT4S") {
       "COMPRESS=ZSTD",
       glue::glue("PREDICTOR={predictor_value}"),
       "NUM_THREADS=ALL_CPUS",
-      "OVERVIEWS=NONE"
+      "OVERVIEWS=AUTO",
+      glue::glue("OVERVIEW_RESAMPLING={resampling_value}")
     ),
     overwrite = TRUE
   )

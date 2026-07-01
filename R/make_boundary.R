@@ -8,6 +8,14 @@
 #' @param custom_projection Logical. `TRUE`if custom projection for planning region is wanted.
 #' @param iso3 The iso3 country code (character) of the country of interest.
 #' @param iso3_column Only relevant when `iso3` != NULL. A string of the name of where iso3 information can be found in a dataset.
+#' @param filter_by_iso3 Logical. When `TRUE` (default) and `iso3` is supplied, the
+#'   boundary is filtered to the feature(s) where `iso3_column == iso3`. Set
+#'   `FALSE` to use the whole input (e.g. a custom regional boundary already
+#'   clipped to the study area) while still passing `iso3` for the projection name.
+#' @param dissolve Logical. When `TRUE`, dissolve the (optionally filtered)
+#'   features into a single geometry so the whole input is treated as one
+#'   planning region. Useful for multi-feature regional boundaries (e.g. several
+#'   provinces). Default `FALSE`.
 #' @param output_path An optional output path for the created file. Only needed when custom_projection = TRUE.
 #'
 #' @return `sf` object of the boundary of the planning region
@@ -27,6 +35,8 @@ make_boundary <- function(boundary_in,
                           custom_projection = TRUE,
                           iso3 = NULL,
                           iso3_column = NULL,
+                          filter_by_iso3 = TRUE,
+                          dissolve = FALSE,
                           output_path = NULL) {
   # Input validation
   assertthat::assert_that(
@@ -43,8 +53,8 @@ make_boundary <- function(boundary_in,
   if (!is.null(iso3)) {
     assertthat::assert_that(assertthat::is.string(iso3),
                             msg = "'iso3' must be a character string.")
-    assertthat::assert_that(!is.null(iso3_column),
-                            msg = "'iso3_column' must be provided when 'iso3' is specified.")
+    assertthat::assert_that(!filter_by_iso3 || !is.null(iso3_column),
+                            msg = "'iso3_column' must be provided when filtering by 'iso3'.")
   }
   if (!is.null(output_path)) {
     assertthat::assert_that(dir.exists(output_path),
@@ -74,13 +84,20 @@ make_boundary <- function(boundary_in,
       sf::st_transform(nb, crs = sf::st_crs(4326))
   }
 
-  if (!is.null(iso3)) { #filter for right country if needed
+  if (!is.null(iso3) && filter_by_iso3) { #filter for right country if needed
     nb <- nb %>%
       dplyr::filter(!!rlang::sym(iso3_column) == iso3)
   }
 
+  if (dissolve) { # treat multiple features (e.g. provinces) as one region
+    nb <- nb %>%
+      sf::st_make_valid() %>%
+      sf::st_union() %>%
+      sf::st_sf(geometry = .)
+  }
+
   if (custom_projection) {
-    wkt <- make_custom_projection(
+    wkt <- make_custom_mollweide_projection(
       boundary = nb,
       output_path = output_path,
       iso3_column = iso3_column,

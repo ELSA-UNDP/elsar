@@ -12,7 +12,8 @@ exact_rasterise(
   invert = FALSE,
   rescaled = TRUE,
   fun = mean,
-  cores = 4
+  cores = 4,
+  max_exact_features = 1000
 )
 }
 \arguments{
@@ -31,6 +32,14 @@ exact_rasterise(
 \item{fun}{Function. Aggregation function applied across overlapping rasterized features (default: \code{mean}).}
 
 \item{cores}{Integer. Number of CPU cores to use for multi-core processing (default: 4).}
+
+\item{max_exact_features}{Integer. Above this feature count the per-feature
+coverage-fraction stack (which needs one raster and one open file handle per
+feature) is skipped in favour of a single \code{terra::rasterize()} pass, provided
+\code{fun} is a standard aggregation (\code{mean}/\code{sum}/\code{max}/\code{min}). This keeps
+wall-to-wall class maps with tens of thousands of polygons from exhausting the
+OS open-file limit and crawling. Set to \code{Inf} to always use the exact path
+(default: 1000).}
 }
 \value{
 A \code{SpatRaster} object representing the attribute-weighted rasterization of the input features.
@@ -44,6 +53,12 @@ and is especially useful when features overlap or vary in size and shape.
 \details{
 If multiple features are provided, each is rasterized independently and aggregated
 across the stack using the specified function (\code{fun}), typically \code{sum}, \code{mean}, or \code{max}.
+
+For layers with more than \code{max_exact_features} features and a standard \code{fun}
+(\code{mean}/\code{sum}/\code{max}/\code{min}), a single \code{terra::rasterize()} pass is used instead
+of the per-feature stack. This bounds open file handles and runtime for
+wall-to-wall class maps with tens of thousands of polygons, at the cost of the
+sub-cell coverage weighting (negligible for such maps).
 }
 \examples{
 \dontrun{
