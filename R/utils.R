@@ -195,6 +195,13 @@ get_coverage <- function(zone_layer, pu_layer) {
 #' @param rescaled Logical. If `TRUE`, rescales the output to 0-1 using `make_normalised_raster()` (default: `TRUE`).
 #' @param fun Function. Aggregation function applied across overlapping rasterized features (default: `mean`).
 #' @param cores Integer. Number of CPU cores to use for multi-core processing (default: 4).
+#' @param max_exact_features Integer. Above this feature count the per-feature
+#'   coverage-fraction stack (which needs one raster and one open file handle per
+#'   feature) is skipped in favour of a single `terra::rasterize()` pass, provided
+#'   `fun` is a standard aggregation (`mean`/`sum`/`max`/`min`). This keeps
+#'   wall-to-wall class maps with tens of thousands of polygons from exhausting the
+#'   OS open-file limit and crawling. Set to `Inf` to always use the exact path
+#'   (default: 1000).
 #'
 #' @return A `SpatRaster` object representing the attribute-weighted rasterization of the input features.
 #'
@@ -206,6 +213,18 @@ get_coverage <- function(zone_layer, pu_layer) {
 #' result <- exact_rasterise(features = my_polygons, attribute = "score", pus = my_raster, fun = sum)
 #' }
 
+# Map an aggregation `fun` (a function like mean/max, or a string) to the
+# equivalent terra::rasterize() `fun` name, or NA if it has no direct equivalent.
+.terra_fun_name <- function(fun) {
+  if (is.character(fun)) {
+    return(if (fun %in% c("mean", "sum", "max", "min", "modal", "first", "last")) fun else NA_character_)
+  }
+  for (nm in c("mean", "sum", "max", "min")) {
+    if (identical(fun, match.fun(nm))) return(nm)
+  }
+  NA_character_
+}
+
 exact_rasterise <- function(
     features,
     attribute,
@@ -214,7 +233,8 @@ exact_rasterise <- function(
     invert = FALSE,
     rescaled = TRUE,
     fun = mean,
-    cores = 4
+    cores = 4,
+    max_exact_features = 1000
 ) {
 
   # Validate inputs
@@ -241,8 +261,34 @@ exact_rasterise <- function(
   # Initialize an empty raster stack
   r_stack <- terra::rast()
 
-  # Handle multiple features by rasterizing each individually and stacking
-  if (nrow(features) > 1) {
+  nfeat <- nrow(features)
+  terra_fun <- .terra_fun_name(fun)
+  use_fast <- nfeat > max_exact_features && !is.na(terra_fun)
+
+  if (nfeat > max_exact_features && is.na(terra_fun)) {
+    warning(
+      glue::glue(
+        "exact_rasterise: {nfeat} features with a non-standard `fun`; falling back to ",
+        "the per-feature coverage stack, which needs one open file handle per feature ",
+        "and may hit the OS file-descriptor limit and run slowly. Pass fun = mean/sum/max/min ",
+        "to use the single-pass terra::rasterize path."
+      ),
+      call. = FALSE
+    )
+  }
+
+  if (use_fast) {
+    # Single-pass rasterisation for large feature counts: O(1) file handles and
+    # far faster than stacking one coverage raster per feature. `fun` aggregates
+    # polygons that share a cell. (Sub-cell coverage weighting is dropped here;
+    # it is negligible for the wall-to-wall class maps that reach this path.)
+    log_message("exact_rasterise: {nfeat} features (> {max_exact_features}); using single-pass terra::rasterize (fun = {terra_fun}).")
+    v <- if (inherits(features, "SpatVector")) features else terra::vect(features)
+    if (!terra::same.crs(v, pus)) v <- terra::project(v, pus)
+    r_stack <- terra::rasterize(v, pus, field = attribute, fun = terra_fun, background = NA)
+
+  } else if (nfeat > 1) {
+    # Handle multiple features by rasterizing each individually and stacking
     for (i in 1:nrow(features)) {
       f <- dplyr::slice(features, i)
       attr_val <- dplyr::pull(f, attribute)        # Get attribute value directly
