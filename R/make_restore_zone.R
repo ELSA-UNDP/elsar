@@ -37,7 +37,7 @@
 #'   an area is considered degraded (default: 4).
 #' @param agriculture_threshold Numeric. Proportion threshold above which an area
 #'   is excluded as agricultural land (default: 0.1).
-#' @param built_area_threshold Numeric. Proportion threshold above which an area
+#' @param built_areas_threshold Numeric. Proportion threshold above which an area
 #'   is excluded as built-up land (default: 0.1).
 #' @param forest_threshold Numeric. Minimum forest cover proportion to include
 #'   in restore_zone_v2 (default: 0.1).
@@ -47,12 +47,16 @@
 #'   agricultural land (default: 5, for ESRI 10m LULC).
 #' @param built_area_lulc_value Integer. Class value in `lulc` representing built-up
 #'   areas (default: 7, for ESRI 10m LULC).
-#' @param filter_small_patches Logical. Whether to remove small isolated patches
+#' @param filter_patch_size Logical. Whether to remove small isolated patches
 #'   from the output (default: TRUE).
 #' @param min_patch_size Integer. Minimum number of connected pixels to retain
 #'   when filtering patches (default: 10).
-#' @param output_path Character or NULL. Directory to save output rasters as
-#'   Cloud Optimized GeoTIFFs. If NULL, outputs are returned but not saved.
+#' @param output_path Character or NULL. When provided, the final zones are saved
+#'   here as a Cloud Optimized GeoTIFF (`restore_zones_{iso3}.tif`), together with
+#'   the region-aligned intermediate inputs used to build them - `agriculture_areas_`,
+#'   `built_areas_`, `human_pressure_`, `degradation_` and `forest_mask_`
+#'   `{iso3}.tif` - each masked to the planning units (NoData outside the study
+#'   area). If NULL, outputs are returned but not saved.
 #'
 #' @return A SpatRaster with two layers:
 #' \describe{
@@ -91,11 +95,11 @@
 #' restore_zone <- make_restore_zone(
 #'   iso3 = "BRA",
 #'   pus = planning_units,
-#'   sdg_degradation_input = sdg_raster,
-#'   agricultural_areas_input = ag_raster,
-#'   built_areas_input = built_raster,
-#'   hii_input = hii_raster,
-#'   forest_cover_input = forest_raster
+#'   degradation = sdg_raster,
+#'   agricultural_areas = ag_raster,
+#'   built_areas = built_raster,
+#'   human_pressure = hii_raster,
+#'   forest_mask = forest_raster
 #' )
 #' }
 
@@ -112,12 +116,12 @@ make_restore_zone <- function(
     degradation_threshold = 0.1,
     human_pressure_threshold = 4,
     agriculture_threshold = 0.1,
-    built_area_threshold = 0.1,
+    built_areas_threshold = 0.1,
     forest_threshold = 0.1,
     lulc_product = c("esri_10m", "dynamic_world", "esa_worldcover", "local"),
     agriculture_lulc_value = NULL,
     built_area_lulc_value = NULL,
-    filter_small_patches = TRUE,
+    filter_patch_size = TRUE,
     min_patch_size = 10,
     output_path = NULL
 ) {
@@ -266,15 +270,18 @@ make_restore_zone <- function(
     method_override = "mean"
   )
 
-  # Optional output of intermediate layers
+  # Optional output of intermediate layers. Masked to the planning units so cells
+  # outside the study area are NoData (consistent with the zone outputs).
   if (!is.null(output_path)) {
-    if (!is.null(agricultural_areas)) {
-      save_raster(agricultural_areas_processed, glue::glue("{output_path}/agriculture_areas_{iso3}.tif"))
-    }
-    if (!is.null(built_areas)) {
-      save_raster(built_areas_processed, glue::glue("{output_path}/built_areas_{iso3}.tif"))
-    }
-    save_raster(human_pressure_processed, glue::glue("{output_path}/human_pressure_{iso3}.tif"))
+    pu_mask <- function(r) terra::mask(r, pus)
+    # agricultural_areas_processed / built_areas_processed are always computed
+    # (from the direct input or derived from LULC), so save them unconditionally -
+    # the LULC-derived proportion is often the most useful to inspect.
+    save_raster(pu_mask(agricultural_areas_processed), glue::glue("{output_path}/agriculture_areas_{iso3}.tif"))
+    save_raster(pu_mask(built_areas_processed), glue::glue("{output_path}/built_areas_{iso3}.tif"))
+    save_raster(pu_mask(human_pressure_processed), glue::glue("{output_path}/human_pressure_{iso3}.tif"))
+    save_raster(pu_mask(degradation_processed), glue::glue("{output_path}/degradation_{iso3}.tif"))
+    save_raster(pu_mask(forest_mask_processed), glue::glue("{output_path}/forest_mask_{iso3}.tif"))
   }
 
   # Combine degradation indicators into restore zone v1 (the Default Restore Zone)
@@ -282,7 +289,7 @@ make_restore_zone <- function(
   restore_zone <- terra::ifel(
     (degradation_processed > degradation_threshold | human_pressure_processed >= human_pressure_threshold) &
       agricultural_areas_processed <= agriculture_threshold &
-      built_areas_processed <= built_area_threshold,
+      built_areas_processed <= built_areas_threshold,
     1, 0
   ) %>%
     elsar::make_normalised_raster(
@@ -306,7 +313,7 @@ make_restore_zone <- function(
   names(restore_zones) <- c("restore_zone_v1", "restore_zone_v2")
 
   # Optionally remove small patches (default behaviour)
-  if (filter_small_patches) {
+  if (filter_patch_size) {
     restore_zones[[1]] <- terra::sieve(restore_zones[[1]], threshold = min_patch_size)
 
     if (terra::nlyr(restore_zones) > 1) {

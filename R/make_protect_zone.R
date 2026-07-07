@@ -14,11 +14,11 @@
 #'        If NULL, `elsar::make_protected_areas()` will be used.
 #' @param lulc_proportions A multi-band `SpatRaster` from [download_lulc_proportions()] containing
 #'   pre-computed class proportions. If provided, bands named "agriculture" and "built_area" will
-#'   be used automatically, overriding `agricultural_areas_input` and `built_areas_input`.
-#' @param agricultural_areas_input A `SpatRaster` representing binary or probabilistic agricultural areas (optional).
-#' @param built_areas_input A `SpatRaster` representing binary or probabilistic built-up areas (optional).
+#'   be used automatically, overriding `agricultural_areas` and `built_areas`.
+#' @param agricultural_areas A `SpatRaster` representing binary or probabilistic agricultural areas (optional).
+#' @param built_areas A `SpatRaster` representing binary or probabilistic built-up areas (optional).
 #' @param lulc_raster A `SpatRaster` LULC map used to extract agriculture/built-up areas if not already provided (default: NULL).
-#' @param hii_input A `SpatRaster` of the Human Footprint Index, or NULL. If NULL,
+#' @param human_pressure A `SpatRaster` of the Human Footprint Index, or NULL. If NULL,
 #'   the protect zone starts with all planning units eligible and applies only
 #'   agriculture and built-area exclusions.
 #' @param hii_threshold A fixed numeric HII threshold. If NULL, `hii_quantile` is used to estimate it.
@@ -34,7 +34,11 @@
 #' @param filter_patch_size Logical. Whether to remove small isolated patches (default: TRUE).
 #' @param min_patch_size Integer. Minimum patch size to retain (in raster cells; default: 20).
 #' @param make_locked_out Logical. If TRUE, invert the raster to produce a locked-out constraint (default: FALSE).
-#' @param output_path Optional directory to write the result as a COG.
+#' @param output_path Optional directory. When provided, the final zone is
+#'   written there as a COG (`protect_zone_{iso3}.tif`), together with the
+#'   region-aligned intermediate inputs used to build it - `agriculture_areas_`,
+#'   `built_areas_` and `human_pressure_` `{iso3}.tif` - each masked to the
+#'   planning units (NoData outside the study area).
 #'
 #' @return A `SpatRaster` with values 1 (eligible) and 0 (excluded), or the inverse if `make_locked_out = TRUE`.
 #' @export
@@ -44,9 +48,9 @@
 #' protect_zone <- make_protect_zone(
 #'   pus = planning_units,
 #'   iso3 = "NPL",
-#'   hii_input = hii_raster,
-#'   agricultural_areas_input = crop_raster,
-#'   built_areas_input = built_raster,
+#'   human_pressure = hii_raster,
+#'   agricultural_areas = crop_raster,
+#'   built_areas = built_raster,
 #'   lulc_raster = NULL,
 #'   hii_quantile = 0.95,
 #'   output_path = "outputs/"
@@ -58,10 +62,10 @@ make_protect_zone <- function(
     pus,
     current_protected_areas,
     lulc_proportions = NULL,
-    agricultural_areas_input = NULL,
-    built_areas_input = NULL,
+    agricultural_areas = NULL,
+    built_areas = NULL,
     lulc_raster = NULL,
-    hii_input = NULL,
+    human_pressure = NULL,
     hii_threshold = NULL,
     hii_quantile = 0.95,
     lulc_product = c("esri_10m", "dynamic_world", "esa_worldcover", "local"),
@@ -82,24 +86,24 @@ make_protect_zone <- function(
     if (inherits(lulc_proportions, "list")) {
       # New format: named list of SpatRasters
       log_message("Using LULC proportions (list format): {paste(names(lulc_proportions), collapse=', ')}")
-      if ("agriculture" %in% names(lulc_proportions) && is.null(agricultural_areas_input)) {
-        agricultural_areas_input <- lulc_proportions[["agriculture"]]
+      if ("agriculture" %in% names(lulc_proportions) && is.null(agricultural_areas)) {
+        agricultural_areas <- lulc_proportions[["agriculture"]]
         log_message("Using 'agriculture' proportion raster")
       }
-      if ("built_area" %in% names(lulc_proportions) && is.null(built_areas_input)) {
-        built_areas_input <- lulc_proportions[["built_area"]]
+      if ("built_area" %in% names(lulc_proportions) && is.null(built_areas)) {
+        built_areas <- lulc_proportions[["built_area"]]
         log_message("Using 'built_area' proportion raster")
       }
     } else if (inherits(lulc_proportions, "SpatRaster")) {
       # Legacy format: multi-band SpatRaster
       band_names <- names(lulc_proportions)
       log_message("Using LULC proportions (SpatRaster): {paste(band_names, collapse=', ')}")
-      if ("agriculture" %in% band_names && is.null(agricultural_areas_input)) {
-        agricultural_areas_input <- lulc_proportions[["agriculture"]]
+      if ("agriculture" %in% band_names && is.null(agricultural_areas)) {
+        agricultural_areas <- lulc_proportions[["agriculture"]]
         log_message("Extracted 'agriculture' band")
       }
-      if ("built_area" %in% band_names && is.null(built_areas_input)) {
-        built_areas_input <- lulc_proportions[["built_area"]]
+      if ("built_area" %in% band_names && is.null(built_areas)) {
+        built_areas <- lulc_proportions[["built_area"]]
         log_message("Extracted 'built_area' band")
       }
     } else {
@@ -109,7 +113,7 @@ make_protect_zone <- function(
 
   # Resolve LULC class values from product if not explicitly provided
   # (only needed if using lulc_raster fallback)
-  if (is.null(agricultural_areas_input) || is.null(built_areas_input)) {
+  if (is.null(agricultural_areas) || is.null(built_areas)) {
     if (is.null(agriculture_lulc_value)) {
       if (lulc_product == "local") {
         stop("When lulc_product = 'local', agriculture_lulc_value must be explicitly provided.", call. = FALSE)
@@ -145,19 +149,19 @@ make_protect_zone <- function(
 
   # Process agriculture
   log_message("Processing agricultural areas...")
-  if (!is.null(agricultural_areas_input)) {
+  if (!is.null(agricultural_areas)) {
     log_message("Aligning provided agricultural areas raster to planning units...")
-    agricultural_areas <- elsar::make_normalised_raster(
-      raster_in = agricultural_areas_input,
+    agricultural_areas_processed <- elsar::make_normalised_raster(
+      raster_in = agricultural_areas,
       pus = pus,
       iso3 = iso3,
       rescaled = FALSE,
       method_override = "mean"
     )
   } else {
-    assertthat::assert_that(!is.null(lulc_raster), msg = "If 'agricultural_areas_input' is NULL, 'lulc_raster' must be provided.")
+    assertthat::assert_that(!is.null(lulc_raster), msg = "If 'agricultural_areas' is NULL, 'lulc_raster' must be provided.")
     log_message("Extracting agricultural areas from LULC raster...")
-    agricultural_areas <- elsar::make_normalised_raster(
+    agricultural_areas_processed <- elsar::make_normalised_raster(
       raster_in = lulc_raster,
       pus = pus,
       iso3 = iso3,
@@ -169,19 +173,19 @@ make_protect_zone <- function(
 
   # Process built-up areas
   log_message("Processing built-up areas...")
-  if (!is.null(built_areas_input)) {
+  if (!is.null(built_areas)) {
     log_message("Aligning provided built areas raster to planning units...")
-    built_areas <- elsar::make_normalised_raster(
-      raster_in = built_areas_input,
+    built_areas_processed <- elsar::make_normalised_raster(
+      raster_in = built_areas,
       pus = pus,
       iso3 = iso3,
       rescaled = FALSE,
       method_override = "mean"
     )
   } else {
-    assertthat::assert_that(!is.null(lulc_raster), msg = "If 'built_areas_input' is NULL, 'lulc_raster' must be provided.")
+    assertthat::assert_that(!is.null(lulc_raster), msg = "If 'built_areas' is NULL, 'lulc_raster' must be provided.")
     log_message("Extracting built areas from LULC raster...")
-    built_areas <-  elsar::make_normalised_raster(
+    built_areas_processed <-  elsar::make_normalised_raster(
       raster_in = lulc_raster,
       pus = pus,
       iso3 = iso3,
@@ -193,11 +197,11 @@ make_protect_zone <- function(
 
   # Create base protect zone from HII or start with all eligible
 
-  if (!is.null(hii_input)) {
+  if (!is.null(human_pressure)) {
     # Normalize HII
     log_message("Processing HII raster...")
     hii_resampled <- elsar::make_normalised_raster(
-      raster_in = hii_input,
+      raster_in = human_pressure,
       pus = pus,
       iso3 = iso3,
       rescaled = FALSE,
@@ -241,12 +245,12 @@ make_protect_zone <- function(
 
   # Exclude agriculture and built-up areas
   log_message("Removing built and agricultural areas...")
-  if (!is.null(built_areas) && is.null(agricultural_areas)) {
-    protect_zone <- terra::ifel(built_areas > built_areas_threshold, 0, protect_zone)
-  } else if (is.null(built_areas) && !is.null(agricultural_areas)) {
-    protect_zone <- terra::ifel(agricultural_areas > agriculture_threshold, 0, protect_zone)
-  } else if (!is.null(built_areas) && !is.null(agricultural_areas)) {
-    protect_zone <- terra::ifel(built_areas > built_areas_threshold | agricultural_areas > agriculture_threshold, 0, protect_zone)
+  if (!is.null(built_areas_processed) && is.null(agricultural_areas_processed)) {
+    protect_zone <- terra::ifel(built_areas_processed > built_areas_threshold, 0, protect_zone)
+  } else if (is.null(built_areas_processed) && !is.null(agricultural_areas_processed)) {
+    protect_zone <- terra::ifel(agricultural_areas_processed > agriculture_threshold, 0, protect_zone)
+  } else if (!is.null(built_areas_processed) && !is.null(agricultural_areas_processed)) {
+    protect_zone <- terra::ifel(built_areas_processed > built_areas_threshold | agricultural_areas_processed > agriculture_threshold, 0, protect_zone)
   } else {
     log_message("No building or agricultural area found - Protection zone based on HII only.")
   }
@@ -273,6 +277,20 @@ make_protect_zone <- function(
       filename = filename,
       datatype = "INT1U"
     )
+
+    # Also save the region-aligned intermediate inputs for inspection (mirrors
+    # make_degraded_areas). Each is guarded because some inputs are optional, and
+    # masked to the planning units so cells outside the study area are NoData.
+    pu_mask <- function(r) terra::mask(r, pus)
+    if (exists("agricultural_areas_processed", inherits = FALSE) && inherits(agricultural_areas_processed, "SpatRaster")) {
+      elsar::save_raster(pu_mask(agricultural_areas_processed), glue::glue("{output_path}/agriculture_areas_{iso3}.tif"), datatype = "FLT4S")
+    }
+    if (exists("built_areas_processed", inherits = FALSE) && inherits(built_areas_processed, "SpatRaster")) {
+      elsar::save_raster(pu_mask(built_areas_processed), glue::glue("{output_path}/built_areas_{iso3}.tif"), datatype = "FLT4S")
+    }
+    if (exists("hii_resampled", inherits = FALSE) && inherits(hii_resampled, "SpatRaster")) {
+      elsar::save_raster(pu_mask(hii_resampled), glue::glue("{output_path}/human_pressure_{iso3}.tif"), datatype = "FLT4S")
+    }
   }
 
   return(protect_zone)

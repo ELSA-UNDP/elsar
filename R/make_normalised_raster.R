@@ -18,8 +18,11 @@
 #'        function to the raster before resampling to the PU layer (default: `NULL`).
 #' @param conditional_expression `function` Optional method to apply a function to the
 #'        raster after resampling to the PU layer (default: `NULL`).
-#' @param fill_na `numeric` or `NA` The fill value to use to fill in `NA` values before
-#'        masking (default: 0).
+#' @param fill_na `numeric` or `NA` The fill value used for `NA` cells before
+#'        masking (default: 0). When non-NULL (the default), filled cells are
+#'        then masked back to the planning units, so the result is NoData outside
+#'        the study area. Pass `NULL` to skip both the fill and this PU masking -
+#'        in which case cells outside the planning units are NOT set to NoData.
 #' @param name_out `character` The name of the output raster file (without the extension).
 #' @param output_path `character` The directory path to save the output raster (default: `NULL`, i.e., not saved).
 #' @param threads Optional method to use multi-core processing - to speed on some `terra`
@@ -232,12 +235,16 @@ make_normalised_raster <- function(raster_in,
   if (rescaled) {
     dat_aligned <- elsar::rescale_raster(dat_aligned)
   } else {
-    warning("NOTE: Raster values are NOT rescaled.")
+    # A deliberate, common choice for presence/coverage layers - inform, don't
+    # warn (warning() here fires dozens of times per pipeline run).
+    log_message("Raster values are NOT rescaled (rescaled = FALSE).")
   }
 
   if (!is.null(output_path)) {
     data_type <- if (terra::is.int(dat_aligned)) "INT1S" else "FLT4S"
-    na_value <- if (terra::is.int(dat_aligned)) 255 else -9999
+    # INT1S is signed (-128..127); 255 is out of range. Use -128 as the NoData
+    # sentinel for integer output (the `invert` path can produce negatives).
+    na_value <- if (terra::is.int(dat_aligned)) -128 else -9999
 
     gdal_options <- c(
       "COMPRESS=ZSTD",
