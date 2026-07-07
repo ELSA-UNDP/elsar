@@ -53,12 +53,6 @@ and is especially useful when features overlap or vary in size and shape.
 \details{
 If multiple features are provided, each is rasterized independently and aggregated
 across the stack using the specified function (\code{fun}), typically \code{sum}, \code{mean}, or \code{max}.
-
-For layers with more than \code{max_exact_features} features and a standard \code{fun}
-(\code{mean}/\code{sum}/\code{max}/\code{min}), a single \code{terra::rasterize()} pass is used instead
-of the per-feature stack. This bounds open file handles and runtime for
-wall-to-wall class maps with tens of thousands of polygons, at the cost of the
-sub-cell coverage weighting (negligible for such maps).
 }
 \examples{
 \dontrun{

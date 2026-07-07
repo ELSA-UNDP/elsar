@@ -20,6 +20,7 @@ Useful links:
 
 Authors:
 \itemize{
+  \item Scott Atkinson \email{scott.atkinson@undp.org} (\href{https://orcid.org/0000-0001-5995-0199}{ORCID})
   \item Sandra Neubert \email{s.neubert@uq.edu.au} (\href{https://orcid.org/0000-0002-3112-4116}{ORCID})
 }
 

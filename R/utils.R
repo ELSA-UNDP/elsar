@@ -177,6 +177,18 @@ get_coverage <- function(zone_layer, pu_layer) {
     terra::global(pu_layer, sum, na.rm = TRUE)$sum * 100
 }
 
+# Map an aggregation `fun` (a function like mean/max, or a string) to the
+# equivalent terra::rasterize() `fun` name, or NA if it has no direct equivalent.
+.terra_fun_name <- function(fun) {
+  if (is.character(fun)) {
+    return(if (fun %in% c("mean", "sum", "max", "min", "modal", "first", "last")) fun else NA_character_)
+  }
+  for (nm in c("mean", "sum", "max", "min")) {
+    if (identical(fun, match.fun(nm))) return(nm)
+  }
+  NA_character_
+}
+
 #' Efficient Attribute-Weighted Rasterization Using Coverage Fraction
 #'
 #' Rasterizes vector features to a raster grid defined by a planning unit (`pus`) layer,
@@ -212,19 +224,6 @@ get_coverage <- function(zone_layer, pu_layer) {
 #' # Rasterize polygons using a 'score' attribute
 #' result <- exact_rasterise(features = my_polygons, attribute = "score", pus = my_raster, fun = sum)
 #' }
-
-# Map an aggregation `fun` (a function like mean/max, or a string) to the
-# equivalent terra::rasterize() `fun` name, or NA if it has no direct equivalent.
-.terra_fun_name <- function(fun) {
-  if (is.character(fun)) {
-    return(if (fun %in% c("mean", "sum", "max", "min", "modal", "first", "last")) fun else NA_character_)
-  }
-  for (nm in c("mean", "sum", "max", "min")) {
-    if (identical(fun, match.fun(nm))) return(nm)
-  }
-  NA_character_
-}
-
 exact_rasterise <- function(
     features,
     attribute,

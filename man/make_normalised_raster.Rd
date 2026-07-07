@@ -44,8 +44,11 @@ function to the raster before resampling to the PU layer (default: \code{NULL}).
 \item{conditional_expression}{\code{function} Optional method to apply a function to the
 raster after resampling to the PU layer (default: \code{NULL}).}
 
-\item{fill_na}{\code{numeric} or \code{NA} The fill value to use to fill in \code{NA} values before
-masking (default: 0).}
+\item{fill_na}{\code{numeric} or \code{NA} The fill value used for \code{NA} cells before
+masking (default: 0). When non-NULL (the default), filled cells are
+then masked back to the planning units, so the result is NoData outside
+the study area. Pass \code{NULL} to skip both the fill and this PU masking -
+in which case cells outside the planning units are NOT set to NoData.}
 
 \item{name_out}{\code{character} The name of the output raster file (without the extension).}
 

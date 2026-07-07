@@ -7,12 +7,12 @@
 make_urban_greening_zone(
   iso3,
   pus,
-  built_areas_input = NULL,
+  built_areas = NULL,
   lulc_proportions = NULL,
   lulc_raster = NULL,
   lulc_product = c("esri_10m", "dynamic_world", "esa_worldcover", "local"),
   built_area_lulc_value = NULL,
-  built_area_threshold = 0,
+  built_areas_threshold = 0,
   filter_patch_size = FALSE,
   min_patch_size = 10,
   output_path = NULL
@@ -23,12 +23,12 @@ make_urban_greening_zone(
 
 \item{pus}{A \code{SpatRaster} defining the planning units.}
 
-\item{built_areas_input}{A \code{SpatRaster} representing binary or probabilistic built-up areas (optional).
+\item{built_areas}{A \code{SpatRaster} representing binary or probabilistic built-up areas (optional).
 If provided, this takes priority over extraction from other inputs.}
 
 \item{lulc_proportions}{A multi-band \code{SpatRaster} or list from \code{\link[=download_lulc_proportions]{download_lulc_proportions()}} containing
 pre-computed class proportions. If provided and contains "built_area", will be used
-if \code{built_areas_input} is NULL.}
+if \code{built_areas} is NULL.}
 
 \item{lulc_raster}{A \code{SpatRaster} LULC map used to extract built-up areas if not already provided (default: NULL).}
 
@@ -38,7 +38,7 @@ if \code{built_areas_input} is NULL.}
 \item{built_area_lulc_value}{Integer or NULL. LULC value representing built-up areas. If NULL,
 automatically determined from \code{lulc_product}. Default is NULL.}
 
-\item{built_area_threshold}{Minimum fraction for built-up area to be included (default: 0).
+\item{built_areas_threshold}{Minimum fraction for built-up area to be included (default: 0).
 A threshold of 0 includes all urban areas, which is recommended since urban areas
 are often small and should be preserved.}
 
@@ -48,7 +48,10 @@ Defaults to FALSE because urban areas are often small and should be preserved.}
 \item{min_patch_size}{Integer. Minimum patch size to retain (in raster cells; default: 10).
 Only used if \code{filter_patch_size = TRUE}.}
 
-\item{output_path}{Optional directory to write the result as a COG.}
+\item{output_path}{Optional directory. When provided, the final zone is
+written there as a COG (\verb{urban_greening_zone_\{iso3\}.tif}), together with the
+region-aligned \verb{built_areas_\{iso3\}.tif} input used to build it, masked to the
+planning units (NoData outside the study area).}
 }
 \value{
 A \code{SpatRaster} with values 1 (urban greening zone) and 0 (not urban).
@@ -69,7 +72,7 @@ into a formal zone layer for consistency with the ELSA framework.
 urban_greening_zone <- make_urban_greening_zone(
   pus = planning_units,
   iso3 = "NPL",
-  built_areas_input = built_raster,
+  built_areas = built_raster,
   output_path = "outputs/"
 )
 }

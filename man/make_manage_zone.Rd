@@ -7,14 +7,14 @@
 make_manage_zone(
   iso3,
   pus,
-  managed_forests_input,
+  managed_forests,
   raster_mf = NULL,
   lulc_proportions = NULL,
-  agricultural_areas_input = NULL,
-  pasturelands_input = NULL,
-  built_areas_input = NULL,
+  agricultural_areas = NULL,
+  pasturelands = NULL,
+  built_areas = NULL,
   lulc_raster = NULL,
-  hii_input = NULL,
+  human_pressure = NULL,
   pasturelands_threshold = 0.35,
   lulc_product = c("esri_10m", "dynamic_world", "esa_worldcover", "local"),
   agriculture_lulc_value = NULL,
@@ -33,23 +33,23 @@ make_manage_zone(
 
 \item{pus}{SpatRaster. Planning units raster to which all inputs are aligned.}
 
-\item{managed_forests_input}{SpatRaster. A preprocssed raster of managed forest extent.}
+\item{managed_forests}{SpatRaster. A preprocssed raster of managed forest extent.}
 
 \item{raster_mf}{SpatRaster A raster of forest classes to identify managed forests.}
 
 \item{lulc_proportions}{A multi-band \code{SpatRaster} from \code{\link[=download_lulc_proportions]{download_lulc_proportions()}} containing
 pre-computed class proportions. If provided, bands named "agriculture" and "built_area" will
-be used automatically, overriding \code{agricultural_areas_input} and \code{built_areas_input}.}
+be used automatically, overriding \code{agricultural_areas} and \code{built_areas}.}
 
-\item{agricultural_areas_input}{SpatRaster. A binary or categorical raster representing agricultural areas.}
+\item{agricultural_areas}{SpatRaster. A binary or categorical raster representing agricultural areas.}
 
-\item{pasturelands_input}{SpatRaster. A binary or categorical raster representing (actively managed/improved)pastures.}
+\item{pasturelands}{SpatRaster. A binary or categorical raster representing (actively managed/improved)pastures.}
 
-\item{built_areas_input}{SpatRaster. A binary or categorical raster representing built-up/urban areas.}
+\item{built_areas}{SpatRaster. A binary or categorical raster representing built-up/urban areas.}
 
 \item{lulc_raster}{SpatRaster or NULL. Optional raw LULC input used to extract agriculture and built-up layers if those inputs are categorical.}
 
-\item{hii_input}{SpatRaster. Human Footprint Index raster.}
+\item{human_pressure}{SpatRaster. Human Footprint Index raster.}
 
 \item{pasturelands_threshold}{Numeric. Probability threshold above which cells are considered pasturelands (default = 0.35).}
 
@@ -75,7 +75,11 @@ automatically determined from \code{lulc_product}. Default is NULL.}
 
 \item{min_patch_size}{Integer. Minimum size of patches to retain (in cells; default = 10).}
 
-\item{output_path}{Character or NULL. If provided, save result to this path as a COG (default = NULL).}
+\item{output_path}{Character or NULL. When provided, the final zone is saved
+here as a COG (\verb{manage_zone_\{iso3\}.tif}), together with the region-aligned
+intermediate inputs used to build it - \code{agriculture_areas_}, \code{pasturelands_},
+\code{built_areas_}, \code{hii_mid60pct_} and \code{managed_forests_} \verb{\{iso3\}.tif} - each
+masked to the planning units (NoData outside the study area). Default NULL.}
 }
 \value{
 A SpatRaster with two layers: \code{manage_zone_v1} and \code{manage_zone_v2}.
@@ -101,12 +105,12 @@ If \code{output_path} is provided, both layers are saved as a (multiband) Cloud 
 manage_zone <- make_manage_zone(
   iso3 = "CHL",
   pus = planning_units,
-  managed_forests_input = forest_raster,
-  agricultural_areas_input = agri_raster,
-  pasturelands_input = pastures_raster,
-  built_areas_input = built_raster,
+  managed_forests = forest_raster,
+  agricultural_areas = agri_raster,
+  pasturelands = pastures_raster,
+  built_areas = built_raster,
   lulc_raster = landcover_raster,
-  hii_input = hfp_raster,
+  human_pressure = hfp_raster,
   output_path = "outputs/"
 )
 }

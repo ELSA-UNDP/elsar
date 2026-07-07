@@ -25,7 +25,6 @@ Description: Provides tools and data pipelines to support Essential Life Support
 License: CC BY 4.0
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
 Suggests:
     DBI,
     future.apply,
@@ -75,3 +74,4 @@ Imports:
 Config/testthat/edition: 3
 LazyData: true
 URL: https://elsa-undp.github.io/elsar/
+Config/roxygen2/version: 8.0.0

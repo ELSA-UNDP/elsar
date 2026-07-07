@@ -17,12 +17,12 @@ make_restore_zone(
   degradation_threshold = 0.1,
   human_pressure_threshold = 4,
   agriculture_threshold = 0.1,
-  built_area_threshold = 0.1,
+  built_areas_threshold = 0.1,
   forest_threshold = 0.1,
   lulc_product = c("esri_10m", "dynamic_world", "esa_worldcover", "local"),
   agriculture_lulc_value = NULL,
   built_area_lulc_value = NULL,
-  filter_small_patches = TRUE,
+  filter_patch_size = TRUE,
   min_patch_size = 10,
   output_path = NULL
 )
@@ -63,7 +63,7 @@ an area is considered degraded (default: 4).}
 \item{agriculture_threshold}{Numeric. Proportion threshold above which an area
 is excluded as agricultural land (default: 0.1).}
 
-\item{built_area_threshold}{Numeric. Proportion threshold above which an area
+\item{built_areas_threshold}{Numeric. Proportion threshold above which an area
 is excluded as built-up land (default: 0.1).}
 
 \item{forest_threshold}{Numeric. Minimum forest cover proportion to include
@@ -78,14 +78,18 @@ agricultural land (default: 5, for ESRI 10m LULC).}
 \item{built_area_lulc_value}{Integer. Class value in \code{lulc} representing built-up
 areas (default: 7, for ESRI 10m LULC).}
 
-\item{filter_small_patches}{Logical. Whether to remove small isolated patches
+\item{filter_patch_size}{Logical. Whether to remove small isolated patches
 from the output (default: TRUE).}
 
 \item{min_patch_size}{Integer. Minimum number of connected pixels to retain
 when filtering patches (default: 10).}
 
-\item{output_path}{Character or NULL. Directory to save output rasters as
-Cloud Optimized GeoTIFFs. If NULL, outputs are returned but not saved.}
+\item{output_path}{Character or NULL. When provided, the final zones are saved
+here as a Cloud Optimized GeoTIFF (\verb{restore_zones_\{iso3\}.tif}), together with
+the region-aligned intermediate inputs used to build them - \code{agriculture_areas_},
+\code{built_areas_}, \code{human_pressure_}, \code{degradation_} and \code{forest_mask_}
+\verb{\{iso3\}.tif} - each masked to the planning units (NoData outside the study
+area). If NULL, outputs are returned but not saved.}
 }
 \value{
 A SpatRaster with two layers:
@@ -143,11 +147,11 @@ restore_zones <- make_restore_zone(
 restore_zone <- make_restore_zone(
   iso3 = "BRA",
   pus = planning_units,
-  sdg_degradation_input = sdg_raster,
-  agricultural_areas_input = ag_raster,
-  built_areas_input = built_raster,
-  hii_input = hii_raster,
-  forest_cover_input = forest_raster
+  degradation = sdg_raster,
+  agricultural_areas = ag_raster,
+  built_areas = built_raster,
+  human_pressure = hii_raster,
+  forest_mask = forest_raster
 )
 }
 }

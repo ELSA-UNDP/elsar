@@ -5,34 +5,34 @@
 \title{Create degraded areas layer for restoration planning}
 \usage{
 make_degraded_areas(
-  country_iso,
-  pu,
+  iso3,
+  pus,
   sdg_degradation_input = NULL,
-  hii_input = NULL,
+  human_pressure = NULL,
   lulc_proportions = NULL,
-  agriculture_input = NULL,
-  built_areas_input = NULL,
+  agricultural_areas = NULL,
+  built_areas = NULL,
   output_path = NULL,
   hii_threshold = 4,
   lulc_threshold = 0.1
 )
 }
 \arguments{
-\item{country_iso}{ISO3 country code (e.g., "CHL" for Chile).}
+\item{iso3}{ISO3 country code (e.g., "CHL" for Chile).}
 
-\item{pu}{Planning units raster (SpatRaster).}
+\item{pus}{Planning units raster (SpatRaster).}
 
 \item{sdg_degradation_input}{Productivity degradation layer (SpatRaster).}
 
-\item{hii_input}{Human Influence Index (HII) raster (SpatRaster).}
+\item{human_pressure}{Human Influence Index (HII) raster (SpatRaster).}
 
 \item{lulc_proportions}{A multi-band \code{SpatRaster} from \code{\link[=download_lulc_proportions]{download_lulc_proportions()}} containing
 pre-computed class proportions. If provided, bands named "agriculture" and "built_area" will
-be used automatically, overriding \code{agriculture_input} and \code{built_areas_input}.}
+be used automatically, overriding \code{agricultural_areas} and \code{built_areas}.}
 
-\item{agriculture_input}{Agriculture layer (SpatRaster).}
+\item{agricultural_areas}{Agriculture layer (SpatRaster).}
 
-\item{built_areas_input}{Built-up areas layer (SpatRaster).}
+\item{built_areas}{Built-up areas layer (SpatRaster).}
 
 \item{output_path}{Directory to save output rasters. If NULL, output is not saved.}
 
@@ -52,11 +52,11 @@ The output is a raster identifying degraded areas according to set thresholds.
 \dontrun{
 restore_zone <- make_degraded_areas(
   "CHL",
-  pu,
+  pus,
   sdg_degradation_input,
-  hii_input,
-  agriculture_input,
-  built_areas_input,
+  human_pressure,
+  agricultural_areas,
+  built_areas,
   output_path = "./output"
   )
 }

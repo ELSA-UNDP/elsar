@@ -9,10 +9,10 @@ make_protect_zone(
   pus,
   current_protected_areas,
   lulc_proportions = NULL,
-  agricultural_areas_input = NULL,
-  built_areas_input = NULL,
+  agricultural_areas = NULL,
+  built_areas = NULL,
   lulc_raster = NULL,
-  hii_input = NULL,
+  human_pressure = NULL,
   hii_threshold = NULL,
   hii_quantile = 0.95,
   lulc_product = c("esri_10m", "dynamic_world", "esa_worldcover", "local"),
@@ -36,15 +36,15 @@ If NULL, \code{elsar::make_protected_areas()} will be used.}
 
 \item{lulc_proportions}{A multi-band \code{SpatRaster} from \code{\link[=download_lulc_proportions]{download_lulc_proportions()}} containing
 pre-computed class proportions. If provided, bands named "agriculture" and "built_area" will
-be used automatically, overriding \code{agricultural_areas_input} and \code{built_areas_input}.}
+be used automatically, overriding \code{agricultural_areas} and \code{built_areas}.}
 
-\item{agricultural_areas_input}{A \code{SpatRaster} representing binary or probabilistic agricultural areas (optional).}
+\item{agricultural_areas}{A \code{SpatRaster} representing binary or probabilistic agricultural areas (optional).}
 
-\item{built_areas_input}{A \code{SpatRaster} representing binary or probabilistic built-up areas (optional).}
+\item{built_areas}{A \code{SpatRaster} representing binary or probabilistic built-up areas (optional).}
 
 \item{lulc_raster}{A \code{SpatRaster} LULC map used to extract agriculture/built-up areas if not already provided (default: NULL).}
 
-\item{hii_input}{A \code{SpatRaster} of the Human Footprint Index, or NULL. If NULL,
+\item{human_pressure}{A \code{SpatRaster} of the Human Footprint Index, or NULL. If NULL,
 the protect zone starts with all planning units eligible and applies only
 agriculture and built-area exclusions.}
 
@@ -71,7 +71,11 @@ automatically determined from \code{lulc_product}. Default is NULL.}
 
 \item{make_locked_out}{Logical. If TRUE, invert the raster to produce a locked-out constraint (default: FALSE).}
 
-\item{output_path}{Optional directory to write the result as a COG.}
+\item{output_path}{Optional directory. When provided, the final zone is
+written there as a COG (\verb{protect_zone_\{iso3\}.tif}), together with the
+region-aligned intermediate inputs used to build it - \code{agriculture_areas_},
+\code{built_areas_} and \code{human_pressure_} \verb{\{iso3\}.tif} - each masked to the
+planning units (NoData outside the study area).}
 }
 \value{
 A \code{SpatRaster} with values 1 (eligible) and 0 (excluded), or the inverse if \code{make_locked_out = TRUE}.
@@ -91,9 +95,9 @@ or estimated from the upper 95\% quantile (\code{hii_quantile}) of values within
 protect_zone <- make_protect_zone(
   pus = planning_units,
   iso3 = "NPL",
-  hii_input = hii_raster,
-  agricultural_areas_input = crop_raster,
-  built_areas_input = built_raster,
+  human_pressure = hii_raster,
+  agricultural_areas = crop_raster,
+  built_areas = built_raster,
   lulc_raster = NULL,
   hii_quantile = 0.95,
   output_path = "outputs/"
