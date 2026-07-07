@@ -14,16 +14,16 @@
 #'
 #' @param iso3 Character. ISO3 country code (e.g., "CHL").
 #' @param pus SpatRaster. Planning units raster to which all inputs are aligned.
-#' @param managed_forests_input SpatRaster. A preprocssed raster of managed forest extent.
+#' @param managed_forests SpatRaster. A preprocssed raster of managed forest extent.
 #' @param raster_mf SpatRaster A raster of forest classes to identify managed forests.
 #' @param lulc_proportions A multi-band `SpatRaster` from [download_lulc_proportions()] containing
 #'   pre-computed class proportions. If provided, bands named "agriculture" and "built_area" will
-#'   be used automatically, overriding `agricultural_areas_input` and `built_areas_input`.
-#' @param agricultural_areas_input SpatRaster. A binary or categorical raster representing agricultural areas.
-#' @param pasturelands_input SpatRaster. A binary or categorical raster representing (actively managed/improved)pastures.
-#' @param built_areas_input SpatRaster. A binary or categorical raster representing built-up/urban areas.
+#'   be used automatically, overriding `agricultural_areas` and `built_areas`.
+#' @param agricultural_areas SpatRaster. A binary or categorical raster representing agricultural areas.
+#' @param pasturelands SpatRaster. A binary or categorical raster representing (actively managed/improved)pastures.
+#' @param built_areas SpatRaster. A binary or categorical raster representing built-up/urban areas.
 #' @param lulc_raster SpatRaster or NULL. Optional raw LULC input used to extract agriculture and built-up layers if those inputs are categorical.
-#' @param hii_input SpatRaster. Human Footprint Index raster.
+#' @param human_pressure SpatRaster. Human Footprint Index raster.
 #' @param pasturelands_threshold Numeric. Probability threshold above which cells are considered pasturelands (default = 0.35).
 #' @param lulc_product Character. LULC product used for class value lookups: "esri_10m" (default),
 #'   "dynamic_world", "esa_worldcover", or "local". When "local", explicit class values must be provided.
@@ -38,7 +38,11 @@
 #' @param built_areas_threshold Numeric. Threshold above which cells are considered built-up and excluded (default = 0.1).
 #' @param filter_patch_size Logical. Whether to remove small patches (default = TRUE).
 #' @param min_patch_size Integer. Minimum size of patches to retain (in cells; default = 10).
-#' @param output_path Character or NULL. If provided, save result to this path as a COG (default = NULL).
+#' @param output_path Character or NULL. When provided, the final zone is saved
+#'   here as a COG (`manage_zone_{iso3}.tif`), together with the region-aligned
+#'   intermediate inputs used to build it - `agriculture_areas_`, `pasturelands_`,
+#'   `built_areas_`, `hii_mid60pct_` and `managed_forests_` `{iso3}.tif` - each
+#'   masked to the planning units (NoData outside the study area). Default NULL.
 #'
 #' @return A SpatRaster with two layers: `manage_zone_v1` and `manage_zone_v2`.
 #'
@@ -51,12 +55,12 @@
 #' manage_zone <- make_manage_zone(
 #'   iso3 = "CHL",
 #'   pus = planning_units,
-#'   managed_forests_input = forest_raster,
-#'   agricultural_areas_input = agri_raster,
-#'   pasturelands_input = pastures_raster,
-#'   built_areas_input = built_raster,
+#'   managed_forests = forest_raster,
+#'   agricultural_areas = agri_raster,
+#'   pasturelands = pastures_raster,
+#'   built_areas = built_raster,
 #'   lulc_raster = landcover_raster,
-#'   hii_input = hfp_raster,
+#'   human_pressure = hfp_raster,
 #'   output_path = "outputs/"
 #' )
 #' }
@@ -64,14 +68,14 @@
 make_manage_zone <- function(
     iso3,
     pus,
-    managed_forests_input,
+    managed_forests,
     raster_mf = NULL,
     lulc_proportions = NULL,
-    agricultural_areas_input = NULL,
-    pasturelands_input = NULL,
-    built_areas_input = NULL,
+    agricultural_areas = NULL,
+    pasturelands = NULL,
+    built_areas = NULL,
     lulc_raster = NULL,
-    hii_input = NULL,
+    human_pressure = NULL,
     pasturelands_threshold = 0.35,
     lulc_product = c("esri_10m", "dynamic_world", "esa_worldcover", "local"),
     agriculture_lulc_value = NULL,
@@ -91,23 +95,23 @@ make_manage_zone <- function(
   if (!is.null(lulc_proportions)) {
     if (inherits(lulc_proportions, "list")) {
       log_message("Using LULC proportions (list format): {paste(names(lulc_proportions), collapse=', ')}")
-      if ("agriculture" %in% names(lulc_proportions) && is.null(agricultural_areas_input)) {
-        agricultural_areas_input <- lulc_proportions[["agriculture"]]
+      if ("agriculture" %in% names(lulc_proportions) && is.null(agricultural_areas)) {
+        agricultural_areas <- lulc_proportions[["agriculture"]]
         log_message("Using 'agriculture' proportion raster")
       }
-      if ("built_area" %in% names(lulc_proportions) && is.null(built_areas_input)) {
-        built_areas_input <- lulc_proportions[["built_area"]]
+      if ("built_area" %in% names(lulc_proportions) && is.null(built_areas)) {
+        built_areas <- lulc_proportions[["built_area"]]
         log_message("Using 'built_area' proportion raster")
       }
     } else if (inherits(lulc_proportions, "SpatRaster")) {
       band_names <- names(lulc_proportions)
       log_message("Using LULC proportions (SpatRaster): {paste(band_names, collapse=', ')}")
-      if ("agriculture" %in% band_names && is.null(agricultural_areas_input)) {
-        agricultural_areas_input <- lulc_proportions[["agriculture"]]
+      if ("agriculture" %in% band_names && is.null(agricultural_areas)) {
+        agricultural_areas <- lulc_proportions[["agriculture"]]
         log_message("Extracted 'agriculture' band")
       }
-      if ("built_area" %in% band_names && is.null(built_areas_input)) {
-        built_areas_input <- lulc_proportions[["built_area"]]
+      if ("built_area" %in% band_names && is.null(built_areas)) {
+        built_areas <- lulc_proportions[["built_area"]]
         log_message("Extracted 'built_area' band")
       }
     } else {
@@ -117,7 +121,7 @@ make_manage_zone <- function(
 
   # Resolve LULC class values from product if not explicitly provided
   # (only needed if using lulc_raster fallback)
-  if (is.null(agricultural_areas_input) || is.null(built_areas_input)) {
+  if (is.null(agricultural_areas) || is.null(built_areas)) {
     if (is.null(agriculture_lulc_value)) {
       if (lulc_product == "local") {
         stop("When lulc_product = 'local', agriculture_lulc_value must be explicitly provided.", call. = FALSE)
@@ -150,23 +154,23 @@ make_manage_zone <- function(
 
   # Ensure agricultural/built data is supplied or can be derived
   assertthat::assert_that(
-    !(is.null(agricultural_areas_input) && is.null(built_areas_input) && is.null(lulc_raster)),
-    msg = "Either 'agricultural_areas_input' and/or 'built_areas_input' must be provided, or 'lulc_raster' must be supplied to derive them."
+    !(is.null(agricultural_areas) && is.null(built_areas) && is.null(lulc_raster)),
+    msg = "Either 'agricultural_areas' and/or 'built_areas' must be provided, or 'lulc_raster' must be supplied to derive them."
   )
 
   # Check required raster inputs
-  assertthat::assert_that(inherits(hii_input, "SpatRaster"), msg = "'hii_input' must be a SpatRaster.")
-  assertthat::assert_that(inherits(managed_forests_input, "SpatRaster"), msg = "'managed_forests_input' must be a SpatRaster.")
+  assertthat::assert_that(inherits(human_pressure, "SpatRaster"), msg = "'human_pressure' must be a SpatRaster.")
+  assertthat::assert_that(inherits(managed_forests, "SpatRaster"), msg = "'managed_forests' must be a SpatRaster.")
 
   # If provided, validate optional rasters
-  if (!is.null(agricultural_areas_input)) {
-    assertthat::assert_that(inherits(agricultural_areas_input, "SpatRaster"), msg = "'agricultural_areas_input' must be a SpatRaster.")
+  if (!is.null(agricultural_areas)) {
+    assertthat::assert_that(inherits(agricultural_areas, "SpatRaster"), msg = "'agricultural_areas' must be a SpatRaster.")
   }
-  if (!is.null(pasturelands_input)) {
-    assertthat::assert_that(inherits(pasturelands_input, "SpatRaster"), msg = "'pasturelands_input' must be a SpatRaster.")
+  if (!is.null(pasturelands)) {
+    assertthat::assert_that(inherits(pasturelands, "SpatRaster"), msg = "'pasturelands' must be a SpatRaster.")
   }
-  if (!is.null(built_areas_input)) {
-    assertthat::assert_that(inherits(built_areas_input, "SpatRaster"), msg = "'built_areas_input' must be a SpatRaster.")
+  if (!is.null(built_areas)) {
+    assertthat::assert_that(inherits(built_areas, "SpatRaster"), msg = "'built_areas' must be a SpatRaster.")
   }
   if (!is.null(lulc_raster)) {
     assertthat::assert_that(inherits(lulc_raster, "SpatRaster"), msg = "'lulc_raster' must be a SpatRaster.")
@@ -178,17 +182,17 @@ make_manage_zone <- function(
 
   # Process agricultural areas
   log_message("Processing agricultural areas...")
-  if (!is.null(agricultural_areas_input)) {
+  if (!is.null(agricultural_areas)) {
     log_message("Aligning provided agricultural areas raster to planning units...")
-    agricultural_areas <- elsar::make_normalised_raster(
-      raster_in = agricultural_areas_input,
+    agricultural_areas_processed <- elsar::make_normalised_raster(
+      raster_in = agricultural_areas,
       pus = pus,
       iso3 = iso3,
       rescaled = FALSE,
       method_override = "mean"
     )
   } else {
-    agricultural_areas <- elsar::make_normalised_raster(
+    agricultural_areas_processed <- elsar::make_normalised_raster(
       raster_in = lulc_raster,
       pus = pus,
       iso3 = iso3,
@@ -200,8 +204,8 @@ make_manage_zone <- function(
 
   # Process pasturelands
   log_message("Processing pasturelands...")
-  pasturelands <- elsar::make_normalised_raster(
-    raster_in = pasturelands_input,
+  pasturelands_processed <- elsar::make_normalised_raster(
+    raster_in = pasturelands,
     pus = pus,
     iso3 = iso3,
     method_override = "mean"
@@ -209,17 +213,17 @@ make_manage_zone <- function(
 
   # Process built-up areas
   log_message("Processing built-up areas...")
-  if (!is.null(built_areas_input)) {
+  if (!is.null(built_areas)) {
     log_message("Aligning provided built areas raster to planning units...")
-    built_areas <- elsar::make_normalised_raster(
-      raster_in = built_areas_input,
+    built_areas_processed <- elsar::make_normalised_raster(
+      raster_in = built_areas,
       pus = pus,
       iso3 = iso3,
       rescaled = FALSE,
       method_override = "mean"
     )
   } else {
-    built_areas <- elsar::make_normalised_raster(
+    built_areas_processed <- elsar::make_normalised_raster(
       raster_in = lulc_raster,
       pus = pus,
       iso3 = iso3,
@@ -232,7 +236,7 @@ make_manage_zone <- function(
   # Normalize HFP and extract middle 60%
   log_message("Processing HII layer and extracting middle 60% quantile range...")
   hii_resampled <- elsar::make_normalised_raster(
-    raster_in = hii_input,
+    raster_in = human_pressure,
     pus = pus,
     iso3 = iso3,
     rescaled = FALSE,
@@ -246,10 +250,10 @@ make_manage_zone <- function(
 
   # Process managed forests
   log_message("Processing managed forests...")
-  if (!is.null(managed_forests_input)) {
+  if (!is.null(managed_forests)) {
     log_message("Aligning provided managed forests raster to planning units...")
-    managed_forests <- elsar::make_normalised_raster(
-      raster_in = managed_forests_input,
+    managed_forests_processed <- elsar::make_normalised_raster(
+      raster_in = managed_forests,
       pus = pus,
       iso3 = iso3,
       rescaled = FALSE,
@@ -257,22 +261,22 @@ make_manage_zone <- function(
     )
   } else {
   # Normalise and reclass
-    managed_forests <- elsar::make_managed_forests(
+    managed_forests_processed <- elsar::make_managed_forests(
       raster_in = raster_mf,
       pus = pus,
       iso3 = iso3,
       make_productive = FALSE)
 
-  managed_forests <- managed_forests[[1]]
+  managed_forests_processed <- managed_forests_processed[[1]]
   }
 
   # Main management zone: moderate HFP, OR managed forests, OR ag areas — minus built-up
   log_message("Creating the default manage zone using middle 60% of HII value, managed forests, agricultural areas, and pasturelands...")
   manage_zone <- terra::ifel(
     hii_middle_60_pct == 1 |
-      managed_forests > forest_class_threshold |
-      agricultural_areas > agriculture_threshold |
-      pasturelands > pasturelands_threshold,
+      managed_forests_processed > forest_class_threshold |
+      agricultural_areas_processed > agriculture_threshold |
+      pasturelands_processed > pasturelands_threshold,
     1, 0
   ) %>% make_normalised_raster(
     pus = pus,
@@ -280,14 +284,14 @@ make_manage_zone <- function(
 
   # Exclude built-up areas
   log_message("Excluding built areas from the manage zone...")
-  manage_zone <- terra::ifel(built_areas > built_areas_threshold, 0, manage_zone) %>%
+  manage_zone <- terra::ifel(built_areas_processed > built_areas_threshold, 0, manage_zone) %>%
     make_normalised_raster(pus = pus, iso3 = iso3)
 
   # Secondary zone (agriculture and pastureland only)
   log_message("Creating the alternative manage zone using agricultural areas and pasturelands only...")
   manage_zone_alt <- terra::ifel(
-    agricultural_areas > agriculture_threshold |
-      pasturelands > pasturelands_threshold,
+    agricultural_areas_processed > agriculture_threshold |
+      pasturelands_processed > pasturelands_threshold,
     1, 0
     ) %>%
     make_normalised_raster(pus = pus, iso3 = iso3)
@@ -312,6 +316,26 @@ make_manage_zone <- function(
       filename = filename,
       datatype = "INT1U"
     )
+
+    # Also save the region-aligned intermediate inputs for inspection (mirrors
+    # make_degraded_areas). Each is guarded because some inputs are optional, and
+    # masked to the planning units so cells outside the study area are NoData.
+    pu_mask <- function(r) terra::mask(r, pus)
+    if (exists("agricultural_areas_processed", inherits = FALSE) && inherits(agricultural_areas_processed, "SpatRaster")) {
+      elsar::save_raster(pu_mask(agricultural_areas_processed), glue::glue("{output_path}/agriculture_areas_{iso3}.tif"), datatype = "FLT4S")
+    }
+    if (exists("pasturelands_processed", inherits = FALSE) && inherits(pasturelands_processed, "SpatRaster")) {
+      elsar::save_raster(pu_mask(pasturelands_processed), glue::glue("{output_path}/pasturelands_{iso3}.tif"), datatype = "FLT4S")
+    }
+    if (exists("built_areas_processed", inherits = FALSE) && inherits(built_areas_processed, "SpatRaster")) {
+      elsar::save_raster(pu_mask(built_areas_processed), glue::glue("{output_path}/built_areas_{iso3}.tif"), datatype = "FLT4S")
+    }
+    if (exists("hii_middle_60_pct", inherits = FALSE) && inherits(hii_middle_60_pct, "SpatRaster")) {
+      elsar::save_raster(pu_mask(hii_middle_60_pct), glue::glue("{output_path}/hii_mid60pct_{iso3}.tif"), datatype = "INT1U")
+    }
+    if (exists("managed_forests_processed", inherits = FALSE) && inherits(managed_forests_processed, "SpatRaster")) {
+      elsar::save_raster(pu_mask(managed_forests_processed), glue::glue("{output_path}/managed_forests_{iso3}.tif"), datatype = "FLT4S")
+    }
   }
 
   return(manage_zones)

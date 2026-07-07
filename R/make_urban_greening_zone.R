@@ -11,24 +11,27 @@
 #'
 #' @param iso3 ISO3 country code (e.g., "NPL").
 #' @param pus A `SpatRaster` defining the planning units.
-#' @param built_areas_input A `SpatRaster` representing binary or probabilistic built-up areas (optional).
+#' @param built_areas A `SpatRaster` representing binary or probabilistic built-up areas (optional).
 #'   If provided, this takes priority over extraction from other inputs.
 #' @param lulc_proportions A multi-band `SpatRaster` or list from [download_lulc_proportions()] containing
 #'   pre-computed class proportions. If provided and contains "built_area", will be used
-#'   if `built_areas_input` is NULL.
+#'   if `built_areas` is NULL.
 #' @param lulc_raster A `SpatRaster` LULC map used to extract built-up areas if not already provided (default: NULL).
 #' @param lulc_product Character. LULC product used for class value lookups: "esri_10m" (default),
 #'   "dynamic_world", "esa_worldcover", or "local". When "local", `built_area_lulc_value` must be provided.
 #' @param built_area_lulc_value Integer or NULL. LULC value representing built-up areas. If NULL,
 #'   automatically determined from `lulc_product`. Default is NULL.
-#' @param built_area_threshold Minimum fraction for built-up area to be included (default: 0).
+#' @param built_areas_threshold Minimum fraction for built-up area to be included (default: 0).
 #'   A threshold of 0 includes all urban areas, which is recommended since urban areas
 #'   are often small and should be preserved.
 #' @param filter_patch_size Logical. Whether to remove small isolated patches (default: FALSE).
 #'   Defaults to FALSE because urban areas are often small and should be preserved.
 #' @param min_patch_size Integer. Minimum patch size to retain (in raster cells; default: 10).
 #'   Only used if `filter_patch_size = TRUE`.
-#' @param output_path Optional directory to write the result as a COG.
+#' @param output_path Optional directory. When provided, the final zone is
+#'   written there as a COG (`urban_greening_zone_{iso3}.tif`), together with the
+#'   region-aligned `built_areas_{iso3}.tif` input used to build it, masked to the
+#'   planning units (NoData outside the study area).
 #'
 #' @return A `SpatRaster` with values 1 (urban greening zone) and 0 (not urban).
 #' @export
@@ -38,7 +41,7 @@
 #' urban_greening_zone <- make_urban_greening_zone(
 #'   pus = planning_units,
 #'   iso3 = "NPL",
-#'   built_areas_input = built_raster,
+#'   built_areas = built_raster,
 #'   output_path = "outputs/"
 #' )
 #' }
@@ -46,12 +49,12 @@
 make_urban_greening_zone <- function(
     iso3,
     pus,
-    built_areas_input = NULL,
+    built_areas = NULL,
     lulc_proportions = NULL,
     lulc_raster = NULL,
     lulc_product = c("esri_10m", "dynamic_world", "esa_worldcover", "local"),
     built_area_lulc_value = NULL,
-    built_area_threshold = 0,
+    built_areas_threshold = 0,
     filter_patch_size = FALSE,
     min_patch_size = 10,
     output_path = NULL
@@ -60,12 +63,12 @@ make_urban_greening_zone <- function(
 
   # If lulc_proportions provided, extract built_area
   # Supports both list format (new) and SpatRaster format (legacy)
-  if (!is.null(lulc_proportions) && is.null(built_areas_input)) {
+  if (!is.null(lulc_proportions) && is.null(built_areas)) {
     if (inherits(lulc_proportions, "list")) {
       # New format: named list of SpatRasters
       log_message("Using LULC proportions (list format): {paste(names(lulc_proportions), collapse=', ')}")
       if ("built_area" %in% names(lulc_proportions)) {
-        built_areas_input <- lulc_proportions[["built_area"]]
+        built_areas <- lulc_proportions[["built_area"]]
         log_message("Using 'built_area' proportion raster")
       }
     } else if (inherits(lulc_proportions, "SpatRaster")) {
@@ -73,7 +76,7 @@ make_urban_greening_zone <- function(
       band_names <- names(lulc_proportions)
       log_message("Using LULC proportions (SpatRaster): {paste(band_names, collapse=', ')}")
       if ("built_area" %in% band_names) {
-        built_areas_input <- lulc_proportions[["built_area"]]
+        built_areas <- lulc_proportions[["built_area"]]
         log_message("Extracted 'built_area' band")
       }
     } else {
@@ -83,7 +86,7 @@ make_urban_greening_zone <- function(
 
   # Resolve LULC class value from product if not explicitly provided
   # (only needed if using lulc_raster fallback)
-  if (is.null(built_areas_input) && is.null(built_area_lulc_value)) {
+  if (is.null(built_areas) && is.null(built_area_lulc_value)) {
     if (lulc_product == "local") {
       stop("When lulc_product = 'local', built_area_lulc_value must be explicitly provided.", call. = FALSE)
     }
@@ -100,10 +103,10 @@ make_urban_greening_zone <- function(
 
   # Process built-up areas
   log_message("Processing built-up areas for Urban Greening Zone...")
-  if (!is.null(built_areas_input)) {
+  if (!is.null(built_areas)) {
     log_message("Aligning provided built areas raster to planning units...")
-    built_areas <- elsar::make_normalised_raster(
-      raster_in = built_areas_input,
+    built_areas_processed <- elsar::make_normalised_raster(
+      raster_in = built_areas,
       pus = pus,
       iso3 = iso3,
       rescaled = FALSE,
@@ -111,9 +114,9 @@ make_urban_greening_zone <- function(
     )
   } else {
     assertthat::assert_that(!is.null(lulc_raster),
-      msg = "One of 'built_areas_input', 'lulc_proportions' (with built_area), or 'lulc_raster' must be provided.")
+      msg = "One of 'built_areas', 'lulc_proportions' (with built_area), or 'lulc_raster' must be provided.")
     log_message("Extracting built areas from LULC raster...")
-    built_areas <- elsar::make_normalised_raster(
+    built_areas_processed <- elsar::make_normalised_raster(
       raster_in = lulc_raster,
       pus = pus,
       iso3 = iso3,
@@ -124,8 +127,8 @@ make_urban_greening_zone <- function(
   }
 
   # Apply threshold to create binary zone
-  log_message("Applying built area threshold: {built_area_threshold}")
-  urban_greening_zone <- terra::ifel(built_areas > built_area_threshold, 1, 0)
+  log_message("Applying built area threshold: {built_areas_threshold}")
+  urban_greening_zone <- terra::ifel(built_areas_processed > built_areas_threshold, 1, 0)
 
   # Optionally filter out small patches
   if (filter_patch_size) {
@@ -145,6 +148,12 @@ make_urban_greening_zone <- function(
       datatype = "INT1U"
     )
     log_message("Saved Urban Greening Zone to: {filename}")
+
+    # Also save the region-aligned built-areas input for inspection (mirrors
+    # make_degraded_areas), masked to the planning units (NoData outside).
+    if (exists("built_areas_processed", inherits = FALSE) && inherits(built_areas_processed, "SpatRaster")) {
+      elsar::save_raster(terra::mask(built_areas_processed, pus), glue::glue("{output_path}/built_areas_{iso3}.tif"), datatype = "FLT4S")
+    }
   }
 
   return(urban_greening_zone)

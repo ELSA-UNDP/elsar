@@ -1,3 +1,59 @@
+# elsar 0.4.0
+
+## Breaking Changes
+
+* Zone-function parameters were harmonised for a coherent API. The human-pressure
+  input is now `human_pressure` everywhere (was `hii_input` in
+  `make_protect_zone()`, `make_manage_zone()`, `make_degraded_areas()`); raw
+  input rasters use bare names without the `_input` suffix
+  (`agricultural_areas`, `built_areas`, `pasturelands`, `managed_forests` -
+  previously `*_input`); `make_degraded_areas()` now takes `iso3`/`pus` (was
+  `country_iso`/`pu`); the built-area threshold is `built_areas_threshold`
+  everywhere (was `built_area_threshold` in `make_restore_zone()` /
+  `make_urban_greening_zone()`); and `make_restore_zone()`'s patch filter is
+  `filter_patch_size` (was `filter_small_patches`). Callers must update named
+  arguments accordingly.
+
+* `make_degraded_areas()` writes its final output as `degraded_areas_{iso3}.tif`
+  (was `restore_zone_{iso3}.tif`, which was easily confused with
+  `make_restore_zone()`'s `restore_zones_{iso3}.tif`).
+
+## New Features
+
+* The zone builders (`make_protect_zone()`, `make_restore_zone()`,
+  `make_manage_zone()`, `make_urban_greening_zone()`) now write their
+  region-aligned intermediate input layers to `output_path` when it is supplied,
+  alongside the final zone raster - matching what `make_degraded_areas()` already
+  did. The files written are, per function:
+  - protect: `agriculture_areas_`, `built_areas_`, `human_pressure_`
+  - restore: `agriculture_areas_`, `built_areas_`, `human_pressure_`,
+    `degradation_`, `forest_mask_`
+  - manage: `agriculture_areas_`, `pasturelands_`, `built_areas_`,
+    `hii_mid60pct_`, `managed_forests_`
+  - urban greening: `built_areas_`
+  Each intermediate is `terra::mask()`-ed to the planning units, so cells outside
+  the study area are NoData (consistent with the zone outputs).
+
+  NOTE: this changes the on-disk output for existing callers that pass
+  `output_path` - they now receive these additional GeoTIFF sidecars. Callers who
+  want only the final zone should point `output_path` at a dedicated directory.
+
+## Bug Fixes
+
+* `make_degraded_areas()` now writes its resampled agriculture and built-area
+  sidecars (`esa_agriculture_resample_`, `built_areas_`) as `FLT4S`. They are
+  bilinear proportions (0-1) and were previously saved as `INT1U`, which
+  truncated them to all-zero.
+
+* `make_restore_zone()` now always saves the `agriculture_areas_` and
+  `built_areas_` intermediates when `output_path` is set, including when they are
+  derived from LULC (previously only saved when passed as explicit rasters).
+
+* `make_normalised_raster()` no longer emits a `warning()` on every
+  `rescaled = FALSE` call (demoted to an informational message), and its internal
+  `output_path` writer uses a valid `INT1S` NoData sentinel (`-128`) instead of
+  the out-of-range `255`.
+
 # elsar 0.3.1
 
 ## Bug Fixes
