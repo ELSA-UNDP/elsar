@@ -11,7 +11,7 @@ The output is a raster identifying degraded areas according to set thresholds.">
 
     <a class="navbar-brand me-2" href="../index.html">elsar</a>
 
-    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,13 +65,13 @@ The output is a raster identifying degraded areas according to set thresholds.</
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">make_degraded_areas</span><span class="op">(</span></span>
-<span>  <span class="va">country_iso</span>,</span>
-<span>  <span class="va">pu</span>,</span>
+<span>  <span class="va">iso3</span>,</span>
+<span>  <span class="va">pus</span>,</span>
 <span>  sdg_degradation_input <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  hii_input <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  human_pressure <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  lulc_proportions <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  agriculture_input <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  built_areas_input <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  agricultural_areas <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  built_areas <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  output_path <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  hii_threshold <span class="op">=</span> <span class="fl">4</span>,</span>
 <span>  lulc_threshold <span class="op">=</span> <span class="fl">0.1</span></span>
@@ -82,11 +82,11 @@ The output is a raster identifying degraded areas according to set thresholds.</
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
 
-<dl><dt id="arg-country-iso">country_iso<a class="anchor" aria-label="anchor" href="#arg-country-iso"></a></dt>
+<dl><dt id="arg-iso-">iso3<a class="anchor" aria-label="anchor" href="#arg-iso-"></a></dt>
 <dd><p>ISO3 country code (e.g., "CHL" for Chile).</p></dd>
 
 
-<dt id="arg-pu">pu<a class="anchor" aria-label="anchor" href="#arg-pu"></a></dt>
+<dt id="arg-pus">pus<a class="anchor" aria-label="anchor" href="#arg-pus"></a></dt>
 <dd><p>Planning units raster (SpatRaster).</p></dd>
 
 
@@ -94,21 +94,21 @@ The output is a raster identifying degraded areas according to set thresholds.</
 <dd><p>Productivity degradation layer (SpatRaster).</p></dd>
 
 
-<dt id="arg-hii-input">hii_input<a class="anchor" aria-label="anchor" href="#arg-hii-input"></a></dt>
+<dt id="arg-human-pressure">human_pressure<a class="anchor" aria-label="anchor" href="#arg-human-pressure"></a></dt>
 <dd><p>Human Influence Index (HII) raster (SpatRaster).</p></dd>
 
 
 <dt id="arg-lulc-proportions">lulc_proportions<a class="anchor" aria-label="anchor" href="#arg-lulc-proportions"></a></dt>
 <dd><p>A multi-band <code>SpatRaster</code> from <code><a href="download_lulc_proportions.html">download_lulc_proportions()</a></code> containing
 pre-computed class proportions. If provided, bands named "agriculture" and "built_area" will
-be used automatically, overriding <code>agriculture_input</code> and <code>built_areas_input</code>.</p></dd>
+be used automatically, overriding <code>agricultural_areas</code> and <code>built_areas</code>.</p></dd>
 
 
-<dt id="arg-agriculture-input">agriculture_input<a class="anchor" aria-label="anchor" href="#arg-agriculture-input"></a></dt>
+<dt id="arg-agricultural-areas">agricultural_areas<a class="anchor" aria-label="anchor" href="#arg-agricultural-areas"></a></dt>
 <dd><p>Agriculture layer (SpatRaster).</p></dd>
 
 
-<dt id="arg-built-areas-input">built_areas_input<a class="anchor" aria-label="anchor" href="#arg-built-areas-input"></a></dt>
+<dt id="arg-built-areas">built_areas<a class="anchor" aria-label="anchor" href="#arg-built-areas"></a></dt>
 <dd><p>Built-up areas layer (SpatRaster).</p></dd>
 
 
@@ -134,11 +134,11 @@ be used automatically, overriding <code>agriculture_input</code> and <code>built
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
 <span class="r-in"><span><span class="va">restore_zone</span> <span class="op">&lt;-</span> <span class="fu">make_degraded_areas</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="st">"CHL"</span>,</span></span>
-<span class="r-in"><span>  <span class="va">pu</span>,</span></span>
+<span class="r-in"><span>  <span class="va">pus</span>,</span></span>
 <span class="r-in"><span>  <span class="va">sdg_degradation_input</span>,</span></span>
-<span class="r-in"><span>  <span class="va">hii_input</span>,</span></span>
-<span class="r-in"><span>  <span class="va">agriculture_input</span>,</span></span>
-<span class="r-in"><span>  <span class="va">built_areas_input</span>,</span></span>
+<span class="r-in"><span>  <span class="va">human_pressure</span>,</span></span>
+<span class="r-in"><span>  <span class="va">agricultural_areas</span>,</span></span>
+<span class="r-in"><span>  <span class="va">built_areas</span>,</span></span>
 <span class="r-in"><span>  output_path <span class="op">=</span> <span class="st">"./output"</span></span></span>
 <span class="r-in"><span>  <span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>

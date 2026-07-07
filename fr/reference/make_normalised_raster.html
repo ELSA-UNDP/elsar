@@ -11,7 +11,7 @@ raster to a specified output path."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">elsar</a>
 
-    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -127,8 +127,11 @@ raster after resampling to the PU layer (default: <code>NULL</code>).</p></dd>
 
 
 <dt id="arg-fill-na">fill_na<a class="anchor" aria-label="anchor" href="#arg-fill-na"></a></dt>
-<dd><p><code>numeric</code> or <code>NA</code> The fill value to use to fill in <code>NA</code> values before
-masking (default: 0).</p></dd>
+<dd><p><code>numeric</code> or <code>NA</code> The fill value used for <code>NA</code> cells before
+masking (default: 0). When non-NULL (the default), filled cells are
+then masked back to the planning units, so the result is NoData outside
+the study area. Pass <code>NULL</code> to skip both the fill and this PU masking -
+in which case cells outside the planning units are NOT set to NoData.</p></dd>
 
 
 <dt id="arg-name-out">name_out<a class="anchor" aria-label="anchor" href="#arg-name-out"></a></dt>

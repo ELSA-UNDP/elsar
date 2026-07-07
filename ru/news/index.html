@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">elsar</a>
 
-    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -52,6 +52,33 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.4.0" id="elsar-040">elsar 0.4.0<a class="anchor" aria-label="anchor" href="#elsar-040"></a></h2>
+<div class="section level3">
+<h3 id="breaking-changes-0-4-0">Breaking Changes<a class="anchor" aria-label="anchor" href="#breaking-changes-0-4-0"></a></h3>
+<ul><li><p>Zone-function parameters were harmonised for a coherent API. The human-pressure input is now <code>human_pressure</code> everywhere (was <code>hii_input</code> in <code><a href="../reference/make_protect_zone.html">make_protect_zone()</a></code>, <code><a href="../reference/make_manage_zone.html">make_manage_zone()</a></code>, <code><a href="../reference/make_degraded_areas.html">make_degraded_areas()</a></code>); raw input rasters use bare names without the <code>_input</code> suffix (<code>agricultural_areas</code>, <code>built_areas</code>, <code>pasturelands</code>, <code>managed_forests</code> - previously <code>*_input</code>); <code><a href="../reference/make_degraded_areas.html">make_degraded_areas()</a></code> now takes <code>iso3</code>/<code>pus</code> (was <code>country_iso</code>/<code>pu</code>); the built-area threshold is <code>built_areas_threshold</code> everywhere (was <code>built_area_threshold</code> in <code><a href="../reference/make_restore_zone.html">make_restore_zone()</a></code> / <code><a href="../reference/make_urban_greening_zone.html">make_urban_greening_zone()</a></code>); and <code><a href="../reference/make_restore_zone.html">make_restore_zone()</a></code>’s patch filter is <code>filter_patch_size</code> (was <code>filter_small_patches</code>). Callers must update named arguments accordingly.</p></li>
+<li><p><code><a href="../reference/make_degraded_areas.html">make_degraded_areas()</a></code> writes its final output as <code>degraded_areas_{iso3}.tif</code> (was <code>restore_zone_{iso3}.tif</code>, which was easily confused with <code><a href="../reference/make_restore_zone.html">make_restore_zone()</a></code>’s <code>restore_zones_{iso3}.tif</code>).</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="new-features-0-4-0">New Features<a class="anchor" aria-label="anchor" href="#new-features-0-4-0"></a></h3>
+<ul><li>The zone builders (<code><a href="../reference/make_protect_zone.html">make_protect_zone()</a></code>, <code><a href="../reference/make_restore_zone.html">make_restore_zone()</a></code>, <code><a href="../reference/make_manage_zone.html">make_manage_zone()</a></code>, <code><a href="../reference/make_urban_greening_zone.html">make_urban_greening_zone()</a></code>) now write their region-aligned intermediate input layers to <code>output_path</code> when it is supplied, alongside the final zone raster - matching what <code><a href="../reference/make_degraded_areas.html">make_degraded_areas()</a></code> already did. The files written are, per function:
+<ul><li>protect: <code>agriculture_areas_</code>, <code>built_areas_</code>, <code>human_pressure_</code>
+</li>
+<li>restore: <code>agriculture_areas_</code>, <code>built_areas_</code>, <code>human_pressure_</code>, <code>degradation_</code>, <code>forest_mask_</code>
+</li>
+<li>manage: <code>agriculture_areas_</code>, <code>pasturelands_</code>, <code>built_areas_</code>, <code>hii_mid60pct_</code>, <code>managed_forests_</code>
+</li>
+<li>urban greening: <code>built_areas_</code> Each intermediate is <code><a href="https://rspatial.github.io/terra/reference/mask.html" class="external-link">terra::mask()</a></code>-ed to the planning units, so cells outside the study area are NoData (consistent with the zone outputs).</li>
+</ul>
+NOTE: this changes the on-disk output for existing callers that pass <code>output_path</code> - they now receive these additional GeoTIFF sidecars. Callers who want only the final zone should point <code>output_path</code> at a dedicated directory.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-0-4-0">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-4-0"></a></h3>
+<ul><li><p><code><a href="../reference/make_degraded_areas.html">make_degraded_areas()</a></code> now writes its resampled agriculture and built-area sidecars (<code>esa_agriculture_resample_</code>, <code>built_areas_</code>) as <code>FLT4S</code>. They are bilinear proportions (0-1) and were previously saved as <code>INT1U</code>, which truncated them to all-zero.</p></li>
+<li><p><code><a href="../reference/make_restore_zone.html">make_restore_zone()</a></code> now always saves the <code>agriculture_areas_</code> and <code>built_areas_</code> intermediates when <code>output_path</code> is set, including when they are derived from LULC (previously only saved when passed as explicit rasters).</p></li>
+<li><p><code><a href="../reference/make_normalised_raster.html">make_normalised_raster()</a></code> no longer emits a <code><a href="https://rdrr.io/r/base/warning.html" class="external-link">warning()</a></code> on every <code>rescaled = FALSE</code> call (demoted to an informational message), and its internal <code>output_path</code> writer uses a valid <code>INT1S</code> NoData sentinel (<code>-128</code>) instead of the out-of-range <code>255</code>.</p></li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.3.1" id="elsar-031">elsar 0.3.1<a class="anchor" aria-label="anchor" href="#elsar-031"></a></h2>
 <div class="section level3">
 <h3 id="bug-fixes-0-3-1">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-3-1"></a></h3>
@@ -68,7 +95,7 @@
 </ul></div>
 <div class="section level3">
 <h3 id="new-features-0-3-0">New Features<a class="anchor" aria-label="anchor" href="#new-features-0-3-0"></a></h3>
-<ul><li><p>Regional / sub-national planning runs: <code>iso3</code> may carry a suffix (e.g. <code>"ECU_REG"</code>, <code>"ECU-GEF8"</code>). <code>is_valid_iso3()</code> and the functions that validate it now accept these custom regional codes, which rely on a supplied boundary rather than an ISO lookup.</p></li>
+<ul><li><p>Regional / sub-national planning runs: <code>iso3</code> may carry a suffix (e.g. <code>"ECU_REG"</code>, <code>"ECU-GEF8"</code>). <code><a href="../reference/is_valid_iso3.html">is_valid_iso3()</a></code> and the functions that validate it now accept these custom regional codes, which rely on a supplied boundary rather than an ISO lookup.</p></li>
 <li><p><code><a href="../reference/make_boundary.html">make_boundary()</a></code> and <code><a href="../reference/make_custom_mollweide_projection.html">make_custom_mollweide_projection()</a></code> support whole-file regional boundaries: use a custom boundary with no ISO3 column, dissolving multiple features into a single planning region.</p></li>
 <li><p><code><a href="../reference/save_raster.html">save_raster()</a></code> now builds overviews (<code>OVERVIEWS=AUTO</code>) so outputs are fully valid Cloud Optimized GeoTIFFs, and gains an overview-resampling override (<code>resampling=</code>, e.g. <code>"mode"</code> for categorical layers).</p></li>
 <li><p><code><a href="../reference/make_protected_areas.html">make_protected_areas()</a></code> tolerates custom local protected-area layers that lack the WDPCA schema (STATUS / SITE_TYPE / MAB filters apply only when those columns exist).</p></li>

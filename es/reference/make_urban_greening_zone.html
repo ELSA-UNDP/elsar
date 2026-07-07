@@ -13,7 +13,7 @@ infrastructure) can be implemented."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">elsar</a>
 
-    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,12 +70,12 @@ infrastructure) can be implemented.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">make_urban_greening_zone</span><span class="op">(</span></span>
 <span>  <span class="va">iso3</span>,</span>
 <span>  <span class="va">pus</span>,</span>
-<span>  built_areas_input <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  built_areas <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  lulc_proportions <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  lulc_raster <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  lulc_product <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"esri_10m"</span>, <span class="st">"dynamic_world"</span>, <span class="st">"esa_worldcover"</span>, <span class="st">"local"</span><span class="op">)</span>,</span>
 <span>  built_area_lulc_value <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  built_area_threshold <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  built_areas_threshold <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  filter_patch_size <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  min_patch_size <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>  output_path <span class="op">=</span> <span class="cn">NULL</span></span>
@@ -94,7 +94,7 @@ infrastructure) can be implemented.</p>
 <dd><p>A <code>SpatRaster</code> defining the planning units.</p></dd>
 
 
-<dt id="arg-built-areas-input">built_areas_input<a class="anchor" aria-label="anchor" href="#arg-built-areas-input"></a></dt>
+<dt id="arg-built-areas">built_areas<a class="anchor" aria-label="anchor" href="#arg-built-areas"></a></dt>
 <dd><p>A <code>SpatRaster</code> representing binary or probabilistic built-up areas (optional).
 If provided, this takes priority over extraction from other inputs.</p></dd>
 
@@ -102,7 +102,7 @@ If provided, this takes priority over extraction from other inputs.</p></dd>
 <dt id="arg-lulc-proportions">lulc_proportions<a class="anchor" aria-label="anchor" href="#arg-lulc-proportions"></a></dt>
 <dd><p>A multi-band <code>SpatRaster</code> or list from <code><a href="download_lulc_proportions.html">download_lulc_proportions()</a></code> containing
 pre-computed class proportions. If provided and contains "built_area", will be used
-if <code>built_areas_input</code> is NULL.</p></dd>
+if <code>built_areas</code> is NULL.</p></dd>
 
 
 <dt id="arg-lulc-raster">lulc_raster<a class="anchor" aria-label="anchor" href="#arg-lulc-raster"></a></dt>
@@ -119,7 +119,7 @@ if <code>built_areas_input</code> is NULL.</p></dd>
 automatically determined from <code>lulc_product</code>. Default is NULL.</p></dd>
 
 
-<dt id="arg-built-area-threshold">built_area_threshold<a class="anchor" aria-label="anchor" href="#arg-built-area-threshold"></a></dt>
+<dt id="arg-built-areas-threshold">built_areas_threshold<a class="anchor" aria-label="anchor" href="#arg-built-areas-threshold"></a></dt>
 <dd><p>Minimum fraction for built-up area to be included (default: 0).
 A threshold of 0 includes all urban areas, which is recommended since urban areas
 are often small and should be preserved.</p></dd>
@@ -136,7 +136,10 @@ Only used if <code>filter_patch_size = TRUE</code>.</p></dd>
 
 
 <dt id="arg-output-path">output_path<a class="anchor" aria-label="anchor" href="#arg-output-path"></a></dt>
-<dd><p>Optional directory to write the result as a COG.</p></dd>
+<dd><p>Optional directory. When provided, the final zone is
+written there as a COG (<code>urban_greening_zone_{iso3}.tif</code>), together with the
+region-aligned <code>built_areas_{iso3}.tif</code> input used to build it, masked to the
+planning units (NoData outside the study area).</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -156,7 +159,7 @@ into a formal zone layer for consistency with the ELSA framework.</p>
 <span class="r-in"><span><span class="va">urban_greening_zone</span> <span class="op">&lt;-</span> <span class="fu">make_urban_greening_zone</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  pus <span class="op">=</span> <span class="va">planning_units</span>,</span></span>
 <span class="r-in"><span>  iso3 <span class="op">=</span> <span class="st">"NPL"</span>,</span></span>
-<span class="r-in"><span>  built_areas_input <span class="op">=</span> <span class="va">built_raster</span>,</span></span>
+<span class="r-in"><span>  built_areas <span class="op">=</span> <span class="va">built_raster</span>,</span></span>
 <span class="r-in"><span>  output_path <span class="op">=</span> <span class="st">"outputs/"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>

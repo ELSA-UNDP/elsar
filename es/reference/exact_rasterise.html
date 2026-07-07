@@ -13,7 +13,7 @@ and is especially useful when features overlap or vary in size and shape."></hea
 
     <a class="navbar-brand me-2" href="../index.html">elsar</a>
 
-    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -134,11 +134,6 @@ OS open-file limit and crawling. Set to <code>Inf</code> to always use the exact
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>If multiple features are provided, each is rasterized independently and aggregated
 across the stack using the specified function (<code>fun</code>), typically <code>sum</code>, <code>mean</code>, or <code>max</code>.</p>
-<p>For layers with more than <code>max_exact_features</code> features and a standard <code>fun</code>
-(<code>mean</code>/<code>sum</code>/<code>max</code>/<code>min</code>), a single <code><a href="https://rspatial.github.io/terra/reference/rasterize.html" class="external-link">terra::rasterize()</a></code> pass is used instead
-of the per-feature stack. This bounds open file handles and runtime for
-wall-to-wall class maps with tens of thousands of polygons, at the cost of the
-sub-cell coverage weighting (negligible for such maps).</p>
     </div>
 
     <div class="section level2">

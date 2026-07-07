@@ -9,7 +9,7 @@ while excluding areas unsuitable for restoration (e.g., active farmland, urban a
 
     <a class="navbar-brand me-2" href="../index.html">elsar</a>
 
-    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -74,12 +74,12 @@ while excluding areas unsuitable for restoration (e.g., active farmland, urban a
 <span>  degradation_threshold <span class="op">=</span> <span class="fl">0.1</span>,</span>
 <span>  human_pressure_threshold <span class="op">=</span> <span class="fl">4</span>,</span>
 <span>  agriculture_threshold <span class="op">=</span> <span class="fl">0.1</span>,</span>
-<span>  built_area_threshold <span class="op">=</span> <span class="fl">0.1</span>,</span>
+<span>  built_areas_threshold <span class="op">=</span> <span class="fl">0.1</span>,</span>
 <span>  forest_threshold <span class="op">=</span> <span class="fl">0.1</span>,</span>
 <span>  lulc_product <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"esri_10m"</span>, <span class="st">"dynamic_world"</span>, <span class="st">"esa_worldcover"</span>, <span class="st">"local"</span><span class="op">)</span>,</span>
 <span>  agriculture_lulc_value <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  built_area_lulc_value <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  filter_small_patches <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  filter_patch_size <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  min_patch_size <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>  output_path <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -148,7 +148,7 @@ an area is considered degraded (default: 4).</p></dd>
 is excluded as agricultural land (default: 0.1).</p></dd>
 
 
-<dt id="arg-built-area-threshold">built_area_threshold<a class="anchor" aria-label="anchor" href="#arg-built-area-threshold"></a></dt>
+<dt id="arg-built-areas-threshold">built_areas_threshold<a class="anchor" aria-label="anchor" href="#arg-built-areas-threshold"></a></dt>
 <dd><p>Numeric. Proportion threshold above which an area
 is excluded as built-up land (default: 0.1).</p></dd>
 
@@ -173,7 +173,7 @@ agricultural land (default: 5, for ESRI 10m LULC).</p></dd>
 areas (default: 7, for ESRI 10m LULC).</p></dd>
 
 
-<dt id="arg-filter-small-patches">filter_small_patches<a class="anchor" aria-label="anchor" href="#arg-filter-small-patches"></a></dt>
+<dt id="arg-filter-patch-size">filter_patch_size<a class="anchor" aria-label="anchor" href="#arg-filter-patch-size"></a></dt>
 <dd><p>Logical. Whether to remove small isolated patches
 from the output (default: TRUE).</p></dd>
 
@@ -184,8 +184,12 @@ when filtering patches (default: 10).</p></dd>
 
 
 <dt id="arg-output-path">output_path<a class="anchor" aria-label="anchor" href="#arg-output-path"></a></dt>
-<dd><p>Character or NULL. Directory to save output rasters as
-Cloud Optimized GeoTIFFs. If NULL, outputs are returned but not saved.</p></dd>
+<dd><p>Character or NULL. When provided, the final zones are saved
+here as a Cloud Optimized GeoTIFF (<code>restore_zones_{iso3}.tif</code>), together with
+the region-aligned intermediate inputs used to build them - <code>agriculture_areas_</code>,
+<code>built_areas_</code>, <code>human_pressure_</code>, <code>degradation_</code> and <code>forest_mask_</code>
+<code>{iso3}.tif</code> - each masked to the planning units (NoData outside the study
+area). If NULL, outputs are returned but not saved.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -238,11 +242,11 @@ from a land use/land cover (LULC) raster by specifying class values.</p>
 <span class="r-in"><span><span class="va">restore_zone</span> <span class="op">&lt;-</span> <span class="fu">make_restore_zone</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  iso3 <span class="op">=</span> <span class="st">"BRA"</span>,</span></span>
 <span class="r-in"><span>  pus <span class="op">=</span> <span class="va">planning_units</span>,</span></span>
-<span class="r-in"><span>  sdg_degradation_input <span class="op">=</span> <span class="va">sdg_raster</span>,</span></span>
-<span class="r-in"><span>  agricultural_areas_input <span class="op">=</span> <span class="va">ag_raster</span>,</span></span>
-<span class="r-in"><span>  built_areas_input <span class="op">=</span> <span class="va">built_raster</span>,</span></span>
-<span class="r-in"><span>  hii_input <span class="op">=</span> <span class="va">hii_raster</span>,</span></span>
-<span class="r-in"><span>  forest_cover_input <span class="op">=</span> <span class="va">forest_raster</span></span></span>
+<span class="r-in"><span>  degradation <span class="op">=</span> <span class="va">sdg_raster</span>,</span></span>
+<span class="r-in"><span>  agricultural_areas <span class="op">=</span> <span class="va">ag_raster</span>,</span></span>
+<span class="r-in"><span>  built_areas <span class="op">=</span> <span class="va">built_raster</span>,</span></span>
+<span class="r-in"><span>  human_pressure <span class="op">=</span> <span class="va">hii_raster</span>,</span></span>
+<span class="r-in"><span>  forest_mask <span class="op">=</span> <span class="va">forest_raster</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>

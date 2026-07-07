@@ -13,7 +13,7 @@ for spatial prioritization tools such as prioritizr."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">elsar</a>
 
-    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -72,10 +72,10 @@ for spatial prioritization tools such as <code>prioritizr</code>.</p>
 <span>  <span class="va">pus</span>,</span>
 <span>  <span class="va">current_protected_areas</span>,</span>
 <span>  lulc_proportions <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  agricultural_areas_input <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  built_areas_input <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  agricultural_areas <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  built_areas <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  lulc_raster <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  hii_input <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  human_pressure <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  hii_threshold <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  hii_quantile <span class="op">=</span> <span class="fl">0.95</span>,</span>
 <span>  lulc_product <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"esri_10m"</span>, <span class="st">"dynamic_world"</span>, <span class="st">"esa_worldcover"</span>, <span class="st">"local"</span><span class="op">)</span>,</span>
@@ -110,14 +110,14 @@ If NULL, <code><a href="make_protected_areas.html">elsar::make_protected_areas()
 <dt id="arg-lulc-proportions">lulc_proportions<a class="anchor" aria-label="anchor" href="#arg-lulc-proportions"></a></dt>
 <dd><p>A multi-band <code>SpatRaster</code> from <code><a href="download_lulc_proportions.html">download_lulc_proportions()</a></code> containing
 pre-computed class proportions. If provided, bands named "agriculture" and "built_area" will
-be used automatically, overriding <code>agricultural_areas_input</code> and <code>built_areas_input</code>.</p></dd>
+be used automatically, overriding <code>agricultural_areas</code> and <code>built_areas</code>.</p></dd>
 
 
-<dt id="arg-agricultural-areas-input">agricultural_areas_input<a class="anchor" aria-label="anchor" href="#arg-agricultural-areas-input"></a></dt>
+<dt id="arg-agricultural-areas">agricultural_areas<a class="anchor" aria-label="anchor" href="#arg-agricultural-areas"></a></dt>
 <dd><p>A <code>SpatRaster</code> representing binary or probabilistic agricultural areas (optional).</p></dd>
 
 
-<dt id="arg-built-areas-input">built_areas_input<a class="anchor" aria-label="anchor" href="#arg-built-areas-input"></a></dt>
+<dt id="arg-built-areas">built_areas<a class="anchor" aria-label="anchor" href="#arg-built-areas"></a></dt>
 <dd><p>A <code>SpatRaster</code> representing binary or probabilistic built-up areas (optional).</p></dd>
 
 
@@ -125,7 +125,7 @@ be used automatically, overriding <code>agricultural_areas_input</code> and <cod
 <dd><p>A <code>SpatRaster</code> LULC map used to extract agriculture/built-up areas if not already provided (default: NULL).</p></dd>
 
 
-<dt id="arg-hii-input">hii_input<a class="anchor" aria-label="anchor" href="#arg-hii-input"></a></dt>
+<dt id="arg-human-pressure">human_pressure<a class="anchor" aria-label="anchor" href="#arg-human-pressure"></a></dt>
 <dd><p>A <code>SpatRaster</code> of the Human Footprint Index, or NULL. If NULL,
 the protect zone starts with all planning units eligible and applies only
 agriculture and built-area exclusions.</p></dd>
@@ -175,7 +175,11 @@ automatically determined from <code>lulc_product</code>. Default is NULL.</p></d
 
 
 <dt id="arg-output-path">output_path<a class="anchor" aria-label="anchor" href="#arg-output-path"></a></dt>
-<dd><p>Optional directory to write the result as a COG.</p></dd>
+<dd><p>Optional directory. When provided, the final zone is
+written there as a COG (<code>protect_zone_{iso3}.tif</code>), together with the
+region-aligned intermediate inputs used to build it - <code>agriculture_areas_</code>,
+<code>built_areas_</code> and <code>human_pressure_</code> <code>{iso3}.tif</code> - each masked to the
+planning units (NoData outside the study area).</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -194,9 +198,9 @@ or estimated from the upper 95% quantile (<code>hii_quantile</code>) of values w
 <span class="r-in"><span><span class="va">protect_zone</span> <span class="op">&lt;-</span> <span class="fu">make_protect_zone</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  pus <span class="op">=</span> <span class="va">planning_units</span>,</span></span>
 <span class="r-in"><span>  iso3 <span class="op">=</span> <span class="st">"NPL"</span>,</span></span>
-<span class="r-in"><span>  hii_input <span class="op">=</span> <span class="va">hii_raster</span>,</span></span>
-<span class="r-in"><span>  agricultural_areas_input <span class="op">=</span> <span class="va">crop_raster</span>,</span></span>
-<span class="r-in"><span>  built_areas_input <span class="op">=</span> <span class="va">built_raster</span>,</span></span>
+<span class="r-in"><span>  human_pressure <span class="op">=</span> <span class="va">hii_raster</span>,</span></span>
+<span class="r-in"><span>  agricultural_areas <span class="op">=</span> <span class="va">crop_raster</span>,</span></span>
+<span class="r-in"><span>  built_areas <span class="op">=</span> <span class="va">built_raster</span>,</span></span>
 <span class="r-in"><span>  lulc_raster <span class="op">=</span> <span class="cn">NULL</span>,</span></span>
 <span class="r-in"><span>  hii_quantile <span class="op">=</span> <span class="fl">0.95</span>,</span></span>
 <span class="r-in"><span>  output_path <span class="op">=</span> <span class="st">"outputs/"</span></span></span>
