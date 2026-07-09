@@ -18,6 +18,16 @@
 
 ## Bug Fixes
 
+* elsar now loads the `sf` namespace when it is loaded, so `sf`'s S3 methods
+  (e.g. `[.sf`, `filter.sf`) are registered. Previously the package referred to
+  `sf` only via `sf::` and never imported from it, so `sf`'s namespace was not
+  loaded at package-load time. As a result, operations on `sf` objects -
+  including subsetting the bundled `boundary_dat` and the `dplyr` calls inside
+  `make_boundary()` - could dispatch to the wrong method and fail with a `vctrs`
+  "incompatible scalar type" error unless `sf` happened to be loaded some other
+  way (e.g. `library(sf)`). Surfaced by running the tests against the installed
+  package under `R CMD check`.
+
 * `make_planning_units()` now errors clearly when `boundary_proj` is in a
   geographic (lat/long) CRS or has no CRS. Previously a lat/long boundary was
   silently rasterised into a **single cell** (the metre resolution was
