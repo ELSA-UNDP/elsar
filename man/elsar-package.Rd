@@ -12,6 +12,8 @@ Provides tools and data pipelines to support Essential Life Support Areas (ELSA)
 Useful links:
 \itemize{
   \item \url{https://elsa-undp.github.io/elsar/}
+  \item \url{https://github.com/ELSA-UNDP/elsar}
+  \item Report bugs at \url{https://github.com/ELSA-UNDP/elsar/issues}
 }
 
 }

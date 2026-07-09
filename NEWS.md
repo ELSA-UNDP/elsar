@@ -1,3 +1,13 @@
+# elsar (development version)
+
+## New Features
+
+* New `elsar_check_setup()` diagnoses your installation tier by tier (core /
+  protected areas / Earth Engine) and reports what is present, what is missing,
+  and the exact command to fix each gap. It makes no changes, needs no
+  credentials, and never errors, so it is safe to run any time - and its output
+  is what the bug-report template asks Earth Engine users to include.
+
 # elsar 0.4.0
 
 ## Breaking Changes
