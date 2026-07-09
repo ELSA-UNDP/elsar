@@ -4,52 +4,97 @@
 # and processing it into Cloud-Optimized GeoTIFFs (COGs). The functions handle authentication,
 # export management, file downloading, and data processing.
 
-#' Create temporary conda environment for GEE
+#' Name of the persistent conda environment elsar uses for Earth Engine
 #'
-#' Creates a temporary conda environment with earthengine-api installed.
-#' Handles conda path detection and environment activation.
+#' Single source of truth for the environment name. Kept stable (not
+#' process-specific) so it is created once and reused across sessions, rather
+#' than rebuilt - and re-downloaded - every call.
 #'
-#' @return Character. Name of the created environment.
+#' @return Character scalar, the environment name.
 #' @keywords internal
-create_gee_conda_env <- function() {
-  temp_env <- paste0("gee_temp_env_", Sys.getpid())
-  conda_base <- find_conda_base()
+elsar_gee_env <- function() "elsar_ee"
 
+#' Find a conda/mamba executable inside a conda base directory
+#'
+#' @param conda_base Path to a conda base directory (from [find_conda_base()]).
+#' @return Path to a `mamba`/`conda` executable, or `NULL` if none is found.
+#'   Mamba is preferred when present.
+#' @keywords internal
+find_conda_exe <- function(conda_base) {
   if (is.null(conda_base)) {
-    stop("Could not find conda installation. Please install miniconda or anaconda.", call. = FALSE)
+    return(NULL)
   }
-
-  # Find conda/mamba executable
   is_windows <- .Platform$OS.type == "windows"
-  conda_exe <- if (is_windows) {
-    # Windows conda locations
-    candidates <- c(
+  candidates <- if (is_windows) {
+    c(
       file.path(conda_base, "Scripts", "mamba.exe"),
       file.path(conda_base, "Scripts", "conda.exe"),
       file.path(conda_base, "condabin", "mamba.bat"),
       file.path(conda_base, "condabin", "conda.bat")
     )
-    found <- candidates[file.exists(candidates)]
-    if (length(found) > 0) found[1] else NULL
   } else {
-    # Unix conda locations
-    candidates <- c(
+    c(
       file.path(conda_base, "bin", "mamba"),
       file.path(conda_base, "bin", "conda")
     )
-    found <- candidates[file.exists(candidates)]
-    if (length(found) > 0) found[1] else NULL
+  }
+  found <- candidates[file.exists(candidates)]
+  if (length(found) > 0) found[1] else NULL
+}
+
+#' Create (or reuse) the persistent conda environment for GEE
+#'
+#' Creates a conda environment with `earthengine-api` installed. The
+#' environment has a stable name ([elsar_gee_env()]) and is **persistent**: if
+#' it already exists it is reused as-is rather than recreated, so the heavy
+#' Python + earthengine-api download happens only once. Also activates the
+#' environment for the current session via `reticulate::use_python()`.
+#'
+#' @param env_name Character. Environment name to create/reuse. Defaults to
+#'   [elsar_gee_env()].
+#' @param python_version Character. Python version for a newly created
+#'   environment. Default `"3.12"`.
+#' @return Character. Name of the environment.
+#' @keywords internal
+create_gee_conda_env <- function(env_name = elsar_gee_env(),
+                                 python_version = "3.12") {
+  conda_base <- find_conda_base()
+
+  if (is.null(conda_base)) {
+    stop(
+      paste0("Could not find a conda installation. Run elsar_setup_gee() to ",
+             "install and configure one, or install miniconda/anaconda yourself."),
+      call. = FALSE
+    )
   }
 
+  env_dir <- file.path(conda_base, "envs", env_name)
+
+  # Reuse an existing environment rather than rebuilding it.
+  if (dir.exists(env_dir)) {
+    env_python <- find_env_python(conda_base, env_name)
+    if (!is.null(env_python)) {
+      log_message("Reusing existing conda environment '{env_name}'.")
+      reticulate::use_python(env_python, required = TRUE)
+      return(env_name)
+    }
+    log_message("Environment '{env_name}' exists but has no Python; recreating.")
+  }
+
+  conda_exe <- find_conda_exe(conda_base)
   if (is.null(conda_exe)) {
-    stop("Could not find conda or mamba executable in conda installation.", call. = FALSE)
+    stop("Could not find a conda or mamba executable in the conda installation.",
+         call. = FALSE)
   }
 
   log_message("Using conda/mamba: {conda_exe}")
-  log_message("Creating conda environment '{temp_env}' in {conda_base}...")
+  log_message("Creating conda environment '{env_name}' in {conda_base}...")
 
-  # Create environment using direct system call to avoid reticulate's env caching issues
-  create_cmd <- glue::glue('"{conda_exe}" create --yes --name {temp_env} python=3.12 earthengine-api -c conda-forge --quiet')
+  # Direct system call, to avoid reticulate's env caching issues.
+  create_cmd <- glue::glue(
+    '"{conda_exe}" create --yes --name {env_name} ',
+    'python={python_version} earthengine-api -c conda-forge --quiet'
+  )
   log_message("Running: {create_cmd}")
 
   result <- system(create_cmd, intern = FALSE, ignore.stdout = FALSE, ignore.stderr = FALSE)
@@ -60,8 +105,6 @@ create_gee_conda_env <- function() {
   # Wait briefly for filesystem to sync
   Sys.sleep(2)
 
-  # Check if the env directory was actually created
-  env_dir <- file.path(conda_base, "envs", temp_env)
   if (!dir.exists(env_dir)) {
     log_message("Environment directory not found at expected location: {env_dir}")
     existing_envs <- list.dirs(file.path(conda_base, "envs"), full.names = FALSE, recursive = FALSE)
@@ -69,9 +112,7 @@ create_gee_conda_env <- function() {
     stop(glue::glue("Conda environment was not created at {env_dir}"), call. = FALSE)
   }
 
-  # Find Python executable
-  env_python <- find_env_python(conda_base, temp_env)
-
+  env_python <- find_env_python(conda_base, env_name)
   if (is.null(env_python)) {
     env_contents <- list.files(env_dir, recursive = FALSE)
     log_message("Contents of {env_dir}: {paste(env_contents, collapse=', ')}")
@@ -80,9 +121,9 @@ create_gee_conda_env <- function() {
 
   log_message("Using Python at: {env_python}")
   reticulate::use_python(env_python, required = TRUE)
-  log_message("Temporary Conda environment created: {temp_env}")
+  log_message("Conda environment ready: {env_name}")
 
-  temp_env
+  env_name
 }
 
 
@@ -123,6 +164,19 @@ find_conda_base <- function() {
       "/opt/miniconda3",
       "/opt/anaconda3"
     )
+  }
+
+  # Also consult reticulate, which knows about conda installs in non-standard
+  # locations (e.g. its own managed miniconda under rappdirs, micromamba, or a
+  # Homebrew install) that the fixed candidate list above would miss.
+  retic_bin <- tryCatch(reticulate::conda_binary(), error = function(e) NULL)
+  if (!is.null(retic_bin) && nzchar(retic_bin)) {
+    # conda_binary() returns <base>/bin/conda or <base>/condabin/conda(.bat)
+    conda_candidates <- c(conda_candidates, dirname(dirname(retic_bin)))
+  }
+  retic_mc <- tryCatch(reticulate::miniconda_path(), error = function(e) NULL)
+  if (!is.null(retic_mc) && nzchar(retic_mc)) {
+    conda_candidates <- c(conda_candidates, retic_mc)
   }
 
   for (cand in conda_candidates) {
@@ -322,7 +376,7 @@ initialize_earthengine <- function(gee_project) {
 
   # Set LD_LIBRARY_PATH for OpenSSL resolution (must be before Python init)
   if (!is.null(conda_base) && .Platform$OS.type != "windows") {
-    for (env_name in c("ee_compat", "ee", "gee", "earthengine")) {
+    for (env_name in c(elsar_gee_env(), "ee_compat", "ee", "gee", "earthengine")) {
       env_lib <- file.path(conda_base, "envs", env_name, "lib")
       if (dir.exists(env_lib)) {
         current_ld_path <- Sys.getenv("LD_LIBRARY_PATH")
@@ -367,7 +421,7 @@ initialize_earthengine <- function(gee_project) {
   # Search for conda environments with Earth Engine
 
   if (!ee_env_found && !is.null(conda_base)) {
-    candidate_envs <- c("ee_compat", "ee", "gee", "earthengine", "earth-engine")
+    candidate_envs <- c(elsar_gee_env(), "ee_compat", "ee", "gee", "earthengine", "earth-engine")
     for (env_name in candidate_envs) {
       env_python <- find_env_python(conda_base, env_name)
       if (!is.null(env_python)) {
@@ -394,10 +448,16 @@ initialize_earthengine <- function(gee_project) {
     }
   }
 
-  # Create temporary environment if none found
+  # No pre-existing environment found: create (once) the persistent elsar env.
+  # It is intentionally NOT recorded in `temp_env`, so cleanup_earthengine()
+  # leaves it in place for reuse next session instead of removing it.
   if (!ee_env_found) {
-    log_message("Creating temporary conda environment for Earth Engine...")
-    temp_env <- create_gee_conda_env()
+    log_message(paste0(
+      "No Earth Engine conda environment found. Creating the persistent '",
+      elsar_gee_env(), "' environment now (one-off; ",
+      "run elsar_setup_gee() to set this up ahead of time)."
+    ))
+    create_gee_conda_env()
   }
 
   # Import and initialize Earth Engine
@@ -417,8 +477,10 @@ initialize_earthengine <- function(gee_project) {
 
 #' Clean up Earth Engine environment
 #'
-#' Removes temporary conda environment if one was created during initialization.
-#' Should be called at the end of any function that uses initialize_earthengine().
+#' Removes a *temporary* conda environment if one was recorded during
+#' initialization. The persistent elsar environment ([elsar_gee_env()]) is
+#' never recorded in `temp_env`, so it is deliberately left in place for reuse -
+#' this function is a no-op in that (now normal) case.
 #'
 #' @param env_info List returned from initialize_earthengine() containing temp_env info
 #' @keywords internal

@@ -8,6 +8,29 @@
   credentials, and never errors, so it is safe to run any time - and its output
   is what the bug-report template asks Earth Engine users to include.
 
+* New `elsar_setup_gee()` bootstraps the Earth Engine environment in one call:
+  it finds conda (and can install miniconda for you if you allow it), creates a
+  **persistent** conda environment (`elsar_ee`) with `earthengine-api`, and
+  optionally walks you through Earth Engine and Google Drive authentication. Run
+  it once, ahead of time, instead of letting the first `download_*` call build
+  the environment mid-analysis.
+
+## Improvements
+
+* The Earth Engine conda environment is now **persistent and reused** across
+  sessions rather than created per-process and removed after each download.
+  Previously each `download_*` call could build a `gee_temp_env_<pid>`
+  environment and delete it on exit, re-downloading Python and `earthengine-api`
+  every session (and, if a run was interrupted before cleanup, leaving stray
+  `gee_temp_env_*` environments behind). `initialize_earthengine()` now creates
+  and reuses the stable `elsar_ee` environment.
+
+* Conda detection (`find_conda_base()`) now also consults `reticulate` (its
+  managed miniconda, `conda_binary()`, `miniconda_path()`), so installations in
+  non-standard locations - including a `reticulate`-installed miniconda and
+  micromamba/Homebrew installs - are found instead of triggering
+  "Could not find conda installation".
+
 # elsar 0.4.0
 
 ## Breaking Changes

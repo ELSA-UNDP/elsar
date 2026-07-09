@@ -259,13 +259,25 @@ check_tier_earth_engine <- function() {
     )))
   }
 
-  # An Earth Engine conda environment
-  ee_env_names <- c("ee_compat", "ee", "gee", "earthengine", "earth-engine")
-  env_list <- if (have_reticulate) safe_try(reticulate::conda_list()) else NULL
+  # An Earth Engine conda environment (elsar's own env first, then the other
+  # names initialize_earthengine() recognises). Detect it two ways - via
+  # reticulate::conda_list() and by scanning <conda_base>/envs directly - because
+  # conda_list() can miss envs when RETICULATE_PYTHON points elsewhere, while the
+  # filesystem scan is what the runtime actually relies on.
+  ee_env_names <- c(elsar_gee_env(), "ee_compat", "ee", "gee", "earthengine", "earth-engine")
   found_env <- NULL
+  env_list <- if (have_reticulate) safe_try(reticulate::conda_list()) else NULL
   if (!is.null(env_list) && nrow(env_list) > 0) {
     hit <- env_list$name %in% ee_env_names
     if (any(hit)) found_env <- env_list$name[hit][1]
+  }
+  if (is.null(found_env) && !is.null(conda_base)) {
+    for (nm in ee_env_names) {
+      if (dir.exists(file.path(conda_base, "envs", nm))) {
+        found_env <- nm
+        break
+      }
+    }
   }
   if (!is.null(found_env)) {
     recs <- c(recs, list(setup_record(
