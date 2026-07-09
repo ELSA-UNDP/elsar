@@ -1,5 +1,34 @@
 # elsar (development version)
 
+## Bug Fixes
+
+* `make_planning_units()` now errors clearly when `boundary_proj` is in a
+  geographic (lat/long) CRS or has no CRS. Previously a lat/long boundary was
+  silently rasterised into a **single cell** (the metre resolution was
+  interpreted as degrees) and every downstream step ran on that one cell with no
+  error or warning. Use `make_boundary(custom_projection = TRUE)` (the default)
+  to get a suitable projected boundary.
+
+* `make_boundary(limit_to_mainland = TRUE)` now works. It previously always
+  errored (`sf::st_area()` was called on an rlang data pronoun). It now keeps the
+  single largest polygon, and does so **after** any `iso3` filter, so the
+  mainland is chosen within the target region rather than across the whole input
+  dataset. The result is also normalised to WGS84 as the non-mainland path
+  already was.
+
+* `make_boundary()` now errors with an actionable message (listing the available
+  codes) when `iso3` matches no feature, instead of silently returning a 0-row
+  `sf` (or later failing with a cryptic GDAL projection error). It also checks
+  that `iso3_column` / `col_name` are actually columns in the input.
+
+* `elsar_load_data()`'s PostgreSQL path now works. The connection list is spliced
+  into `DBI::dbConnect()` via `do.call()` instead of the rlang `!!!` operator,
+  which never worked there (`dbConnect()` is a plain S4 generic, so `!!!x` was
+  parsed as `!(!(!x))`). The path now also guards on `RPostgres`/`DBI` with an
+  install hint, closes the connection with `on.exit()`, quotes table/column
+  identifiers and the `iso3` literal to prevent SQL injection, and omits the
+  `WHERE` clause when no `iso3`/`iso3_column` is supplied.
+
 ## New Features
 
 * New `elsar_check_setup()` diagnoses your installation tier by tier (core /

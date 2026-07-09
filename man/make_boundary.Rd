@@ -23,7 +23,10 @@ make_boundary(
 
 \item{input_type}{A string that is either "sf" or "SpatRaster" (default is "sf").}
 
-\item{limit_to_mainland}{Logical. Limits the extent of the data to mainland.}
+\item{limit_to_mainland}{Logical. When \code{TRUE}, keep only the single largest
+polygon (the mainland), dropping islands and other outlying parts. Applied
+after any \code{iso3} filter, so the largest polygon is chosen within the target
+region. Default \code{FALSE}.}
 
 \item{col_name}{A string of the column containing the actual extent of the planning region (not outside area). Can be \code{NULL}.}
 
