@@ -1,5 +1,18 @@
 # elsar (development version)
 
+## New features
+
+* `elsar_calibrate_weights()` computes per-feature calibration weights for an ELSA
+  prioritization so that features achieve more even representation relative to their
+  single-feature maxima. This is the ELSA pre-calibration step, previously living in
+  the downstream tool; the objective and framework are unchanged (spread-of-shortfall
+  minimisation via an additive, increase-only weight update), with added robustness:
+  it returns the best-seen weights, stops once the allocation freezes, and excludes
+  zero-total features instead of aborting. It returns a structured `elsar_calibration`
+  object (weights, representation profile, per-iteration trajectory, metadata) and
+  writes no files. `prioritizr` and a solver (`gurobi`, or `highs` for a free/local
+  option) are optional dependencies, checked at call time with an actionable message.
+
 ## Installation / Dependencies
 
 * The core package is now much lighter to install. `wdpar`, `reticulate`,
