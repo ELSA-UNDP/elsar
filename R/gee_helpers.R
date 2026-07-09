@@ -14,6 +14,59 @@
 #' @keywords internal
 elsar_gee_env <- function() "elsar_ee"
 
+#' Ensure the Earth Engine toolchain packages are installed
+#'
+#' The Earth Engine workflow relies on `reticulate` and `googledrive`, which are
+#' `Suggests` (so the core package installs without conda, a browser, or two
+#' Google OAuth flows). This errors with an actionable message when a required
+#' one is missing, rather than letting a bare `pkg::fun` fail obscurely.
+#'
+#' @param need_reticulate,need_drive Logical. Which of the two packages this
+#'   entry point needs.
+#' @return `invisible(TRUE)` if all needed packages are available; otherwise
+#'   stops.
+#' @keywords internal
+require_gee_deps <- function(need_reticulate = TRUE, need_drive = TRUE) {
+  missing <- character(0)
+  if (need_reticulate && !requireNamespace("reticulate", quietly = TRUE)) {
+    missing <- c(missing, "reticulate")
+  }
+  if (need_drive && !requireNamespace("googledrive", quietly = TRUE)) {
+    missing <- c(missing, "googledrive")
+  }
+  if (length(missing) > 0) {
+    stop(
+      glue::glue(
+        "The Earth Engine download functions need package(s) that are not ",
+        "installed: {paste(missing, collapse = ', ')}. Install with ",
+        "install.packages(c({paste0('\"', missing, '\"', collapse = ', ')})), ",
+        "then run elsar_setup_gee()."
+      ),
+      call. = FALSE
+    )
+  }
+  invisible(TRUE)
+}
+
+#' Candidate paths for the Earth Engine credentials file
+#'
+#' The Python `earthengine-api` and `rappdirs` disagree on where credentials
+#' live across platforms, so this returns every plausible location to test with
+#' `file.exists()`. `rappdirs` is optional (`Suggests`); if it is not installed,
+#' the standard `~/.config/earthengine/credentials` path is still returned.
+#'
+#' @return Character vector of candidate credential-file paths.
+#' @keywords internal
+earthengine_cred_paths <- function() {
+  paths <- character(0)
+  rd <- tryCatch(rappdirs::user_config_dir("earthengine"), error = function(e) NULL)
+  if (!is.null(rd) && nzchar(rd)) {
+    paths <- c(paths, file.path(rd, "credentials"))
+  }
+  paths <- c(paths, file.path(path.expand("~"), ".config", "earthengine", "credentials"))
+  unique(paths)
+}
+
 #' Find a conda/mamba executable inside a conda base directory
 #'
 #' @param conda_base Path to a conda base directory (from [find_conda_base()]).
@@ -367,6 +420,7 @@ initialize_earthengine <- function(gee_project) {
     assertthat::is.string(gee_project) && nchar(gee_project) > 0,
     msg = "gee_project is required and must be a non-empty string (your GEE cloud project ID)"
   )
+  require_gee_deps(need_reticulate = TRUE, need_drive = FALSE)
 
   log_message("Initializing Earth Engine...")
 
@@ -463,8 +517,7 @@ initialize_earthengine <- function(gee_project) {
   # Import and initialize Earth Engine
   ee <- reticulate::import("ee")
 
-  cred_path <- file.path(rappdirs::user_config_dir("earthengine"), "credentials")
-  if (!file.exists(cred_path)) {
+  if (!any(file.exists(earthengine_cred_paths()))) {
     log_message("Starting Earth Engine authentication...")
     ee$Authenticate()
   }
@@ -515,6 +568,7 @@ cleanup_earthengine <- function(env_info) {
 #' if (!result$success) warning("Some downloads failed")
 #' }
 download_from_drive <- function(drive_folder, file_prefix, local_path) {
+  require_gee_deps(need_reticulate = FALSE, need_drive = TRUE)
   # Input validation
   assertthat::assert_that(
     is.character(file_prefix) && nchar(file_prefix) > 0,

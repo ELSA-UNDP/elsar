@@ -151,12 +151,7 @@ authenticate_gee <- function(gee_project = NULL, include_drive = TRUE) {
   log_message("Authenticating Earth Engine (a browser window may open)...")
   ee <- reticulate::import("ee")
 
-  cred_candidates <- unique(c(
-    file.path(tryCatch(rappdirs::user_config_dir("earthengine"),
-                       error = function(e) ""), "credentials"),
-    file.path(path.expand("~"), ".config", "earthengine", "credentials")
-  ))
-  if (!any(file.exists(cred_candidates))) {
+  if (!any(file.exists(earthengine_cred_paths()))) {
     ee$Authenticate()
   } else {
     log_message("Existing Earth Engine credentials found; skipping re-auth.")

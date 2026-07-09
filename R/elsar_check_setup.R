@@ -318,12 +318,7 @@ check_tier_earth_engine <- function() {
   # Earth Engine credentials. The Python earthengine-api and rappdirs disagree
   # on the path across platforms, so check both candidates and report whichever
   # exists.
-  cred_candidates <- unique(c(
-    file.path(safe_try(rappdirs::user_config_dir("earthengine"), default = ""),
-              "credentials"),
-    file.path(path.expand("~"), ".config", "earthengine", "credentials")
-  ))
-  cred_candidates <- cred_candidates[nzchar(dirname(cred_candidates))]
+  cred_candidates <- earthengine_cred_paths()
   cred_found <- cred_candidates[file.exists(cred_candidates)]
   if (length(cred_found) > 0) {
     recs <- c(recs, list(setup_record(

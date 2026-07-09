@@ -1,5 +1,21 @@
 # elsar (development version)
 
+## Installation / Dependencies
+
+* The core package is now much lighter to install. `wdpar`, `reticulate`,
+  `googledrive`, and `rappdirs` moved from `Imports` to `Suggests`, so installing
+  elsar no longer forces a Chromium browser, `libarchive`, conda/Python, or two
+  Google OAuth flows on users who only need the core (boundaries, planning units,
+  normalisation, zone builders from local rasters, plotting). The optional
+  features now check for their packages and give an actionable install message
+  when one is missing:
+  - `make_protected_areas(from_wdpca = TRUE)` requires `wdpar`;
+  - the `download_*` (Earth Engine) functions require `reticulate` and
+    `googledrive` (run `elsar_setup_gee()` to configure them).
+
+* `scales` and `png` moved from `Suggests` to `Imports`: they are used
+  unconditionally by the core plotting functions, so they belong there.
+
 ## Bug Fixes
 
 * `make_planning_units()` now errors clearly when `boundary_proj` is in a
