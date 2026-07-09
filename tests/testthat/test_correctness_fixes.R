@@ -72,3 +72,60 @@ test_that("elsar_load_data() PostgreSQL path guards on RPostgres", {
     "RPostgres"
   )
 })
+
+# ---- elsar_load_data aggregation (filter_sf failures) ----------------------
+
+# Helper: write a small valid shapefile from boundary_dat.
+.write_shp <- function(dir, iso, name) {
+  suppressWarnings(sf::st_write(
+    boundary_dat[boundary_dat$iso3cd == iso, ],
+    file.path(dir, name), quiet = TRUE, delete_dsn = TRUE
+  ))
+}
+
+test_that("elsar_load_data() returns an sf when all reads succeed", {
+  dir <- file.path(tempdir(), "eld_ok"); dir.create(dir, showWarnings = FALSE)
+  on.exit(unlink(dir, recursive = TRUE))
+  .write_shp(dir, "NPL", "a.shp"); .write_shp(dir, "IND", "b.shp")
+
+  res <- suppressMessages(elsar_load_data(file_name = NULL, file_path = dir))
+  expect_s3_class(res, "sf")
+  expect_equal(nrow(res), 2L)
+})
+
+test_that("elsar_load_data() warns but continues on partial read failure", {
+  dir <- file.path(tempdir(), "eld_partial"); dir.create(dir, showWarnings = FALSE)
+  on.exit(unlink(dir, recursive = TRUE))
+  .write_shp(dir, "NPL", "a.shp")
+  writeLines("junk", file.path(dir, "bad.shp"))
+
+  expect_warning(
+    res <- suppressMessages(elsar_load_data(file_name = NULL, file_path = dir)),
+    "failed to read"
+  )
+  expect_s3_class(res, "sf")
+  expect_equal(nrow(res), 1L)
+})
+
+test_that("elsar_load_data() errors when every read fails (was a 0x0 tibble)", {
+  dir <- file.path(tempdir(), "eld_allfail"); dir.create(dir, showWarnings = FALSE)
+  on.exit(unlink(dir, recursive = TRUE))
+  writeLines("junk", file.path(dir, "a.shp"))
+  writeLines("junk", file.path(dir, "b.shp"))
+
+  expect_error(
+    suppressMessages(elsar_load_data(file_name = NULL, file_path = dir)),
+    "Failed to read all"
+  )
+})
+
+test_that("elsar_load_data() errors on a single unreadable file (was silent NULL)", {
+  dir <- file.path(tempdir(), "eld_single"); dir.create(dir, showWarnings = FALSE)
+  on.exit(unlink(dir, recursive = TRUE))
+  writeLines("junk", file.path(dir, "a.shp"))
+
+  expect_error(
+    suppressMessages(elsar_load_data(file_name = "a.shp", file_path = dir)),
+    "Failed to read"
+  )
+})

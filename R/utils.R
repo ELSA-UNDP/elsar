@@ -490,9 +490,20 @@ filter_sf <- function(file_path,
                       wkt_filter = NULL,
                       file_type = NULL) {
 
-  # If no layer name provided and the format supports layers, pick the first one
+  # If no layer name provided and the format supports layers, pick the first
+  # one. Guard the read: st_layers() throws on an unreadable/corrupt file, and
+  # this call is outside the st_read() tryCatch below, so without this guard a
+  # bad file would error out of filter_sf() instead of returning NULL (its
+  # documented failure contract, which callers rely on to skip bad layers).
   if (is.null(layer_name)) {
-    layer_info <- sf::st_layers(file_path)
+    layer_info <- tryCatch(sf::st_layers(file_path), error = function(e) {
+      message("Failed to read layer info from file: ", file_path,
+              "\nError: ", e$message)
+      NULL
+    })
+    if (is.null(layer_info)) {
+      return(NULL)
+    }
     layer_name <- layer_info$name[1]
   }
 
