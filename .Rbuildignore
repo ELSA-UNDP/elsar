@@ -11,3 +11,4 @@
 ^\.claude$
 ^build-multilingual\.R$
 ^translations$
+^notes$
