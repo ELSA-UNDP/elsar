@@ -1,0 +1,35 @@
+name: Feature request
+description: Suggest a new capability or a change to an existing one
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the suggestion. Please
+        [search existing issues](https://github.com/ELSA-UNDP/elsar/issues?q=is%3Aissue)
+        first — someone may have proposed the same thing.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the need or the workflow that's currently awkward or impossible. Focus on the goal, not only the proposed solution.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What would you like elsar to do? If you can, sketch the function name, arguments, or a small usage example.
+      render: r
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives or workarounds
+      description: Anything you've tried or considered, in elsar or elsewhere.
+    validations:
+      required: false

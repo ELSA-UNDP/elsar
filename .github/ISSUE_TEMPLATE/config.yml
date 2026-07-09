@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: How do I…? / usage question
+    url: https://github.com/ELSA-UNDP/elsar/issues?q=is%3Aissue
+    about: Search existing issues first. If you don't find an answer, open a bug report and describe what you're trying to do.
+  - name: Documentation
+    url: https://elsa-undp.github.io/elsar/
+    about: The package website, including the getting-started guide and function reference.
+  - name: Getting help & what we support
+    url: https://github.com/ELSA-UNDP/elsar/blob/main/SUPPORT.md
+    about: Where to ask, and what the team can and cannot help with (especially for Earth Engine setup).

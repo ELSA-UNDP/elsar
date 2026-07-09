@@ -73,5 +73,7 @@ Imports:
     xml2
 Config/testthat/edition: 3
 LazyData: true
-URL: https://elsa-undp.github.io/elsar/
+Language: en-GB
+URL: https://elsa-undp.github.io/elsar/, https://github.com/ELSA-UNDP/elsar
+BugReports: https://github.com/ELSA-UNDP/elsar/issues
 Config/roxygen2/version: 8.0.0
