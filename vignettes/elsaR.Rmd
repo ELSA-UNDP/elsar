@@ -25,6 +25,27 @@ knitr::opts_chunk$set(
 
 ## Introduction
 
+The **elsar** package supports *Essential Life Support Areas (ELSA)*
+conservation planning: preparing a planning region, harmonising global spatial
+datasets onto a common grid of planning units, building protect / restore /
+manage zone layers, and producing publication-ready maps. This vignette walks
+through a minimal end-to-end example for a single country (Nepal), using only
+data bundled with the package so it runs without any credentials or downloads.
+
+The typical workflow is:
+
+1. **Define the planning region** with `make_boundary()`, then subdivide it into
+   equal-area **planning units** with `make_planning_units()`.
+2. **Prepare feature layers** by reprojecting and normalising rasters onto the
+   planning units with `make_normalised_raster()` (and the `make_*` feature
+   helpers).
+3. **Visualise** the result with `elsar_plot_static_raster()` and related
+   plotting functions.
+
+Larger analyses go on to build zone layers and feed the stack into a
+prioritisation (e.g. with `prioritizr`), but this example stops at preparing and
+plotting a single feature.
+
 ## Get started
 
 ```{r, message = FALSE}
@@ -59,7 +80,7 @@ ggplot() +
   geom_sf(data = boundary)
 ```
 
-The `make_boundary()` function also provides the option to create a custom projection centred on the planning region. This can also be done in separate steps using the `make_custom_projection()` function, which is integrated in the `make_boundary()` function.
+The `make_boundary()` function also provides the option to create a custom projection centred on the planning region. This can also be done in separate steps using the `make_custom_mollweide_projection()` function, which is integrated in the `make_boundary()` function.
 
 ```{r, fig.width = w, fig.height = h}
 boundary_proj <- make_boundary(
@@ -70,7 +91,7 @@ boundary_proj <- make_boundary(
 )
 
 # create custom projection and apply it to boundary
-wkt <- make_custom_projection(boundary = boundary, iso3 = "NPL")
+wkt <- make_custom_mollweide_projection(boundary = boundary, iso3 = "NPL")
 boundary_proj2 <- sf::st_transform(boundary, crs = sf::st_crs(wkt))
 ```
 

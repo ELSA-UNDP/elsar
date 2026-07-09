@@ -14,7 +14,7 @@ test_that("make_boundary (custom_projection == TRUE)", {
     iso3_column = "iso3cd"
   )
 
-  wkt <- make_custom_projection(boundary = boundary, iso3 = "NPL")
+  wkt <- make_custom_mollweide_projection(boundary = boundary, iso3 = "NPL")
   boundary_proj <- sf::st_transform(boundary, crs = sf::st_crs(wkt))
 
   boundary_proj2 <- make_boundary(

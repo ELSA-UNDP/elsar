@@ -28,6 +28,7 @@ Roxygen: list(markdown = TRUE)
 Suggests:
     archive,
     chromote,
+    covr,
     DBI,
     future.apply,
     googledrive,
