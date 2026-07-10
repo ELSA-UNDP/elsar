@@ -1,11 +1,12 @@
 pandoc: 3.8.3
-pkgdown: 2.2.0
+pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
+  calibrating-weights: calibrating-weights.html
   data-info: data-info.html
   elsaR: elsaR.html
   naming_conventions: naming_conventions.html
-last_built: 2026-07-07T08:45Z
+last_built: 2026-07-10T07:49Z
 urls:
   reference: https://elsa-undp.github.io/elsar/ru/reference
   article: https://elsa-undp.github.io/elsar/ru/articles

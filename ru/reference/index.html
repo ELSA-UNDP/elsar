@@ -18,7 +18,8 @@
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/data-info.html">Справочник по Обработке Глобальных Данных</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/calibrating-weights.html">Calibrating feature weights</a></li>
+    <li><a class="dropdown-item" href="../articles/data-info.html">Справочник по Обработке Глобальных Данных</a></li>
     <li><a class="dropdown-item" href="../articles/elsaR.html">Пример Рабочего Процесса ELSA</a></li>
     <li><a class="dropdown-item" href="../articles/naming_conventions.html">Соглашения об Именовании Файлов</a></li>
   </ul></li>
@@ -33,6 +34,7 @@
     <li><a class="external-link dropdown-item" href="https://elsa-undp.github.io/elsar/pt/">Português</a></li>
     <li><a class="dropdown-item" href="https://elsa-undp.github.io/elsar/ru/">Русский</a></li>
   </ul></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/ELSA-UNDP/elsar/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch"><li><button class="dropdown-item" data-bs-theme-value="light"><span class="fa fa-sun"></span> Light</button></li>
@@ -51,7 +53,30 @@
     </div>
 
     <div class="section level2">
-      <h2 id="-">Подготовка Региона Планирования<a class="anchor" aria-label="anchor" href="#-"></a></h2>
+      <h2 id="-">Настройка и проверка окружения<a class="anchor" aria-label="anchor" href="#-"></a></h2>
+
+      <div class="section-desc"><p>Диагностика и настройка инструментов, необходимых elsar (включая Earth Engine)</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="elsar_check_setup.html">elsar_check_setup()</a></code>
+
+        </dt>
+        <dd>Diagnose your elsar setup</dd>
+
+        <dt>
+
+          <code><a href="elsar_setup_gee.html">elsar_setup_gee()</a></code>
+
+        </dt>
+        <dd>Set up the Earth Engine environment for elsar</dd>
+      </dl></div><div class="section level2">
+      <h2 id="--1">Подготовка Региона Планирования<a class="anchor" aria-label="anchor" href="#--1"></a></h2>
 
       <div class="section-desc"><p>Функции для подготовки региона планирования для рабочего процесса ELSA</p></div>
 
@@ -74,7 +99,7 @@
         </dt>
         <dd>Create a Planning Units Raster</dd>
       </dl></div><div class="section level2">
-      <h2 id="--1">Подготовка Данных Характеристик<a class="anchor" aria-label="anchor" href="#--1"></a></h2>
+      <h2 id="--2">Подготовка Данных Характеристик<a class="anchor" aria-label="anchor" href="#--2"></a></h2>
 
       <div class="section-desc"><p>Функции для подготовки глобальных наборов данных для рабочего процесса ELSA</p></div>
 
@@ -243,6 +268,13 @@
 
         <dt>
 
+          <code><a href="elsar_calibrate_weights.html">elsar_calibrate_weights()</a></code>
+
+        </dt>
+        <dd>Calibrate feature weights for an ELSA prioritization</dd>
+
+        <dt>
+
           <code><a href="get_min_lockin_target.html">get_min_lockin_target()</a></code>
 
         </dt>
@@ -255,7 +287,7 @@
         </dt>
         <dd>Calculate Target Area from Percentage</dd>
       </dl></div><div class="section level2">
-      <h2 id="--2">Вспомогательные Функции<a class="anchor" aria-label="anchor" href="#--2"></a></h2>
+      <h2 id="--3">Вспомогательные Функции<a class="anchor" aria-label="anchor" href="#--3"></a></h2>
 
 
 
@@ -404,7 +436,7 @@
         </dt>
         <dd>Create a custom Mollweide projection centred on the planning region</dd>
       </dl></div><div class="section level2">
-      <h2 id="--3">Утилиты<a class="anchor" aria-label="anchor" href="#--3"></a></h2>
+      <h2 id="--4">Утилиты<a class="anchor" aria-label="anchor" href="#--4"></a></h2>
 
 
 
@@ -490,7 +522,7 @@
         </dt>
         <dd>Save a Raster as a Cloud Optimized GeoTIFF (COG)</dd>
       </dl></div><div class="section level2">
-      <h2 id="--4">Функции Визуализации<a class="anchor" aria-label="anchor" href="#--4"></a></h2>
+      <h2 id="--5">Функции Визуализации<a class="anchor" aria-label="anchor" href="#--5"></a></h2>
 
       <div class="section-desc"><p>Функции для визуализации входных и выходных данных рабочего процесса ELSA</p></div>
 
@@ -520,7 +552,7 @@
         </dt>
         <dd>Function to create a static plot from raster data</dd>
       </dl></div><div class="section level2">
-      <h2 id="--5">Утилиты Визуализации<a class="anchor" aria-label="anchor" href="#--5"></a></h2>
+      <h2 id="--6">Утилиты Визуализации<a class="anchor" aria-label="anchor" href="#--6"></a></h2>
 
       <div class="section-desc"><p>Вспомогательные функции для визуализации</p></div>
 
@@ -564,7 +596,7 @@
         </dt>
         <dd>Function to easily adapt the visual appearance of a plot</dd>
       </dl></div><div class="section level2">
-      <h2 id="--6">Наборы Данных<a class="anchor" aria-label="anchor" href="#--6"></a></h2>
+      <h2 id="--7">Наборы Данных<a class="anchor" aria-label="anchor" href="#--7"></a></h2>
 
 
 
@@ -603,7 +635,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

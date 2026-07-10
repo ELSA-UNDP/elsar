@@ -1,6 +1,12 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://elsa-undp.github.io/elsar/es/404.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/es/CODE_OF_CONDUCT.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/es/CONTRIBUTING.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/LICENSE.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/es/PULL_REQUEST_TEMPLATE.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/es/SECURITY.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/es/SUPPORT.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/es/articles/calibrating-weights.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/articles/data-info.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/articles/elsaR.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/articles/index.html</loc></url>
@@ -8,10 +14,12 @@
 <url><loc>https://elsa-undp.github.io/elsar/es/authors.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/index.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/news/index.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/es/reference/authenticate_gee.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/reference/boundary_dat.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/reference/calculate_restore_and_urban_budgets.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/reference/check_and_download_required_layers.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/reference/cleanup_earthengine.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/es/reference/combine_layers.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/reference/conditionally_subdivide_bbox.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/reference/convert_points_polygon.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/reference/create_gee_conda_env.html</loc></url>
@@ -26,9 +34,13 @@
 <url><loc>https://elsa-undp.github.io/elsar/es/reference/download_lulc_class_proportion.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/reference/download_lulc_data.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/reference/download_lulc_proportions.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/es/reference/earthengine_cred_paths.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/reference/elsar-package.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/es/reference/elsar_calibrate_weights.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/es/reference/elsar_check_setup.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/reference/elsar_continuous_to_categorical.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/reference/elsar_extend.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/es/reference/elsar_gee_env.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/reference/elsar_load_data.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/reference/elsar_plot_background.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/reference/elsar_plot_distribution.html</loc></url>
@@ -38,10 +50,12 @@
 <url><loc>https://elsa-undp.github.io/elsar/es/reference/elsar_plot_static_raster.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/reference/elsar_plot_static_raster_c.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/reference/elsar_plot_static_raster_d.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/es/reference/elsar_setup_gee.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/reference/exact_rasterise.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/reference/extract_filename_filetype.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/reference/filter_sf.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/reference/find_conda_base.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/es/reference/find_conda_exe.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/reference/find_env_python.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/reference/get_all_features.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/reference/get_binary_layers.html</loc></url>
@@ -85,10 +99,14 @@
 <url><loc>https://elsa-undp.github.io/elsar/es/reference/median_from_rast.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/reference/merge_tiles.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/reference/pipe.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/es/reference/print_setup_report.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/es/reference/require_gee_deps.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/reference/rescale_raster.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/es/reference/resolve_conda.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/reference/safe_gee_getinfo.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/reference/safe_task_status.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/reference/save_raster.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/es/reference/setup_record.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/es/reference/split_bbox_into_tiles.html</loc></url>
 </urlset>
 
