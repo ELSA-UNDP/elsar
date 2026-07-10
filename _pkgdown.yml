@@ -28,6 +28,12 @@ development:
   version_tooltip: "The package is in the early stages of development. Use with caution."
 reference:
 
+- title: Set up and check your environment
+  desc: Diagnose and configure the tools elsar needs (including Earth Engine)
+- contents:
+  - elsar_check_setup
+  - elsar_setup_gee
+
 - title: Prepare Planning Region
   desc: Functions to prepare the planning region for the ELSA workflow
 - contents:

@@ -29,6 +29,12 @@ development:
   version_tooltip: "El paquete se encuentra en las primeras etapas de desarrollo. Úselo con precaución."
 reference:
 
+- title: Configurar y comprobar su entorno
+  desc: Diagnostique y configure las herramientas que elsar necesita (incluido Earth Engine)
+- contents:
+  - elsar_check_setup
+  - elsar_setup_gee
+
 - title: Preparar la Región de Planificación
   desc: Funciones para preparar la región de planificación para el flujo de trabajo ELSA
 - contents:
