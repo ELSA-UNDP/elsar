@@ -72,6 +72,7 @@ reference:
   desc: Функции для помощи в анализе ELSA
 - contents:
   - calculate_restore_and_urban_budgets
+  - elsar_calibrate_weights
   - get_min_lockin_target
   - get_target
 

@@ -32,6 +32,7 @@ Suggests:
     DBI,
     future.apply,
     googledrive,
+    gurobi,
     highs,
     kableExtra,
     knitr,

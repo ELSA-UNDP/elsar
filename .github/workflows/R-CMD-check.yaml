@@ -31,6 +31,11 @@ jobs:
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
+      # gurobi is an optional, non-CRAN solver (installed with the Gurobi
+      # software). Declared in Suggests so requireNamespace() use is not flagged
+      # as undeclared; this stops the check from erroring when it cannot be
+      # installed in CI.
+      _R_CHECK_FORCE_SUGGESTS_: false
 
     steps:
       - uses: actions/checkout@v4
