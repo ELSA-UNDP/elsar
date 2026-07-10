@@ -54,6 +54,10 @@
 #' @param solve_retries Number of times to retry a failed solve (default `2`), to
 #'   survive transient solver or cloud-connection errors (e.g. a dropped connection
 #'   to a Gurobi Compute Server). A short pause separates attempts.
+#' @param progress_file Optional path to a CSV. When set, each iteration's
+#'   trajectory row is appended as it completes, so a long-running calibration can
+#'   be monitored live (e.g. by a UI polling the file). The function is otherwise
+#'   side-effect-free. Any existing file at this path is overwritten.
 #' @param freeze_tol Convergence threshold on the maximum per-feature change in
 #'   representation between iterations (default `0.01`). When the allocation stops
 #'   changing by more than this, further additive reweighting cannot move the (exactly
@@ -107,6 +111,7 @@ elsar_calibrate_weights <- function(features,
                                     threads = 4,
                                     time_limit = 3600,
                                     solve_retries = 2,
+                                    progress_file = NULL,
                                     freeze_tol = 0.01,
                                     freeze_patience = 3,
                                     max_iter = 200,
@@ -226,7 +231,19 @@ elsar_calibrate_weights <- function(features,
   util_best <- util
   if (verbose) log_message("  baseline spread {round(spread_prev, 4)} over {sum(valid0)}/{n_feat} features.")
 
+  # Optional live progress: append each trajectory row to progress_file as it lands.
+  if (!is.null(progress_file) && file.exists(progress_file)) file.remove(progress_file)
+  write_progress <- function(row) {
+    if (is.null(progress_file)) {
+      return(invisible())
+    }
+    ex <- file.exists(progress_file)
+    utils::write.table(row, progress_file, sep = ",", append = ex,
+      col.names = !ex, row.names = FALSE, qmethod = "double")
+  }
+
   traj <- list(.elsar_traj_row(0L, NA_real_, spread_prev, NA_real_, delta, wgta))
+  write_progress(traj[[1L]])
 
   # ---- Step 3: iterative calibration ----
   if (verbose) log_message("Step 3/3: iterative calibration (freeze_tol={freeze_tol}, patience={freeze_patience}, max_iter={max_iter}).")
@@ -265,6 +282,7 @@ elsar_calibrate_weights <- function(features,
     spread_new <- max(delta_new[valid_new]) - min(delta_new[valid_new])
 
     traj[[length(traj) + 1L]] <- .elsar_traj_row(iter, spread_prev, spread_new, max_change, delta_new, wgtb)
+    write_progress(traj[[length(traj)]])
 
     # keep the best-seen configuration (lowest spread)
     if (is.finite(spread_new) && spread_new < spread_best - 1e-6) {

@@ -18,6 +18,7 @@ elsar_calibrate_weights(
   threads = 4,
   time_limit = 3600,
   solve_retries = 2,
+  progress_file = NULL,
   freeze_tol = 0.01,
   freeze_patience = 3,
   max_iter = 200,
@@ -69,6 +70,11 @@ this tolerance rarely binds.}
 \item{solve_retries}{Number of times to retry a failed solve (default \code{2}), to
 survive transient solver or cloud-connection errors (e.g. a dropped connection
 to a Gurobi Compute Server). A short pause separates attempts.}
+
+\item{progress_file}{Optional path to a CSV. When set, each iteration's
+trajectory row is appended as it completes, so a long-running calibration can
+be monitored live (e.g. by a UI polling the file). The function is otherwise
+side-effect-free. Any existing file at this path is overwritten.}
 
 \item{freeze_tol}{Convergence threshold on the maximum per-feature change in
 representation between iterations (default \code{0.01}). When the allocation stops
@@ -128,7 +134,7 @@ Requires the \code{prioritizr} package (and a supported solver, e.g. \code{gurob
 \dontrun{
 cal <- elsar_calibrate_weights(
   features       = feature_stack,
-  impacts        = impact_df,       # cols: feature, protect, restore, manage
+  impacts        = impact_df, # cols: feature, protect, restore, manage
   zones_pu       = list(protect = pu_protect, restore = pu_restore, manage = pu_manage),
   planning_units = pu_all,
   budgets        = c(protect = 30, restore = 18.564, manage = 5),
