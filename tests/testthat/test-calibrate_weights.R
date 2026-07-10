@@ -41,6 +41,12 @@ test_that("elsar_calibrate_weights balances representation on a synthetic proble
   expect_true(all(cal$weights$weight >= 1))          # increase-only from baseline 1
   expect_true(all(cal$a_max >= 0))
 
+  # representation profile is complete and finite
+  expect_equal(nrow(cal$representation), 4L)
+  expect_true(all(is.finite(cal$representation$ratio)))
+  expect_true(all(is.finite(cal$representation$delta_pct)))
+  expect_equal(cal$representation$ratio, cal$representation$a / cal$representation$a_max)
+
   # do_nothing weight column is zero
   dn <- which(cal$meta$zones == "do_nothing")
   expect_true(all(cal$weight_matrix[, dn] == 0))

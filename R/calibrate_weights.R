@@ -51,6 +51,9 @@
 #'   (prioritizr's best available). `"gurobi"` requires the `gurobi` package.
 #' @param threads Number of solver threads (default `4`).
 #' @param time_limit Per-solve time limit in seconds (default `3600`).
+#' @param solve_retries Number of times to retry a failed solve (default `2`), to
+#'   survive transient solver or cloud-connection errors (e.g. a dropped connection
+#'   to a Gurobi Compute Server). A short pause separates attempts.
 #' @param freeze_tol Convergence threshold on the maximum per-feature change in
 #'   representation between iterations (default `0.01`). When the allocation stops
 #'   changing by more than this, further additive reweighting cannot move the (exactly
@@ -103,6 +106,7 @@ elsar_calibrate_weights <- function(features,
                                     solver = c("gurobi", "highs", "default"),
                                     threads = 4,
                                     time_limit = 3600,
+                                    solve_retries = 2,
                                     freeze_tol = 0.01,
                                     freeze_patience = 3,
                                     max_iter = 200,
@@ -185,7 +189,8 @@ elsar_calibrate_weights <- function(features,
     w
   }
   overall_rep <- function(weight_matrix) {
-    .elsar_zone_representation(base_problem, weight_matrix, feature_totals, feat_names)
+    .elsar_zone_representation(base_problem, weight_matrix, feature_totals, feat_names,
+                              retries = solve_retries)
   }
 
   # ---- Step 1: single-feature maxima a_max ----
@@ -292,14 +297,16 @@ elsar_calibrate_weights <- function(features,
 
   # ---- Assemble result (best-seen) ----
   weights_vec <- as.numeric(wgta_best[, 1])
+  a_vec    <- as.numeric(util_best[feat_names])
+  amax_vec <- as.numeric(a_max[feat_names])
   result <- list(
     weights = tibble::tibble(feature = feat_names, weight = weights_vec),
     weight_matrix = wgta_best,
     representation = tibble::tibble(
       feature   = feat_names,
-      a         = as.numeric(util_best[feat_names]),
-      a_max     = as.numeric(a_max[feat_names]),
-      ratio     = as.numeric(util_best[feat_names] / a_max[feat_names]),
+      a         = a_vec,
+      a_max     = amax_vec,
+      ratio     = a_vec / amax_vec,
       delta_pct = as.numeric(delta_best)
     ),
     a_max = a_max,
@@ -399,20 +406,33 @@ elsar_calibrate_weights <- function(features,
 #'
 #' @keywords internal
 #' @noRd
-.elsar_zone_representation <- function(base_problem, weight_matrix, feature_totals, feat_names) {
+.elsar_zone_representation <- function(base_problem, weight_matrix, feature_totals,
+                                       feat_names, retries = 2) {
   # The do_nothing zone holds an all-zero coefficient block, over which prioritizr
   # harmlessly calls min() on an empty slot ("no non-missing arguments to min").
   # Muffle only that specific, benign warning.
-  sol <- withCallingHandlers(
-    base_problem %>%
-      prioritizr::add_feature_weights(as.matrix(weight_matrix)) %>%
-      prioritizr::solve.ConservationProblem(force = TRUE, run_checks = FALSE),
-    warning = function(w) {
-      if (grepl("no non-missing arguments to min", conditionMessage(w), fixed = TRUE)) {
-        invokeRestart("muffleWarning")
+  do_solve <- function() {
+    withCallingHandlers(
+      base_problem %>%
+        prioritizr::add_feature_weights(as.matrix(weight_matrix)) %>%
+        prioritizr::solve.ConservationProblem(force = TRUE, run_checks = FALSE),
+      warning = function(w) {
+        if (grepl("no non-missing arguments to min", conditionMessage(w), fixed = TRUE)) {
+          invokeRestart("muffleWarning")
+        }
       }
-    }
-  )
+    )
+  }
+  # Retry on transient solver / cloud-connection errors.
+  attempt <- 0L
+  repeat {
+    sol <- tryCatch(do_solve(), error = function(e) e)
+    if (!inherits(sol, "error")) break
+    if (attempt >= retries) stop(sol)
+    attempt <- attempt + 1L
+    log_message("Solve failed ({conditionMessage(sol)}); retry {attempt}/{retries}...")
+    Sys.sleep(5)
+  }
 
   rep_summary <- prioritizr::eval_feature_representation_summary(base_problem, sol)
 

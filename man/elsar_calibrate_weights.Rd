@@ -17,6 +17,7 @@ elsar_calibrate_weights(
   solver = c("gurobi", "highs", "default"),
   threads = 4,
   time_limit = 3600,
+  solve_retries = 2,
   freeze_tol = 0.01,
   freeze_patience = 3,
   max_iter = 200,
@@ -64,6 +65,10 @@ this tolerance rarely binds.}
 \item{threads}{Number of solver threads (default \code{4}).}
 
 \item{time_limit}{Per-solve time limit in seconds (default \code{3600}).}
+
+\item{solve_retries}{Number of times to retry a failed solve (default \code{2}), to
+survive transient solver or cloud-connection errors (e.g. a dropped connection
+to a Gurobi Compute Server). A short pause separates attempts.}
 
 \item{freeze_tol}{Convergence threshold on the maximum per-feature change in
 representation between iterations (default \code{0.01}). When the allocation stops
