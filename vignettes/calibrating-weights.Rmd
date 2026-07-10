@@ -1,0 +1,143 @@
+---
+title: "Calibrating feature weights"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Calibrating feature weights}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+# The runnable example needs prioritizr and a solver (we use HiGHS here so the
+# vignette builds without a commercial licence). Chunks are skipped otherwise.
+has_solver <- requireNamespace("prioritizr", quietly = TRUE) &&
+  requireNamespace("highs", quietly = TRUE) &&
+  requireNamespace("terra", quietly = TRUE)
+knitr::opts_chunk$set(
+  collapse = TRUE, comment = "#>", eval = has_solver
+)
+```
+
+## Why calibrate?
+
+ELSA prioritizations maximise a weighted, **additive** utility: the total amount
+of each feature secured, summed across planning units and action zones. Because
+the objective is additive, spatially extensive features — and features that
+co-occur with areas that are valuable to *other* features — are favoured over
+rarer or more isolated features when every feature is weighted equally. Some
+features end up well represented while others are left far below what they could
+achieve.
+
+`elsar_calibrate_weights()` computes a per-feature weight `w_j` that counteracts
+this, so features achieve **more even representation relative to their own
+single-feature maximum**. It reproduces the ELSA calibration framework exactly;
+this vignette shows how to run it and read the result.
+
+## How it works
+
+1. **Single-feature maxima.** Each feature `j` is maximised on its own (weight 1
+   for `j`, 0 for the rest) to find its maximum attainable representation
+   `a_j^max`.
+2. **Baseline.** The problem is solved with equal weights to get each feature's
+   representation `a_j` and relative shortfall
+   `delta_j = (a_j - a_j^max) / a_j^max`.
+3. **Iterate.** Weights are nudged up — most for the worst-represented feature,
+   none for the best — the problem is re-solved, and shortfalls recomputed. This
+   repeats until the allocation stops changing; the weights giving the most even
+   representation (smallest spread of `delta_j`) are returned.
+
+The objective and update rule are unchanged from the original ELSA tool; the
+implementation additionally returns the best-seen weights, stops once the
+allocation freezes, and excludes zero-total features.
+
+## A worked example
+
+We build a small synthetic stack of four features with different spatial
+footprints, two action zones, and per-zone impacts and budgets.
+
+```{r setup}
+library(elsar)
+library(terra)
+
+set.seed(1)
+r0 <- rast(nrows = 24, ncols = 24, xmin = 0, xmax = 24, ymin = 0, ymax = 24,
+           crs = "EPSG:3857")
+xx <- init(r0, "x")
+yy <- init(r0, "y")
+
+features <- c(
+  init(r0, runif),                          # broad, diffuse
+  (xx < 8) * 1,                             # concentrated strip
+  ((xx - 12)^2 + (yy - 12)^2 < 40) * 1,     # central disc
+  (yy > 20) * init(r0, runif)               # sparse band
+)
+names(features) <- c("diffuse", "strip", "disc", "band")
+
+pu_all   <- ifel(!is.na(features[[1]]), 1, NA)
+zones_pu <- list(protect = pu_all, restore = pu_all)
+
+impacts <- data.frame(
+  feature = names(features),
+  protect = c(1.0, 1.0, 1.0, 1.0),
+  restore = c(0.6, 0.3, 0.8, 0.5)
+)
+budgets <- c(protect = 20, restore = 15)  # % of planning-unit area
+```
+
+Run the calibration. We use the free HiGHS solver here; in production you would
+typically use `solver = "gurobi"`.
+
+```{r calibrate}
+cal <- elsar_calibrate_weights(
+  features       = features,
+  impacts        = impacts,
+  zones_pu       = zones_pu,
+  planning_units = pu_all,
+  budgets        = budgets,
+  solver         = "highs",
+  verbose        = FALSE
+)
+```
+
+The calibrated weights:
+
+```{r weights}
+cal$weights
+```
+
+The representation profile shows how close each feature gets to its single-feature
+maximum (`ratio = a / a_max`); calibration lifts the weakest features:
+
+```{r representation}
+cal$representation
+```
+
+The per-iteration trajectory records how the spread of shortfalls shrinks and when
+the allocation froze:
+
+```{r trajectory}
+cal$trajectory[, c("iter", "spread_new", "max_abs_util_change", "weight_max")]
+```
+
+```{r converged}
+cal$converged
+cal$iterations
+```
+
+## Using the weights
+
+At run time the ELSA tool multiplies these calibration weights by any
+user-specified weights, so `w_j = w_j^user * w_j^cal` (with `w_j^user = 1` by
+default). Persist `cal$weights` alongside your prepared layers and load them as
+the `weight_calibration` for each feature.
+
+## Solvers
+
+`elsar_calibrate_weights()` needs `prioritizr` and a supported solver:
+
+- `solver = "gurobi"` — fastest; requires the commercial `gurobi` R package.
+- `solver = "highs"` — free and open-source (`install.packages("highs")`).
+- `solver = "default"` — prioritizr's best available solver.
+
+Transient solver or cloud-connection failures are retried automatically
+(`solve_retries`).

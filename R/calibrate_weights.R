@@ -84,7 +84,7 @@
 #' \dontrun{
 #' cal <- elsar_calibrate_weights(
 #'   features       = feature_stack,
-#'   impacts        = impact_df,       # cols: feature, protect, restore, manage
+#'   impacts        = impact_df, # cols: feature, protect, restore, manage
 #'   zones_pu       = list(protect = pu_protect, restore = pu_restore, manage = pu_manage),
 #'   planning_units = pu_all,
 #'   budgets        = c(protect = 30, restore = 18.564, manage = 5),
@@ -125,24 +125,32 @@ elsar_calibrate_weights <- function(features,
     )
   }
   assertthat::assert_that(inherits(features, "SpatRaster"),
-    msg = "'features' must be a SpatRaster.")
+    msg = "'features' must be a SpatRaster."
+  )
   assertthat::assert_that(inherits(planning_units, "SpatRaster") && terra::nlyr(planning_units) == 1,
-    msg = "'planning_units' must be a single-layer SpatRaster.")
+    msg = "'planning_units' must be a single-layer SpatRaster."
+  )
   assertthat::assert_that(is.data.frame(impacts) && "feature" %in% names(impacts),
-    msg = "'impacts' must be a data.frame with a 'feature' column and one column per action zone.")
+    msg = "'impacts' must be a data.frame with a 'feature' column and one column per action zone."
+  )
   assertthat::assert_that(is.list(zones_pu) && !is.null(names(zones_pu)),
-    msg = "'zones_pu' must be a named list of single-layer SpatRaster zone masks.")
+    msg = "'zones_pu' must be a named list of single-layer SpatRaster zone masks."
+  )
   assertthat::assert_that(is.numeric(budgets) && !is.null(names(budgets)),
-    msg = "'budgets' must be a named numeric vector of per-zone area-cap percentages.")
+    msg = "'budgets' must be a named numeric vector of per-zone area-cap percentages."
+  )
 
   zone_names <- names(zones_pu)
   feat_names <- names(features)
   assertthat::assert_that(all(zone_names %in% names(impacts)),
-    msg = "every zone in 'zones_pu' must have a matching impact column in 'impacts'.")
+    msg = "every zone in 'zones_pu' must have a matching impact column in 'impacts'."
+  )
   assertthat::assert_that(all(zone_names %in% names(budgets)),
-    msg = "every zone in 'zones_pu' must have a matching entry in 'budgets'.")
+    msg = "every zone in 'zones_pu' must have a matching entry in 'budgets'."
+  )
   assertthat::assert_that(setequal(impacts$feature, feat_names),
-    msg = "'impacts$feature' must match names(features) exactly.")
+    msg = "'impacts$feature' must match names(features) exactly."
+  )
 
   # order impacts to feature order
   impacts <- impacts[match(feat_names, impacts$feature), , drop = FALSE]
@@ -190,7 +198,8 @@ elsar_calibrate_weights <- function(features,
   }
   overall_rep <- function(weight_matrix) {
     .elsar_zone_representation(base_problem, weight_matrix, feature_totals, feat_names,
-                              retries = solve_retries)
+      retries = solve_retries
+    )
   }
 
   # ---- Step 1: single-feature maxima a_max ----
@@ -212,9 +221,9 @@ elsar_calibrate_weights <- function(features,
   valid0 <- is.finite(delta)
   spread_prev <- max(delta[valid0]) - min(delta[valid0])
   spread_best <- spread_prev
-  wgta_best   <- wgta
-  delta_best  <- delta
-  util_best   <- util
+  wgta_best <- wgta
+  delta_best <- delta
+  util_best <- util
   if (verbose) log_message("  baseline spread {round(spread_prev, 4)} over {sum(valid0)}/{n_feat} features.")
 
   traj <- list(.elsar_traj_row(0L, NA_real_, spread_prev, NA_real_, delta, wgta))
@@ -259,9 +268,9 @@ elsar_calibrate_weights <- function(features,
 
     # keep the best-seen configuration (lowest spread)
     if (is.finite(spread_new) && spread_new < spread_best - 1e-6) {
-      wgta_best   <- wgtb
-      delta_best  <- delta_new
-      util_best   <- util_new
+      wgta_best <- wgtb
+      delta_best <- delta_new
+      util_best <- util_new
       spread_best <- spread_new
     }
 
@@ -297,7 +306,7 @@ elsar_calibrate_weights <- function(features,
 
   # ---- Assemble result (best-seen) ----
   weights_vec <- as.numeric(wgta_best[, 1])
-  a_vec    <- as.numeric(util_best[feat_names])
+  a_vec <- as.numeric(util_best[feat_names])
   amax_vec <- as.numeric(a_max[feat_names])
   result <- list(
     weights = tibble::tibble(feature = feat_names, weight = weights_vec),
@@ -357,10 +366,14 @@ elsar_calibrate_weights <- function(features,
 
   # solver
   problem <- switch(solver,
-    gurobi  = prioritizr::add_gurobi_solver(problem, gap = gap, threads = threads,
-                                            time_limit = time_limit, verbose = FALSE),
-    highs   = prioritizr::add_highs_solver(problem, gap = gap,
-                                           time_limit = time_limit, verbose = FALSE),
+    gurobi = prioritizr::add_gurobi_solver(problem,
+      gap = gap, threads = threads,
+      time_limit = time_limit, verbose = FALSE
+    ),
+    highs = prioritizr::add_highs_solver(problem,
+      gap = gap,
+      time_limit = time_limit, verbose = FALSE
+    ),
     default = prioritizr::add_default_solver(problem, gap = gap, verbose = FALSE)
   )
 
@@ -444,7 +457,8 @@ elsar_calibrate_weights <- function(features,
     dplyr::mutate(
       total_amount = feature_totals[.data$feature],
       relative_held = dplyr::if_else(.data$total_amount > 0,
-        .data$absolute_held / .data$total_amount, 0.0)
+        .data$absolute_held / .data$total_amount, 0.0
+      )
     ) %>%
     dplyr::group_by(.data$feature) %>%
     dplyr::summarise(overall = sum(.data$relative_held, na.rm = TRUE), .groups = "drop")
