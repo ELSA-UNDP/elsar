@@ -45,7 +45,8 @@
 * `make_boundary()` now errors with an actionable message (listing the available
   codes) when `iso3` matches no feature, instead of silently returning a 0-row
   `sf` (or later failing with a cryptic GDAL projection error). It also checks
-  that `iso3_column` / `col_name` are actually columns in the input.
+  that `iso3_column` / `col_name` are actually columns in the input, and that the
+  boundary has a coordinate reference system before reprojecting it.
 
 * `elsar_load_data()` no longer silently returns a non-`sf` object when reads
   fail. When loading multiple files/layers it now **errors** if every read
@@ -54,7 +55,10 @@
   Loading a single unreadable file now errors instead of returning `NULL`.
   Relatedly, `filter_sf()` now honours its "return `NULL` on failure" contract
   for corrupt files: the layer-name probe (`sf::st_layers()`) is now inside the
-  read guard, so a bad file is skipped rather than aborting the whole load.
+  read guard, so a bad file is skipped rather than aborting the whole load. When
+  the successfully-read layers have different coordinate reference systems, the
+  load now stops with a clear message naming them instead of failing deep inside
+  `bind_rows()`.
 
 * `elsar_load_data()`'s PostgreSQL path now works. The connection list is spliced
   into `DBI::dbConnect()` via `do.call()` instead of the rlang `!!!` operator,

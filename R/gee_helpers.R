@@ -131,7 +131,14 @@ create_gee_conda_env <- function(env_name = elsar_gee_env(),
       reticulate::use_python(env_python, required = TRUE)
       return(env_name)
     }
-    log_message("Environment '{env_name}' exists but has no Python; recreating.")
+    # A partial/corrupt env (dir present but no Python, e.g. an interrupted
+    # create) must be removed first: `conda create` aborts with "prefix already
+    # exists", which would otherwise make the persistent env unrecoverable.
+    log_message("Environment '{env_name}' exists but has no Python; removing and recreating.")
+    tryCatch(reticulate::conda_remove(env_name), error = function(e) NULL)
+    if (dir.exists(env_dir)) {
+      unlink(env_dir, recursive = TRUE, force = TRUE)
+    }
   }
 
   conda_exe <- find_conda_exe(conda_base)
@@ -227,6 +234,8 @@ find_conda_base <- function() {
     # conda_binary() returns <base>/bin/conda or <base>/condabin/conda(.bat)
     conda_candidates <- c(conda_candidates, dirname(dirname(retic_bin)))
   }
+  # miniconda_path() returns the DEFAULT location whether or not it exists, so
+  # this may add a phantom candidate; the dir.exists() check below filters it out.
   retic_mc <- tryCatch(reticulate::miniconda_path(), error = function(e) NULL)
   if (!is.null(retic_mc) && nzchar(retic_mc)) {
     conda_candidates <- c(conda_candidates, retic_mc)

@@ -139,6 +139,12 @@ elsar_load_data <- function(file_name = NULL,
     # SQL injection and to handle names that need quoting.
     tbl <- DBI::dbQuoteIdentifier(con, file_lyr)
     query <- if (!is.null(iso3) && !is.null(iso3_column)) {
+      # dbQuoteLiteral() is vectorised; a non-scalar iso3 would build multiple
+      # query strings and break st_read(). Filtering here is single-value (`=`).
+      assertthat::assert_that(
+        assertthat::is.string(iso3),
+        msg = "'iso3' must be a single string when loading from PostgreSQL."
+      )
       col <- DBI::dbQuoteIdentifier(con, iso3_column)
       val <- DBI::dbQuoteLiteral(con, iso3)
       glue::glue("SELECT * FROM {tbl} WHERE {col} = {val}")
@@ -251,6 +257,23 @@ combine_layers <- function(results, sources, noun = "layer") {
   }
 
   ok <- results[!failed]
+
+  # Combining sf objects with different CRS via bind_rows() fails deep in vctrs
+  # with an opaque message. Check up front and report it clearly, naming the
+  # offending sources, rather than silently reprojecting to an arbitrary CRS.
+  first_crs <- sf::st_crs(ok[[1]])
+  crs_ok <- vapply(ok, function(x) isTRUE(sf::st_crs(x) == first_crs), logical(1))
+  if (!all(crs_ok)) {
+    stop(
+      glue::glue(
+        "The {noun}s do not share a coordinate reference system, so they cannot ",
+        "be combined. Reproject them to a common CRS first. Differing: ",
+        "{paste(sources[!failed][!crs_ok], collapse = ', ')}"
+      ),
+      call. = FALSE
+    )
+  }
+
   all_cols <- unique(unlist(lapply(ok, names)))
   ok <- lapply(ok, function(x) {
     missing <- setdiff(all_cols, names(x))
