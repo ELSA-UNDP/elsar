@@ -38,6 +38,16 @@ test_that("make_boundary(limit_to_mainland = TRUE) works and stays in-country", 
   expect_true(sf::st_is_longlat(b))
 })
 
+test_that("make_boundary() errors clearly when the boundary has no CRS", {
+  nb <- boundary_dat[boundary_dat$iso3cd == "NPL", ]
+  sf::st_crs(nb) <- NA
+  expect_error(
+    make_boundary(nb, iso3 = "NPL", iso3_column = "iso3cd",
+                  filter_by_iso3 = FALSE, custom_projection = FALSE),
+    "no coordinate reference system"
+  )
+})
+
 # ---- make_planning_units ---------------------------------------------------
 
 test_that("make_planning_units() rejects a geographic (lat/long) boundary", {
@@ -91,6 +101,15 @@ test_that("elsar_load_data() returns an sf when all reads succeed", {
   res <- suppressMessages(elsar_load_data(file_name = NULL, file_path = dir))
   expect_s3_class(res, "sf")
   expect_equal(nrow(res), 2L)
+})
+
+test_that("combine_layers() errors clearly when layers have different CRS", {
+  a <- boundary_dat[boundary_dat$iso3cd == "NPL", ]
+  b <- sf::st_transform(boundary_dat[boundary_dat$iso3cd == "IND", ], 3857)
+  expect_error(
+    suppressMessages(combine_layers(list(a, b), c("a.shp", "b.shp"), noun = "file")),
+    "do not share a coordinate reference system"
+  )
 })
 
 test_that("elsar_load_data() warns but continues on partial read failure", {

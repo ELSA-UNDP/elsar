@@ -117,7 +117,15 @@ make_boundary <- function(boundary_in,
       dplyr::slice(which.max(as.numeric(sf::st_area(nb))))
   }
 
-  # Normalise to WGS84 before any custom projection is applied.
+  # Normalise to WGS84 before any custom projection is applied. Check for a CRS
+  # first, so a boundary without one fails with a clear message rather than an
+  # obscure error from sf::st_transform().
+  assertthat::assert_that(
+    !is.na(sf::st_crs(nb)),
+    msg = paste0("The boundary has no coordinate reference system. Set one on ",
+                 "'boundary_in' (e.g. sf::st_crs(x) <- 4326, or the raster's CRS ",
+                 "for SpatRaster input) before calling make_boundary().")
+  )
   nb <- sf::st_transform(nb, crs = sf::st_crs(4326))
 
   if (dissolve) { # treat multiple features (e.g. provinces) as one region
