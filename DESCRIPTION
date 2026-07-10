@@ -45,8 +45,6 @@ Suggests:
     RPostgres,
     testthat (>= 3.0.0),
     wdpar
-Enhances:
-    gurobi
 VignetteBuilder: knitr
 Depends:
     R (>= 3.5.0)

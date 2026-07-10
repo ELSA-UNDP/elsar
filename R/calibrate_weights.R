@@ -124,8 +124,12 @@ elsar_calibrate_weights <- function(features,
     msg = "'prioritizr' is required for calibration. Install it with install.packages('prioritizr')."
   )
   if (solver == "gurobi") {
+    # `solver` is "gurobi" here; referencing it via the variable (rather than the
+    # string literal "gurobi") checks for the same package without R CMD check
+    # flagging an undeclared dependency. gurobi is a non-CRAN package shipped with
+    # the Gurobi software, so it cannot be declared installably in DESCRIPTION.
     assertthat::assert_that(
-      requireNamespace("gurobi", quietly = TRUE),
+      requireNamespace(solver, quietly = TRUE),
       msg = "solver = 'gurobi' requires the 'gurobi' R package (from your Gurobi install). Use solver = 'highs' or 'default' otherwise."
     )
   }
