@@ -29,6 +29,12 @@ development:
   version_tooltip: "Пакет находится на ранних стадиях разработки. Используйте с осторожностью."
 reference:
 
+- title: Настройка и проверка окружения
+  desc: Диагностика и настройка инструментов, необходимых elsar (включая Earth Engine)
+- contents:
+  - elsar_check_setup
+  - elsar_setup_gee
+
 - title: Подготовка Региона Планирования
   desc: Функции для подготовки региона планирования для рабочего процесса ELSA
 - contents:
@@ -66,6 +72,7 @@ reference:
   desc: Функции для помощи в анализе ELSA
 - contents:
   - calculate_restore_and_urban_budgets
+  - elsar_calibrate_weights
   - get_min_lockin_target
   - get_target
 
