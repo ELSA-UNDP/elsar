@@ -117,17 +117,36 @@ elsar_load_data <- function(file_name = NULL,
       !is.null(file_lyr),
       msg = "'file_lyr' (table name) is required when loading from PostgreSQL."
     )
+    if (!requireNamespace("RPostgres", quietly = TRUE)) {
+      stop("Package 'RPostgres' is required to load from PostgreSQL. ",
+           "Install it with install.packages(\"RPostgres\").", call. = FALSE)
+    }
+    if (!requireNamespace("DBI", quietly = TRUE)) {
+      stop("Package 'DBI' is required to load from PostgreSQL. ",
+           "Install it with install.packages(\"DBI\").", call. = FALSE)
+    }
+
     log_message("Connecting to PostgreSQL database...")
-    con <- if (is.null(pg_connection)) {
-      RPostgres::dbConnect(RPostgres::Postgres(), !!!db_info)
+    # Use do.call to splice the named connection list into dbConnect(). The
+    # rlang splice operator `!!!` does not work here: dbConnect() is a plain S4
+    # generic, not a quoting function, so `!!!x` would be parsed as `!(!(!x))`.
+    params <- if (!is.null(pg_connection)) pg_connection else db_info
+    con <- do.call(RPostgres::dbConnect, c(list(RPostgres::Postgres()), params))
+    # Always close the connection, even if the read errors.
+    on.exit(DBI::dbDisconnect(con), add = TRUE)
+
+    # Build the query with properly quoted identifiers and literals to avoid
+    # SQL injection and to handle names that need quoting.
+    tbl <- DBI::dbQuoteIdentifier(con, file_lyr)
+    query <- if (!is.null(iso3) && !is.null(iso3_column)) {
+      col <- DBI::dbQuoteIdentifier(con, iso3_column)
+      val <- DBI::dbQuoteLiteral(con, iso3)
+      glue::glue("SELECT * FROM {tbl} WHERE {col} = {val}")
     } else {
-      RPostgres::dbConnect(RPostgres::Postgres(), !!!pg_connection)
+      glue::glue("SELECT * FROM {tbl}")
     }
     log_message("Loading table '{file_lyr}' from PostgreSQL...")
-    return(sf::st_read(
-      dsn = con,
-      query = glue::glue("SELECT * FROM {file_lyr} WHERE {iso3_column} = '{iso3}'")
-    ))
+    return(sf::st_read(dsn = con, query = query))
   }
 
   # Local file handling
@@ -166,17 +185,7 @@ elsar_load_data <- function(file_name = NULL,
     log_message("Loading {length(shapefiles)} shapefile(s)...")
     all_data <- lapply(shapefiles, function(f)
       filter_sf(f, iso3, iso3_column, drop3d = drop3d, wkt_filter = filter_geom, file_type = file_type))
-    all_data <- Filter(Negate(is.null), all_data)
-    all_cols <- unique(unlist(lapply(all_data, names)))
-    all_data <- lapply(all_data, function(x) {
-      missing <- setdiff(all_cols, names(x))
-      for (col in missing)
-        x[[col]] <- NA
-      x[, all_cols]
-    })
-    result <- dplyr::bind_rows(all_data)
-    log_message("Loaded {nrow(result)} features from {length(all_data)} file(s).")
-    return(result)
+    return(combine_layers(all_data, shapefiles, noun = "file"))
   }
 
   # Vector formats - multi-layer files without specified layer
@@ -185,24 +194,72 @@ elsar_load_data <- function(file_name = NULL,
     log_message("Loading all {length(all_layers)} layers from '{file_type}' file...")
     all_data <- lapply(all_layers, function(lyr)
       filter_sf(input_path, iso3, iso3_column, lyr, drop3d, filter_geom, file_type))
-    all_data <- Filter(Negate(is.null), all_data)
-    all_cols <- unique(unlist(lapply(all_data, names)))
-    all_data <- lapply(all_data, function(x) {
-      missing <- setdiff(all_cols, names(x))
-      for (col in missing)
-        x[[col]] <- NA
-      x[, all_cols]
-    })
-    result <- dplyr::bind_rows(all_data)
-    log_message("Loaded {nrow(result)} features from {length(all_data)} layer(s).")
-    return(result)
+    return(combine_layers(all_data, all_layers, noun = "layer"))
   }
 
   # Single vector layer
   log_message("Loading vector data from '{input_path}'...")
   result <- filter_sf(input_path, iso3, iso3_column, layer_name = file_lyr, drop3d = drop3d, wkt_filter = filter_geom, file_type = file_type)
-  if (!is.null(result)) {
-    log_message("Loaded {nrow(result)} features.")
+  # filter_sf() returns NULL only when the read itself failed (a successful read
+  # with no matching rows returns a 0-row sf). So NULL here is a genuine error,
+  # not an empty result - surface it instead of silently returning a non-sf NULL.
+  if (is.null(result)) {
+    stop(glue::glue("Failed to read '{input_path}'. See the message above for the error."),
+         call. = FALSE)
   }
+  log_message("Loaded {nrow(result)} features.")
   return(result)
+}
+
+#' Combine per-layer read results into a single sf, surfacing read failures
+#'
+#' Aggregates the results of several [filter_sf()] calls (one per file or
+#' layer). `NULL` entries are failed reads; successful reads are `sf` objects
+#' (possibly with zero rows). Unlike a bare `dplyr::bind_rows()`, this:
+#'
+#' * errors if *every* read failed (rather than returning a `0 x 0` tibble that
+#'   is not an `sf` object), and
+#' * warns, but continues, if *some* reads failed, naming which.
+#'
+#' @param results List returned from [filter_sf()] calls; `NULL` = failed read.
+#' @param sources Character vector of the file paths / layer names read, in the
+#'   same order as `results`, used in messages.
+#' @param noun Character. `"file"` or `"layer"`, for messages.
+#' @return An `sf` object combining all successful reads (possibly zero rows).
+#' @keywords internal
+combine_layers <- function(results, sources, noun = "layer") {
+  n_total <- length(results)
+  failed <- vapply(results, is.null, logical(1))
+  n_failed <- sum(failed)
+
+  if (n_total == 0) {
+    stop(glue::glue("No {noun}s found to load."), call. = FALSE)
+  }
+  if (n_failed == n_total) {
+    stop(
+      glue::glue("Failed to read all {n_total} {noun}(s). ",
+                 "See the messages above for the per-{noun} errors."),
+      call. = FALSE
+    )
+  }
+  if (n_failed > 0) {
+    warning(
+      glue::glue("{n_failed} of {n_total} {noun}(s) failed to read and were ",
+                 "skipped: {paste(sources[failed], collapse = ', ')}"),
+      call. = FALSE
+    )
+  }
+
+  ok <- results[!failed]
+  all_cols <- unique(unlist(lapply(ok, names)))
+  ok <- lapply(ok, function(x) {
+    missing <- setdiff(all_cols, names(x))
+    for (col in missing) {
+      x[[col]] <- NA
+    }
+    x[, all_cols]
+  })
+  result <- dplyr::bind_rows(ok)
+  log_message("Loaded {nrow(result)} features from {length(ok)} {noun}(s).")
+  result
 }

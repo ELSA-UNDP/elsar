@@ -10,8 +10,10 @@ cleanup_earthengine(env_info)
 \item{env_info}{List returned from initialize_earthengine() containing temp_env info}
 }
 \description{
-Removes temporary conda environment if one was created during initialization.
-Should be called at the end of any function that uses initialize_earthengine().
+Removes a \emph{temporary} conda environment if one was recorded during
+initialization. The persistent elsar environment (\code{\link[=elsar_gee_env]{elsar_gee_env()}}) is
+never recorded in \code{temp_env}, so it is deliberately left in place for reuse -
+this function is a no-op in that (now normal) case.
 }
 \examples{
 \dontrun{

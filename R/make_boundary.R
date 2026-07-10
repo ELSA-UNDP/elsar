@@ -2,7 +2,10 @@
 #'
 #' @param boundary_in A file containing the boundary information. Can be `sf` or `SpatRaster`
 #' @param input_type A string that is either "sf" or "SpatRaster" (default is "sf").
-#' @param limit_to_mainland Logical. Limits the extent of the data to mainland.
+#' @param limit_to_mainland Logical. When `TRUE`, keep only the single largest
+#'   polygon (the mainland), dropping islands and other outlying parts. Applied
+#'   after any `iso3` filter, so the largest polygon is chosen within the target
+#'   region. Default `FALSE`.
 #' @param col_name A string of the column containing the actual extent of the planning region (not outside area). Can be `NULL`.
 #' @param filter_out A value representing the outside area in the data (e.g. `0`)
 #' @param custom_projection Logical. `TRUE`if custom projection for planning region is wanted.
@@ -71,23 +74,51 @@ make_boundary <- function(boundary_in,
       sf::st_as_sf()
   }
 
-  if (limit_to_mainland == TRUE) { # exclude any islands etc.
+  # Optionally drop non-data features (e.g. background coded as 0/NA)
+  if (!is.null(col_name)) {
+    assertthat::assert_that(
+      col_name %in% names(nb),
+      msg = glue::glue("'col_name' ('{col_name}') is not a column in the boundary data.")
+    )
     nb <- nb %>%
-      sf::st_cast("POLYGON") %>%
-      dplyr::slice(which.max(as.numeric(sf::st_area(.data)))) # get largest polygon that represents mainland
-  } else {
-    if (!is.null(col_name)) {
-      nb <- nb %>%
-        dplyr::filter(!!rlang::sym(col_name) != filter_out) # filter out anything that's not data (e.g. 0s, NAs)
-    }
-    nb <- nb %>%
-      sf::st_transform(nb, crs = sf::st_crs(4326))
+      dplyr::filter(!!rlang::sym(col_name) != filter_out)
   }
 
-  if (!is.null(iso3) && filter_by_iso3) { #filter for right country if needed
+  # Filter to the country/region of interest. Do this BEFORE limiting to the
+  # mainland, so "largest polygon" is chosen within the target region rather
+  # than across the whole input dataset.
+  if (!is.null(iso3) && filter_by_iso3) {
+    assertthat::assert_that(
+      iso3_column %in% names(nb),
+      msg = glue::glue("'iso3_column' ('{iso3_column}') is not a column in the boundary data.")
+    )
+    available <- unique(as.character(nb[[iso3_column]]))
     nb <- nb %>%
       dplyr::filter(!!rlang::sym(iso3_column) == iso3)
+    assertthat::assert_that(
+      nrow(nb) > 0,
+      msg = glue::glue(
+        "No features found for iso3 = '{iso3}' in column '{iso3_column}'. ",
+        "Available values: {paste(utils::head(available, 25), collapse = ', ')}",
+        if (length(available) > 25) {
+          glue::glue(" (and {length(available) - 25} more).")
+        } else {
+          "."
+        }
+      )
+    )
   }
+
+  # Limit to the largest (mainland) polygon, dropping islands etc.
+  if (isTRUE(limit_to_mainland)) {
+    nb <- nb %>%
+      sf::st_cast("POLYGON")
+    nb <- nb %>%
+      dplyr::slice(which.max(as.numeric(sf::st_area(nb))))
+  }
+
+  # Normalise to WGS84 before any custom projection is applied.
+  nb <- sf::st_transform(nb, crs = sf::st_crs(4326))
 
   if (dissolve) { # treat multiple features (e.g. provinces) as one region
     nb <- nb %>%

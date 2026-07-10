@@ -26,19 +26,25 @@ License: CC BY 4.0
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 Suggests:
+    archive,
+    chromote,
+    covr,
     DBI,
     future.apply,
+    googledrive,
+    highs,
     kableExtra,
     knitr,
     patchwork,
-    png,
     prioritizr,
     progressr,
+    rappdirs,
     readr,
+    reticulate,
     rmarkdown,
-    scales,
     RPostgres,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    wdpar
 VignetteBuilder: knitr
 Depends:
     R (>= 3.5.0)
@@ -51,17 +57,16 @@ Imports:
     ggplot2,
     ggridges,
     ggspatial,
-    googledrive,
     glue,
     here,
     jsonlite,
     lifecycle,
     magrittr,
     plyr,
+    png,
     purrr,
-    rappdirs,
-    reticulate,
     rlang,
+    scales,
     sf,
     stats,
     stringr,
@@ -69,9 +74,10 @@ Imports:
     tibble,
     tidyterra,
     units,
-    wdpar,
     xml2
 Config/testthat/edition: 3
 LazyData: true
-URL: https://elsa-undp.github.io/elsar/
+Language: en-GB
+URL: https://elsa-undp.github.io/elsar/, https://github.com/ELSA-UNDP/elsar
+BugReports: https://github.com/ELSA-UNDP/elsar/issues
 Config/roxygen2/version: 8.0.0

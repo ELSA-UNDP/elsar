@@ -1,3 +1,113 @@
+# elsar (development version)
+
+## New features
+
+* `elsar_calibrate_weights()` computes per-feature calibration weights for an ELSA
+  prioritization so that features achieve more even representation relative to their
+  single-feature maxima. This is the ELSA pre-calibration step, previously living in
+  the downstream tool; the objective and framework are unchanged (spread-of-shortfall
+  minimisation via an additive, increase-only weight update), with added robustness:
+  it returns the best-seen weights, stops once the allocation freezes, and excludes
+  zero-total features instead of aborting. It returns a structured `elsar_calibration`
+  object (weights, representation profile, per-iteration trajectory, metadata) and
+  writes no files. `prioritizr` and a solver (`gurobi`, or `highs` for a free/local
+  option) are optional dependencies, checked at call time with an actionable message.
+
+## Installation / Dependencies
+
+* The core package is now much lighter to install. `wdpar`, `reticulate`,
+  `googledrive`, and `rappdirs` moved from `Imports` to `Suggests`, so installing
+  elsar no longer forces a Chromium browser, `libarchive`, conda/Python, or two
+  Google OAuth flows on users who only need the core (boundaries, planning units,
+  normalisation, zone builders from local rasters, plotting). The optional
+  features now check for their packages and give an actionable install message
+  when one is missing:
+  - `make_protected_areas(from_wdpca = TRUE)` requires `wdpar`;
+  - the `download_*` (Earth Engine) functions require `reticulate` and
+    `googledrive` (run `elsar_setup_gee()` to configure them).
+
+* `scales` and `png` moved from `Suggests` to `Imports`: they are used
+  unconditionally by the core plotting functions, so they belong there.
+
+## Bug Fixes
+
+* elsar now loads the `sf` namespace when it is loaded, so `sf`'s S3 methods
+  (e.g. `[.sf`, `filter.sf`) are registered. Previously the package referred to
+  `sf` only via `sf::` and never imported from it, so `sf`'s namespace was not
+  loaded at package-load time. As a result, operations on `sf` objects -
+  including subsetting the bundled `boundary_dat` and the `dplyr` calls inside
+  `make_boundary()` - could dispatch to the wrong method and fail with a `vctrs`
+  "incompatible scalar type" error unless `sf` happened to be loaded some other
+  way (e.g. `library(sf)`). Surfaced by running the tests against the installed
+  package under `R CMD check`.
+
+* `make_planning_units()` now errors clearly when `boundary_proj` is in a
+  geographic (lat/long) CRS or has no CRS. Previously a lat/long boundary was
+  silently rasterised into a **single cell** (the metre resolution was
+  interpreted as degrees) and every downstream step ran on that one cell with no
+  error or warning. Use `make_boundary(custom_projection = TRUE)` (the default)
+  to get a suitable projected boundary.
+
+* `make_boundary(limit_to_mainland = TRUE)` now works. It previously always
+  errored (`sf::st_area()` was called on an rlang data pronoun). It now keeps the
+  single largest polygon, and does so **after** any `iso3` filter, so the
+  mainland is chosen within the target region rather than across the whole input
+  dataset. The result is also normalised to WGS84 as the non-mainland path
+  already was.
+
+* `make_boundary()` now errors with an actionable message (listing the available
+  codes) when `iso3` matches no feature, instead of silently returning a 0-row
+  `sf` (or later failing with a cryptic GDAL projection error). It also checks
+  that `iso3_column` / `col_name` are actually columns in the input.
+
+* `elsar_load_data()` no longer silently returns a non-`sf` object when reads
+  fail. When loading multiple files/layers it now **errors** if every read
+  fails (previously it returned a `0 x 0` tibble while logging "Loaded 0
+  features"), and **warns but continues** when only some fail, naming them.
+  Loading a single unreadable file now errors instead of returning `NULL`.
+  Relatedly, `filter_sf()` now honours its "return `NULL` on failure" contract
+  for corrupt files: the layer-name probe (`sf::st_layers()`) is now inside the
+  read guard, so a bad file is skipped rather than aborting the whole load.
+
+* `elsar_load_data()`'s PostgreSQL path now works. The connection list is spliced
+  into `DBI::dbConnect()` via `do.call()` instead of the rlang `!!!` operator,
+  which never worked there (`dbConnect()` is a plain S4 generic, so `!!!x` was
+  parsed as `!(!(!x))`). The path now also guards on `RPostgres`/`DBI` with an
+  install hint, closes the connection with `on.exit()`, quotes table/column
+  identifiers and the `iso3` literal to prevent SQL injection, and omits the
+  `WHERE` clause when no `iso3`/`iso3_column` is supplied.
+
+## New Features
+
+* New `elsar_check_setup()` diagnoses your installation tier by tier (core /
+  protected areas / Earth Engine) and reports what is present, what is missing,
+  and the exact command to fix each gap. It makes no changes, needs no
+  credentials, and never errors, so it is safe to run any time - and its output
+  is what the bug-report template asks Earth Engine users to include.
+
+* New `elsar_setup_gee()` bootstraps the Earth Engine environment in one call:
+  it finds conda (and can install miniconda for you if you allow it), creates a
+  **persistent** conda environment (`elsar_ee`) with `earthengine-api`, and
+  optionally walks you through Earth Engine and Google Drive authentication. Run
+  it once, ahead of time, instead of letting the first `download_*` call build
+  the environment mid-analysis.
+
+## Improvements
+
+* The Earth Engine conda environment is now **persistent and reused** across
+  sessions rather than created per-process and removed after each download.
+  Previously each `download_*` call could build a `gee_temp_env_<pid>`
+  environment and delete it on exit, re-downloading Python and `earthengine-api`
+  every session (and, if a run was interrupted before cleanup, leaving stray
+  `gee_temp_env_*` environments behind). `initialize_earthengine()` now creates
+  and reuses the stable `elsar_ee` environment.
+
+* Conda detection (`find_conda_base()`) now also consults `reticulate` (its
+  managed miniconda, `conda_binary()`, `miniconda_path()`), so installations in
+  non-standard locations - including a `reticulate`-installed miniconda and
+  micromamba/Homebrew installs - are found instead of triggering
+  "Could not find conda installation".
+
 # elsar 0.4.0
 
 ## Breaking Changes

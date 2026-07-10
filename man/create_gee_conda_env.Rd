@@ -2,15 +2,25 @@
 % Please edit documentation in R/gee_helpers.R
 \name{create_gee_conda_env}
 \alias{create_gee_conda_env}
-\title{Create temporary conda environment for GEE}
+\title{Create (or reuse) the persistent conda environment for GEE}
 \usage{
-create_gee_conda_env()
+create_gee_conda_env(env_name = elsar_gee_env(), python_version = "3.12")
+}
+\arguments{
+\item{env_name}{Character. Environment name to create/reuse. Defaults to
+\code{\link[=elsar_gee_env]{elsar_gee_env()}}.}
+
+\item{python_version}{Character. Python version for a newly created
+environment. Default \code{"3.12"}.}
 }
 \value{
-Character. Name of the created environment.
+Character. Name of the environment.
 }
 \description{
-Creates a temporary conda environment with earthengine-api installed.
-Handles conda path detection and environment activation.
+Creates a conda environment with \code{earthengine-api} installed. The
+environment has a stable name (\code{\link[=elsar_gee_env]{elsar_gee_env()}}) and is \strong{persistent}: if
+it already exists it is reused as-is rather than recreated, so the heavy
+Python + earthengine-api download happens only once. Also activates the
+environment for the current session via \code{reticulate::use_python()}.
 }
 \keyword{internal}

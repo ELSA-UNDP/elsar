@@ -27,11 +27,11 @@
 #' @examples
 #' \dontrun{
 #' # Automatically estimate PU size to stay under 850,000 PUs
-#' boundary_proj <- make_boundary(boundary_in = boundary_dat, iso3 = "ZMB", iso3_column = "iso3cd")
-#' pu_raster <- make_planning_units(boundary_proj, iso3 = "ZMB")
+#' boundary_proj <- make_boundary(boundary_in = boundary_dat, iso3 = "NPL", iso3_column = "iso3cd")
+#' pu_raster <- make_planning_units(boundary_proj, iso3 = "NPL")
 #'
 #' # Use a fixed PU size (e.g., 250 meters)
-#' pu_raster <- make_planning_units(boundary_proj, pu_size = 250, iso3 = "ZMB")
+#' pu_raster <- make_planning_units(boundary_proj, pu_size = 250, iso3 = "NPL")
 #' }
 make_planning_units <- function(boundary_proj,
                                 pu_size = NULL,
@@ -46,6 +46,23 @@ make_planning_units <- function(boundary_proj,
                           msg = "'boundary_proj' must be an sf object.")
   assertthat::assert_that(assertthat::is.string(iso3),
                           msg = "'iso3' must be a character string.")
+  # Planning-unit sizes are in metres, so the boundary must be in a projected
+  # CRS. Without this guard a lat/long boundary is silently rasterised into a
+  # 1-cell "raster" (the resolution is interpreted as degrees), and every
+  # downstream step runs on that single cell with no error.
+  assertthat::assert_that(
+    !is.na(sf::st_crs(boundary_proj)),
+    msg = paste0("'boundary_proj' has no CRS. It must be in a projected CRS ",
+                 "with linear units (metres). Create it with ",
+                 "make_boundary(custom_projection = TRUE).")
+  )
+  assertthat::assert_that(
+    !sf::st_is_longlat(boundary_proj),
+    msg = paste0("'boundary_proj' is in a geographic (lat/long) CRS, but ",
+                 "planning-unit sizes are in metres. Create the boundary with ",
+                 "make_boundary(custom_projection = TRUE) (the default), or ",
+                 "reproject it to a projected CRS with linear units.")
+  )
   if (!is.null(output_path)) {
     assertthat::assert_that(dir.exists(output_path),
                             msg = glue::glue("'output_path' directory does not exist: {output_path}"))

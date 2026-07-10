@@ -125,6 +125,17 @@ make_protected_areas <- function(
 
   # Load data
   if (from_wdpca) {
+    # wdpar is Suggests: it pulls in a headless browser (chromote) and
+    # libarchive, which the core package should not force on every user.
+    if (!requireNamespace("wdpar", quietly = TRUE)) {
+      stop(
+        paste0("Fetching protected areas from Protected Planet needs the ",
+               "'wdpar' package (install.packages(\"wdpar\")), which also ",
+               "requires a Chromium browser and libarchive. Alternatively, ",
+               "supply your own protected-area layer via from_wdpca = FALSE."),
+        call. = FALSE
+      )
+    }
     wdpa_dir <- file.path(download_path, "wdpa_downloads")
     if (!dir.exists(wdpa_dir)) dir.create(wdpa_dir, recursive = TRUE)
 

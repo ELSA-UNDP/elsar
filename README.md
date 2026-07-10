@@ -2,6 +2,8 @@
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/ELSA-UNDP/elsar/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/ELSA-UNDP/elsar/actions/workflows/R-CMD-check.yaml)
+[![test-coverage](https://github.com/ELSA-UNDP/elsar/actions/workflows/test-coverage.yaml/badge.svg)](https://github.com/ELSA-UNDP/elsar/actions/workflows/test-coverage.yaml)
+[![Codecov test coverage](https://codecov.io/gh/ELSA-UNDP/elsar/graph/badge.svg)](https://app.codecov.io/gh/ELSA-UNDP/elsar)
 <!-- badges: end -->
 
 The **elsar** package provides tools and data pipelines to support *Essential Life Support Areas (ELSA)* conservation planning. It is designed to assist in spatial prioritization and scenario development using globally standardized geospatial data layers.
