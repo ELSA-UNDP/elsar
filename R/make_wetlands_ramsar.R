@@ -37,7 +37,8 @@ make_wetlands_ramsar <- function(
 
   # To keep consistent with use of iso3 elsewhere, and to avoid issues around filtering
   # on the attribute of the same name in the Ramsar dataset, we use iso3_filter.
-  iso3_filter <- iso3
+  # A sub-national code ("USA_CA") is matched by its national part ("USA").
+  iso3_filter <- iso3_base(iso3)
 
   if (!is.null(ramsar_in)) {
     # Handle gpkg file path input - read and combine centroids and boundaries layers

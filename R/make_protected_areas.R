@@ -140,8 +140,10 @@ make_protected_areas <- function(
     if (!dir.exists(wdpa_dir)) dir.create(wdpa_dir, recursive = TRUE)
 
     log_message("Downloading protected areas using the wdpar package")
+    # WDPCA is published per country: a sub-national code ("USA_CA") fetches
+    # the national dataset ("USA"), which is cropped to the PUs below.
     protected_areas <- wdpar::wdpa_fetch(
-      iso3,
+      iso3_base(iso3),
       wait = TRUE,
       check_version = TRUE,
       force_download = force_update,
@@ -199,7 +201,9 @@ make_protected_areas <- function(
     }
   }
 
-  # If geometry includes POINT/MULTIPOINT, buffer or filter
+  # If geometry includes POINT/MULTIPOINT, buffer or filter. Each branch drops
+  # features outside the planning-unit extent before dissolving, so a national
+  # dataset used for a small (e.g. sub-national) study area stays cheap.
   geom_type <- sf::st_geometry_type(protected_areas)
 
   if (any(geom_type %in% c("POINT", "MULTIPOINT"))) {
@@ -212,18 +216,21 @@ make_protected_areas <- function(
         nQuadSegs = n_quad_segs
       ) %>%
         sf::st_transform(sf::st_crs(pus)) %>%
+        crop_to_extent(pus) %>%
         dplyr::summarise() %>%
         sf::st_make_valid()
     } else {
       protected_areas <- protected_areas %>%
         dplyr::filter(sf::st_is(., c("POLYGON", "MULTIPOLYGON"))) %>%
         sf::st_transform(sf::st_crs(pus)) %>%
+        crop_to_extent(pus) %>%
         sf::st_make_valid()
     }
   } else {
     # If already polygonal, reproject and dissolve
     protected_areas <- protected_areas %>%
       sf::st_transform(sf::st_crs(pus)) %>%
+      crop_to_extent(pus) %>%
       dplyr::summarise() %>%
       sf::st_make_valid()
   }
@@ -264,4 +271,34 @@ make_protected_areas <- function(
   }
 
   return(protected_areas_raster)
+}
+
+
+#' Keep only features whose bounding box overlaps a raster's extent
+#'
+#' A cheap pre-filter before dissolving a large layer: compares each feature's
+#' bounding box with the raster extent using coordinates only, so invalid
+#' geometries (common in WDPCA) cannot make GEOS fail. Features are kept
+#' conservatively (bbox overlap, not true intersection); rasterisation onto the
+#' planning units does the exact clipping. `x` must already be in the CRS of
+#' `pus`.
+#'
+#' @param x `sf` object.
+#' @param pus `SpatRaster` defining the extent.
+#'
+#' @return `x` restricted to the overlapping features.
+#' @keywords internal
+crop_to_extent <- function(x, pus) {
+  if (nrow(x) == 0) return(x)
+  e <- as.vector(terra::ext(pus)) # xmin, xmax, ymin, ymax
+  bb <- vapply(sf::st_geometry(x), function(g) as.numeric(sf::st_bbox(g)),
+               numeric(4)) # rows: xmin, ymin, xmax, ymax
+  keep <- !is.na(bb[1, ]) &
+    bb[1, ] <= e[2] & bb[3, ] >= e[1] &
+    bb[2, ] <= e[4] & bb[4, ] >= e[3]
+  n_drop <- sum(!keep)
+  if (n_drop > 0) {
+    log_message("Dropping {n_drop} of {nrow(x)} features outside the planning-unit extent.")
+  }
+  x[keep, , drop = FALSE]
 }

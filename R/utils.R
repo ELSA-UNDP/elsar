@@ -18,6 +18,20 @@ is_valid_iso3 <- function(iso3) {
     grepl("^[A-Za-z]{3}([_-][A-Za-z0-9]+)*$", iso3)
 }
 
+#' National part of an ISO3-style region code
+#'
+#' Global datasets (KBAs, Ramsar, WDPA, GHSL urban centres) carry a national
+#' ISO3 attribute, so a sub-national code such as `"USA_CA"` must be matched
+#' as `"USA"`. A plain 3-letter code is returned unchanged.
+#'
+#' @param iso3 Character. An ISO3-style code accepted by [is_valid_iso3()].
+#'
+#' @return The first three characters of `iso3`.
+#' @keywords internal
+iso3_base <- function(iso3) {
+  substr(iso3, 1, 3)
+}
+
 #' Rescale Raster to 0-1 Range
 #'
 #' This function rescales values in a raster to a range between 0 and 1.
