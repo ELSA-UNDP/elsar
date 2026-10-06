@@ -13,6 +13,15 @@
   writes no files. `prioritizr` and a solver (`gurobi`, or `highs` for a free/local
   option) are optional dependencies, checked at call time with an actionable message.
 
+* Sub-national region codes (e.g. `"USA_CA"`) now work with global datasets:
+  `make_kbas()`, `make_wetlands_ramsar()`, `make_urban_greening_opportunities()`
+  and `make_protected_areas(from_wdpca = TRUE)` filter or fetch by the national
+  part of the code (`"USA"`) instead of matching nothing.
+* `make_protected_areas()` drops protected areas outside the planning-unit
+  extent before dissolving them. Using a national WDPA dataset for a small
+  study area is now much cheaper (California: 48,010 of 50,976 US sites
+  skipped).
+
 ## Installation / Dependencies
 
 * The core package is now much lighter to install. `wdpar`, `reticulate`,

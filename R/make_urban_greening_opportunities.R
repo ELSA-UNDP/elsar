@@ -137,7 +137,7 @@ make_urban_greening_opportunities <- function(
     terra::vect()
 
   sdei_filtered <- sdei_statistics %>%
-    dplyr::filter(!is.na(CTR_MN_ISO) & CTR_MN_ISO == iso3) %>%
+    dplyr::filter(!is.na(CTR_MN_ISO) & CTR_MN_ISO == iso3_base(iso3)) %>%
     terra::vect() %>%
     terra::intersect(y = pu_proj) %>%
     sf::st_as_sf()
