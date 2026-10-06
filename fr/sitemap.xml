@@ -24,6 +24,7 @@
 <url><loc>https://elsa-undp.github.io/elsar/fr/reference/convert_points_polygon.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/fr/reference/create_gee_conda_env.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/fr/reference/crop_global_raster.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/fr/reference/crop_to_extent.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/fr/reference/current_pas_sf.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/fr/reference/download_dynamic_world_data.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/fr/reference/download_esa_worldcover_data.html</loc></url>
@@ -72,6 +73,7 @@
 <url><loc>https://elsa-undp.github.io/elsar/fr/reference/index.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/fr/reference/initialize_earthengine.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/fr/reference/is_valid_iso3.html</loc></url>
+<url><loc>https://elsa-undp.github.io/elsar/fr/reference/iso3_base.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/fr/reference/list_lulc_products.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/fr/reference/load_local_lulc_data.html</loc></url>
 <url><loc>https://elsa-undp.github.io/elsar/fr/reference/log_message.html</loc></url>

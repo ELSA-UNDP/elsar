@@ -135,7 +135,7 @@ budgets.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://elsa-undp.github.io/elsar/" class="external-link">elsar</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://rspatial.org/" class="external-link">terra</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; terra 1.9.34</span></span>
+<span><span class="co">#&gt; terra 1.9.50</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">r0</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rspatial.github.io/terra/reference/rast.html" class="external-link">rast</a></span><span class="op">(</span>nrows <span class="op">=</span> <span class="fl">24</span>, ncols <span class="op">=</span> <span class="fl">24</span>, xmin <span class="op">=</span> <span class="fl">0</span>, xmax <span class="op">=</span> <span class="fl">24</span>, ymin <span class="op">=</span> <span class="fl">0</span>, ymax <span class="op">=</span> <span class="fl">24</span>,</span>
@@ -172,8 +172,10 @@ you would typically use <code>solver = "gurobi"</code>.</p>
 <span>  solver         <span class="op">=</span> <span class="st">"highs"</span>,</span>
 <span>  verbose        <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; [2026-07-10 08:51:24] Calculated target: 115 (20% of total PU area)</span></span>
-<span><span class="co">#&gt; [2026-07-10 08:51:24] Calculated target: 86 (15% of total PU area)</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> `add_max_wtd_sum_objective()` has severe limitations - use with caution.</span></span>
+<span><span class="co">#&gt; [2026-10-06 23:04:38] Calculated target: 115 (20% of total PU area)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; [2026-10-06 23:04:38] Calculated target: 86 (15% of total PU area)</span></span></code></pre></div>
 <p>The calibrated weights:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cal</span><span class="op">$</span><span class="va">weights</span></span>
