@@ -753,6 +753,21 @@ save_raster <- function(raster, filename, datatype = "FLT4S", resampling = NULL)
   log_message("Saved: {filename}.")
 }
 
+# Instruction appended to median_from_rast() errors. The side-car must sit next
+# to the file terra actually opened (terra::sources() resolves symlinks).
+sidecar_fix_hint <- function(tif) {
+  size_gb <- suppressWarnings(file.size(tif) / 1024^3)
+  cost <- if (!is.na(size_gb) && size_gb >= 1) {
+    paste0(" (reads the whole ", round(size_gb), " GB file once; ~",
+           max(1, round(size_gb / 8)), " min)")
+  } else {
+    ""
+  }
+  paste0("This raster needs a precomputed histogram. Create it with:\n",
+         "  gdalinfo -hist '", tif, "'", cost, "\n",
+         "or from R: sf::gdal_utils('info', '", tif, "', options = '-hist')")
+}
+
 #' Compute median from a SpatRaster using its GDAL PAM side-car histogram
 #'
 #' Extracts the histogram stored in the GDAL PAM side-car XML file
@@ -794,13 +809,17 @@ median_from_rast <- function(r) {
     if (file.exists(alt)) {
       xmlf <- alt
     } else {
-      stop("Side-car XML not found for ", tif)
+      stop("Side-car XML not found for ", tif, "\n",
+           sidecar_fix_hint(tif), call. = FALSE)
     }
   }
 
   doc      <- xml2::read_xml(xmlf)
   histItem <- xml2::xml_find_first(doc, ".//HistItem")
-  if (is.na(histItem)) stop("No <HistItem> in side-car XML: ", xmlf)
+  if (is.na(histItem)) {
+    stop("No <HistItem> in side-car XML: ", xmlf, "\n",
+         sidecar_fix_hint(tif), call. = FALSE)
+  }
 
   minv        <- as.numeric(xml2::xml_text(xml2::xml_find_first(histItem, "./HistMin")))
   maxv        <- as.numeric(xml2::xml_text(xml2::xml_find_first(histItem, "./HistMax")))

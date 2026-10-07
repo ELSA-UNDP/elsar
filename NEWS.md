@@ -38,6 +38,15 @@
 * `scales` and `png` moved from `Suggests` to `Imports`: they are used
   unconditionally by the core plotting functions, so they belong there.
 
+## Improvements
+
+* `median_from_rast()` errors now say how to fix a missing or histogram-less
+  GDAL side-car: they give the `gdalinfo -hist` command (and the
+  `sf::gdal_utils()` equivalent) for the exact file terra opened, with a rough
+  time estimate for large rasters. Previously the message was only
+  "Side-car XML not found for <file>", which surfaced mid-run in
+  `make_threatened_ecosystems_protection()` with no hint.
+
 ## Bug Fixes
 
 * elsar now loads the `sf` namespace when it is loaded, so `sf`'s S3 methods
