@@ -55,3 +55,18 @@ test_that("make_protected_areas drops PAs outside the planning units before diss
   )
   expect_equal(sum(terra::values(r) > 0, na.rm = TRUE), 4)
 })
+
+test_that("make_protected_areas repairs invalid geometries before dissolving", {
+  # A self-intersecting "bow-tie" overlapping a valid square makes the dissolve
+  # throw a GEOS TopologyException ("side location conflict") unless the
+  # geometries are re-validated after reprojection, before summarise().
+  pus <- make_test_pus()
+  bow <- sf::st_polygon(list(rbind(c(0, 0), c(10, 10), c(10, 0), c(0, 10), c(0, 0))))
+  pas <- sf::st_sf(
+    geometry = sf::st_sfc(bow, square(2, 2, size = 6), crs = "EPSG:3857")
+  )
+  expect_false(all(sf::st_is_valid(pas)))
+  r <- make_protected_areas(pus = pus, iso3 = "USA_CA", from_wdpca = FALSE, sf_in = pas)
+  expect_s4_class(r, "SpatRaster")
+  expect_gt(sum(terra::values(r) > 0, na.rm = TRUE), 0)
+})

@@ -204,6 +204,11 @@ make_protected_areas <- function(
   # If geometry includes POINT/MULTIPOINT, buffer or filter. Each branch drops
   # features outside the planning-unit extent before dissolving, so a national
   # dataset used for a small (e.g. sub-national) study area stays cheap.
+  # Geometries must be re-validated AFTER reprojecting and BEFORE dissolving:
+  # st_transform() can turn polygons that were valid in the source CRS invalid
+  # (e.g. near-coincident shared edges), and dissolving those throws a GEOS
+  # TopologyException ("side location conflict"). The load-time st_make_valid()
+  # in filter_sf() runs in the source CRS, so it cannot prevent this.
   geom_type <- sf::st_geometry_type(protected_areas)
 
   if (any(geom_type %in% c("POINT", "MULTIPOINT"))) {
@@ -217,6 +222,7 @@ make_protected_areas <- function(
       ) %>%
         sf::st_transform(sf::st_crs(pus)) %>%
         crop_to_extent(pus) %>%
+        sf::st_make_valid() %>%
         dplyr::summarise() %>%
         sf::st_make_valid()
     } else {
@@ -231,6 +237,7 @@ make_protected_areas <- function(
     protected_areas <- protected_areas %>%
       sf::st_transform(sf::st_crs(pus)) %>%
       crop_to_extent(pus) %>%
+      sf::st_make_valid() %>%
       dplyr::summarise() %>%
       sf::st_make_valid()
   }

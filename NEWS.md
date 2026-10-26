@@ -49,6 +49,12 @@
 
 ## Bug Fixes
 
+* `make_protected_areas()` now re-validates geometries after reprojecting to the
+  planning-unit CRS and before dissolving. Reprojection can turn polygons that
+  were valid in the source CRS invalid, and dissolving them failed with a GEOS
+  `TopologyException: side location conflict` (seen with California's 30x30
+  Conserved Areas layer; 77 polygons broke on reprojection).
+
 * elsar now loads the `sf` namespace when it is loaded, so `sf`'s S3 methods
   (e.g. `[.sf`, `filter.sf`) are registered. Previously the package referred to
   `sf` only via `sf::` and never imported from it, so `sf`'s namespace was not
