@@ -32,7 +32,9 @@ make_protect_zone(
 \item{pus}{A \code{SpatRaster} defining the planning units.}
 
 \item{current_protected_areas}{a \code{sf} or \code{SpatVector} object of current protected areas.
-If NULL, \code{elsar::make_protected_areas()} will be used.}
+If NULL, \code{elsar::make_protected_areas()} will be used. May have 0 rows
+(a country with no protected areas); \code{hii_threshold} is then required,
+because there are no protected areas to derive it from.}
 
 \item{lulc_proportions}{A multi-band \code{SpatRaster} from \code{\link[=download_lulc_proportions]{download_lulc_proportions()}} containing
 pre-computed class proportions. If provided, bands named "agriculture" and "built_area" will

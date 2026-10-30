@@ -46,13 +46,24 @@
 #'   if cached. Default is `FALSE`.
 #' @param output_path Character or NULL. Directory to save the output raster.
 #'   If NULL, the raster is returned but not saved.
+#' @param return_sf Logical. If `TRUE`, returns the dissolved polygons alongside
+#'   the raster (see Value). Defaults to `from_wdpca`, which keeps the original
+#'   return types.
 #'
-#' @return If `sf_in` was provided (i.e., `from_wdpca = FALSE`), returns a SpatRaster.
-#'   If data was downloaded from WDPCA (`from_wdpca = TRUE`), returns a list with:
+#' @return If `return_sf = FALSE` (the default when `from_wdpca = FALSE`), returns
+#'   a SpatRaster. If `return_sf = TRUE` (the default when `from_wdpca = TRUE`),
+#'   returns a list with:
 #' \describe{
 #'   \item{raster}{SpatRaster of protected areas}
 #'   \item{sf}{sf object of dissolved protected area polygons for reuse}
 #' }
+#'
+#' @section No protected areas:
+#' Some countries have no usable protected-area geometry: no records pass the
+#' filters, none overlap the planning units, or all are points with no
+#' reported area to buffer (e.g. Somalia in WDPA). Then the raster is all 0
+#' within the planning units, the `sf` has 0 rows, and a warning says why.
+#' Downstream functions accepting protected areas handle the 0-row `sf`.
 #'
 #' @export
 make_protected_areas <- function(
@@ -72,7 +83,8 @@ make_protected_areas <- function(
     binary = TRUE,
     threshold = 0.10,
     force_update = FALSE,
-    output_path = NULL
+    output_path = NULL,
+    return_sf = from_wdpca
 ) {
   # Handle deprecated pa_def parameter
   if (lifecycle::is_present(pa_def)) {
@@ -152,6 +164,7 @@ make_protected_areas <- function(
   } else {
     protected_areas <- sf_in
   }
+  n_loaded <- nrow(protected_areas)
 
   log_message(
     "Including {glue::glue_collapse(status, sep = ', ', last = ' and ')} areas only"
@@ -200,6 +213,7 @@ make_protected_areas <- function(
         dplyr::filter(!stringr::str_detect(.data[[desig_col]], "MAB"))
     }
   }
+  n_filtered <- nrow(protected_areas)
 
   # If geometry includes POINT/MULTIPOINT, buffer or filter. Each branch drops
   # features outside the planning-unit extent before dissolving, so a national
@@ -223,8 +237,7 @@ make_protected_areas <- function(
         sf::st_transform(sf::st_crs(pus)) %>%
         crop_to_extent(pus) %>%
         sf::st_make_valid() %>%
-        dplyr::summarise() %>%
-        sf::st_make_valid()
+        dissolve_sf()
     } else {
       protected_areas <- protected_areas %>%
         dplyr::filter(sf::st_is(., c("POLYGON", "MULTIPOLYGON"))) %>%
@@ -238,26 +251,39 @@ make_protected_areas <- function(
       sf::st_transform(sf::st_crs(pus)) %>%
       crop_to_extent(pus) %>%
       sf::st_make_valid() %>%
-      dplyr::summarise() %>%
-      sf::st_make_valid()
+      dissolve_sf()
   }
 
-  # Rasterize with coverage fraction
-  log_message("Generating raster from dissolved protected area geometries")
-  protected_areas_raster <- exactextractr::coverage_fraction(pus, protected_areas)[[1]]
+  if (!any(!sf::st_is_empty(protected_areas))) {
+    # No usable geometry: nothing passed the filters, nothing overlaps the
+    # planning units, or only points without a reported area to buffer (e.g.
+    # Somalia in WDPA). Return an all-0 layer instead of failing in
+    # coverage_fraction(), and say why.
+    warning(glue::glue(
+      "No usable protected-area geometry for {iso3}: {n_loaded} record(s) ",
+      "loaded, {n_filtered} after the STATUS/SITE_TYPE/MAB filters, none with ",
+      "area inside the planning units. Returning an all-0 protected-areas layer."
+    ), call. = FALSE)
+    protected_areas <- protected_areas[0, ]
+    protected_areas_raster <- terra::ifel(is.na(pus), NA, 0)
+  } else {
+    # Rasterize with coverage fraction
+    log_message("Generating raster from dissolved protected area geometries")
+    protected_areas_raster <- exactextractr::coverage_fraction(pus, protected_areas)[[1]]
 
-  # Binary conversion if requested
-  if (binary) {
-    threshold <- threshold %||% 0  # Ensure threshold is numeric and not NULL
-    protected_areas_raster <- terra::ifel(protected_areas_raster > threshold, 1, 0)
+    # Binary conversion if requested
+    if (binary) {
+      threshold <- threshold %||% 0  # Ensure threshold is numeric and not NULL
+      protected_areas_raster <- terra::ifel(protected_areas_raster > threshold, 1, 0)
+    }
+
+    # Mask to original planning units extent (retain NA where no data)
+    protected_areas_raster <- make_normalised_raster(
+      protected_areas_raster,
+      pus = pus,
+      iso3 = iso3
+    )
   }
-
-  # Mask to original planning units extent (retain NA where no data)
-  protected_areas_raster <- make_normalised_raster(
-    protected_areas_raster,
-    pus = pus,
-    iso3 = iso3
-  )
 
   # Save raster
   if (!is.null(output_path)) {
@@ -268,9 +294,13 @@ make_protected_areas <- function(
     )
   }
 
-  # Return sf object alongside raster when data was downloaded (for reuse)
-  if (from_wdpca) {
-    protected_areas_sf <- sf::st_cast(protected_areas, "POLYGON")
+  # Return the dissolved polygons alongside the raster (for reuse)
+  if (return_sf) {
+    protected_areas_sf <- if (nrow(protected_areas) > 0) {
+      sf::st_cast(protected_areas, "POLYGON")
+    } else {
+      protected_areas
+    }
     return(list(
       raster = protected_areas_raster,
       sf = protected_areas_sf
@@ -278,6 +308,23 @@ make_protected_areas <- function(
   }
 
   return(protected_areas_raster)
+}
+
+
+#' Dissolve all features into one, keeping a 0-row input as 0 rows
+#'
+#' `dplyr::summarise()` errors on a 0-row `sf`, which is what a country with no
+#' usable protected areas produces.
+#'
+#' @param x `sf` object.
+#'
+#' @return `x` dissolved into a single valid feature, or `x` if it has 0 rows.
+#' @keywords internal
+dissolve_sf <- function(x) {
+  if (nrow(x) == 0) return(x)
+  x %>%
+    dplyr::summarise() %>%
+    sf::st_make_valid()
 }
 
 
