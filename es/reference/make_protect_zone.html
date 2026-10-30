@@ -13,7 +13,7 @@ for spatial prioritization tools such as prioritizr."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">elsar</a>
 
-    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
+    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -106,7 +106,9 @@ for spatial prioritization tools such as <code>prioritizr</code>.</p>
 
 <dt id="arg-current-protected-areas">current_protected_areas<a class="anchor" aria-label="anchor" href="#arg-current-protected-areas"></a></dt>
 <dd><p>a <code>sf</code> or <code>SpatVector</code> object of current protected areas.
-If NULL, <code><a href="make_protected_areas.html">elsar::make_protected_areas()</a></code> will be used.</p></dd>
+If NULL, <code><a href="make_protected_areas.html">elsar::make_protected_areas()</a></code> will be used. May have 0 rows
+(a country with no protected areas); <code>hii_threshold</code> is then required,
+because there are no protected areas to derive it from.</p></dd>
 
 
 <dt id="arg-lulc-proportions">lulc_proportions<a class="anchor" aria-label="anchor" href="#arg-lulc-proportions"></a></dt>

@@ -13,7 +13,7 @@ the average degree of underrepresentation across each planning unit.
 
     <a class="navbar-brand me-2" href="../index.html">elsar</a>
 
-    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
+    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -97,7 +97,9 @@ the average degree of underrepresentation across each planning unit.
 
 
 <dt id="arg-protected-areas-sf">protected_areas_sf<a class="anchor" aria-label="anchor" href="#arg-protected-areas-sf"></a></dt>
-<dd><p><code>sf</code> or <code>SpatVector</code>. Protected areas dataset to be used in the gap calculation.</p></dd>
+<dd><p><code>sf</code> or <code>SpatVector</code>. Protected areas dataset to be used in the gap calculation.
+May have 0 rows (a country with no protected areas): every ecosystem then
+has the full gap, and the result is 1 wherever there is an ecosystem, with a warning.</p></dd>
 
 
 <dt id="arg-pus">pus<a class="anchor" aria-label="anchor" href="#arg-pus"></a></dt>

@@ -11,7 +11,7 @@ database via the wdpar package, or provided as an sf object."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">elsar</a>
 
-    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
+    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -83,7 +83,8 @@ database via the <span class="pkg">wdpar</span> package, or provided as an <code
 <span>  binary <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  threshold <span class="op">=</span> <span class="fl">0.1</span>,</span>
 <span>  force_update <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  output_path <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  output_path <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  return_sf <span class="op">=</span> <span class="va">from_wdpca</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -177,11 +178,18 @@ if cached. Default is <code>FALSE</code>.</p></dd>
 <dd><p>Character or NULL. Directory to save the output raster.
 If NULL, the raster is returned but not saved.</p></dd>
 
+
+<dt id="arg-return-sf">return_sf<a class="anchor" aria-label="anchor" href="#arg-return-sf"></a></dt>
+<dd><p>Logical. If <code>TRUE</code>, returns the dissolved polygons alongside
+the raster (see Value). Defaults to <code>from_wdpca</code>, which keeps the original
+return types.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>If <code>sf_in</code> was provided (i.e., <code>from_wdpca = FALSE</code>), returns a SpatRaster.
-If data was downloaded from WDPCA (<code>from_wdpca = TRUE</code>), returns a list with:</p><dl><dt>raster</dt>
+    <p>If <code>return_sf = FALSE</code> (the default when <code>from_wdpca = FALSE</code>), returns
+a SpatRaster. If <code>return_sf = TRUE</code> (the default when <code>from_wdpca = TRUE</code>),
+returns a list with:</p><dl><dt>raster</dt>
 <dd><p>SpatRaster of protected areas</p></dd>
 
 <dt>sf</dt>
@@ -194,6 +202,16 @@ If data was downloaded from WDPCA (<code>from_wdpca = TRUE</code>), returns a li
     <p>All geometries are reprojected, dissolved to avoid double-counting overlaps, and
 rasterized. The output can be binary (presence/absence based on a coverage threshold)
 or fractional (proportion of each planning unit covered).</p>
+    </div>
+    <div class="section level2">
+    <h2 id="no-protected-areas">No protected areas<a class="anchor" aria-label="anchor" href="#no-protected-areas"></a></h2>
+
+
+<p>Some countries have no usable protected-area geometry: no records pass the
+filters, none overlap the planning units, or all are points with no
+reported area to buffer (e.g. Somalia in WDPA). Then the raster is all 0
+within the planning units, the <code>sf</code> has 0 rows, and a warning says why.
+Downstream functions accepting protected areas handle the 0-row <code>sf</code>.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
