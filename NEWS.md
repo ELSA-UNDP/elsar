@@ -1,5 +1,13 @@
 # elsar (development version)
 
+## Bug fixes
+
+* `make_underrepresented_ecosystems()` gave ecosystems that no protected area
+  overlaps an `NA` gap, which ended up as the *lowest* value after rasterising.
+  They now get the full gap (they are 0% protected), so the least-protected
+  ecosystems score highest, as intended. Layers built with earlier versions
+  under-rate completely unprotected ecosystems and should be rebuilt.
+
 ## New features
 
 * `elsar_calibrate_weights()` computes per-feature calibration weights for an ELSA

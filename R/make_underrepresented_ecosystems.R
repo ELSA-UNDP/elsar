@@ -89,6 +89,9 @@ make_underrepresented_ecosystems <- function(
     dplyr::mutate(area = units::drop_units(sf::st_area(.))) %>%
     dplyr::left_join(protected_df, by = group_attribute) %>%
     dplyr::mutate(
+      # An ecosystem no protected area overlaps has no row in protected_df:
+      # it is 0% protected (the full gap), not NA.
+      area_protected = dplyr::coalesce(area_protected, 0),
       percent_protected = area_protected / area * 100,
       target_gap = dplyr::if_else(percent_protected < target_percent, target_percent - percent_protected, 0)
     )
