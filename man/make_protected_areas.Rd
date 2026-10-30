@@ -21,7 +21,8 @@ make_protected_areas(
   binary = TRUE,
   threshold = 0.1,
   force_update = FALSE,
-  output_path = NULL
+  output_path = NULL,
+  return_sf = from_wdpca
 )
 }
 \arguments{
@@ -79,10 +80,15 @@ if cached. Default is \code{FALSE}.}
 
 \item{output_path}{Character or NULL. Directory to save the output raster.
 If NULL, the raster is returned but not saved.}
+
+\item{return_sf}{Logical. If \code{TRUE}, returns the dissolved polygons alongside
+the raster (see Value). Defaults to \code{from_wdpca}, which keeps the original
+return types.}
 }
 \value{
-If \code{sf_in} was provided (i.e., \code{from_wdpca = FALSE}), returns a SpatRaster.
-If data was downloaded from WDPCA (\code{from_wdpca = TRUE}), returns a list with:
+If \code{return_sf = FALSE} (the default when \code{from_wdpca = FALSE}), returns
+a SpatRaster. If \code{return_sf = TRUE} (the default when \code{from_wdpca = TRUE}),
+returns a list with:
 \describe{
 \item{raster}{SpatRaster of protected areas}
 \item{sf}{sf object of dissolved protected area polygons for reuse}
@@ -98,3 +104,12 @@ All geometries are reprojected, dissolved to avoid double-counting overlaps, and
 rasterized. The output can be binary (presence/absence based on a coverage threshold)
 or fractional (proportion of each planning unit covered).
 }
+\section{No protected areas}{
+
+Some countries have no usable protected-area geometry: no records pass the
+filters, none overlap the planning units, or all are points with no
+reported area to buffer (e.g. Somalia in WDPA). Then the raster is all 0
+within the planning units, the \code{sf} has 0 rows, and a warning says why.
+Downstream functions accepting protected areas handle the 0-row \code{sf}.
+}
+

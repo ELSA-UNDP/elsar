@@ -8,6 +8,17 @@
   ecosystems score highest, as intended. Layers built with earlier versions
   under-rate completely unprotected ecosystems and should be rebuilt.
 
+* Countries with no usable protected-area geometry (no records, none inside
+  the planning units, or only points without a reported area, e.g. Somalia in
+  WDPA) no longer fail:
+  - `make_protected_areas()` returns an all-0 layer and a 0-row `sf`, with a
+    warning that says why. New argument `return_sf` returns the cleaned
+    polygons for a supplied `sf_in` too (default unchanged).
+  - `make_protect_zone()` accepts 0-row protected areas; it then needs a fixed
+    `hii_threshold`, since there is nothing to derive it from.
+  - `make_underrepresented_ecosystems()` accepts 0-row protected areas and
+    warns that the result is uniform (1 wherever there is an ecosystem).
+
 ## New features
 
 * `elsar_calibrate_weights()` computes per-feature calibration weights for an ELSA

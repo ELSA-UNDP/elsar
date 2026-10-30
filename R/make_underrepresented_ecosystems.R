@@ -8,6 +8,8 @@
 #' @param group_attribute `character`. Column name in `ecosystems_sf` used to group features (e.g., "econame" or "get_id").
 #' @param target_percent `numeric`. Target percentage of protection for each ecosystem group (default = 30).
 #' @param protected_areas_sf `sf` or `SpatVector`. Protected areas dataset to be used in the gap calculation.
+#'   May have 0 rows (a country with no protected areas): every ecosystem then
+#'   has the full gap, and the result is 1 wherever there is an ecosystem, with a warning.
 #' @param pus `SpatRaster`. Raster of planning units (e.g., from `make_planning_units()`), used as the target grid for rasterization.
 #' @param iso3 `character`, optional. ISO3 country code used for naming output files (e.g., "BRA").
 #' @param output_path `character`, optional. Directory path to save the output raster as a GeoTIFF.
@@ -77,8 +79,14 @@ make_underrepresented_ecosystems <- function(
     }, silent = TRUE)
   }
 
-  # Bind and summarize
-  protected_df <- dplyr::bind_rows(Filter(Negate(is.null), protected_intersections)) %>%
+  # Bind and summarize. With no protected areas (or no overlaps) there is
+  # nothing to bind, so start from an empty table with the expected columns.
+  empty_df <- tibble::tibble(area_protected = numeric(0))
+  empty_df[[group_attribute]] <- ecosystems_sf[[group_attribute]][0]
+  protected_df <- dplyr::bind_rows(
+    empty_df,
+    Filter(Negate(is.null), protected_intersections)
+  ) %>%
     dplyr::group_by(.data[[group_attribute]]) %>%
     dplyr::summarise(area_protected = sum(area_protected, na.rm = TRUE), .groups = "drop")
 
@@ -96,15 +104,27 @@ make_underrepresented_ecosystems <- function(
       target_gap = dplyr::if_else(percent_protected < target_percent, target_percent - percent_protected, 0)
     )
 
-  # Rasterize
+  # Rasterize. Without protected areas every ecosystem has the full gap, so a
+  # 0-1 rescale (min == max) is undefined; express the gap as a share of the
+  # target instead (1 wherever there is an ecosystem).
+  no_pas <- nrow(protected_areas_sf) == 0 || all(sf::st_is_empty(protected_areas_sf))
+  if (no_pas) {
+    warning("No protected areas: every ecosystem is 0% protected, so the ",
+            "representation gap is uniform (", target_percent, "%) and the ",
+            "layer carries no information for prioritisation.", call. = FALSE)
+  }
   log_message("Rasterizing average target gap per planning unit...")
   underrepresented_ecosystems <- elsar::exact_rasterise(
     features = ecosystems_summary,
     pus = pus,
     fun = "max",
     iso3 = iso3,
-    attribute = "target_gap"
+    attribute = "target_gap",
+    rescaled = !no_pas
   )
+  if (no_pas) {
+    underrepresented_ecosystems <- underrepresented_ecosystems / target_percent
+  }
   names(underrepresented_ecosystems) <- "underrepresented_ecosystems"
 
   if (!is.null(output_path)) {
