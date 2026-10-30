@@ -11,7 +11,9 @@
 #' @param iso3 ISO3 country code (e.g., "NPL").
 #' @param pus A `SpatRaster` defining the planning units.
 #' @param current_protected_areas a `sf` or `SpatVector` object of current protected areas.
-#'        If NULL, `elsar::make_protected_areas()` will be used.
+#'        If NULL, `elsar::make_protected_areas()` will be used. May have 0 rows
+#'        (a country with no protected areas); `hii_threshold` is then required,
+#'        because there are no protected areas to derive it from.
 #' @param lulc_proportions A multi-band `SpatRaster` from [download_lulc_proportions()] containing
 #'   pre-computed class proportions. If provided, bands named "agriculture" and "built_area" will
 #'   be used automatically, overriding `agricultural_areas` and `built_areas`.
@@ -139,6 +141,14 @@ make_protect_zone <- function(
   if (!is.null(output_path)) {
     assertthat::assert_that(dir.exists(output_path),
                             msg = glue::glue("'output_path' directory does not exist: {output_path}"))
+  }
+
+  has_pas <- nrow(current_protected_areas) > 0 &&
+    !all(sf::st_is_empty(sf::st_as_sf(current_protected_areas)))
+  if (!has_pas && !is.null(human_pressure) && is.null(hii_threshold)) {
+    stop("No protected areas for ", iso3, ": the HII threshold cannot be derived ",
+         "from HII inside protected areas. Supply a fixed 'hii_threshold'.",
+         call. = FALSE)
   }
 
   if (nrow(current_protected_areas) > 1){

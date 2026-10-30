@@ -21,7 +21,9 @@ make_underrepresented_ecosystems(
 
 \item{target_percent}{\code{numeric}. Target percentage of protection for each ecosystem group (default = 30).}
 
-\item{protected_areas_sf}{\code{sf} or \code{SpatVector}. Protected areas dataset to be used in the gap calculation.}
+\item{protected_areas_sf}{\code{sf} or \code{SpatVector}. Protected areas dataset to be used in the gap calculation.
+May have 0 rows (a country with no protected areas): every ecosystem then
+has the full gap, and the result is 1 wherever there is an ecosystem, with a warning.}
 
 \item{pus}{\code{SpatRaster}. Raster of planning units (e.g., from \code{make_planning_units()}), used as the target grid for rasterization.}
 
