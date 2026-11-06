@@ -108,7 +108,7 @@ or fractional (proportion of each planning unit covered).
 
 Some countries have no usable protected-area geometry: no records pass the
 filters, none overlap the planning units, or all are points with no
-reported area to buffer (e.g. Somalia in WDPA). Then the raster is all 0
+reported area to buffer (e.g. Somalia in WDPCA). Then the raster is all 0
 within the planning units, the \code{sf} has 0 rows, and a warning says why.
 Downstream functions accepting protected areas handle the 0-row \code{sf}.
 }
