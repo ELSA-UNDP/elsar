@@ -6,8 +6,8 @@
 \usage{
 elsar_action_scheme(
   values = 1:5,
-  labels = c("Protect", "Restore", "Manage", "Urban Greening", "Do Nothing"),
-  colours = c("#06C723", "#8803FC", "#FFEA00", "#FF0000", "#E5E5E5"),
+  labels = c("Protect", "Manage", "Restore", "Urban Greening", "Do Nothing"),
+  colours = c("#06C723", "#FFEA00", "#8803FC", "#FF0000", "#E5E5E5"),
   groups = labels,
   no_action = "Do Nothing"
 )
@@ -37,16 +37,32 @@ labels, colours and reporting groups, and which value means "no action".
 Every post-analysis function in elsar reads its labels and colours from this
 scheme, so a custom scheme carries through to all tables and plots.
 }
+\details{
+The default follows the ELSA tool's standard configuration: 1 Protect,
+2 Manage (the tool's "Reduce Pressures"), 3 Restore, 4 Urban Greening (the
+tool's "Urban Adapt") and 5 Do Nothing, with the tool's colours. Runs with
+other actions or fallback zones (e.g. "Avoid Loss") number them after the
+primary actions and put Do Nothing last; read such schemes from the run's
+configuration with \code{\link[=elsar_action_scheme_from_config]{elsar_action_scheme_from_config()}}, or write them out
+here.
+}
 \examples{
 # The default ELSA scheme
 elsar_action_scheme()
 
-# A run with a fourth action and different colours
+# A run with an "Avoid Loss" fallback zone (e.g. South Africa)
+elsar_action_scheme(
+  values = 1:6,
+  labels = c("Protect", "Manage", "Restore", "Urban Greening", "Avoid Loss", "Do Nothing"),
+  colours = c("#06C723", "#FFEA00", "#8803FC", "#FF0000", "#A3BA95", "#E5E5E5")
+)
+
+# Report two actions as one group in bar charts
 elsar_action_scheme(
   values = 1:5,
-  labels = c("Protect", "Restore", "Manage", "Agroforestry", "No action"),
-  colours = c("#1B9E77", "#7570B3", "#E6AB02", "#A6761D", "grey85"),
-  groups = c("Protect", "Restore", "Manage", "Manage", "No action"),
+  labels = c("Protect", "Manage", "Restore", "Agroforestry", "No action"),
+  colours = c("#06C723", "#FFEA00", "#8803FC", "#A6761D", "grey85"),
+  groups = c("Protect", "Manage", "Restore", "Manage", "No action"),
   no_action = "No action"
 )
 }

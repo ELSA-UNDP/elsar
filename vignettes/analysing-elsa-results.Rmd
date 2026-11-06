@@ -15,7 +15,7 @@ knitr::opts_chunk$set(
 ```
 
 An ELSA run produces an **action map**: every planning unit is assigned an
-action (Protect, Restore, Manage, Urban Greening) or no action. elsar's results
+action (Protect, Manage, Restore, Urban Greening) or no action. elsar's results
 functions turn that map into the tables and figures that go into national and
 subnational reports:
 
@@ -55,22 +55,30 @@ more control.
 
 `elsar_prepare_actions()` reads the action raster and attaches an **action
 scheme**: the label, colour and reporting group for each raster value. The
-default matches a standard ELSA run.
+default matches a standard run of the ELSA tool: 1 Protect, 2 Manage ("Reduce
+Pressures" in the tool), 3 Restore, 4 Urban Greening ("Urban Adapt") and 5 Do
+Nothing.
 
 ```{r scheme}
 elsar_action_scheme()
 ```
 
-If your run used different actions, describe them once and every table and
-plot follows:
+If your run used other actions, the simplest route is to read the scheme from
+the run's `config.json`, which also picks up fallback zones such as South
+Africa's "Avoid Loss":
+
+```{r config-scheme, eval = FALSE}
+scheme <- elsar_action_scheme_from_config("inputs/config.json")
+```
+
+Or describe it yourself, once; every table and plot follows. The ELSA tool
+numbers fallback zones after the primary actions and puts Do Nothing last:
 
 ```{r custom-scheme, eval = FALSE}
-my_scheme <- elsar_action_scheme(
-  values = 1:5,
-  labels = c("Protect", "Restore", "Manage", "Agroforestry", "No action"),
-  colours = c("#06C723", "#8803FC", "#FFEA00", "#A6761D", "#E5E5E5"),
-  groups = c("Protect", "Restore", "Manage", "Manage", "No action"),
-  no_action = "No action"
+zaf_scheme <- elsar_action_scheme(
+  values = 1:6,
+  labels = c("Protect", "Manage", "Restore", "Urban Greening", "Avoid Loss", "Do Nothing"),
+  colours = c("#06C723", "#FFEA00", "#8803FC", "#FF0000", "#A3BA95", "#E5E5E5")
 )
 ```
 

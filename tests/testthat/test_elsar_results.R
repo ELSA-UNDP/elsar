@@ -44,6 +44,38 @@ test_that("elsar_action_scheme() returns the default ELSA scheme", {
   expect_equal(s$group, s$label)
 })
 
+test_that("the default scheme follows the ELSA tool's value order", {
+  s <- elsar_action_scheme()
+  expect_equal(s$label, c("Protect", "Manage", "Restore", "Urban Greening", "Do Nothing"))
+  expect_equal(s$colour, c("#06C723", "#FFEA00", "#8803FC", "#FF0000", "#E5E5E5"))
+})
+
+test_that("elsar_action_scheme_from_config() reads actions and fallbacks", {
+  config <- list(
+    actions = list(
+      list(name = "Protect", slug = "protect", rasterValue = 1, color = "#06c723"),
+      list(name = "Reduce Pressures", slug = "reduce-pressures", rasterValue = 2, color = "#ffea00"),
+      list(name = "Restore", slug = "restore", rasterValue = 3, color = "#8803fc"),
+      list(name = "Urban Adapt", slug = "urban-adapt", rasterValue = 4, color = "#ff0000")
+    ),
+    fallbackActions = list(
+      list(name = "Avoid Loss", slug = "avoid-loss", rasterValue = 5, color = "#a3ba95")
+    )
+  )
+  s <- elsar_action_scheme_from_config(config)
+  expect_equal(s$value, 1:6)
+  expect_equal(s$label, c("Protect", "Manage", "Restore", "Urban Greening", "Avoid Loss", "Do Nothing"))
+  expect_equal(s$colour[5], "#A3BA95")
+  expect_equal(s$is_action, c(rep(TRUE, 5), FALSE))
+  s_cfg <- elsar_action_scheme_from_config(config, labels = "config")
+  expect_equal(s_cfg$label[c(2, 4)], c("Reduce Pressures", "Urban Adapt"))
+
+  path <- withr::local_tempfile(fileext = ".json")
+  jsonlite::write_json(config, path, auto_unbox = TRUE)
+  expect_equal(elsar_action_scheme_from_config(path), s)
+  expect_error(elsar_action_scheme_from_config(list(actions = list())), "actions")
+})
+
 test_that("elsar_action_scheme() validates its inputs", {
   expect_error(elsar_action_scheme(values = 1:3), "same length")
   expect_error(elsar_action_scheme(values = c(1, 1, 2, 3, 4)), "duplicates")
@@ -110,7 +142,7 @@ test_that("pa_threshold binarises protected-area cover", {
 test_that("national summary gives exact areas and percentages", {
   x <- elsar_prepare_actions(toy_actions(), pas = toy_pas())
   s <- elsar_summarise_actions(x)
-  # 15 valid cells; Protect = 3, Restore = 3, Manage = 1, Urban = 1, Do Nothing = 7
+  # 15 valid cells; Protect = 3, Manage = 3, Restore = 1, Urban = 1, Do Nothing = 7
   expect_equal(as.character(s$action), elsar_action_scheme()$label)
   expect_equal(s$area, c(300, 300, 100, 100, 700), tolerance = 1e-3)
   expect_equal(s$pct_of_region, 100 * c(3, 3, 1, 1, 7) / 15, tolerance = 1e-3)
@@ -129,10 +161,10 @@ test_that("regional summary splits areas between regions", {
   s <- elsar_summarise_actions(x, toy_regions(), region_col = "name")
   expect_equal(levels(s$region), c("West", "East"))
   expect_equal(area_of(s, "West", "Protect"), 300, tolerance = 1e-3)
-  expect_equal(area_of(s, "East", "Restore"), 300, tolerance = 1e-3)
+  expect_equal(area_of(s, "East", "Manage"), 300, tolerance = 1e-3)
   expect_equal(area_of(s, "West", "Urban Greening"), 0)
-  # East: Restore 3 of 8 valid cells
-  expect_equal(area_of(s, "East", "Restore", "pct_of_region"), 100 * 3 / 8, tolerance = 1e-3)
+  # East: Manage 3 of 8 valid cells
+  expect_equal(area_of(s, "East", "Manage", "pct_of_region"), 100 * 3 / 8, tolerance = 1e-3)
   # pct_of_action sums to 100 for every action present
   totals <- tapply(s$pct_of_action, s$action, sum)
   expect_equal(as.vector(totals), rep(100, 5), tolerance = 1e-6)
@@ -201,7 +233,7 @@ test_that("unprepared rasters are rejected", {
 test_that("protection gap separates current and new protection", {
   x <- elsar_prepare_actions(toy_actions(), pas = toy_pas())
   g <- elsar_protection_gap(elsar_summarise_actions(x), target = 0.5)
-  # Current: 4 PA cells (3 Protect + 1 Manage, i.e. not locked in) = 400 ha.
+  # Current: 4 PA cells (3 Protect + 1 Restore, i.e. not locked in) = 400 ha.
   # New: Protect outside PAs = 0 ha.
   expect_equal(g$current, 400, tolerance = 1e-3)
   expect_equal(g$new, 0, tolerance = 1e-3)

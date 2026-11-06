@@ -79,6 +79,7 @@ reference:
   desc: Summarise, compare and report the action map produced by an ELSA run
 - contents:
   - elsar_action_scheme
+  - elsar_action_scheme_from_config
   - elsar_prepare_actions
   - elsar_summarise_actions
   - elsar_protection_gap

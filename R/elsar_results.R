@@ -13,6 +13,14 @@
 #' Every post-analysis function in elsar reads its labels and colours from this
 #' scheme, so a custom scheme carries through to all tables and plots.
 #'
+#' The default follows the ELSA tool's standard configuration: 1 Protect,
+#' 2 Manage (the tool's "Reduce Pressures"), 3 Restore, 4 Urban Greening (the
+#' tool's "Urban Adapt") and 5 Do Nothing, with the tool's colours. Runs with
+#' other actions or fallback zones (e.g. "Avoid Loss") number them after the
+#' primary actions and put Do Nothing last; read such schemes from the run's
+#' configuration with [elsar_action_scheme_from_config()], or write them out
+#' here.
+#'
 #' @param values Numeric vector. The cell values used in the action raster.
 #' @param labels Character vector. A label for each value. Must be unique.
 #' @param colours Character vector. A colour (name or hex code) for each value.
@@ -33,18 +41,25 @@
 #' # The default ELSA scheme
 #' elsar_action_scheme()
 #'
-#' # A run with a fourth action and different colours
+#' # A run with an "Avoid Loss" fallback zone (e.g. South Africa)
+#' elsar_action_scheme(
+#'   values = 1:6,
+#'   labels = c("Protect", "Manage", "Restore", "Urban Greening", "Avoid Loss", "Do Nothing"),
+#'   colours = c("#06C723", "#FFEA00", "#8803FC", "#FF0000", "#A3BA95", "#E5E5E5")
+#' )
+#'
+#' # Report two actions as one group in bar charts
 #' elsar_action_scheme(
 #'   values = 1:5,
-#'   labels = c("Protect", "Restore", "Manage", "Agroforestry", "No action"),
-#'   colours = c("#1B9E77", "#7570B3", "#E6AB02", "#A6761D", "grey85"),
-#'   groups = c("Protect", "Restore", "Manage", "Manage", "No action"),
+#'   labels = c("Protect", "Manage", "Restore", "Agroforestry", "No action"),
+#'   colours = c("#06C723", "#FFEA00", "#8803FC", "#A6761D", "grey85"),
+#'   groups = c("Protect", "Manage", "Restore", "Manage", "No action"),
 #'   no_action = "No action"
 #' )
 elsar_action_scheme <- function(
     values = 1:5,
-    labels = c("Protect", "Restore", "Manage", "Urban Greening", "Do Nothing"),
-    colours = c("#06C723", "#8803FC", "#FFEA00", "#FF0000", "#E5E5E5"),
+    labels = c("Protect", "Manage", "Restore", "Urban Greening", "Do Nothing"),
+    colours = c("#06C723", "#FFEA00", "#8803FC", "#FF0000", "#E5E5E5"),
     groups = labels,
     no_action = "Do Nothing") {
   n <- length(values)
@@ -78,6 +93,75 @@ elsar_action_scheme <- function(
     colour = as.character(colours),
     group = as.character(groups),
     is_action = !labels %in% no_action
+  )
+}
+
+#' Read the action scheme of an ELSA run from its configuration
+#'
+#' Builds an [elsar_action_scheme()] from the `config.json` of an ELSA tool
+#' run, so the raster values, labels and colours match that run exactly,
+#' including fallback zones such as "Avoid Loss". Do Nothing is added after
+#' the last action, as the ELSA tool writes it.
+#'
+#' @param config Path to the run's `config.json`, or the parsed list.
+#' @param labels `"elsar"` (default) renames the standard actions to elsar's
+#'   zone names (Protect, Manage, Restore, Urban Greening) and keeps the
+#'   configured name for any other action; `"config"` keeps every name as
+#'   configured (e.g. in the run's language).
+#' @param no_action_label,no_action_colour Label and colour of the Do Nothing
+#'   value.
+#'
+#' @return A tibble, as from [elsar_action_scheme()].
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' scheme <- elsar_action_scheme_from_config("inputs/config.json")
+#' x <- elsar_prepare_actions("04_ELSA_Action.tif", scheme = scheme)
+#' }
+elsar_action_scheme_from_config <- function(config,
+                                            labels = c("elsar", "config"),
+                                            no_action_label = "Do Nothing",
+                                            no_action_colour = "#E5E5E5") {
+  labels <- match.arg(labels)
+  if (is.character(config)) {
+    assertthat::assert_that(
+      length(config) == 1, file.exists(config),
+      msg = paste0("Config file not found: ", config[1])
+    )
+    config <- jsonlite::read_json(config)
+  }
+  assertthat::assert_that(
+    is.list(config), length(config$actions) > 0,
+    msg = "'config' must be an ELSA tool config with an 'actions' list."
+  )
+
+  as_rows <- function(actions) {
+    do.call(rbind, lapply(actions, function(a) {
+      data.frame(
+        value = as.numeric(a$rasterValue), slug = as.character(a$slug %||% ""),
+        name = as.character(a$name), colour = as.character(a$color)
+      )
+    }))
+  }
+  rows <- as_rows(config$actions)
+  if (length(config$fallbackActions) > 0) rows <- rbind(rows, as_rows(config$fallbackActions))
+  rows <- rows[order(rows$value), ]
+
+  if (labels == "elsar") {
+    elsar_names <- c(
+      "protect" = "Protect", "reduce-pressures" = "Manage", "manage" = "Manage",
+      "restore" = "Restore", "urban-adapt" = "Urban Greening", "urban-greening" = "Urban Greening"
+    )
+    known <- rows$slug %in% names(elsar_names)
+    rows$name[known] <- elsar_names[rows$slug[known]]
+  }
+
+  elsar_action_scheme(
+    values = c(rows$value, max(rows$value) + 1),
+    labels = c(rows$name, no_action_label),
+    colours = c(toupper(rows$colour), no_action_colour),
+    no_action = no_action_label
   )
 }
 
