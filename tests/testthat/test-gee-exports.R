@@ -61,7 +61,21 @@ test_that("the wait follows the task and returns every tile", {
   task <- fake_task(c("RUNNING", "RUNNING", "COMPLETED"))
   files <- suppressMessages(.wait_for_export("exp", task = task, wait_time = 5))
   expect_equal(nrow(files), 2)
-  expect_equal(sleeps, 2)
+  expect_equal(sleeps, 3) # two while running, one to confirm Drive's listing
+})
+
+test_that("after COMPLETED, files are taken only once Drive's listing is stable", {
+  counts <- c(1, 2, 2)
+  calls <- 0
+  local_mocked_bindings(
+    .gee_sleep = function(s) NULL,
+    .drive_find = function(...) {
+      calls <<- calls + 1
+      dribble(sprintf("exp-0000000000-%010d.tif", seq_len(counts[min(calls, 3)])))
+    }
+  )
+  files <- suppressMessages(.wait_for_export("exp", task = fake_task("COMPLETED"), wait_time = 5))
+  expect_equal(nrow(files), 2)
 })
 
 test_that("a completed task keeps polling until Drive lists its files", {
@@ -113,6 +127,43 @@ test_that("without a task, files are returned once their number is stable", {
   expect_equal(nrow(files), 2)
 })
 
+test_that("listed tasks are read without a status request per task", {
+  listed <- function(state, description) list(
+    state = state, config = list(description = description),
+    status = function() stop("status() should not be needed")
+  )
+  ee <- list(batch = list(Task = list(list = function() list(
+    listed("COMPLETED", "exp"), listed("RUNNING", "exp")
+  ))))
+  expect_equal(.find_active_task(ee, "exp")$state, "RUNNING")
+})
+
+test_that("a running task is waited for before Drive is looked at", {
+  # Tiles of a running export can already be in Drive: they must not be
+  # downloaded as if the export were complete
+  ee_with <- function(...) list(batch = list(Task = list(list = function() list(...))))
+  trashed <- 0
+  local_mocked_bindings(
+    .drive_find = function(...) dribble("exp-0000000000-0000000000.tif"),
+    .drive_trash = function(f) trashed <<- trashed + nrow(f)
+  )
+  r <- suppressMessages(.resolve_export(ee_with(fake_task("RUNNING", "exp")), "exp"))
+  expect_equal(r$status, "running")
+  r <- suppressMessages(.resolve_export(ee_with(fake_task("COMPLETED", "exp")), "exp"))
+  expect_equal(r$status, "in_drive")
+  expect_equal(nrow(r$files), 1)
+  # force_download trashes the old export and exports again
+  r <- suppressMessages(.resolve_export(ee_with(), "exp", force_download = TRUE))
+  expect_equal(r$status, "export")
+  expect_equal(trashed, 1)
+})
+
+test_that("nothing running and nothing in Drive means a new export", {
+  local_mocked_bindings(.drive_find = function(...) dribble(character(0)))
+  ee <- list(batch = list(Task = list(list = function() list())))
+  expect_equal(.resolve_export(ee, "exp")$status, "export")
+})
+
 test_that("a running task with the same description is found for reuse", {
   ee <- list(batch = list(Task = list(list = function() list(
     fake_task("COMPLETED", "exp"), fake_task("RUNNING", "exp_other"), fake_task("RUNNING", "exp")
@@ -127,7 +178,7 @@ tile <- function(xmin, crs = "EPSG:3857", res = 10) {
               crs = crs, vals = 1:4)
 }
 
-test_that("merge_tiles merges the given files and writes atomically", {
+test_that("merge_tiles merges only the given files and leaves no partial file", {
   dir <- withr::local_tempdir()
   a <- file.path(dir, "a.tif"); b <- file.path(dir, "b.tif")
   terra::writeRaster(tile(0), a); terra::writeRaster(tile(20), b)
@@ -186,6 +237,10 @@ test_that("download_lulc_data passes the year to ESRI and warns for ESA", {
   suppressMessages(download_lulc_data(boundary, "TST", product = "esri_10m",
                                       gee_project = "none", year = 2019))
   expect_equal(got$year_override, 2019)
+  # year_override given directly still works (no duplicate argument)
+  suppressMessages(download_lulc_data(boundary, "TST", product = "esri_10m",
+                                      gee_project = "none", year_override = 2018))
+  expect_equal(got$year_override, 2018)
   expect_warning(download_lulc_data(boundary, "TST", product = "esa_worldcover",
                                     gee_project = "none", year = 2020), "only available for 2021")
 })

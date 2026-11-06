@@ -10,9 +10,9 @@ need a live run.
   Before, any name starting with the export's name matched, so the `ECU`
   export could pick up `ECU_REG` files, or an old copy.
 * **The wait follows the export task.** Downloads start when Earth Engine
-  reports the task COMPLETED, and a FAILED or CANCELLED task is an error with
-  Earth Engine's message. Before, the wait only watched for files to appear
-  in Drive.
+  reports the task COMPLETED and Drive lists the same files twice in a row (its
+  listing can lag). A FAILED or CANCELLED task is an error with Earth Engine's
+  message. Before, the wait only watched for files to appear in Drive.
 * **Every tile is downloaded.** `download_lulc_proportions()` took only the
   first tile of a split export, and `download_lulc_class_proportion()`
   stopped at the first file to appear. Running out of `wait_time` is now
@@ -20,7 +20,10 @@ need a live run.
   arrived, with a warning.
 * **A rerun waits for a task that is still running** instead of exporting the
   same layer again. That applies to all three export functions; before, only
-  `download_gee_layer()` checked.
+  `download_gee_layer()` checked. The running task is looked for *before*
+  Drive, because a running export's first tiles can already be there.
+  `download_lulc_class_proportion()` also downloads a finished export from
+  Drive instead of exporting it again.
 * **`force_download = TRUE` refreshes.** `download_lulc_proportions()` now
   moves the previous export's Drive files to the bin before exporting again.
   Before, the wait picked up the old file straight away.
@@ -32,8 +35,15 @@ need a live run.
 * **`download_gee_layer(aggregate_to_pus = TRUE)` now aggregates in Earth
   Engine** (`reduceResolution()` with `aggregation_reducer`). Before, it
   exported at planning-unit scale without aggregating, so Earth Engine
-  resampled categorical data by averaging class codes. Files read from the
-  cache now get the same `pre_aggregated` tag as fresh downloads.
+  resampled categorical data by averaging class codes. Aggregated outputs are
+  now named `<prefix>_<year>_<iso3>_pus_<reducer>.tif`, so neither a
+  native-resolution file nor one aggregated the old way is reused as one. They
+  get the same `pre_aggregated` tag whether downloaded or read from the cache.
+* **LULC proportions use the 10 m pixels** (values change: rebuild the
+  `*_proportion_*` files). `download_lulc_proportions()` called
+  `reduceResolution()` with Earth Engine's default `maxPixels` (64), so for
+  planning units over about 80 m it read coarser pyramid levels of the land
+  cover instead of the 10 m pixels.
 * **`download_gee_layer()` looks for the latest year with data in the region**,
   not anywhere in the world.
 * **`wait_time` is the maximum wait in minutes and may be fractional.** It must

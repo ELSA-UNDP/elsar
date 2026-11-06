@@ -976,7 +976,14 @@ download_gee_layer <- function(
   }
 
   # Build export filename and check if local file already exists
-  file_name <- glue::glue("{file_prefix}_{year}_{iso3}")
+  # Aggregated outputs get their own name, so a cached native-resolution file
+  # (or one aggregated before 0.4.3, without reduceResolution) is never taken
+  # for an aggregated one
+  file_name <- if (aggregate_to_pus) {
+    glue::glue("{file_prefix}_{year}_{iso3}_pus_{aggregation_reducer}")
+  } else {
+    glue::glue("{file_prefix}_{year}_{iso3}")
+  }
   output_file <- file.path(output_dir, glue::glue("{file_name}.tif"))
 
   if (file.exists(output_file)) {
@@ -992,20 +999,15 @@ download_gee_layer <- function(
     }
   }
 
-  # Files of this exact export already in Drive (all tiles)
-  matching_files <- .drive_export_files(file_name)
+  # A running task first (its tiles may be partly in Drive), then Drive,
+  # then a new export
+  resolved <- .resolve_export(ee, file_name)
+  matching_files <- resolved$files
 
-  if (nrow(matching_files) > 0) {
-    log_message("Found in Drive: {file_name} ({nrow(matching_files)} file(s))")
-  } else {
-    log_message("Not found in Drive, will export from GEE: {file_name}")
+  if (resolved$status != "in_drive") {
+    task <- resolved$task
 
-    # A task still running from an earlier attempt is waited for, not repeated
-    task <- .find_active_task(ee, file_name)
-
-    if (!is.null(task)) {
-      log_message("An export task for '{file_name}' is already running; waiting for it")
-    } else {
+    if (resolved$status == "export") {
       log_message("Preparing export task...")
       # Filter collection and create composite
       start_date <- ee$Date(glue::glue("{year}-01-01"))
@@ -1083,9 +1085,15 @@ download_gee_layer <- function(
       "near"  # Default fallback
     )
     output_raster <- terra::project(output_raster, pus, method = resample_method)
-    # Overwrite the file with reprojected version
-    terra::writeRaster(output_raster, output_file, overwrite = TRUE,
+    # Replace the file with the reprojected version, atomically: an
+    # interrupted write must not leave the unprojected file under this name
+    partial_file <- paste0(output_file, ".part.tif")
+    on.exit(unlink(partial_file), add = TRUE)
+    terra::writeRaster(output_raster, partial_file, overwrite = TRUE,
                        filetype = "COG", gdal = c("COMPRESS=DEFLATE"))
+    unlink(output_file)
+    file.rename(partial_file, output_file)
+    output_raster <- terra::rast(output_file)
   }
 
   return(tag_result(output_raster))
@@ -1878,15 +1886,17 @@ download_lulc_class_proportion <- function(
 
     # Submit the export, unless the same export is still running from an
     # earlier attempt, and wait for the task to finish
-    task <- .find_active_task(ee, file_name)
-    if (is.null(task)) {
-      task <- do.call(ee$batch$Export$image$toDrive, export_params)
-      task$start()
-      log_message("Export task started. Monitor it at: https://code.earthengine.google.com/tasks")
-    } else {
-      log_message("An export task for '{file_name}' is already running; waiting for it")
+    resolved <- .resolve_export(ee, file_name)
+    drive_files <- resolved$files
+    if (resolved$status != "in_drive") {
+      task <- resolved$task
+      if (resolved$status == "export") {
+        task <- do.call(ee$batch$Export$image$toDrive, export_params)
+        task$start()
+        log_message("Export task started. Monitor it at: https://code.earthengine.google.com/tasks")
+      }
+      drive_files <- .wait_for_export(file_name, task = task, wait_time = wait_time)
     }
-    drive_files <- .wait_for_export(file_name, task = task, wait_time = wait_time)
 
     # Download every tile, then remove them from Drive
     tile_paths <- .download_drive_export(drive_files, temp_dir)
@@ -2231,28 +2241,29 @@ download_lulc_proportions <- function(
       # Aggregate to PU resolution using mean reducer to get true proportions
       # This computes the fraction of source pixels that are this class
       target_proj <- ee$Projection("EPSG:4326")$atScale(pu_res[1])
+      # maxPixels: Earth Engine's default (64) made bestEffort read coarse
+      # pyramid levels instead of the 10 m pixels for planning units over
+      # about 80 m (before 0.4.3)
       class_mask <- class_mask$reduceResolution(
         reducer = ee$Reducer$mean(),
-        bestEffort = TRUE
+        bestEffort = TRUE,
+        maxPixels = reticulate::r_to_py(65536L)
       )$reproject(crs = target_proj)
 
       # File name for GEE export (without path)
       gee_file_name <- glue::glue("{file_prefix}_{cn}")
 
-      # A forced refresh first removes the previous export from Drive, so the
-      # wait below cannot pick up the old file (before 0.4.3 it did)
-      if (force_download) .trash_drive_export(gee_file_name)
+      # A running task first (its tiles may be partly in Drive), then Drive,
+      # then a new export. A forced refresh trashes the previous export's
+      # Drive files, so the wait cannot pick up the old file (before 0.4.3 it
+      # did).
+      resolved <- .resolve_export(ee, gee_file_name, force_download = force_download)
 
-      existing_in_drive <- if (force_download) NULL else .drive_export_files(gee_file_name)
-      active_task <- .find_active_task(ee, gee_file_name)
-
-      if (!is.null(existing_in_drive) && nrow(existing_in_drive) > 0) {
-        log_message("Found '{cn}' in Drive, will download")
-        export_tasks[[cn]] <- list(status = "exists_drive", drive_file = existing_in_drive,
+      if (resolved$status == "in_drive") {
+        export_tasks[[cn]] <- list(status = "exists_drive", drive_file = resolved$files,
                                    output_file = output_file, gee_file_name = gee_file_name)
-      } else if (!is.null(active_task)) {
-        log_message("An export task for '{cn}' is already running; waiting for it")
-        export_tasks[[cn]] <- list(status = "exporting", task = active_task,
+      } else if (resolved$status == "running") {
+        export_tasks[[cn]] <- list(status = "exporting", task = resolved$task,
                                    output_file = output_file, gee_file_name = gee_file_name)
       } else {
         log_message("'{cn}' not found locally or in Drive, will export from GEE")
@@ -2455,6 +2466,17 @@ download_lulc_data <- function(
             " is ignored.", call. = FALSE)
   }
 
+  # Before 0.4.3 'year' never reached the ESRI download. It goes through
+  # '...' as year_override, unless the caller set year_override there.
+  if (product == "esri_10m" && !is.null(year) && !"year_override" %in% names(list(...))) {
+    return(download_lulc_data(
+      boundary_layer = boundary_layer, iso3 = iso3, product = product,
+      gee_project = gee_project, output_dir = output_dir, year = NULL, pus = pus,
+      aggregate_to_pus = aggregate_to_pus, wait_time = wait_time,
+      year_override = year, ...
+    ))
+  }
+
   # Route to appropriate handler
   result <- switch(
     product,
@@ -2466,7 +2488,6 @@ download_lulc_data <- function(
       pus = pus,
       aggregate_to_pus = aggregate_to_pus,
       wait_time = wait_time,
-      year_override = year, # before 0.4.3 'year' was dropped for ESRI
       ...
     ),
     dynamic_world = download_dynamic_world_data(

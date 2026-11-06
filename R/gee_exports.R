@@ -58,25 +58,64 @@
   )
 }
 
+# State and description of a task from Task.list(). Listed tasks already
+# carry both, so this avoids one status request per task; it falls back to
+# task$status() if they cannot be read.
+.listed_task_info <- function(task) {
+  info <- tryCatch(
+    list(state = as.character(task$state), description = as.character(task$config$description)),
+    error = function(e) NULL
+  )
+  if (is.null(info) || length(info$state) != 1 || length(info$description) != 1) {
+    info <- safe_task_status(task)
+  }
+  info
+}
+
 # The READY or RUNNING Earth Engine task with this description, or NULL. A
 # rerun after a timeout then waits for that task instead of exporting again.
 .find_active_task <- function(ee, description) {
   tasks <- tryCatch(ee$batch$Task$list(), error = function(e) list())
   purrr::detect(tasks, function(t) {
-    status <- safe_task_status(t)
-    !is.null(status) &&
-      isTRUE(status$state %in% c("READY", "RUNNING")) &&
-      identical(status$description, as.character(description))
+    info <- .listed_task_info(t)
+    !is.null(info) &&
+      isTRUE(info$state %in% c("READY", "RUNNING")) &&
+      identical(info$description, as.character(description))
   })
+}
+
+# What to do for one export, in this order:
+# 1. a task with this name still running: wait for it (its tiles may already
+#    be partly in Drive, so Drive is not looked at first);
+# 2. the export's files in Drive: download them (not with force_download,
+#    which trashes them so the export runs again);
+# 3. otherwise: export.
+# Returns list(status = "running" | "in_drive" | "export", task, files).
+.resolve_export <- function(ee, name, force_download = FALSE) {
+  task <- .find_active_task(ee, name)
+  if (!is.null(task)) {
+    log_message("An export task for '{name}' is already running; waiting for it")
+    return(list(status = "running", task = task, files = NULL))
+  }
+  if (force_download) {
+    .trash_drive_export(name)
+  } else {
+    files <- .drive_export_files(name)
+    if (nrow(files) > 0) {
+      log_message("Found '{name}' in Drive ({nrow(files)} file(s)), will download")
+      return(list(status = "in_drive", task = NULL, files = files))
+    }
+  }
+  list(status = "export", task = NULL, files = NULL)
 }
 
 # Wait for the export called `name` and return its Drive files (every tile).
 #
-# With a task handle, the task state decides: COMPLETED returns the files
-# (polling on if Drive has not listed them yet), FAILED or CANCELLED is an
-# error with Earth Engine's message. Without one (or if its state cannot be
-# read), the files are returned once their number has stayed the same for
-# two checks in a row. Running past `wait_time` minutes is an error: a
+# With a task handle, the task state decides: once it is COMPLETED, the files
+# are returned when Drive lists the same number twice in a row; FAILED or
+# CANCELLED is an error with Earth Engine's message. Without one (or if its
+# state cannot be read), the files are returned once their number has stayed
+# the same for three checks in a row. Running past `wait_time` minutes is an error: a
 # partial set of tiles is never returned.
 .wait_for_export <- function(name, task = NULL, wait_time, start_time = Sys.time()) {
   .check_wait_time(wait_time)
@@ -100,19 +139,16 @@
     files <- .drive_export_files(name)
     count <- nrow(files)
 
-    if (!is.na(state)) {
-      if (state == "COMPLETED" && count > 0) {
-        log_message("Export '{name}' completed: {count} file(s)")
-        return(files)
-      }
-    } else if (count > 0) {
-      stable_checks <- if (count == previous_count) stable_checks + 1 else 0
-      if (stable_checks >= 2) {
-        log_message("Found {count} file(s) for '{name}'")
-        return(files)
-      }
-    }
+    # Drive listings can lag behind the upload, so the files are taken only
+    # once their number has stayed the same between checks: after the task
+    # reports COMPLETED (one repeat), or, without a readable task state, two
+    stable_checks <- if (count > 0 && count == previous_count) stable_checks + 1 else 0
     previous_count <- count
+    needed <- if (!is.na(state)) 1 else 2
+    if (count > 0 && (is.na(state) || state == "COMPLETED") && stable_checks >= needed) {
+      log_message("Export '{name}' ready: {count} file(s)")
+      return(files)
+    }
 
     elapsed <- as.numeric(difftime(Sys.time(), start_time, units = "mins"))
     if (elapsed > wait_time) {
