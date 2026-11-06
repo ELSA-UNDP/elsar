@@ -11,7 +11,7 @@ It automatically selects the first available layer if layer_name is not provided
 
     <a class="navbar-brand me-2" href="../index.html">elsar</a>
 
-    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.1</small>
+    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,7 +54,7 @@ It automatically selects the first available layer if layer_name is not provided
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Load and optionally filter a single vector layer</h1>
-      <small class="dont-index">Source: <a href="https://github.com/ELSA-UNDP/elsar/blob/v0.4.1/R/utils.R" class="external-link"><code>R/utils.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/ELSA-UNDP/elsar/blob/main/R/utils.R" class="external-link"><code>R/utils.R</code></a></small>
       <div class="d-none name"><code>filter_sf.Rd</code></div>
     </div>
 
@@ -73,7 +73,8 @@ It automatically selects the first available layer if <code>layer_name</code> is
 <span>  layer_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  drop3d <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  wkt_filter <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  file_type <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  file_type <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  warn_empty <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -107,6 +108,12 @@ It automatically selects the first available layer if <code>layer_name</code> is
 
 <dt id="arg-file-type">file_type<a class="anchor" aria-label="anchor" href="#arg-file-type"></a></dt>
 <dd><p>Character or NULL. File type used to determine if layer name inference is required.</p></dd>
+
+
+<dt id="arg-warn-empty">warn_empty<a class="anchor" aria-label="anchor" href="#arg-warn-empty"></a></dt>
+<dd><p>Logical. Warn when an ISO3 filter matches no features
+(default <code>TRUE</code>). Loaders that read several layers and combine them set it
+to <code>FALSE</code> and check the combined result instead.</p></dd>
 
 </dl></div>
     <div class="section level2">

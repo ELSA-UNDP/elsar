@@ -17,7 +17,7 @@ when the deployed tool solves the prioritization."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">elsar</a>
 
-    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.1</small>
+    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,7 +60,7 @@ when the deployed tool solves the prioritization."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Calibrate feature weights for an ELSA prioritization</h1>
-      <small class="dont-index">Source: <a href="https://github.com/ELSA-UNDP/elsar/blob/v0.4.1/R/calibrate_weights.R" class="external-link"><code>R/calibrate_weights.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/ELSA-UNDP/elsar/blob/main/R/calibrate_weights.R" class="external-link"><code>R/calibrate_weights.R</code></a></small>
       <div class="d-none name"><code>elsar_calibrate_weights.Rd</code></div>
     </div>
 
@@ -82,6 +82,8 @@ when the deployed tool solves the prioritization.</p>
 <span>  <span class="va">planning_units</span>,</span>
 <span>  <span class="va">budgets</span>,</span>
 <span>  lockins <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  lockin_threshold <span class="op">=</span> <span class="fl">0.1</span>,</span>
+<span>  lockin_priority <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  feature_totals <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  wgt_scale <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>  gap <span class="op">=</span> <span class="fl">0.05</span>,</span>
@@ -132,9 +134,29 @@ the study-area planning-unit count. Names must match <code>names(zones_pu)</code
 
 
 <dt id="arg-lockins">lockins<a class="anchor" aria-label="anchor" href="#arg-lockins"></a></dt>
-<dd><p>Optional named <code>list</code> of <code>SpatRaster</code> lock-in areas per action zone.
-Used only to raise a zone's target to its locked-in coverage when the lock-in
-exceeds the nominal budget (feasibility floor).</p></dd>
+<dd><p>Optional named <code>list</code> of <code>SpatRaster</code> lock-in areas per action
+zone (e.g. existing protected areas for <code>protect</code>), as the ELSA tool uses
+them. Cells with cover above <code>lockin_threshold</code> are locked into their zone:
+added to its planning units and removed from every other zone, including
+<code>do_nothing</code>, so the solver must allocate them there. Where lock-ins
+overlap, the zone earlier in <code>lockin_priority</code> wins. A zone's budget is
+raised to its locked-in coverage (the number of locked cells) when that
+is larger. Before 0.4.2
+lock-ins only raised the budget and were not enforced, unlike the original
+ELSA pre-calibration.</p></dd>
+
+
+<dt id="arg-lockin-threshold">lockin_threshold<a class="anchor" aria-label="anchor" href="#arg-lockin-threshold"></a></dt>
+<dd><p>Numeric. Lock-in cover above which a cell is locked
+in (default <code>0.1</code>, as in the ELSA tool).</p></dd>
+
+
+<dt id="arg-lockin-priority">lockin_priority<a class="anchor" aria-label="anchor" href="#arg-lockin-priority"></a></dt>
+<dd><p>Character vector of zone names: where lock-ins
+overlap, the earlier zone wins. Default <code>NULL</code> uses the ELSA tool's order
+(lowest raster value first): protect, manage (or reduce pressures),
+restore, urban greening (or urban adapt), then any other zones in the
+order of <code>zones_pu</code>.</p></dd>
 
 
 <dt id="arg-feature-totals">feature_totals<a class="anchor" aria-label="anchor" href="#arg-feature-totals"></a></dt>

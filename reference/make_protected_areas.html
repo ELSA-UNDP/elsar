@@ -11,7 +11,7 @@ database via the wdpar package, or provided as an sf object."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">elsar</a>
 
-    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.1</small>
+    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,7 +54,7 @@ database via the wdpar package, or provided as an sf object."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Create a Binary or Fractional Raster of Protected Areas Aligned to Planning Units</h1>
-      <small class="dont-index">Source: <a href="https://github.com/ELSA-UNDP/elsar/blob/v0.4.1/R/make_protected_areas.R" class="external-link"><code>R/make_protected_areas.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/ELSA-UNDP/elsar/blob/main/R/make_protected_areas.R" class="external-link"><code>R/make_protected_areas.R</code></a></small>
       <div class="d-none name"><code>make_protected_areas.Rd</code></div>
     </div>
 
@@ -209,7 +209,7 @@ or fractional (proportion of each planning unit covered).</p>
 
 <p>Some countries have no usable protected-area geometry: no records pass the
 filters, none overlap the planning units, or all are points with no
-reported area to buffer (e.g. Somalia in WDPA). Then the raster is all 0
+reported area to buffer (e.g. Somalia in WDPCA). Then the raster is all 0
 within the planning units, the <code>sf</code> has 0 rows, and a warning says why.
 Downstream functions accepting protected areas handle the 0-row <code>sf</code>.</p>
     </div>

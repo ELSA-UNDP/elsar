@@ -13,7 +13,7 @@ for spatial prioritization tools such as prioritizr."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">elsar</a>
 
-    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.1</small>
+    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -56,7 +56,7 @@ for spatial prioritization tools such as prioritizr."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Generate Protect Zone Raster for ELSA Analysis</h1>
-      <small class="dont-index">Source: <a href="https://github.com/ELSA-UNDP/elsar/blob/v0.4.1/R/make_protect_zone.R" class="external-link"><code>R/make_protect_zone.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/ELSA-UNDP/elsar/blob/main/R/make_protect_zone.R" class="external-link"><code>R/make_protect_zone.R</code></a></small>
       <div class="d-none name"><code>make_protect_zone.Rd</code></div>
     </div>
 
@@ -105,8 +105,8 @@ for spatial prioritization tools such as <code>prioritizr</code>.</p>
 
 
 <dt id="arg-current-protected-areas">current_protected_areas<a class="anchor" aria-label="anchor" href="#arg-current-protected-areas"></a></dt>
-<dd><p>a <code>sf</code> or <code>SpatVector</code> object of current protected areas.
-If NULL, <code><a href="make_protected_areas.html">elsar::make_protected_areas()</a></code> will be used. May have 0 rows
+<dd><p>a <code>sf</code> or <code>SpatVector</code> object of current protected areas,
+in any CRS. May have 0 rows
 (a country with no protected areas); <code>hii_threshold</code> is then required,
 because there are no protected areas to derive it from.</p></dd>
 

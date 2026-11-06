@@ -15,7 +15,7 @@ and clean rounding steps. The result can optionally be saved as a Cloud Optimize
 
     <a class="navbar-brand me-2" href="../index.html">elsar</a>
 
-    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.1</small>
+    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -58,7 +58,7 @@ and clean rounding steps. The result can optionally be saved as a Cloud Optimize
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Create a Planning Units Raster</h1>
-      <small class="dont-index">Source: <a href="https://github.com/ELSA-UNDP/elsar/blob/v0.4.1/R/make_planning_units.R" class="external-link"><code>R/make_planning_units.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/ELSA-UNDP/elsar/blob/main/R/make_planning_units.R" class="external-link"><code>R/make_planning_units.R</code></a></small>
       <div class="d-none name"><code>make_planning_units.Rd</code></div>
     </div>
 
@@ -109,7 +109,13 @@ when estimating PU size automatically.</p></dd>
 
 
 <dt id="arg-limit-to-mainland">limit_to_mainland<a class="anchor" aria-label="anchor" href="#arg-limit-to-mainland"></a></dt>
-<dd><p>Logical. Reserved for future use. If <code>TRUE</code>, limits planning units to mainland regions only.</p></dd>
+<dd><p>Logical. If <code>TRUE</code>, only the largest polygon of
+<code>boundary_proj</code> (its mainland) gets planning units; islands and other
+outlying parts are dropped (default <code>FALSE</code>; before 0.4.2 it was ignored).
+Note that this is the single largest polygon after merging all
+features: for New Zealand it is the South Island, for Indonesia the
+Indonesian part of Borneo, for the United States the contiguous states
+(Alaska and Hawaii are dropped).</p></dd>
 
 
 <dt id="arg-iso-">iso3<a class="anchor" aria-label="anchor" href="#arg-iso-"></a></dt>

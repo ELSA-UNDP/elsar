@@ -9,7 +9,7 @@ while excluding areas unsuitable for restoration (e.g., active farmland, urban a
 
     <a class="navbar-brand me-2" href="../index.html">elsar</a>
 
-    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.1</small>
+    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -52,7 +52,7 @@ while excluding areas unsuitable for restoration (e.g., active farmland, urban a
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Generate Restore Zones for Spatial Planning</h1>
-      <small class="dont-index">Source: <a href="https://github.com/ELSA-UNDP/elsar/blob/v0.4.1/R/make_restore_zone.R" class="external-link"><code>R/make_restore_zone.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/ELSA-UNDP/elsar/blob/main/R/make_restore_zone.R" class="external-link"><code>R/make_restore_zone.R</code></a></small>
       <div class="d-none name"><code>make_restore_zone.Rd</code></div>
     </div>
 
@@ -74,7 +74,10 @@ while excluding areas unsuitable for restoration (e.g., active farmland, urban a
 <span>  built_areas <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  lulc <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  degradation_threshold <span class="op">=</span> <span class="fl">0.1</span>,</span>
-<span>  human_pressure_threshold <span class="op">=</span> <span class="fl">4</span>,</span>
+<span>  hii_min <span class="op">=</span> <span class="fl">4</span>,</span>
+<span>  hii_max <span class="op">=</span> <span class="fl">21</span>,</span>
+<span>  degradation_encoding <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"sdg"</span>, <span class="st">"binary"</span><span class="op">)</span>,</span>
+<span>  human_pressure_threshold <span class="op">=</span> <span class="fu">deprecated</span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  agriculture_threshold <span class="op">=</span> <span class="fl">0.1</span>,</span>
 <span>  built_areas_threshold <span class="op">=</span> <span class="fl">0.1</span>,</span>
 <span>  forest_threshold <span class="op">=</span> <span class="fl">0.1</span>,</span>
@@ -100,8 +103,10 @@ while excluding areas unsuitable for restoration (e.g., active farmland, urban a
 
 
 <dt id="arg-degradation">degradation<a class="anchor" aria-label="anchor" href="#arg-degradation"></a></dt>
-<dd><p>SpatRaster. Raster indicating land degradation. Values of -1 are
-treated as degraded (e.g., SDG 15.3.1 productivity degradation layer).</p></dd>
+<dd><p>SpatRaster. Raster indicating land degradation: either an
+SDG 15.3.1 productivity layer, where -1 means degraded, or a 0/1
+degraded-areas layer such as <code><a href="make_degraded_areas.html">make_degraded_areas()</a></code> output, where values
+above 0 mean degraded. See <code>degradation_encoding</code>.</p></dd>
 
 
 <dt id="arg-human-pressure">human_pressure<a class="anchor" aria-label="anchor" href="#arg-human-pressure"></a></dt>
@@ -140,9 +145,29 @@ agriculture and built-up areas when not provided directly.</p></dd>
 is considered degraded (default: 0.1).</p></dd>
 
 
+<dt id="arg-hii-min">hii_min<a class="anchor" aria-label="anchor" href="#arg-hii-min"></a></dt>
+<dd><p>Numeric. Human pressure (HII) at or above which an area counts
+as degraded (default: 4).</p></dd>
+
+
+<dt id="arg-hii-max">hii_max<a class="anchor" aria-label="anchor" href="#arg-hii-max"></a></dt>
+<dd><p>Numeric. Human pressure (HII) at or above which an area is too
+pressured to restore and is excluded (default: 21, as in the original ELSA
+design). Use <code>Inf</code> for no upper limit.</p></dd>
+
+
+<dt id="arg-degradation-encoding">degradation_encoding<a class="anchor" aria-label="anchor" href="#arg-degradation-encoding"></a></dt>
+<dd><p>How to read <code>degradation</code>: <code>"sdg"</code> (-1 is
+degraded), <code>"binary"</code> (values above 0 are degraded) or <code>"auto"</code> (default),
+which looks at the values within the planning region: -1 to 1 is read as
+<code>"sdg"</code>, 0 to 1 as <code>"binary"</code> (with a message: an SDG layer with no
+degraded cells in the region looks the same, so set the encoding
+explicitly in that case), and anything else is an error.</p></dd>
+
+
 <dt id="arg-human-pressure-threshold">human_pressure_threshold<a class="anchor" aria-label="anchor" href="#arg-human-pressure-threshold"></a></dt>
-<dd><p>Numeric. Human pressure value at or above which
-an area is considered degraded (default: 4).</p></dd>
+<dd><p><a href="https://lifecycle.r-lib.org/articles/stages.html#deprecated" class="external-link"><img src="figures/lifecycle-deprecated.svg" alt="[Deprecated]"></a> Use
+<code>hii_min</code> instead.</p></dd>
 
 
 <dt id="arg-agriculture-threshold">agriculture_threshold<a class="anchor" aria-label="anchor" href="#arg-agriculture-threshold"></a></dt>
@@ -208,9 +233,20 @@ area). If NULL, outputs are returned but not saved.</p></dd>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The function generates two restore zone outputs:</p><ul><li><p><code>restore_zone_v1</code>: All degraded areas excluding agriculture and built-up land</p></li>
 <li><p><code>restore_zone_v2</code>: Same as v1, but further masked to forest ecosystems only</p></li>
-</ul><p>Areas are classified as degraded based on either:</p><ul><li><p>Land degradation indicators (e.g., productivity decline)</p></li>
-<li><p>Human pressure exceeding a threshold</p></li>
-</ul><p>Agricultural and built-up areas can be provided directly as rasters, or derived
+</ul><p>The Restore Zone targets land that is degraded but still restorable:</p>
+<p></p><div class="sourceCode"><pre><code><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>restore <span class="ot">=</span> (degradation <span class="sc">&gt;</span> degradation_threshold <span class="sc">|</span> HII <span class="sc">&gt;=</span> hii_min)  <span class="co"># degraded, by either signal</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>          <span class="sc">&amp;</span> HII <span class="sc">&lt;</span> hii_max                                         <span class="co"># but not too pressured to restore</span></span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>          <span class="sc">&amp;</span> agriculture <span class="sc">&lt;=</span> agriculture_threshold                  <span class="co"># farmland is managed, not restored</span></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>          <span class="sc">&amp;</span> built <span class="sc">&lt;=</span> built_areas_threshold                        <span class="co"># as are built-up areas</span></span></code></pre><p></p></div>
+<p>Degraded land is identified both by a degradation layer and by human
+pressure (<code>HII &gt;= hii_min</code>). Land under very high pressure
+(<code>HII &gt;= hii_max</code>) is excluded as too far gone to restore, as in the
+original ELSA design ("HFP &lt; 21"). Farmland and built-up areas may well be
+degraded, but they belong to the Manage Zone, so they are excluded here.
+Both HII thresholds are on the HII's own 0-50 scale. Cells with no HII data
+(e.g. water) are judged on the degradation layer alone: they enter the zone
+only if degraded, and the upper cap does not apply to them.</p>
+<p>Agricultural and built-up areas can be provided directly as rasters, or derived
 from a land use/land cover (LULC) raster by specifying class values.</p>
     </div>
 

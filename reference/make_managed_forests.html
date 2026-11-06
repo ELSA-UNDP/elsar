@@ -11,7 +11,7 @@ LULC classification values which are reclassified according to defined managed f
 
     <a class="navbar-brand me-2" href="../index.html">elsar</a>
 
-    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.1</small>
+    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,7 +54,7 @@ LULC classification values which are reclassified according to defined managed f
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Create Managed Forests and Productive Managed Forests Raster Layers</h1>
-      <small class="dont-index">Source: <a href="https://github.com/ELSA-UNDP/elsar/blob/v0.4.1/R/make_managed_forests.R" class="external-link"><code>R/make_managed_forests.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/ELSA-UNDP/elsar/blob/main/R/make_managed_forests.R" class="external-link"><code>R/make_managed_forests.R</code></a></small>
       <div class="d-none name"><code>make_managed_forests.Rd</code></div>
     </div>
 
@@ -76,7 +76,8 @@ LULC classification values which are reclassified according to defined managed f
 <span>  make_productive <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  raster_npp <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">name_out</span>,</span>
-<span>  output_path <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  output_path <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  rescaled <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -124,6 +125,13 @@ automatically determined from <code>lulc_product</code>. Default is NULL.</p></d
 
 <dt id="arg-output-path">output_path<a class="anchor" aria-label="anchor" href="#arg-output-path"></a></dt>
 <dd><p>Optional character. Directory to save output raster(s) if provided.</p></dd>
+
+
+<dt id="arg-rescaled">rescaled<a class="anchor" aria-label="anchor" href="#arg-rescaled"></a></dt>
+<dd><p>Logical. Rescale the managed-forest share to 0-1 (default
+<code>TRUE</code>, for use as a feature layer). Use <code>FALSE</code> when the result feeds
+<code><a href="make_manage_zone.html">make_manage_zone()</a></code>: its <code>forest_class_threshold</code> is a true share of
+each planning unit, so the share must not be rescaled first.</p></dd>
 
 </dl></div>
     <div class="section level2">

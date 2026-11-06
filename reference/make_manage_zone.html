@@ -15,7 +15,7 @@ agricultural areas and pasturelands.'></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">elsar</a>
 
-    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.1</small>
+    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -58,7 +58,7 @@ agricultural areas and pasturelands.'></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Generate Sustainable Management Zones for ELSA Analysis</h1>
-      <small class="dont-index">Source: <a href="https://github.com/ELSA-UNDP/elsar/blob/v0.4.1/R/make_manage_zone.R" class="external-link"><code>R/make_manage_zone.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/ELSA-UNDP/elsar/blob/main/R/make_manage_zone.R" class="external-link"><code>R/make_manage_zone.R</code></a></small>
       <div class="d-none name"><code>make_manage_zone.Rd</code></div>
     </div>
 
@@ -84,6 +84,7 @@ agricultural areas and pasturelands.</p>
 <span>  lulc_raster <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  human_pressure <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  pasturelands_threshold <span class="op">=</span> <span class="fl">0.35</span>,</span>
+<span>  pasturelands_scale <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"percent"</span>, <span class="st">"fraction"</span><span class="op">)</span>,</span>
 <span>  lulc_product <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"esri_10m"</span>, <span class="st">"dynamic_world"</span>, <span class="st">"esa_worldcover"</span>, <span class="st">"local"</span><span class="op">)</span>,</span>
 <span>  agriculture_lulc_value <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  built_area_lulc_value <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -110,7 +111,10 @@ agricultural areas and pasturelands.</p>
 
 
 <dt id="arg-managed-forests">managed_forests<a class="anchor" aria-label="anchor" href="#arg-managed-forests"></a></dt>
-<dd><p>SpatRaster. A preprocssed raster of managed forest extent.</p></dd>
+<dd><p>SpatRaster. The share (0-1) of each planning unit
+under managed forest. It is compared with <code>forest_class_threshold</code>, so it
+must be the true share, not rescaled: build it with
+<code>make_managed_forests(..., rescaled = FALSE)</code>.</p></dd>
 
 
 <dt id="arg-raster-mf">raster_mf<a class="anchor" aria-label="anchor" href="#arg-raster-mf"></a></dt>
@@ -128,7 +132,9 @@ be used automatically, overriding <code>agricultural_areas</code> and <code>buil
 
 
 <dt id="arg-pasturelands">pasturelands<a class="anchor" aria-label="anchor" href="#arg-pasturelands"></a></dt>
-<dd><p>SpatRaster. A binary or categorical raster representing (actively managed/improved)pastures.</p></dd>
+<dd><p>SpatRaster or NULL. A raster of (actively managed or
+improved) pasture probability or share. Optional: without it the pasture
+criterion is not used.</p></dd>
 
 
 <dt id="arg-built-areas">built_areas<a class="anchor" aria-label="anchor" href="#arg-built-areas"></a></dt>
@@ -144,7 +150,14 @@ be used automatically, overriding <code>agricultural_areas</code> and <code>buil
 
 
 <dt id="arg-pasturelands-threshold">pasturelands_threshold<a class="anchor" aria-label="anchor" href="#arg-pasturelands-threshold"></a></dt>
-<dd><p>Numeric. Probability threshold above which cells are considered pasturelands (default = 0.35).</p></dd>
+<dd><p>Numeric. Probability (0-1) above which cells are considered pasturelands (default = 0.35).</p></dd>
+
+
+<dt id="arg-pasturelands-scale">pasturelands_scale<a class="anchor" aria-label="anchor" href="#arg-pasturelands-scale"></a></dt>
+<dd><p>Character. Scale of the <code>pasturelands</code> values:
+<code>"percent"</code> (0-100, as in the Global Pasture Watch probability layers),
+<code>"fraction"</code> (0-1) or <code>"auto"</code> (default: percent if any value is above 1).
+Percent values are divided by 100 before <code>pasturelands_threshold</code> applies.</p></dd>
 
 
 <dt id="arg-lulc-product">lulc_product<a class="anchor" aria-label="anchor" href="#arg-lulc-product"></a></dt>

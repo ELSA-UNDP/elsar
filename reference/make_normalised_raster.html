@@ -11,7 +11,7 @@ raster to a specified output path."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">elsar</a>
 
-    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.1</small>
+    <small class="nav-text text-info me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,7 +54,7 @@ raster to a specified output path."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Create a Normalised Raster Aligned with and masked by Planning Units</h1>
-      <small class="dont-index">Source: <a href="https://github.com/ELSA-UNDP/elsar/blob/v0.4.1/R/make_normalised_raster.R" class="external-link"><code>R/make_normalised_raster.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/ELSA-UNDP/elsar/blob/main/R/make_normalised_raster.R" class="external-link"><code>R/make_normalised_raster.R</code></a></small>
       <div class="d-none name"><code>make_normalised_raster.Rd</code></div>
     </div>
 
@@ -108,8 +108,10 @@ raster to a specified output path.</p>
 
 
 <dt id="arg-method-override">method_override<a class="anchor" aria-label="anchor" href="#arg-method-override"></a></dt>
-<dd><p><code>character</code> Optional method for <code><a href="https://rspatial.github.io/terra/reference/project.html" class="external-link">terra::project()</a></code>, overriding
-the default (default: <code>NULL</code>).</p></dd>
+<dd><p><code>character</code> How input cells are combined into each
+planning unit (default <code>NULL</code>, i.e. <code>"mean"</code>): one of the
+<code><a href="https://isciences.gitlab.io/exactextractr/reference/exact_resample.html" class="external-link">exactextractr::exact_resample()</a></code> summaries, e.g. <code>"mean"</code>, <code>"sum"</code>,
+<code>"max"</code>, <code>"min"</code> or <code>"mode"</code>. All are area-weighted (see Details).</p></dd>
 
 
 <dt id="arg-crop-global-input">crop_global_input<a class="anchor" aria-label="anchor" href="#arg-crop-global-input"></a></dt>
@@ -129,11 +131,11 @@ raster after resampling to the PU layer (default: <code>NULL</code>).</p></dd>
 
 
 <dt id="arg-fill-na">fill_na<a class="anchor" aria-label="anchor" href="#arg-fill-na"></a></dt>
-<dd><p><code>numeric</code> or <code>NA</code> The fill value used for <code>NA</code> cells before
-masking (default: 0). When non-NULL (the default), filled cells are
-then masked back to the planning units, so the result is NoData outside
-the study area. Pass <code>NULL</code> to skip both the fill and this PU masking -
-in which case cells outside the planning units are NOT set to NoData.</p></dd>
+<dd><p><code>numeric</code> or <code>NULL</code>. The value given to planning units with
+no data (default: 0). It is applied <em>after</em> <code>invert</code> and <code>rescaled</code>,
+so with the defaults missing data gets the lowest score (0). <code>NULL</code>
+leaves those cells <code>NA</code>. Cells outside the planning units are always
+NoData.</p></dd>
 
 
 <dt id="arg-name-out">name_out<a class="anchor" aria-label="anchor" href="#arg-name-out"></a></dt>
@@ -156,11 +158,21 @@ If <code>output_path</code> is specified, saves the raster as a COG (Cloud Optim
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>This function reprojects the input raster (<code>raster_in</code>) to match the CRS and resolution
-of the planning units (<code>pus</code>). The method for reprojection can be overridden using <code>method_override</code>.
-If <code>input_raster_conditional_expression</code> is provided, it is applied before any reprojection. Applying a
-<code>input_raster_conditional_expression</code> can also make processing times significantly longer
-for high resolution input rasters.The function can optionally rescale (0-1) and invert the raster values.</p>
+    <p>The input is aggregated to the planning-unit grid with <code>method_override</code>
+(<code>"mean"</code> by default), weighting every input cell by the share of the
+planning unit it covers:</p><ul><li><p>in the same CRS, with <code><a href="https://isciences.gitlab.io/exactextractr/reference/exact_resample.html" class="external-link">exactextractr::exact_resample()</a></code>;</p></li>
+<li><p>in another CRS, by warping onto a sub-grid of up to 10 x 10 cells per
+planning unit with the matching GDAL method (average, max, min, mode;
+every overlapping input cell counts) and aggregating back. Very fine
+inputs are first aggregated in their own CRS. Results are area-weighted to
+within 1/100 of a planning unit, memory is bounded by the planning-unit
+grid, and inputs crossing the antimeridian are handled. <code>"sum"</code> keeps
+totals.</p></li>
+</ul><p>Steps, in order: <code>input_raster_conditional_expression</code> (on the input, before
+aggregation; it can be slow for high-resolution inputs), aggregation,
+<code>conditional_expression</code>, <code>invert</code>, rescaling to 0-1, <code>fill_na</code>, masking to
+the planning units. A layer with no data at all returns 0 inside the
+planning units.</p>
     </div>
 
     <div class="section level2">
