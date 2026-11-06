@@ -64,7 +64,7 @@ make_kbas <- function(
     msg = "'kba_in' must have an 'iso3' column with each site's country code."
   )
   kba <- kba_in %>%
-    dplyr::filter(.data$iso3 == iso3_filter)
+    dplyr::filter(toupper(.data$iso3) == iso3_filter)
 
   if (nrow(kba) > 0) {
     if (aze_only) {

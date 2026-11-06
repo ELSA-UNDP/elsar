@@ -10,7 +10,7 @@ iso3_base(iso3)
 \item{iso3}{Character. An ISO3-style code accepted by \code{\link[=is_valid_iso3]{is_valid_iso3()}}.}
 }
 \value{
-The first three characters of \code{iso3}.
+The first three characters of \code{iso3}, in upper case.
 }
 \description{
 Global datasets (KBAs, Ramsar, WDPCA, GHSL urban centres) carry a national

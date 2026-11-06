@@ -136,7 +136,7 @@ make_wetlands_ramsar <- function(
       msg = "'ramsar_in' must have an 'iso3' column with each site's country code."
     )
     ramsar <- ramsar_in %>%
-      dplyr::filter(.data$iso3 == iso3_filter) %>%
+      dplyr::filter(toupper(.data$iso3) == iso3_filter) %>%
       sf::st_transform(crs = sf::st_crs(pus)) %>%
       sf::st_make_valid()
 

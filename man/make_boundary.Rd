@@ -26,7 +26,11 @@ make_boundary(
 \item{limit_to_mainland}{Logical. When \code{TRUE}, keep only the single largest
 polygon (the mainland), dropping islands and other outlying parts. Applied
 after any \code{iso3} filter, so the largest polygon is chosen within the target
-region. Default \code{FALSE}.}
+region. Default \code{FALSE}.
+Note that this is the single largest polygon after merging all
+features: for New Zealand it is the South Island, for Indonesia the
+Indonesian part of Borneo, for the United States the contiguous states
+(Alaska and Hawaii are dropped).}
 
 \item{col_name}{A string of the column containing the actual extent of the planning region (not outside area). Can be \code{NULL}.}
 
