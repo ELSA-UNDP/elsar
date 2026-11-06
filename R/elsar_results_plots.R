@@ -77,7 +77,7 @@ elsar_plot_actions <- function(x,
   }
 
   if (!is.null(regions)) {
-    regions <- .as_sf(regions, x)
+    regions <- .regions_as_sf(regions, x)
     p <- p + ggplot2::geom_sf(
       data = regions, fill = NA, colour = "grey25", linewidth = 0.3,
       inherit.aes = FALSE
@@ -586,7 +586,7 @@ elsar_plot_regions <- function(x, summary, regions, region_col, ...) {
   sf::st_as_sf(terra::as.polygons(m, dissolve = TRUE))
 }
 
-.as_sf <- function(regions, x) {
+.regions_as_sf <- function(regions, x) {
   if (inherits(regions, "SpatVector")) regions <- sf::st_as_sf(regions)
   assertthat::assert_that(inherits(regions, "sf"), msg = "'regions' must be an sf or SpatVector object.")
   sf::st_transform(regions, terra::crs(x))
