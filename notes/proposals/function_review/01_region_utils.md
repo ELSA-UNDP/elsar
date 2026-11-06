@@ -97,7 +97,7 @@ Environment: terra 1.9.34, GDAL 3.8.4, GEOS 3.12.1, PROJ 9.3.1.
 - Matching is case-sensitive and uses the full code. [verified] `"aaa"` → 0 rows. A sub-national `"USA_CA"` must be reduced with `iso3_base()` by every caller; `elsar_load_data()` does not do this.
 - `file_type` is a dead parameter (documented, never read).
 - `st_layers()` is called twice when a geometry filter is given.
-- `st_make_valid()` always runs on the full result. On WDPA- or GAUL-sized layers this is the slowest step, and under `sf_use_s2(TRUE)` on lon/lat data it applies s2 repair semantics (UNVERIFIED cost).
+- `st_make_valid()` always runs on the full result. On WDPCA- or GAUL-sized layers this is the slowest step, and under `sf_use_s2(TRUE)` on lon/lat data it applies s2 repair semantics (UNVERIFIED cost).
 - The "Applying a spatial filter" log line only appears when there is no query.
 **Improvements:**
 - Validate `iso3_column` against the field names first (read 1 feature, as the pipeline's `vector_field_names()` does). Drop `layer` when `query` is set. Escape `'` → `''`. Uppercase both sides (`WHERE upper("col") = 'USA'`). S
@@ -206,7 +206,7 @@ Environment: terra 1.9.34, GDAL 3.8.4, GEOS 3.12.1, PROJ 9.3.1.
 **Issues:**
 - Known items: KBA multiplier (audit §2 #5) and polygons with area 0/NA dropped (audit §2 #12).
 - **MULTIPOINT features get one full-area circle per point.** [verified] `REP_AREA = 1` km² on a 2-point multipoint gave 1.995 km². The area should be split across parts, or the points cast first and the area divided.
-- The docs contradict the default. The description says "assuming the area is in hectares", `@param area_multiplier` cites `1e4` for hectares, but the default is `1e6` (km², correct for WDPA `REP_AREA`). Four of five callers override it with `1e4`.
+- The docs contradict the default. The description says "assuming the area is in hectares", `@param area_multiplier` cites `1e4` for hectares, but the default is `1e6` (km², correct for WDPCA `REP_AREA`). Four of five callers override it with `1e4`.
 - The `@return` says "If no valid features are found, returns NULL", but the code returns an empty `sf`.
 - Control flow uses `exists("points_buffered", inherits = FALSE)` instead of a variable initialised to `NULL`.
 - The caller `make_protected_areas` logs "geodesic buffers". The buffer is planar in the equal-area CRS, so the area is right and the shape slightly distorted. The log should not say geodesic.
@@ -346,7 +346,7 @@ S–M (the conversion is mechanical but touches 332 lines).
 **Verdict:** keep and fix. Unify the grammar with the pipeline, and normalise case once.
 **Issues:**
 - **The two validators disagree.** [verified] elsar accepts `"usa"`, `"USA-CA"` and `"USA_ca_x"`. The pipeline rejects all three and has a test asserting `USA-CA` is invalid (`tests/testthat/test-subnational.R:10`).
-- `iso3_base("usa")` → `"usa"`, which matches nothing in KBA, Ramsar, WDPA or GHSL. These are compared case-sensitively against uppercase attributes, so a lowercase code validates and then silently filters everything out (code; cf. `filter_sf` case test above).
+- `iso3_base("usa")` → `"usa"`, which matches nothing in KBA, Ramsar, WDPCA or GHSL. These are compared case-sensitively against uppercase attributes, so a lowercase code validates and then silently filters everything out (code; cf. `filter_sf` case test above).
 - `make_boundary()`, `make_planning_units()` and `make_custom_mollweide_projection()` validate with `is.string` instead, so three grammars are in use.
 - Neither function has a direct test in elsar (`iso3_base` is tested; `is_valid_iso3` only in the pipeline).
 **Improvements:**

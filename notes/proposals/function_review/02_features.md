@@ -38,7 +38,7 @@ so the in-builder writes matter only to standalone users.
 - Tests: all-0, constant, ≤0 plus post-expression, invert with and without rescale, a NoData sentinel, `output_path` written, layer name. **S**
 
 ### `make_protected_areas()`  (R/make_protected_areas.R:69)
-**Does:** filters WDPA (via wdpar) or a user `sf` by STATUS/SITE_TYPE/MAB, buffers points, dissolves, and returns PU coverage, binarised at `threshold`.
+**Does:** filters WDPCA (via wdpar) or a user `sf` by STATUS/SITE_TYPE/MAB, buffers points, dissolves, and returns PU coverage, binarised at `threshold`.
 **Used by:** elsar_pipeline, 1 call through `build_protected_areas()` (Z:286), which serves the feature, the Protect Zone and the lock-in. That call passes every argument explicitly: `binary = TRUE`, `threshold = pa$coverage_threshold` (0.1 in defaults.yaml:68), `return_sf = TRUE`, `output_path = NULL`, `site_type = "PA"`. Internal callers: `make_protect_zone()`, `elsar_check_setup()`, plot utils.
 **Method:** the filter matches Protected Planet practice (Designated/Inscribed/Established, no MAB, points buffered by REP_AREA in km² with `area_multiplier = 1e6`, which is correct here, unlike KBAs). It dissolves before coverage, so overlaps are not double-counted. The output is "PU is protected if more than 10% of it is covered". That is a sensible lock-in rule, but it overstates protected *area* when the layer is used as a feature, and the docs do not say which use it is meant for. `binary = FALSE` is rescaled, not raw coverage (audit §2 #12). Fully protected countries give NaN (audit §2 #2).
 **Verdict:** fix: the method is sound and the function is well guarded (empty-PA handling and the pre-dissolve crop are good). A few small consistency fixes remain.
@@ -250,7 +250,7 @@ so the in-builder writes matter only to standalone users.
 - **Coverage-weighted `max` deflates edge cells.** A cell 50% covered by a full-gap ecosystem scores half the gap. [ran] t02b T12: across the ecosystem boundary, 1, 1, 1, 1, 1, **0.5**, 0, ... Cells on the coast or a national border are systematically down-weighted, although the "max gap present in the PU" is the full gap.
 - Performance: a sequential loop over *every PA polygon* runs `st_intersection(ecosystems_sf, pa)` on the whole ecosystem layer, i.e. O(n_PA × n_eco) GEOS calls. The pipeline passes the dissolved PAs cast to POLYGON, which can be thousands of parts.
 - `try(..., silent = TRUE)` swallows intersection errors, so protection is silently underestimated and the gap overestimated.
-- If a user passes raw (undissolved) WDPA, overlapping PAs are double-counted, and `percent_protected` can exceed 100.
+- If a user passes raw (undissolved) WDPCA, overlapping PAs are double-counted, and `percent_protected` can exceed 100.
 - `iso3 = NULL` default, but it is required by `exact_rasterise()` (see the threatened-ecosystems issue). `group_attribute` is lowercased into the file name.
 **Improvements:**
 - Compute `pct_protected = exact_extract(pa_coverage_raster, eco_summary, "weighted_mean"/"mean")` from the same PA raster as the feature, or from one `st_intersection(eco_summary, st_union(pa))`. Drop the loop and the `try`. **M**

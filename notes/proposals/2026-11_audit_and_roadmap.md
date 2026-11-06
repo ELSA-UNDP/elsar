@@ -201,7 +201,7 @@ lifecycle everywhere.
 - An example that doesn't parse (`make_normalised_raster`).
 - 57 of 65 examples sit in `\dontrun{}`, although the README chain runs in
   4 seconds on bundled data.
-- `boundary_dat` is credited to GADM but is UN geodata, and the WDPA-derived
+- `boundary_dat` is credited to GADM but is UN geodata, and the WDPCA-derived
   `current_pas_sf` has no version or terms. That is a **licensing problem**
   for a CC BY package (§7).
 
@@ -237,7 +237,7 @@ Beyond the items in §2:
 - **Year selection.**
   - The year depends on today's date.
   - An explicitly requested year can be silently replaced with the latest.
-  - Nothing records asset versions or the WDPA release.
+  - Nothing records asset versions or the WDPCA release.
 - **Cached runs still need the network.** A fully cached rerun still starts
   conda, Python and Earth Engine authentication.
 - **Credentials.**
@@ -351,7 +351,7 @@ All six decisions are made.
    - Steps: `usethis::use_apache_license()`, a `NOTICE` file, `cph` (UNDP)
      and `fnd` roles in `Authors@R`, and a NEWS entry.
 4. **Bundled real data will be replaced.**
-   - Redistribution of the UN boundaries and the WDPA-derived data probably
+   - Redistribution of the UN boundaries and the WDPCA-derived data probably
      can't be cleared.
    - Ship a public-domain or synthetic boundary (Natural Earth, or a
      synthetic country like the results branch's "Elsaland") and **dummy
