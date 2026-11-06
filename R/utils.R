@@ -203,7 +203,10 @@ extract_filename_filetype <- function(data_name, file_path) {
 #' @return Numeric. Percentage of zone coverage across PUs.
 #' @export
 get_coverage <- function(zone_layer, pu_layer) {
-  terra::global(zone_layer, sum, na.rm = TRUE)$sum /
+  # Count the zone only within the planning units (coded 1; NA or 0 outside),
+  # so coverage cannot exceed 100% (before 0.4.2 cells outside counted too)
+  zone_in_pus <- terra::mask(zone_layer, pu_layer, maskvalues = c(NA, 0))
+  terra::global(zone_in_pus, sum, na.rm = TRUE)$sum /
     terra::global(pu_layer, sum, na.rm = TRUE)$sum * 100
 }
 
@@ -370,7 +373,7 @@ exact_rasterise <- function(
 #'
 #' @param raster_in SpatRaster. A large input raster (e.g., global dataset).
 #' @param pus SpatRaster. Planning units raster used to define the target extent.
-#' @param threads Optional method to use multi-core processing - to speed on some `terra` functions (default: `TRUE`).
+#' @param threads Ignored since 0.4.2 (kept so existing calls still work).
 #'
 #' @return A cropped SpatRaster with the same CRS as `raster_in` and extent matching the reprojected `pus`.
 #' @export
@@ -386,28 +389,16 @@ crop_global_raster <- function(raster_in, pus, threads = TRUE) {
   assertthat::assert_that(inherits(pus, "SpatRaster"),
                           msg = "'pus' must be a SpatRaster.")
 
-  # Attempt to project and crop
-  tryCatch({
-    log_message("Projecting PUs to match global input raster...")
-    pus_extent <- pus %>%
-      terra::project(
-        terra::crs(raster_in),
-        threads = threads
-        ) %>%
-      terra::ext()
-
-    log_message("Cropping raster to PU layer...")
-    cropped <- terra::crop(
-      raster_in,
-      pus_extent,
-      extend = TRUE
-    )
-
-    return(cropped)
-  }, error = function(e) {
-    log_message("Warning: crop failed: {e$message}; returning an empty raster.")
-    return(terra::ifel(pus == 1, 0, NA))  # Or NULL if you want to explicitly handle failure
-  })
+  # Crop to the planning-unit footprint, projected into the input's CRS. Only
+  # "no overlap" gives an empty layer; any other error (memory, a bad file) is
+  # raised. Before 0.4.2 every error became an all-0 layer without notice.
+  log_message("Cropping raster to PU layer...")
+  cropped <- .crop_to(raster_in, pus)
+  if (is.null(cropped)) {
+    log_message("The input raster does not overlap the planning units; returning an empty raster.")
+    return(terra::ifel(pus == 1, 0, NA))
+  }
+  cropped
 }
 
 #' Log a message with timestamp
@@ -503,6 +494,9 @@ get_file_type <- function(path) {
 #' @param wkt_filter Character or NULL. Optional WKT string used for spatial filtering.
 #' @param file_type Character or NULL. File type used to determine if layer name inference is required.
 #'
+#' @param warn_empty Logical. Warn when an ISO3 filter matches no features
+#'   (default `TRUE`). Loaders that read several layers and combine them set it
+#'   to `FALSE` and check the combined result instead.
 #' @return An `sf` object with valid geometry, or `NULL` on failure.
 #' @export
 #'
@@ -517,7 +511,8 @@ filter_sf <- function(file_path,
                       layer_name = NULL,
                       drop3d = TRUE,
                       wkt_filter = NULL,
-                      file_type = NULL) {
+                      file_type = NULL,
+                      warn_empty = TRUE) {
 
   # If no layer name provided and the format supports layers, pick the first
   # one. Guard the read: st_layers() throws on an unreadable/corrupt file, and
@@ -567,7 +562,8 @@ filter_sf <- function(file_path,
   # Dynamically build st_read() call
   dat <- tryCatch({
     args <- list(dsn = file_path, quiet = TRUE)
-    if (!is.null(layer_name)) args$layer <- layer_name
+    # (sf ignores, and warns about, a layer when a query is given)
+    if (!is.null(layer_name) && is.null(query)) args$layer <- layer_name
     if (!is.null(query)) args$query <- query
     if (!is.null(wkt_filter)) args$wkt_filter <- wkt_filter
     do.call(sf::st_read, args)
@@ -575,6 +571,13 @@ filter_sf <- function(file_path,
     message("Failed to read layer: ", layer_name, " in file: ", file_path, "\nError: ", e$message)
     return(NULL)
   })
+
+  # An ISO3 filter that matches nothing usually means a wrong iso3_column or
+  # code; say so instead of silently returning no features
+  if (warn_empty && !is.null(dat) && !is.null(query) && nrow(dat) == 0) {
+    warning("No features in layer '", layer_name, "' where ", iso3_column, " = '", iso3,
+            "'. Check 'iso3' and 'iso3_column'.", call. = FALSE)
+  }
 
   # Drop Z/M geometry dimensions if requested
   if (!is.null(dat) && drop3d) {
@@ -726,11 +729,24 @@ conditionally_subdivide_bbox <- function(bbox_sf,
 #' }
 #'
 save_raster <- function(raster, filename, datatype = "FLT4S", resampling = NULL) {
-  # Determine GDAL predictor: 3 for float (better for continuous), 2 for integer (better for categorical)
-  predictor_value <- ifelse(datatype == "FLT4S", "3", "2")
-
-  # Define nodata value: NaN for float, 255 for integer (common convention)
-  nodata_value <- if (datatype == "FLT4S") NaN else 255
+  # NoData and compression predictor per data type. Before 0.4.2 every type
+  # other than FLT4S got NoData 255 and predictor 2: FLT8S failed, and in
+  # INT2U/INT4U data the valid value 255 became NoData.
+  types <- list(
+    FLT4S = list(nodata = NaN, predictor = "3"),
+    FLT8S = list(nodata = NaN, predictor = "3"),
+    INT1U = list(nodata = 255, predictor = "2"),
+    INT1S = list(nodata = -128, predictor = "2"),
+    INT2U = list(nodata = 65535, predictor = "2"),
+    INT2S = list(nodata = -32768, predictor = "2"),
+    INT4U = list(nodata = 4294967295, predictor = "2"),
+    INT4S = list(nodata = -2147483648, predictor = "2")
+  )
+  assertthat::assert_that(
+    datatype %in% names(types),
+    msg = paste0("'datatype' must be one of: ", paste(names(types), collapse = ", "), ".")
+  )
+  type <- types[[datatype]]
 
   # Overview resampling. Caller may override; otherwise default by datatype:
   #   - float    -> AVERAGE  (smooth downsampling of continuous values)
@@ -739,7 +755,7 @@ save_raster <- function(raster, filename, datatype = "FLT4S", resampling = NULL)
   # so overviews keep the dominant class instead of an arbitrary pixel.
   resampling_value <- if (!is.null(resampling)) {
     toupper(resampling)
-  } else if (datatype == "FLT4S") {
+  } else if (startsWith(datatype, "FLT")) {
     "AVERAGE"
   } else {
     "NEAREST"
@@ -748,24 +764,33 @@ save_raster <- function(raster, filename, datatype = "FLT4S", resampling = NULL)
   # Write raster to disk as Cloud Optimized GeoTIFF (COG). Overviews are built
   # (OVERVIEWS=AUTO) so the output is a fully valid COG - required by strict COG
   # readers/servers such as TiTiler/rio-cogeo, which reject COGs without them.
-  terra::writeRaster(
-    raster,
-    filename = filename,
-    filetype = "COG",
-    datatype = datatype,
-    NAflag = nodata_value,
-    gdal = c(
-      "COMPRESS=ZSTD",
-      glue::glue("PREDICTOR={predictor_value}"),
-      "NUM_THREADS=ALL_CPUS",
-      "OVERVIEWS=AUTO",
-      glue::glue("OVERVIEW_RESAMPLING={resampling_value}")
+  # GDAL builds COGs through an in-memory copy and warns that the MEM driver
+  # ignores the creation options; those warnings are harmless and muffled.
+  withCallingHandlers(
+    terra::writeRaster(
+      raster,
+      filename = filename,
+      filetype = "COG",
+      datatype = datatype,
+      NAflag = type$nodata,
+      gdal = c(
+        "COMPRESS=ZSTD",
+        glue::glue("PREDICTOR={type$predictor}"),
+        "NUM_THREADS=ALL_CPUS",
+        "OVERVIEWS=AUTO",
+        glue::glue("OVERVIEW_RESAMPLING={resampling_value}")
+      ),
+      overwrite = TRUE
     ),
-    overwrite = TRUE
+    warning = function(w) {
+      if (grepl("driver MEM does not support creation option", conditionMessage(w))) {
+        invokeRestart("muffleWarning")
+      }
+    }
   )
 
-  # Log saved file path
   log_message("Saved: {filename}.")
+  invisible(filename)
 }
 
 # Instruction appended to median_from_rast() errors. The side-car must sit next
@@ -879,8 +904,6 @@ get_binary_layers <- function(raster_stack) {
     msg = "'raster_stack' must be a SpatRaster object."
   )
 
-  # Handle empty raster stacks
-
   if (terra::nlyr(raster_stack) == 0) {
     log_message("Raster stack has 0 layers - returning empty result.")
     return(list(NULL, NULL))
@@ -888,33 +911,20 @@ get_binary_layers <- function(raster_stack) {
 
   log_message("Analyzing {terra::nlyr(raster_stack)} layer(s) for binary values...")
 
-  # get frequency of values per raster layer
-  freq_tab <- terra::freq(raster_stack, digits = 4, bylayer = TRUE)
+  # A layer is binary when every value is exactly 0 or 1, tested layer by layer
+  # (before 0.4.2: values were rounded to 4 digits first, so near-0 or near-1
+  # floats counted as binary and were then written as integers, and an all-NA
+  # layer shifted the labels of the others). All-NA layers are kept as float.
+  # One pass over the whole stack (a per-layer loop was ~7x slower on disk)
+  other <- terra::global(raster_stack != 0 & raster_stack != 1, "sum", na.rm = TRUE)[[1]]
+  has_data <- terra::global(raster_stack, "notNA")[[1]] > 0
+  binary_mask <- other == 0 & has_data
 
-  # Split frequency table by layer
-  freq_by_layer <- split(freq_tab, freq_tab$layer)
+  int_layers <- if (any(binary_mask)) raster_stack[[which(binary_mask)]] else NULL
+  float_layers <- if (any(!binary_mask)) raster_stack[[which(!binary_mask)]] else NULL
+  log_message("Found {sum(binary_mask)} binary layer(s) and {sum(!binary_mask)} float layer(s).")
 
-  # Identify binary layers: only values 0, 1, or both
-  binary_mask <- sapply(freq_by_layer, function(df) {
-    all(df$value %in% c(0, 1))
-  })
-
-  # Subset only if binary layers were found
-  if (any(binary_mask, na.rm = TRUE)) {
-    binary_idx <- which(binary_mask)
-    float_idx <- which(!binary_mask)
-
-    int_layers <- if (length(binary_idx) > 0) raster_stack[[binary_idx]] else NULL
-    float_layers <- if (length(float_idx) > 0) raster_stack[[float_idx]] else NULL
-
-    log_message("Found {sum(binary_mask)} binary layer(s) and {sum(!binary_mask)} float layer(s).")
-  } else {
-    log_message("No binary layers found in raster stack.")
-    int_layers <- NULL
-    float_layers <- raster_stack
-  }
-
-  return(list(int_layers, float_layers))
+  list(int_layers, float_layers)
 }
 
 

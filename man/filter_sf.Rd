@@ -11,7 +11,8 @@ filter_sf(
   layer_name = NULL,
   drop3d = TRUE,
   wkt_filter = NULL,
-  file_type = NULL
+  file_type = NULL,
+  warn_empty = TRUE
 )
 }
 \arguments{
@@ -28,6 +29,10 @@ filter_sf(
 \item{wkt_filter}{Character or NULL. Optional WKT string used for spatial filtering.}
 
 \item{file_type}{Character or NULL. File type used to determine if layer name inference is required.}
+
+\item{warn_empty}{Logical. Warn when an ISO3 filter matches no features
+(default \code{TRUE}). Loaders that read several layers and combine them set it
+to \code{FALSE} and check the combined result instead.}
 }
 \value{
 An \code{sf} object with valid geometry, or \code{NULL} on failure.

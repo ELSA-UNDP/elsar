@@ -47,75 +47,43 @@ make_forest_integrity <- function(raster_flii = NULL,
     assertthat::assert_that(dir.exists(output_path),
                             msg = glue::glue("'output_path' directory does not exist: {output_path}"))
   }
+  assertthat::assert_that(
+    !is.null(raster_flii) || !is.null(raster_fsii),
+    msg = "Provide 'raster_flii', 'raster_fsii' or both."
+  )
 
-  if (!is.null(raster_flii) & !is.null(raster_fsii)) {
+  # Each index is rescaled to 0-1 before they are combined. FLII is published
+  # on a 0-10000 scale, so before 0.4.2 adding the raw values let FLII swamp
+  # FSII; an index that is all 0 in the region is left out.
+  indices <- list(FLII = raster_flii, FSII = raster_fsii)
+  indices <- indices[!vapply(indices, is.null, logical(1))]
+  aligned <- lapply(indices, function(r) {
+    assertthat::assert_that(inherits(r, "SpatRaster"))
+    suppressWarnings(make_normalised_raster(raster_in = r, pus = pus, iso3 = iso3))
+  })
+  has_data <- vapply(aligned, function(r) {
+    isTRUE(terra::global(r, "max", na.rm = TRUE)[[1]] > 0)
+  }, logical(1))
 
-    assertthat::assert_that(
-      inherits(raster_flii, "SpatRaster"),
-      inherits(raster_fsii, "SpatRaster")
-    )
-
-  # crop and align to pus
-  suppressWarnings(flii <- make_normalised_raster(
-    raster_in = raster_flii,
-    pus = pus,
-    rescaled = FALSE
-  ))
-
-  suppressWarnings(fsii <- make_normalised_raster(
-    raster_in = raster_fsii,
-    pus = pus,
-    rescaled = FALSE
-  ))
-
-  if ((terra::global(fsii, sum, na.rm=TRUE)[[1]]) == 0) {
-    log_message("FSII only contains 0s for the study area. Forest integrity will be calculated using FLII only.")
-
-    raster_rescaled <- rescale_raster(flii)
-
-  } else if ((terra::global(flii, sum, na.rm=TRUE)[[1]]) == 0) {
-
-    log_message("FLII only contains 0s for the study area. Forest integrity will be calculated using FSII only.")
-
-    raster_rescaled <- rescale_raster(fsii)
-
-  } else if (((terra::global(fsii, sum, na.rm=TRUE)[[1]]) > 0) & ((terra::global(fsii, sum, na.rm=TRUE)[[1]]) > 0)) {
-    log_message("Forest integrity will be calculated using FLII and FSII.")
-
-    # get mean of fsii and flii and rescale
-    fi <- terra::mean(fsii + flii)
-    raster_rescaled <- rescale_raster(fi)
-
+  if (!any(has_data)) {
+    warning("Forest integrity inputs only contain 0 values in the region; returning an all-0 layer.",
+            call. = FALSE)
+    raster_rescaled <- terra::ifel(pus == 1, 0, NA)
   } else {
-    log_message("Both of your input data files only contain 0 values. Please check your input data.")
+    used <- names(aligned)[has_data]
+    log_message("Forest integrity calculated from {paste(used, collapse = ' and ')}.")
+    combined <- Reduce(`+`, aligned[has_data]) / length(used)
+    raster_rescaled <- if (length(used) > 1) rescale_raster(combined) else combined
   }
-
-  } else if (is.null(raster_flii) & !is.null(raster_fsii)) {
-
-    log_message("Only FSII data provided. Forest integrity will be calculated using FSII only.")
-
-    raster_rescaled <- make_normalised_raster(
-      raster_in = raster_fsii,
-      pus = pus
-    )
-
-  } else if (!is.null(raster_flii) & is.null(raster_fsii)) {
-    log_message("Only FLII data provided. Forest integrity will be calculated using FLII only.")
-
-    raster_rescaled <- make_normalised_raster(
-      raster_in = raster_flii,
-      pus = pus
-    )
-
-  }
+  names(raster_rescaled) <- "forest_integrity"
 
   if (!is.null(output_path)) {
-    elsar::save_raster(
+    save_raster(
       raster = raster_rescaled,
       filename = glue::glue("{output_path}/forest_integrity_{iso3}.tif"),
       datatype = "FLT4S"
     )
   }
 
-  return(raster_rescaled)
+  raster_rescaled
 }
