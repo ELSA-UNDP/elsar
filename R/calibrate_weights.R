@@ -42,12 +42,18 @@
 #'   them. Cells with cover above `lockin_threshold` are locked into their zone:
 #'   added to its planning units and removed from every other zone, including
 #'   `do_nothing`, so the solver must allocate them there. Where lock-ins
-#'   overlap, the zone listed first in `zones_pu` wins. A zone's budget is
-#'   raised to its locked-in coverage when that is larger. Before 0.4.2
+#'   overlap, the zone earlier in `lockin_priority` wins. A zone's budget is
+#'   raised to its locked-in coverage (the number of locked cells) when that
+#'   is larger. Before 0.4.2
 #'   lock-ins only raised the budget and were not enforced, unlike the original
 #'   ELSA pre-calibration.
 #' @param lockin_threshold Numeric. Lock-in cover above which a cell is locked
 #'   in (default `0.1`, as in the ELSA tool).
+#' @param lockin_priority Character vector of zone names: where lock-ins
+#'   overlap, the earlier zone wins. Default `NULL` uses the ELSA tool's order
+#'   (lowest raster value first): protect, manage (or reduce pressures),
+#'   restore, urban greening (or urban adapt), then any other zones in the
+#'   order of `zones_pu`.
 #' @param feature_totals Optional named numeric vector of raw (non-impact-weighted)
 #'   feature totals used as the representation denominator. Computed from `features`
 #'   via `terra::global(..., "sum")` when `NULL` (the default).
@@ -113,6 +119,7 @@ elsar_calibrate_weights <- function(features,
                                     budgets,
                                     lockins = NULL,
                                     lockin_threshold = 0.1,
+                                    lockin_priority = NULL,
                                     feature_totals = NULL,
                                     wgt_scale = 2,
                                     gap = 0.05,
@@ -160,9 +167,20 @@ elsar_calibrate_weights <- function(features,
 
   zone_names <- names(zones_pu)
 
-  prepared <- .apply_lockins(zones_pu, lockins, planning_units, lockin_threshold)
+  assertthat::assert_that(
+    all(vapply(zones_pu, function(z) inherits(z, "SpatRaster") && terra::nlyr(z) == 1, logical(1))),
+    msg = "'zones_pu' must be a named list of single-layer SpatRaster zone masks."
+  )
+  assertthat::assert_that(assertthat::is.number(lockin_threshold),
+                          msg = "'lockin_threshold' must be a single number.")
+  prepared <- .apply_lockins(zones_pu, lockins, planning_units, lockin_threshold,
+                             priority = lockin_priority)
   zones_pu <- prepared$zones_pu
   locked_any <- prepared$locked
+  # The budget floor counts the locked cells (thresholded, as enforced), not
+  # the raw cover: with fractional lock-ins the raw sum was smaller than the
+  # cells forced into the zone, which made the problem infeasible
+  lockins <- prepared$lockins
   feat_names <- names(features)
   assertthat::assert_that(all(zone_names %in% names(impacts)),
     msg = "every zone in 'zones_pu' must have a matching impact column in 'impacts'."
@@ -534,24 +552,52 @@ elsar_calibrate_weights <- function(features,
 # to that zone and removed from every other zone; applied last-to-first so the
 # first listed zone wins overlaps. Returns the masks and the union of locked
 # cells (1/NA), which the problem also removes from do_nothing.
-.apply_lockins <- function(zones_pu, lockins, planning_units, threshold = 0.1) {
+.apply_lockins <- function(zones_pu, lockins, planning_units, threshold = 0.1,
+                           priority = NULL) {
   zone_names <- names(zones_pu)
   zones_pu <- lapply(zones_pu, function(z) terra::ifel(z > 0, 1, NA))
   locked_any <- NULL
+  binary <- NULL
   if (!is.null(lockins) && length(lockins) > 0) {
     assertthat::assert_that(
       all(names(lockins) %in% zone_names),
       msg = "every name in 'lockins' must be a zone in 'zones_pu'."
     )
-    for (z in rev(intersect(zone_names, names(lockins)))) {
+    order <- .lockin_priority(zone_names, priority)
+    binary <- list()
+    # Applied lowest priority first, so higher-priority zones take overlaps
+    for (z in rev(intersect(order, names(lockins)))) {
       locked <- terra::ifel(!is.na(lockins[[z]]) & lockins[[z]] > threshold, 1, NA)
       locked <- terra::mask(locked, planning_units)
       for (other in setdiff(zone_names, z)) {
         zones_pu[[other]] <- terra::ifel(!is.na(locked), NA, zones_pu[[other]])
+        if (!is.null(binary[[other]])) {
+          binary[[other]] <- terra::ifel(!is.na(locked), 0, binary[[other]])
+        }
       }
       zones_pu[[z]] <- terra::ifel(!is.na(locked), 1, zones_pu[[z]])
+      binary[[z]] <- terra::ifel(is.na(locked), 0, 1)
       locked_any <- if (is.null(locked_any)) locked else terra::cover(locked_any, locked)
     }
   }
-  list(zones_pu = zones_pu, locked = locked_any)
+  list(zones_pu = zones_pu, locked = locked_any, lockins = binary)
+}
+
+# Zone order for resolving overlapping lock-ins: an explicit `priority`, or
+# the ELSA tool's raster-value order (protect, manage/reduce pressures,
+# restore, urban greening/urban adapt), then the remaining zones
+.lockin_priority <- function(zone_names, priority = NULL) {
+  if (!is.null(priority)) {
+    assertthat::assert_that(
+      all(priority %in% zone_names),
+      msg = "every name in 'lockin_priority' must be a zone in 'zones_pu'."
+    )
+    return(c(priority, setdiff(zone_names, priority)))
+  }
+  key <- tolower(gsub("[^[:alnum:]]", "", zone_names))
+  rank <- c(protect = 1, manage = 2, reducepressures = 2, restore = 3,
+            urbangreening = 4, urbanadapt = 4)
+  r <- unname(rank[key])
+  r[is.na(r)] <- 5
+  zone_names[order(r, seq_along(zone_names))]
 }
