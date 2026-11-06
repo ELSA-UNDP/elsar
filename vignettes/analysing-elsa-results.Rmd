@@ -128,7 +128,7 @@ correct for any projection: cell areas are planar in the equal-area projections
 ELSA uses, geodesic for lon/lat rasters, and cells cut by a region boundary are
 weighted by the share inside it.
 
-```{r bars, fig.height = 3}
+```{r bars, fig.height = 4}
 elsar_plot_action_bars(by_region)
 ```
 
@@ -146,7 +146,7 @@ gap <- elsar_protection_gap(by_region, target = 0.30)
 gap[, c("region", "pct_current", "pct_new", "pct_total", "gap", "target_met")]
 ```
 
-```{r gap-plot, fig.height = 3}
+```{r gap-plot, fig.height = 4}
 elsar_plot_protection_gap(gap)
 ```
 
@@ -165,7 +165,7 @@ and those are the figures to cite for the run. This function adds regional
 breakdowns, the split by existing protected areas, and layers that were not
 part of the run.
 
-```{r overlap, fig.height = 2.5}
+```{r overlap, fig.height = 4}
 crs <- terra::crs(x)
 kba <- sf::st_sf(geometry = sf::st_buffer(sf::st_sfc(sf::st_point(c(38000, 40000)), crs = crs), 9000))
 wetland <- sf::st_sf(geometry = sf::st_buffer(sf::st_sfc(sf::st_point(c(65000, 15000)), crs = crs), 8000))

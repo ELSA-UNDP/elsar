@@ -118,6 +118,7 @@ elsar_summarise_overlap <- function(x,
 #' @param overlap A tibble from [elsar_summarise_overlap()].
 #' @param show_no_action Logical. Include the share under no action, so bars
 #'   reach 100%. Default `TRUE`.
+#' @param orientation `"vertical"` (default) or `"horizontal"` bars.
 #' @param title Optional plot title.
 #' @param base_size Base font size in points.
 #'
@@ -137,8 +138,11 @@ elsar_summarise_overlap <- function(x,
 #' elsar_plot_overlap(elsar_summarise_overlap(x, layers))
 elsar_plot_overlap <- function(overlap,
                                show_no_action = TRUE,
+                               orientation = c("vertical", "horizontal"),
                                title = NULL,
                                base_size = 10) {
+  orientation <- match.arg(orientation)
+  vertical <- orientation == "vertical"
   needed <- c("region", "layer", "action", "colour", "is_action", "pct_of_layer")
   assertthat::assert_that(
     is.data.frame(overlap), all(needed %in% names(overlap)),
@@ -150,20 +154,31 @@ elsar_plot_overlap <- function(overlap,
   colours <- stats::setNames(sch$colour, as.character(sch$action))
   d$action <- factor(as.character(d$action), levels = names(colours))
 
-  p <- ggplot2::ggplot(d, ggplot2::aes(x = .data$pct_of_layer, y = .data$layer, fill = .data$action)) +
+  layer_levels <- levels(d$layer)
+  d$layer <- factor(as.character(d$layer), levels = if (vertical) layer_levels else rev(layer_levels))
+  mapping <- if (vertical) {
+    ggplot2::aes(x = .data$layer, y = .data$pct_of_layer, fill = .data$action)
+  } else {
+    ggplot2::aes(x = .data$pct_of_layer, y = .data$layer, fill = .data$action)
+  }
+  pct_scale <- (if (vertical) ggplot2::scale_y_continuous else ggplot2::scale_x_continuous)(
+    labels = scales::label_percent(scale = 1), breaks = seq(0, 100, 25),
+    limits = c(0, 100 + 1e-6), expand = ggplot2::expansion(mult = c(0, 0.02))
+  )
+  value_title <- "% of layer within planning area"
+
+  p <- ggplot2::ggplot(d, mapping) +
     ggplot2::geom_col(
       position = ggplot2::position_stack(reverse = TRUE),
       width = 0.7, colour = "white", linewidth = 0.4
     ) +
     ggplot2::scale_fill_manual(values = colours, labels = .wrap(names(colours)), name = NULL) +
-    ggplot2::scale_y_discrete(limits = rev(levels(d$layer)), labels = function(x) .wrap(x, 22)) +
-    ggplot2::scale_x_continuous(
-      labels = scales::label_percent(scale = 1), breaks = seq(0, 100, 25),
-      limits = c(0, 100 + 1e-6), expand = ggplot2::expansion(mult = c(0, 0.02))
-    ) +
-    ggplot2::labs(x = "% of layer within planning area", y = NULL, title = title) +
+    .category_scale(vertical) +
+    pct_scale +
+    ggplot2::labs(title = title) +
+    (if (vertical) ggplot2::labs(x = NULL, y = value_title) else ggplot2::labs(x = value_title, y = NULL)) +
     .results_theme(base_size) +
-    ggplot2::theme(panel.grid.major.y = ggplot2::element_blank()) +
+    .category_axis_theme(vertical, length(layer_levels), layer_levels) +
     ggplot2::guides(fill = ggplot2::guide_legend(nrow = 1))
 
   if (nlevels(droplevels(d$region)) > 1) {

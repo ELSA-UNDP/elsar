@@ -12,6 +12,7 @@ elsar_plot_region(
   region_col,
   region,
   metrics = c("percent", "area"),
+  orientation = c("vertical", "horizontal"),
   map_width = 0.45,
   title = region,
   ...,
@@ -36,6 +37,8 @@ same \code{regions} and \code{region_col}.}
 
 \item{metrics}{Which bar charts to show next to the map: any of
 \code{"percent"} and \code{"area"}. Default both.}
+
+\item{orientation}{\code{"vertical"} (default) or \code{"horizontal"} bars.}
 
 \item{map_width}{Numeric between 0 and 1. Share of the figure width taken by
 the map. Default \code{0.45}.}

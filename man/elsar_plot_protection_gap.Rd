@@ -7,6 +7,9 @@
 elsar_plot_protection_gap(
   gap,
   metric = c("percent", "area"),
+  sort = c("total", "none"),
+  orientation = c("vertical", "horizontal"),
+  national_label = attr(gap, "national_label") \%||\% "National",
   colours = c(current = "#005000", new = "#06C723"),
   labels = c(current = "Existing PAs", new = "New protection (ELSA)"),
   title = NULL,
@@ -18,6 +21,14 @@ elsar_plot_protection_gap(
 
 \item{metric}{\code{"percent"} (default) or \code{"area"}. The target line is only
 drawn for \code{"percent"}.}
+
+\item{sort}{\code{"total"} (default) orders regions from most to least total
+protection; \code{"none"} keeps their order in \code{gap}. The national bar always
+comes last.}
+
+\item{orientation}{\code{"vertical"} (default) or \code{"horizontal"} bars.}
+
+\item{national_label}{Name of the national row in \code{gap}.}
 
 \item{colours}{Named character vector with colours for \code{current} and \code{new}
 protection.}
@@ -33,15 +44,17 @@ protection.}
 A \code{ggplot} object.
 }
 \description{
-Draws the output of \code{\link[=elsar_protection_gap]{elsar_protection_gap()}} as one horizontal bar per
-region: existing protected areas plus the new protection proposed by ELSA,
-with a dashed line at the target.
+Draws the output of \code{\link[=elsar_protection_gap]{elsar_protection_gap()}} as one bar per region:
+existing protected areas plus the new protection proposed by ELSA, with a
+dashed line at the target. The national bar is set apart from the regions.
 }
 \examples{
 ex <- elsar_example_results()
 x <- elsar_prepare_actions(ex$actions, pas = ex$pas)
 s <- elsar_summarise_actions(x, ex$regions, region_col = "region_name")
-elsar_plot_protection_gap(elsar_protection_gap(s))
+g <- elsar_protection_gap(s)
+elsar_plot_protection_gap(g)
+elsar_plot_protection_gap(g, orientation = "horizontal", sort = "none")
 }
 \seealso{
 \code{\link[=elsar_protection_gap]{elsar_protection_gap()}}

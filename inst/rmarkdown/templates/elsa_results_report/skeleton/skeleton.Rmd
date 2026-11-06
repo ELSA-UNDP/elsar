@@ -60,6 +60,7 @@ if (has_pa && has_regions) {
     gap_national
   )
   gap$region <- factor(gap$region, levels = unique(as.character(gap$region)))
+  attr(gap, "national_label") <- "National"
 }
 overlap <- if (has_layers) elsar_summarise_overlap(x, p$layers, units = p$units)
 
@@ -119,7 +120,7 @@ cat(
 )
 ```
 
-```{r protection-plot, eval = has_pa, fig.height = if (has_regions) 1.6 + 0.45 * nrow(gap) else 2.2}
+```{r protection-plot, eval = has_pa, fig.height = 4.2}
 elsar_plot_protection_gap(gap)
 ```
 
@@ -138,7 +139,7 @@ kable(data.frame(
 cat("\n## Actions by region\n\n")
 ```
 
-```{r regions-plot, eval = has_regions, fig.height = 1.6 + 0.45 * nlevels(by_region$region)}
+```{r regions-plot, eval = has_regions, fig.height = 4.2}
 elsar_plot_action_bars(by_region)
 ```
 
@@ -160,7 +161,7 @@ cat(
 )
 ```
 
-```{r overlap-plot, eval = has_layers, fig.height = 1.6 + 0.45 * nlevels(overlap$layer)}
+```{r overlap-plot, eval = has_layers, fig.height = 4}
 elsar_plot_overlap(overlap)
 ```
 

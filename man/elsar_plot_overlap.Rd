@@ -7,6 +7,7 @@
 elsar_plot_overlap(
   overlap,
   show_no_action = TRUE,
+  orientation = c("vertical", "horizontal"),
   title = NULL,
   base_size = 10
 )
@@ -16,6 +17,8 @@ elsar_plot_overlap(
 
 \item{show_no_action}{Logical. Include the share under no action, so bars
 reach 100\%. Default \code{TRUE}.}
+
+\item{orientation}{\code{"vertical"} (default) or \code{"horizontal"} bars.}
 
 \item{title}{Optional plot title.}
 

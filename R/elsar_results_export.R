@@ -155,8 +155,9 @@ elsar_export_results <- function(x,
   if (!is.null(gap)) plots$protection_gap <- elsar_plot_protection_gap(gap)
 
   n_bars <- nlevels(main_summary$region)
-  sizes <- list(map = c(8, 7), bars = c(8, 1.5 + 0.45 * n_bars),
-                protection_gap = c(8, 1.5 + 0.45 * (n_bars + 1)))
+  # Vertical bars: width grows with the number of regions
+  sizes <- list(map = c(8, 7), bars = c(max(6, 2 + 0.7 * n_bars), 4.5),
+                protection_gap = c(max(6, 2.5 + 0.7 * (n_bars + 1)), 4.5))
   for (nm in names(plots)) {
     files <- c(files, elsar_save_plots(
       plots[[nm]], dir, prefix = paste0(prefix, "_", nm),

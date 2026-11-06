@@ -270,8 +270,17 @@ test_that("bar charts use the scheme colours and the PA segment", {
   fills <- unique(built$data[[1]]$fill)
   expect_true(all(c("#005000", "#06C723", "#8803FC") %in% fills))
   # Segments of each region add up to the action share of the region
+  # (vertical bars: Westmoor is the first category on the x axis)
+  bars <- built$data[[1]]
   expect_equal(
-    sum(built$data[[1]]$x[built$data[[1]]$y == 3] - built$data[[1]]$xmin[built$data[[1]]$y == 3]),
+    sum(bars$ymax[bars$x == 1] - bars$ymin[bars$x == 1]),
+    sum(d$s$pct_of_region[d$s$region == "Westmoor" & d$s$is_action]),
+    tolerance = 1e-6
+  )
+  # Horizontal bars: Westmoor is drawn at the top (last y position)
+  h <- ggplot2::ggplot_build(elsar_plot_action_bars(d$s, orientation = "horizontal"))$data[[1]]
+  expect_equal(
+    sum(h$xmax[h$y == 3] - h$xmin[h$y == 3]),
     sum(d$s$pct_of_region[d$s$region == "Westmoor" & d$s$is_action]),
     tolerance = 1e-6
   )
@@ -285,9 +294,22 @@ test_that("bar charts warn when asked to split PAs without PA data", {
   builds(p)
 })
 
+test_that("protection gap plot sorts regions and keeps national last", {
+  d <- example_inputs()
+  p <- elsar_plot_protection_gap(d$g)
+  lv <- levels(p$data$region)
+  regions <- d$g[d$g$region != "National", ]
+  expect_equal(lv, c(as.character(regions$region[order(-regions$pct_total)]), "National"))
+  expect_equal(levels(elsar_plot_protection_gap(d$g, sort = "none")$data$region),
+               as.character(d$g$region))
+  # Horizontal bars run top to bottom, so the levels are reversed
+  expect_equal(levels(elsar_plot_protection_gap(d$g, orientation = "horizontal")$data$region), rev(lv))
+})
+
 test_that("protection gap plot builds, with and without a target", {
   d <- example_inputs()
   builds(elsar_plot_protection_gap(d$g))
+  builds(elsar_plot_protection_gap(d$g, orientation = "horizontal"))
   builds(elsar_plot_protection_gap(d$g, metric = "area"))
   s_no_target <- elsar_protection_gap(d$s, target = NULL)
   builds(elsar_plot_protection_gap(s_no_target))
@@ -383,10 +405,11 @@ test_that("overlap plot builds and bars reach 100%", {
   ov <- elsar_summarise_overlap(x, list(PA = toy_pas()), toy_regions(), "name")
   p <- elsar_plot_overlap(ov)
   built <- ggplot2::ggplot_build(p)
-  ends <- tapply(built$data[[1]]$xmax, list(built$data[[1]]$PANEL, built$data[[1]]$y), max)
+  ends <- tapply(built$data[[1]]$ymax, list(built$data[[1]]$PANEL, built$data[[1]]$x), max)
   # West holds the whole PA; East has none (bar of 0)
   expect_equal(max(ends, na.rm = TRUE), 100, tolerance = 1e-6)
   builds(elsar_plot_overlap(ov, show_no_action = FALSE))
+  builds(elsar_plot_overlap(ov, orientation = "horizontal"))
 })
 
 # Report --------------------------------------------------------------------------

@@ -11,6 +11,7 @@ elsar_plot_action_bars(
   split_pa = isTRUE(attr(summary, "has_pa")),
   pa_colour = "#005000",
   pa_label = "Existing PAs",
+  orientation = c("vertical", "horizontal"),
   title = NULL,
   base_size = 10
 )
@@ -21,15 +22,19 @@ elsar_plot_action_bars(
 \item{metric}{\code{"percent"} (share of each region's planning area, default)
 or \code{"area"}.}
 
-\item{by}{\code{"region"} (default) draws one horizontal bar per region, stacked
-by action, to compare regions. \code{"action"} draws one bar per action group,
-with a panel per region if there are several.}
+\item{by}{\code{"region"} (default) draws one bar per region, stacked by action,
+to compare regions. \code{"action"} draws one bar per action group, with a
+panel per region if there are several.}
 
 \item{split_pa}{Logical. Draw the part of each action inside existing
 protected areas as a separate segment. Default \code{TRUE} when the summary
 has protected-area information.}
 
 \item{pa_colour, pa_label}{Colour and legend label of that segment.}
+
+\item{orientation}{\code{"vertical"} (default) or \code{"horizontal"} bars. Long or
+many category labels are wrapped, and tilted when vertical bars get
+crowded; horizontal bars suit many regions with long names.}
 
 \item{title}{Optional plot title.}
 

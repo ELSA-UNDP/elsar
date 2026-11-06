@@ -395,6 +395,7 @@ elsar_protection_gap <- function(summary,
   }
 
   attr(out, "units") <- attr(summary, "units")
+  attr(out, "national_label") <- national_label
   out
 }
 
