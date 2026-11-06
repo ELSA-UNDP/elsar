@@ -121,7 +121,8 @@ convert_points_polygon <- function(
   points <- sf_layer[is_point, ]
 
   points_buffered <- NULL
-  if (nrow(points) > 0) {
+  had_points <- nrow(points) > 0
+  if (had_points) {
     if (!area_attr %in% names(sf_layer)) {
       stop(paste("The area attribute", area_attr, "does not exist in the input sf_layer."))
     }
@@ -131,13 +132,15 @@ convert_points_polygon <- function(
   }
 
   if (nrow(points) == 0) {
-    warning("No point geometries with area attributes found.")
+    if (had_points) warning("No point geometries with area attributes found.")
   } else {
     # A multipoint's reported area is shared between its points (before 0.4.2
     # each point got a circle of the full area)
     points$.feature <- seq_len(nrow(points))
     points$.area <- area
-    single <- suppressWarnings(sf::st_cast(points, "POINT"))
+    # Cast to MULTIPOINT first: casting a mixed POINT/MULTIPOINT column straight
+    # to POINT keeps only the first point of each multipoint
+    single <- suppressWarnings(sf::st_cast(sf::st_cast(points, "MULTIPOINT"), "POINT"))
     n_parts <- tabulate(single$.feature, nbins = nrow(points))
     part_area <- single$.area / n_parts[single$.feature]
 
@@ -261,8 +264,9 @@ exact_rasterise <- function(
     inherits(features, "sf") || inherits(features, "SpatVector"),
     msg = "'features' must be an 'sf' or 'SpatVector' object."
   )
+  if (inherits(features, "SpatVector")) features <- sf::st_as_sf(features)
   assertthat::assert_that(
-    attribute %in% colnames(features),
+    attribute %in% names(features),
     msg = glue::glue("Attribute '{attribute}' not found in 'features'.")
   )
   assertthat::assert_that(
@@ -274,7 +278,6 @@ exact_rasterise <- function(
     msg = "'iso3' must be a 3-letter ISO3 code, optionally with a regional suffix (e.g. ECU_REG)."
   )
 
-  if (inherits(features, "SpatVector")) features <- sf::st_as_sf(features)
   features <- features[!sf::st_is_empty(features), ]
 
   if (nrow(features) == 0) {
@@ -282,7 +285,15 @@ exact_rasterise <- function(
     r <- terra::ifel(pus == 1, 0, NA)
   } else {
     features <- sf::st_make_valid(sf::st_transform(features, sf::st_crs(pus)))
-    values <- as.numeric(sf::st_drop_geometry(features)[[attribute]])
+    features <- .polygons_only(features)
+    raw <- sf::st_drop_geometry(features)[[attribute]]
+    # A factor's level codes are not its values (factor("10") is code 1)
+    if (is.factor(raw)) raw <- as.character(raw)
+    values <- suppressWarnings(as.numeric(raw))
+    assertthat::assert_that(
+      sum(is.na(values)) == sum(is.na(raw)),
+      msg = glue::glue("Attribute '{attribute}' must be numeric.")
+    )
     log_message("exact_rasterise: {nrow(features)} feature(s), fun = {fun_name}.")
 
     cells <- exactextractr::exact_extract(
@@ -298,15 +309,19 @@ exact_rasterise <- function(
 
     r <- terra::ifel(pus == 1, 0, NA)
     if (nrow(cells) > 0) {
-      by_cell <- switch(fun_name,
-        mean = dplyr::summarise(dplyr::group_by(cells, .data$cell),
-          v = sum(.data$value * .data$coverage_fraction) / sum(.data$coverage_fraction)),
-        sum = dplyr::summarise(dplyr::group_by(cells, .data$cell),
-          v = sum(.data$value * .data$coverage_fraction)),
-        max = dplyr::summarise(dplyr::group_by(cells, .data$cell), v = max(.data$value)),
-        min = dplyr::summarise(dplyr::group_by(cells, .data$cell), v = min(.data$value))
-      )
-      r[by_cell$cell] <- by_cell$v
+      # Base rowsum()/ordering: far faster than grouped dplyr on millions of rows
+      if (fun_name %in% c("mean", "sum")) {
+        totals <- rowsum(cbind(cells$value * cells$coverage_fraction, cells$coverage_fraction),
+                         cells$cell, reorder = FALSE)
+        cell_ids <- as.numeric(rownames(totals))
+        v <- if (fun_name == "mean") totals[, 1] / totals[, 2] else totals[, 1]
+      } else {
+        ord <- order(cells$cell, if (fun_name == "max") -cells$value else cells$value)
+        first <- ord[!duplicated(cells$cell[ord])]
+        cell_ids <- cells$cell[first]
+        v <- cells$value[first]
+      }
+      r[cell_ids] <- v
       r <- terra::mask(r, pus)
     }
   }
@@ -903,3 +918,13 @@ get_binary_layers <- function(raster_stack) {
 }
 
 
+
+# Keep only polygon geometry: extract polygons from geometry collections (which
+# st_make_valid() can produce) and drop points and lines, which coverage
+# fractions cannot use
+.polygons_only <- function(x) {
+  if (any(sf::st_is(x, "GEOMETRYCOLLECTION"))) {
+    x <- sf::st_collection_extract(x, "POLYGON")
+  }
+  x[sf::st_is(x, c("POLYGON", "MULTIPOLYGON")), ]
+}

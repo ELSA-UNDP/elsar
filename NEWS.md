@@ -43,7 +43,9 @@ on 0.4.1 until a country is rerun.
   area: `repareakm2` is in km², but was converted as hectares, so the circles
   were 100 times too small.
 * **Wetlands and Ramsar (`make_wetlands_ramsar()`).** Ramsar polygons are now
-  always rasterised, with buffered points added when `buffer_points = TRUE`.
+  always rasterised, with buffered points added when `buffer_points = TRUE`
+  (centroids of sites that also have a boundary are ignored, via the new
+  `id_column`, so those sites are not counted twice).
   Before, they were only rasterised when the data contained points and
   `buffer_points = FALSE`, so Ramsar sites were usually missing. Any positive
   wetland class now counts as wetland, so 0/1 wetland masks work (the CIFOR
@@ -54,13 +56,15 @@ on 0.4.1 until a country is rerun.
 * **Protected areas and indigenous lands with point data
   (`convert_points_polygon()`).** Polygons whose reported area is 0 or missing
   (common in WDPA) are no longer dropped, and a multipoint's reported area is
-  shared between its points instead of given to each.
+  shared between its points instead of given to each (also when points and
+  multipoints are mixed).
 * **Threatened and under-represented ecosystems, urban heat
   (`exact_rasterise()`).** `fun = mean` averaged each planning unit over *all*
   features, including ones not touching it, and the method changed above 1,000
   features. It is now the coverage-weighted mean of the features present, with
   one rule for any number of features. `max` and `min` no longer shrink at the
-  edges of features. It is also much faster (one `exact_extract()` pass).
+  edges of features. (With tens of thousands of features it is slower than the
+  old approximate path; the callers in elsar pass tens to hundreds.)
 
 * **Restore Zone (`make_restore_zone()`).** It is now the intended band of
   degraded but restorable land: `(degradation > degradation_threshold |
@@ -71,11 +75,17 @@ on 0.4.1 until a country is rerun.
   deprecated in favour of `hii_min`. The `degradation` input can now be a 0/1
   degraded-areas layer as well as an SDG 15.3.1 layer (-1 = degraded): before,
   a 0/1 layer such as `make_degraded_areas()` output silently added no
-  degradation (`degradation_encoding = "auto"` detects which it is).
+  degradation. `degradation_encoding = "auto"` reads the values within the
+  planning region and stops when they are unclear. This affects any 0/1
+  "Degraded Areas" input, not only `compute_degraded_areas`. Note: the new
+  arguments come before `agriculture_threshold`, so positional calls shift.
 * **All zones with `filter_patch_size = TRUE`.** Removing small patches used
   `terra::sieve()`, which also filled small excluded holes (farms, towns)
-  back into the zone. Excluded cells now stay excluded; small eligible
-  patches are still removed.
+  back into the zone, and could keep small patches next to other small
+  patches or NoData. Small eligible patches are now removed exactly and
+  excluded cells always stay excluded. Patches are now edge-connected: cells
+  touching only at a corner count as separate patches (they were joined
+  before).
 
 * **Planning-unit grids (`make_planning_units()`).** The grid now covers the
   whole boundary: its extent is snapped outwards to whole cells, where before
@@ -105,11 +115,14 @@ on 0.4.1 until a country is rerun.
 
 * `exact_rasterise()` accepts `fun` as `mean`, `sum`, `max` or `min` (function,
   terra generic or string); other functions now give an error. `cores` and
-  `max_exact_features` are ignored. With no features it returns zeros.
+  `max_exact_features` are ignored. With no features it returns zeros. It
+  accepts `SpatVector` input, uses a factor attribute's labels (not its level
+  codes), rejects non-numeric attributes and ignores non-polygon geometry.
 * `make_kbas()` and `make_wetlands_ramsar()` require an `iso3` column and say
   so, instead of silently keeping every site worldwide when it is missing.
-  `make_kbas()` also saves the empty layer it returns when AZE exclusion leaves
-  no sites, and geometries are re-validated after reprojection.
+  `make_kbas()` no longer fails when excluding AZE sites leaves no sites (it
+  returns, and saves, an empty layer), and geometries are re-validated after
+  reprojection.
 
 * `make_managed_forests()` gains `rescaled` (default `TRUE`). When its output
   feeds `make_manage_zone()`, use `rescaled = FALSE`: the zone's

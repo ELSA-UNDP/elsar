@@ -131,3 +131,47 @@ test_that("exact_rasterise with no features returns zeros", {
   r <- suppressMessages(exact_rasterise(none, "score", "TST", pus_grid(), rescaled = FALSE))
   expect_true(all(terra::values(r) == 0))
 })
+
+# Cases from the independent review of PR #106 ------------------------------------
+
+test_that("KBAs that are all AZE sites give a saved empty layer, not an error", {
+  kba <- kbas(iso3 = "TST", azestatus = "confirmed", kbaclass = "Global", repareakm2 = 4)
+  dir <- withr::local_tempdir()
+  r <- suppressWarnings(suppressMessages(
+    make_kbas(kba, pus_grid(), "TST", include_aze_sites = FALSE, output_path = dir)
+  ))
+  expect_true(all(terra::values(r) == 0))
+  expect_length(list.files(dir, pattern = "\\.tif$"), 1)
+})
+
+test_that("mixed points and multipoints keep every point", {
+  x <- sf::st_sf(REP_AREA = c(1, 3), geometry = sf::st_sfc(
+    sf::st_point(c(500, 500)),
+    sf::st_multipoint(rbind(c(2500, 2500), c(4500, 4500), c(5500, 500))),
+    crs = ea
+  ))
+  out <- convert_points_polygon(x, area_crs = ea, nQuadSegs = 200)
+  expect_equal(nrow(out), 4)
+  expect_equal(sum(as.numeric(sf::st_area(out))) / 1e6, 4, tolerance = 0.01)
+})
+
+test_that("Ramsar centroids of sites with a boundary are not counted twice", {
+  both <- sf::st_sf(
+    iso3 = "TST", ramsarid = c(1, 1), area_ha = c(NA, 400),
+    geometry = sf::st_sfc(square(0, 0, 2000), sf::st_point(c(1000, 1000)), crs = ea)
+  )
+  r <- suppressMessages(make_wetlands_ramsar(ramsar_in = both, pus = pus_grid(), iso3 = "TST"))
+  expect_equal(sum(terra::values(r) > 0, na.rm = TRUE), 4)
+})
+
+test_that("exact_rasterise handles SpatVector input, factors and features partly outside", {
+  feats <- sf::st_sf(score = factor(c("10", "20")),
+                     geometry = sf::st_sfc(square(0, 0), square(5500, 5500), crs = ea))
+  r <- suppressMessages(exact_rasterise(terra::vect(feats), "score", "TST", pus_grid(),
+                                        rescaled = FALSE))
+  v <- terra::values(r)[, 1]
+  expect_equal(max(v), 20)           # the label, not the level code 2
+  expect_equal(sort(unique(v)), c(0, 10, 20))
+  bad <- sf::st_sf(score = c("a", "b"), geometry = sf::st_geometry(feats))
+  expect_error(suppressMessages(exact_rasterise(bad, "score", "TST", pus_grid())), "numeric")
+})

@@ -69,9 +69,12 @@ as degraded (default: 4).}
 pressured to restore and is excluded (default: 21, as in the original ELSA
 design). Use \code{Inf} for no upper limit.}
 
-\item{degradation_encoding}{How to read \code{degradation}: \code{"auto"} (default:
-\code{"sdg"} if the layer contains -1, otherwise \code{"binary"}), \code{"sdg"} (-1 is
-degraded) or \code{"binary"} (values above 0 are degraded).}
+\item{degradation_encoding}{How to read \code{degradation}: \code{"sdg"} (-1 is
+degraded), \code{"binary"} (values above 0 are degraded) or \code{"auto"} (default),
+which looks at the values within the planning region: -1 to 1 is read as
+\code{"sdg"}, 0 to 1 as \code{"binary"} (with a message: an SDG layer with no
+degraded cells in the region looks the same, so set the encoding
+explicitly in that case), and anything else is an error.}
 
 \item{human_pressure_threshold}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Use
 \code{hii_min} instead.}
@@ -138,7 +141,9 @@ pressure (\code{HII >= hii_min}). Land under very high pressure
 (\code{HII >= hii_max}) is excluded as too far gone to restore, as in the
 original ELSA design ("HFP < 21"). Farmland and built-up areas may well be
 degraded, but they belong to the Manage Zone, so they are excluded here.
-Both HII thresholds are on the HII's own 0-50 scale.
+Both HII thresholds are on the HII's own 0-50 scale. Cells with no HII data
+(e.g. water) are judged on the degradation layer alone: they enter the zone
+only if degraded, and the upper cap does not apply to them.
 
 Agricultural and built-up areas can be provided directly as rasters, or derived
 from a land use/land cover (LULC) raster by specifying class values.

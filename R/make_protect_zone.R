@@ -140,6 +140,11 @@ make_protect_zone <- function(
       msg = "'current_protected_areas' must be an 'sf' or 'SpatVector' object.")
   # Work in sf (dissolving and exact_extract need it); in the PU CRS
   current_protected_areas <- sf::st_as_sf(current_protected_areas)
+  if (is.na(sf::st_crs(current_protected_areas))) {
+    warning("'current_protected_areas' has no CRS; assuming the planning units' CRS.",
+            call. = FALSE)
+    sf::st_crs(current_protected_areas) <- sf::st_crs(pus)
+  }
   if (nrow(current_protected_areas) > 0) {
     current_protected_areas <- sf::st_make_valid(
       sf::st_transform(current_protected_areas, sf::st_crs(pus))
