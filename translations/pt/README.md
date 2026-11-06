@@ -75,4 +75,4 @@ elsar_plot_static_raster(
 - [Guia de início](https://elsa-undp.github.io/elsar/pt/articles/elsaR.html)
 
 ## Licença
-CC BY 4.0
+[Apache License 2.0](../../LICENSE.md)

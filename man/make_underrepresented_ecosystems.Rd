@@ -32,13 +32,16 @@ has the full gap, and the result is 1 wherever there is an ecosystem, with a war
 \item{output_path}{\code{character}, optional. Directory path to save the output raster as a GeoTIFF.}
 }
 \value{
-A \code{SpatRaster} with one layer: \code{"underrepresented_ecosystems"}, showing the maximum gap (0 to target_percent) per planning unit.
+A \code{SpatRaster} with one layer: \code{"underrepresented_ecosystems"}, showing the largest gap per planning unit as a share of the target (0-1). The
+scale is absolute, not rescaled across ecosystems (before 0.4.2 the largest gap
+in the region became 1, however small it was).
 }
 \description{
 This function calculates the representation gap of ecosystems provided, identifying
-those that fall short of a 30\% protection target. The resulting raster layer indicates
-the average degree of underrepresentation across each planning unit.
-#'
+those that fall short of a 30\% protection target. For each ecosystem the gap is
+\code{target_percent} minus its protected percentage (0 once the target is met). Each
+planning unit takes the largest gap of the ecosystems it overlaps, divided by
+\code{target_percent}, so 0 means the target is met and 1 means no protection.
 }
 \examples{
 \dontrun{

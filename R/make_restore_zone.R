@@ -7,17 +7,39 @@
 #' - `restore_zone_v1`: All degraded areas excluding agriculture and built-up land
 #' - `restore_zone_v2`: Same as v1, but further masked to forest ecosystems only
 #'
-#' Areas are classified as degraded based on either:
-#' - Land degradation indicators (e.g., productivity decline)
-#' - Human pressure exceeding a threshold
+#' The Restore Zone targets land that is degraded but still restorable:
+#'
+#' ```
+#' restore = (degradation > degradation_threshold | HII >= hii_min)  # degraded, by either signal
+#'           & HII < hii_max                                         # but not too pressured to restore
+#'           & agriculture <= agriculture_threshold                  # farmland is managed, not restored
+#'           & built <= built_areas_threshold                        # as are built-up areas
+#' ```
+#'
+#' Degraded land is identified both by a degradation layer and by human
+#' pressure (`HII >= hii_min`). Land under very high pressure
+#' (`HII >= hii_max`) is excluded as too far gone to restore, as in the
+#' original ELSA design ("HFP < 21"). Farmland and built-up areas may well be
+#' degraded, but they belong to the Manage Zone, so they are excluded here.
+#' Both HII thresholds are on the HII's own 0-50 scale. Cells with no HII data
+#' (e.g. water) are judged on the degradation layer alone: they enter the zone
+#' only if degraded, and the upper cap does not apply to them.
 #'
 #' Agricultural and built-up areas can be provided directly as rasters, or derived
 #' from a land use/land cover (LULC) raster by specifying class values.
 #'
 #' @param iso3 Character. ISO3 country code (e.g., "CHL").
 #' @param pus SpatRaster. Planning units raster defining the output resolution and extent.
-#' @param degradation SpatRaster. Raster indicating land degradation. Values of -1 are
-#'   treated as degraded (e.g., SDG 15.3.1 productivity degradation layer).
+#' @param degradation SpatRaster. Raster indicating land degradation: either an
+#'   SDG 15.3.1 productivity layer, where -1 means degraded, or a 0/1
+#'   degraded-areas layer such as [make_degraded_areas()] output, where values
+#'   above 0 mean degraded. See `degradation_encoding`.
+#' @param degradation_encoding How to read `degradation`: `"sdg"` (-1 is
+#'   degraded), `"binary"` (values above 0 are degraded) or `"auto"` (default),
+#'   which looks at the values within the planning region: -1 to 1 is read as
+#'   `"sdg"`, 0 to 1 as `"binary"` (with a message: an SDG layer with no
+#'   degraded cells in the region looks the same, so set the encoding
+#'   explicitly in that case), and anything else is an error.
 #' @param human_pressure SpatRaster. Raster of human pressure/impact values
 #'   (e.g., Human Footprint Index). Higher values indicate greater pressure.
 #' @param forest_mask SpatRaster. Raster indicating forest ecosystem extent, used
@@ -33,8 +55,13 @@
 #'   agriculture and built-up areas when not provided directly.
 #' @param degradation_threshold Numeric. Proportion threshold above which an area
 #'   is considered degraded (default: 0.1).
-#' @param human_pressure_threshold Numeric. Human pressure value at or above which
-#'   an area is considered degraded (default: 4).
+#' @param hii_min Numeric. Human pressure (HII) at or above which an area counts
+#'   as degraded (default: 4).
+#' @param hii_max Numeric. Human pressure (HII) at or above which an area is too
+#'   pressured to restore and is excluded (default: 21, as in the original ELSA
+#'   design). Use `Inf` for no upper limit.
+#' @param human_pressure_threshold `r lifecycle::badge("deprecated")` Use
+#'   `hii_min` instead.
 #' @param agriculture_threshold Numeric. Proportion threshold above which an area
 #'   is excluded as agricultural land (default: 0.1).
 #' @param built_areas_threshold Numeric. Proportion threshold above which an area
@@ -114,7 +141,10 @@ make_restore_zone <- function(
     built_areas = NULL,
     lulc = NULL,
     degradation_threshold = 0.1,
-    human_pressure_threshold = 4,
+    hii_min = 4,
+    hii_max = 21,
+    degradation_encoding = c("auto", "sdg", "binary"),
+    human_pressure_threshold = deprecated(),
     agriculture_threshold = 0.1,
     built_areas_threshold = 0.1,
     forest_threshold = 0.1,
@@ -126,6 +156,22 @@ make_restore_zone <- function(
     output_path = NULL
 ) {
   lulc_product <- match.arg(lulc_product)
+  degradation_encoding <- match.arg(degradation_encoding)
+  if (lifecycle::is_present(human_pressure_threshold)) {
+    lifecycle::deprecate_warn(
+      "0.4.2", "make_restore_zone(human_pressure_threshold)", "make_restore_zone(hii_min)"
+    )
+    assertthat::assert_that(
+      missing(hii_min),
+      msg = "Give 'hii_min' or the deprecated 'human_pressure_threshold', not both."
+    )
+    hii_min <- human_pressure_threshold
+  }
+  assertthat::assert_that(assertthat::is.number(hii_min), !is.na(hii_min),
+                          msg = "'hii_min' must be a single number.")
+  assertthat::assert_that(assertthat::is.number(hii_max), !is.na(hii_max),
+                          msg = "'hii_max' must be a single number (Inf for no cap).")
+  assertthat::assert_that(hii_min < hii_max, msg = "'hii_min' must be smaller than 'hii_max'.")
 
   # If lulc_proportions provided, extract agriculture and built_area
   # Supports both list format (new) and SpatRaster format (legacy)
@@ -194,14 +240,25 @@ make_restore_zone <- function(
                             msg = glue::glue("'output_path' directory does not exist: {output_path}"))
   }
 
-  # Land degradation layer
-  log_message("Processing degradation layer...")
-  degradation_processed <- elsar::make_normalised_raster(
+  # Land degradation layer: an SDG 15.3.1 layer (-1 = degraded) or a 0/1
+  # degraded-areas layer such as make_degraded_areas() output (> 0 = degraded).
+  # Before 0.4.2 only -1 counted, so a 0/1 layer silently added no degradation.
+  if (degradation_encoding == "auto") {
+    degradation_encoding <- .detect_degradation_encoding(degradation, pus)
+  }
+  log_message("Processing degradation layer ({degradation_encoding} encoding)...")
+  is_degraded <- if (degradation_encoding == "sdg") {
+    function(x) terra::ifel(x == -1, 1, 0)
+  } else {
+    function(x) terra::ifel(x > 0, 1, 0)
+  }
+  degradation_processed <- make_normalised_raster(
     raster_in = degradation,
     pus = pus,
     iso3 = iso3,
-    method = "mean",
-    input_raster_conditional_expression = function(x) terra::ifel(x == -1, 1, 0)
+    rescaled = FALSE, # compared with an absolute threshold below
+    method_override = "mean",
+    input_raster_conditional_expression = is_degraded
   )
 
   # Agricultural areas
@@ -222,6 +279,7 @@ make_restore_zone <- function(
       raster_in = lulc,
       pus = pus,
       iso3 = iso3,
+      rescaled = FALSE, # compared with an absolute threshold below
       method_override = "mean",
       input_raster_conditional_expression = function(x) terra::ifel(x == agriculture_lulc_value, 1, 0)
     )
@@ -245,6 +303,7 @@ make_restore_zone <- function(
       raster_in = lulc,
       pus = pus,
       iso3 = iso3,
+      rescaled = FALSE, # compared with an absolute threshold below
       method_override = "mean",
       input_raster_conditional_expression = function(x) terra::ifel(x == built_area_lulc_value, 1, 0)
     )
@@ -284,10 +343,12 @@ make_restore_zone <- function(
     save_raster(pu_mask(forest_mask_processed), glue::glue("{output_path}/forest_mask_{iso3}.tif"))
   }
 
-  # Combine degradation indicators into restore zone v1 (the Default Restore Zone)
-  # Include areas that are degraded but exclude farms and urban areas
+  # Restore zone v1 (the default): degraded by either signal, not too
+  # pressured to restore, and not farmland or built-up (those are managed)
+  log_message("Restore rule: (degradation > {degradation_threshold} | HII >= {hii_min}) & HII < {hii_max}")
   restore_zone <- terra::ifel(
-    (degradation_processed > degradation_threshold | human_pressure_processed >= human_pressure_threshold) &
+    (degradation_processed > degradation_threshold | human_pressure_processed >= hii_min) &
+      human_pressure_processed < hii_max &
       agricultural_areas_processed <= agriculture_threshold &
       built_areas_processed <= built_areas_threshold,
     1, 0
@@ -314,10 +375,10 @@ make_restore_zone <- function(
 
   # Optionally remove small patches (default behaviour)
   if (filter_patch_size) {
-    restore_zones[[1]] <- terra::sieve(restore_zones[[1]], threshold = min_patch_size)
+    restore_zones[[1]] <- .sieve_zone(restore_zones[[1]], min_patch_size)
 
     if (terra::nlyr(restore_zones) > 1) {
-      restore_zones[[2]] <- terra::sieve(restore_zones[[2]], threshold = min_patch_size)
+      restore_zones[[2]] <- .sieve_zone(restore_zones[[2]], min_patch_size)
     }
   }
 
@@ -333,4 +394,30 @@ make_restore_zone <- function(
 
   log_message("Successfully created {terra::nlyr(restore_zones)} restore zone layer(s)")
   return(restore_zones)
+}
+
+# Work out how a degradation layer is coded from its values within the
+# planning region (cheap, and not misled by values elsewhere in a global file)
+.detect_degradation_encoding <- function(degradation, pus) {
+  local <- .crop_to(degradation, pus)
+  rng <- if (is.null(local)) c(NA, NA) else terra::minmax(local, compute = TRUE)[, 1]
+  if (anyNA(rng)) {
+    stop("The degradation layer has no data in the planning region; ",
+         "set 'degradation_encoding'.", call. = FALSE)
+  }
+  if (rng[1] >= -1 && rng[1] < 0 && rng[2] <= 1) {
+    log_message("Degradation layer read as SDG 15.3.1 (-1 = degraded).")
+    return("sdg")
+  }
+  if (rng[1] >= 0 && rng[2] <= 1) {
+    log_message(paste(
+      "Degradation layer read as 0/1 degraded areas (values above 0 = degraded).",
+      "If it is an SDG 15.3.1 layer with no degraded cells in this region, set",
+      "degradation_encoding = 'sdg'."
+    ))
+    return("binary")
+  }
+  stop("Cannot tell how the degradation layer is coded (values ", rng[1], " to ",
+       rng[2], " in the planning region); set degradation_encoding to 'sdg' ",
+       "(-1 = degraded) or 'binary' (values above 0 = degraded).", call. = FALSE)
 }

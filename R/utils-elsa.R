@@ -203,3 +203,23 @@ calculate_restore_and_urban_budgets <- function(iso3,
   # Return rounded named vector
   return(result)
 }
+
+# Remove eligible patches (cells == 1) smaller than `min_patch_size` cells,
+# setting them to 0. Excluded cells (0) and NoData are never changed.
+#
+# Patches are the connected parts of the eligible cells (edge-connected, as
+# GDAL polygonises them), found by polygonising: exact, and under a second on
+# fragmented national grids (terra::patches() took over a minute). Before
+# 0.4.2 terra::sieve() was used, which merges every small patch into its
+# neighbours: it filled small excluded holes (farms, towns) back into the
+# zone, and could keep small patches next to other small patches or NoData.
+.sieve_zone <- function(zone, min_patch_size) {
+  stopifnot(terra::nlyr(zone) == 1)
+  eligible <- terra::as.polygons(terra::ifel(zone == 1, 1, NA), aggregate = TRUE)
+  if (length(eligible) == 0) return(zone)
+  parts <- terra::disagg(eligible)
+  n_cells <- terra::expanse(parts, transform = FALSE) / prod(terra::res(zone))
+  small <- parts[n_cells < min_patch_size - 1e-6]
+  if (length(small) == 0) return(zone)
+  terra::ifel(!is.na(terra::rasterize(small, zone)), 0, zone)
+}

@@ -14,7 +14,8 @@ make_managed_forests(
   make_productive = FALSE,
   raster_npp = NULL,
   name_out,
-  output_path = NULL
+  output_path = NULL,
+  rescaled = TRUE
 )
 }
 \arguments{
@@ -39,6 +40,11 @@ automatically determined from \code{lulc_product}. Default is NULL.}
 \item{name_out}{Character. Name stem for output file(s) (optional, not currently used).}
 
 \item{output_path}{Optional character. Directory to save output raster(s) if provided.}
+
+\item{rescaled}{Logical. Rescale the managed-forest share to 0-1 (default
+\code{TRUE}, for use as a feature layer). Use \code{FALSE} when the result feeds
+\code{\link[=make_manage_zone]{make_manage_zone()}}: its \code{forest_class_threshold} is a true share of
+each planning unit, so the share must not be rescaled first.}
 }
 \value{
 A \code{SpatRaster} with either one layer (managed forests) or two layers (managed forests and productive managed forests).

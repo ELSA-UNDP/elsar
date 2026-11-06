@@ -97,7 +97,9 @@ make_urban_greening_opportunities <- function(
     raster_in = ndvi_raster,
     pus = pus,
     iso3 = iso3,
-    invert = TRUE,
+    # 1 - NDVI already ranks low vegetation highest; inverting again (as
+    # before 0.4.2) ranked green cells highest. Water (NDVI < 0) has no
+    # greening potential: NA, filled with the lowest score.
     conditional_expression = function(x) terra::ifel(x < 0, NA, 1 - x)
   )
 
@@ -108,6 +110,7 @@ make_urban_greening_opportunities <- function(
       raster_in = built_areas_raster,
       pus = pus,
       iso3 = iso3,
+      rescaled = FALSE, # compared with an absolute threshold below
       method_override = "mean"
     )
   } else {
@@ -116,6 +119,7 @@ make_urban_greening_opportunities <- function(
       raster_in = lulc_raster,
       pus = pus,
       iso3 = iso3,
+      rescaled = FALSE, # compared with an absolute threshold below
       method_override = "mean",
       crop_global_input = FALSE,
       input_raster_conditional_expression = function(x) terra::ifel(x == built_area_lulc_value, 1, 0)
@@ -129,15 +133,15 @@ make_urban_greening_opportunities <- function(
 
   # Process urban heat exposure from SDEI
   log_message("Rasterizing urban heat exposure from SDEI...")
-  pu_proj <- terra::as.polygons(pus) %>%
+  # Planning-unit footprint, whatever the layer is called
+  pu_proj <- terra::as.polygons(terra::ifel(pus == 1, 1, NA)) %>%
     sf::st_as_sf() %>%
-    dplyr::filter(!is.na(`Planning Units`) & `Planning Units` == 1) %>%
     sf::st_transform(sf::st_crs(sdei_statistics)) %>%
     sf::st_make_valid() %>%
     terra::vect()
 
   sdei_filtered <- sdei_statistics %>%
-    dplyr::filter(!is.na(CTR_MN_ISO) & CTR_MN_ISO == iso3_base(iso3)) %>%
+    dplyr::filter(!is.na(CTR_MN_ISO) & toupper(CTR_MN_ISO) == iso3_base(iso3)) %>%
     terra::vect() %>%
     terra::intersect(y = pu_proj) %>%
     sf::st_as_sf()

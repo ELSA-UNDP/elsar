@@ -1,9 +1,15 @@
 #' Create a Flood Abatement Opportunities Raster
 #'
-#' This function generates a raster that identifies flood abatement opportunities
-#' by integrating the Global Flood Database (GFD) and NDVI (Normalized Difference Vegetation Index).
-#' The function normalizes NDVI and flood risk data, then calculates potential areas for flood
-#' abatement based on their relationship.
+#' Identifies flood-prone land that lacks vegetation, where restoring,
+#' managing or greening it can reduce flood risk (the ELSA impacts credit this
+#' layer fully to manage, restore and urban greening, and half to protect):
+#'
+#' `flood_abatement = rescale(flood_risk * (1 - NDVI))`
+#'
+#' NDVI is used on its own 0-1 scale (not rescaled within the region), so bare
+#' land scores high everywhere. Water (NDVI < 0) scores 0. Before 0.4.2 the
+#' layer was `flood_risk / (1 - NDVI)`, which inverted the intent (it rose
+#' with vegetation) and grew without bound for dense vegetation.
 #'
 #' @param gfd_raster A `SpatRaster` representing flood risk data from the Global Flood Database.
 #' @param ndvi_raster A `SpatRaster` representing NDVI data.
@@ -40,18 +46,20 @@ make_flood_abatement_opportunities <- function(
                             msg = glue::glue("'output_path' directory does not exist: {output_path}"))
   }
 
-  # Normalize NDVI
+  # Lack of vegetation, 1 - NDVI on NDVI's own 0-1 scale; water (NDVI < 0) has
+  # no greening opportunity (NA, filled with 0)
   log_message("Normalizing NDVI raster and removing negative (e.g., water) values...")
-  ndvi <- elsar::make_normalised_raster(
+  lack_of_vegetation <- make_normalised_raster(
     raster_in = ndvi_raster,
     pus = pus,
     iso3 = iso3,
-    conditional_expression = function(x) terra::ifel(x < 0, NA, 1 - x)
+    rescaled = FALSE,
+    conditional_expression = function(x) terra::ifel(x < 0, NA, terra::ifel(x > 1, 0, 1 - x))
   )
 
   # Normalize Global Flood Database
   log_message("Normalizing Global Flood Database...")
-  gfd_risk <- elsar::make_normalised_raster(
+  gfd_risk <- make_normalised_raster(
     raster_in = gfd_raster,
     pus = pus,
     iso3 = iso3,
@@ -59,8 +67,7 @@ make_flood_abatement_opportunities <- function(
   )
 
   # Calculate flood abatement opportunities
-  flood_abatement_opportunities <- terra::ifel(ndvi == 0, 0, gfd_risk / ndvi) %>%
-    elsar::rescale_raster()
+  flood_abatement_opportunities <- rescale_raster(gfd_risk * lack_of_vegetation)
 
   names(flood_abatement_opportunities) <- "flood_abatement_opportunities"
 
