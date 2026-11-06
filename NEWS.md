@@ -1,5 +1,8 @@
 # elsar (development version)
 
+* elsar is now released under the Apache License 2.0 (was CC BY 4.0, which
+  is not meant for software), as agreed by the authors.
+
 ## Bug fixes
 
 * `make_underrepresented_ecosystems()` gave ecosystems that no protected area
