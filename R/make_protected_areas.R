@@ -61,7 +61,7 @@
 #' @section No protected areas:
 #' Some countries have no usable protected-area geometry: no records pass the
 #' filters, none overlap the planning units, or all are points with no
-#' reported area to buffer (e.g. Somalia in WDPA). Then the raster is all 0
+#' reported area to buffer (e.g. Somalia in WDPCA). Then the raster is all 0
 #' within the planning units, the `sf` has 0 rows, and a warning says why.
 #' Downstream functions accepting protected areas handle the 0-row `sf`.
 #'
@@ -261,7 +261,7 @@ make_protected_areas <- function(
   if (!any(!sf::st_is_empty(protected_areas))) {
     # No usable geometry: nothing passed the filters, nothing overlaps the
     # planning units, or only points without a reported area to buffer (e.g.
-    # Somalia in WDPA). Return an all-0 layer instead of failing in
+    # Somalia in WDPCA). Return an all-0 layer instead of failing in
     # coverage_fraction(), and say why.
     warning(glue::glue(
       "No usable protected-area geometry for {iso3}: {n_loaded} record(s) ",

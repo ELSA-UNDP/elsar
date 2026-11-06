@@ -20,7 +20,7 @@ is_valid_iso3 <- function(iso3) {
 
 #' National part of an ISO3-style region code
 #'
-#' Global datasets (KBAs, Ramsar, WDPA, GHSL urban centres) carry a national
+#' Global datasets (KBAs, Ramsar, WDPCA, GHSL urban centres) carry a national
 #' ISO3 attribute, so a sub-national code such as `"USA_CA"` must be matched
 #' as `"USA"`. A plain 3-letter code is returned unchanged.
 #'
@@ -115,7 +115,7 @@ convert_points_polygon <- function(
   }
 
   is_point <- sf::st_is(sf_layer, c("POINT", "MULTIPOINT"))
-  # Polygons are kept as they are: their area attribute is not needed (WDPA
+  # Polygons are kept as they are: their area attribute is not needed (WDPCA
   # polygons often report 0 or NA). Before 0.4.2 they were dropped too.
   polygons <- sf_layer[!is_point, ]
   points <- sf_layer[is_point, ]
