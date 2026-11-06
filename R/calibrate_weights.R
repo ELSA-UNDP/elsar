@@ -37,9 +37,13 @@
 #'   area targets.
 #' @param budgets A named numeric vector of per-zone area caps, each a percentage of
 #'   the study-area planning-unit count. Names must match `names(zones_pu)`.
-#' @param lockins Optional named `list` of `SpatRaster` lock-in areas per action zone.
-#'   Used only to raise a zone's target to its locked-in coverage when the lock-in
-#'   exceeds the nominal budget (feasibility floor).
+#' @param lockins Optional named `list` of `SpatRaster` lock-in areas per action zone
+#'   (cells > 0.1 are locked). Locked cells are forced into their zone, as the ELSA
+#'   tools do: the lock-in is added to its zone and removed from every other zone,
+#'   including `do_nothing`. Where lock-ins of different zones overlap, the zone
+#'   listed first in `zones_pu` keeps the cell. A zone's budget is raised to its
+#'   lock-in coverage when the lock-in is larger. Calibrate with the lock-ins the
+#'   tool will run with, or the weights are fitted to a different problem.
 #' @param feature_totals Optional named numeric vector of raw (non-impact-weighted)
 #'   feature totals used as the representation denominator. Computed from `features`
 #'   via `terra::global(..., "sum")` when `NULL` (the default).
@@ -375,8 +379,10 @@ elsar_calibrate_weights <- function(features,
   names(zone_features) <- zone_names
   zone_features[["do_nothing"]] <- features * 0
 
-  # per-zone planning-unit stack (matching all_zone_names order)
+  # per-zone planning-unit stack (matching all_zone_names order), with lock-ins
+  # forced into their zones
   pu_stack <- c(zones_pu, list(do_nothing = planning_units * 0))
+  pu_stack <- .elsar_lock_zones(pu_stack, lockins, zone_names, planning_units)
   pu_stack <- terra::rast(pu_stack[all_zone_names])
 
   zones_obj <- do.call(
@@ -430,6 +436,42 @@ elsar_calibrate_weights <- function(features,
 
   problem <- prioritizr::add_mandatory_allocation_constraints(problem)
   return(problem)
+}
+
+
+#' Force lock-in cells into their zones
+#'
+#' Internal. Mirrors how elsa_national and unbl-elsa enforce lock-ins: each lock-in
+#' (cells > 0.1, within the planning units) is added to its zone's planning units
+#' and removed from every other zone, including `do_nothing`, so mandatory
+#' allocation assigns those cells to the lock-in's zone. Lock-ins are applied in
+#' reverse zone order, so where they overlap the zone listed first keeps the cell.
+#'
+#' @param pu_stack Named list of single-layer SpatRaster zone masks (1/NA, and
+#'   `do_nothing` 0/NA).
+#' @param lockins Named list of lock-in SpatRasters, or NULL.
+#' @param zone_names Action zone names, highest lock-in priority first.
+#' @param planning_units Planning-unit SpatRaster (1/NA).
+#'
+#' @return `pu_stack` with lock-ins applied.
+#' @keywords internal
+#' @noRd
+.elsar_lock_zones <- function(pu_stack, lockins, zone_names, planning_units) {
+  if (is.null(lockins) || length(lockins) == 0) {
+    return(pu_stack)
+  }
+  unknown <- setdiff(names(lockins), zone_names)
+  if (length(unknown) > 0) {
+    stop("lockins for unknown zone(s): ", paste(unknown, collapse = ", "), call. = FALSE)
+  }
+  for (z in rev(intersect(zone_names, names(lockins)))) {
+    locked <- !is.na(lockins[[z]]) & lockins[[z]] > 0.1 & !is.na(planning_units)
+    pu_stack[[z]] <- terra::ifel(locked, 1, pu_stack[[z]])
+    for (other in setdiff(names(pu_stack), z)) {
+      pu_stack[[other]] <- terra::ifel(locked, NA, pu_stack[[other]])
+    }
+  }
+  pu_stack
 }
 
 

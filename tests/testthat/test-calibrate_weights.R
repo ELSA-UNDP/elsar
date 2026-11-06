@@ -129,3 +129,52 @@ test_that("elsar_calibrate_weights validates inputs", {
     "match names\\(features\\)"
   )
 })
+
+test_that("lock-ins force their cells into the zone during calibration", {
+  skip_if_not_installed("prioritizr")
+  skip_if_not_installed("highs")
+
+  r0 <- terra::rast(nrows = 10, ncols = 10, xmin = 0, xmax = 10, ymin = 0, ymax = 10,
+                    crs = "EPSG:3857")
+  xx <- terra::init(r0, "x")
+  # the feature lives on the right; the lock-in is on the left, so without
+  # enforcement the solver would never protect the locked cells
+  features <- c((xx > 5) * 1, (xx > 7) * 1)
+  names(features) <- c("feat_a", "feat_b")
+  pu_all <- terra::ifel(!is.na(features[[1]]), 1, NA)
+  lock <- (xx < 2) * 1  # 20 cells
+  impacts <- data.frame(feature = names(features), protect = c(1, 1), restore = c(0.5, 0.5))
+  zones_pu <- list(protect = pu_all, restore = pu_all)
+  budgets <- c(protect = 25, restore = 10)
+
+  problem <- elsar:::.elsar_calibration_problem(
+    features = features, impacts = impacts, zones_pu = zones_pu,
+    planning_units = pu_all, budgets = budgets, lockins = list(protect = lock),
+    zone_names = names(zones_pu), all_zone_names = c(names(zones_pu), "do_nothing"),
+    gap = 0, solver = "highs", threads = 1, time_limit = 60
+  )
+  w <- matrix(c(1, 1, 1, 1, 0, 0), nrow = 2)
+  sol <- suppressMessages(prioritizr::solve.ConservationProblem(
+    prioritizr::add_feature_weights(problem, w), force = TRUE, run_checks = FALSE
+  ))
+  locked_cells <- which(terra::values(lock)[, 1] == 1)
+  expect_true(all(terra::values(sol[["protect"]])[locked_cells, 1] == 1))
+  # the rest of the protect budget still goes to the feature-rich right side
+  expect_equal(sum(terra::values(sol[["protect"]])[, 1], na.rm = TRUE), 25)
+})
+
+test_that("overlapping lock-ins go to the zone listed first", {
+  pu <- terra::rast(nrows = 2, ncols = 2, xmin = 0, xmax = 2, ymin = 0, ymax = 2,
+                    crs = "EPSG:3857", vals = 1)
+  lock <- terra::rast(pu, vals = c(1, 0, 0, 0))
+  stack <- list(protect = pu, restore = pu, do_nothing = pu * 0)
+  out <- elsar:::.elsar_lock_zones(stack, list(restore = lock, protect = lock),
+                                   c("protect", "restore"), pu)
+  expect_equal(unname(terra::values(out$protect)[1, 1]), 1)
+  expect_true(is.na(terra::values(out$restore)[1, 1]))
+  expect_true(is.na(terra::values(out$do_nothing)[1, 1]))
+  expect_error(
+    elsar:::.elsar_lock_zones(stack, list(manage = lock), c("protect", "restore"), pu),
+    "unknown zone"
+  )
+})

@@ -2,6 +2,15 @@
 
 ## Bug fixes
 
+* `elsar_calibrate_weights(lockins = )` only raised each zone's budget to its
+  locked-in coverage; the locked cells could still go to another zone or to
+  `do_nothing`, so weights were fitted to a different problem from the one the
+  ELSA tools solve. Lock-ins are now forced into their zones the way
+  elsa_national and unbl-elsa do it (added to their zone, removed from every
+  other zone including `do_nothing`; where lock-ins overlap, the zone listed
+  first in `zones_pu` wins). Weights calibrated with lock-ins by earlier
+  versions should be recalibrated.
+
 * `make_underrepresented_ecosystems()` gave ecosystems that no protected area
   overlaps an `NA` gap, which ended up as the *lowest* value after rasterising.
   They now get the full gap (they are 0% protected), so the least-protected

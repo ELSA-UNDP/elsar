@@ -46,9 +46,13 @@ area targets.}
 \item{budgets}{A named numeric vector of per-zone area caps, each a percentage of
 the study-area planning-unit count. Names must match \code{names(zones_pu)}.}
 
-\item{lockins}{Optional named \code{list} of \code{SpatRaster} lock-in areas per action zone.
-Used only to raise a zone's target to its locked-in coverage when the lock-in
-exceeds the nominal budget (feasibility floor).}
+\item{lockins}{Optional named \code{list} of \code{SpatRaster} lock-in areas per action zone
+(cells > 0.1 are locked). Locked cells are forced into their zone, as the ELSA
+tools do: the lock-in is added to its zone and removed from every other zone,
+including \code{do_nothing}. Where lock-ins of different zones overlap, the zone
+listed first in \code{zones_pu} keeps the cell. A zone's budget is raised to its
+lock-in coverage when the lock-in is larger. Calibrate with the lock-ins the
+tool will run with, or the weights are fitted to a different problem.}
 
 \item{feature_totals}{Optional named numeric vector of raw (non-impact-weighted)
 feature totals used as the representation denominator. Computed from \code{features}
