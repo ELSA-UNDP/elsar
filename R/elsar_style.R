@@ -56,11 +56,11 @@ elsar_inks <- function(dark = FALSE) {
 # Palettes ---------------------------------------------------------------------
 
 # ELSA action colours. These are the established ELSA colours and match the
-# defaults of elsar_action_scheme().
+# defaults of elsar_action_scheme(), in the ELSA tool's raster value order.
 .elsar_action_colours <- c(
   "Protect" = "#06C723",
-  "Restore" = "#8803FC",
   "Manage" = "#FFEA00",
+  "Restore" = "#8803FC",
   "Urban Greening" = "#FF0000",
   "Do Nothing" = "#E5E5E5"
 )
