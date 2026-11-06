@@ -90,7 +90,9 @@ on 0.4.1 until a country is rerun.
 ## Other changes
 
 * `make_manage_zone()` works without a pasture layer (`pasturelands = NULL`,
-  the documented default, used to fail).
+  the documented default, used to fail), and its alternative zone (v2,
+  agriculture and pasture) now also excludes built-up areas, like the default
+  zone.
 * `make_protect_zone()` accepts protected areas as a multi-row `SpatVector`
   and in any CRS; the docs no longer claim that `NULL` loads protected areas.
 
