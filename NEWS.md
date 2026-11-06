@@ -39,7 +39,38 @@ on 0.4.1 until a country is rerun.
   lowest. It also no longer requires the planning-unit layer to be named
   "Planning Units".
 
+* **KBA layers (`make_kbas()`).** Point KBAs are now buffered to their reported
+  area: `repareakm2` is in km², but was converted as hectares, so the circles
+  were 100 times too small.
+* **Wetlands and Ramsar (`make_wetlands_ramsar()`).** Ramsar polygons are now
+  always rasterised, with buffered points added when `buffer_points = TRUE`.
+  Before, they were only rasterised when the data contained points and
+  `buffer_points = FALSE`, so Ramsar sites were usually missing. Any positive
+  wetland class now counts as wetland, so 0/1 wetland masks work (the CIFOR
+  map, coded 10-100, is unaffected).
+* **Protected areas with `buffer_points = FALSE`
+  (`make_protected_areas()`).** When the data contained points, only the first
+  protected-area polygon was rasterised; all are now included.
+* **Protected areas and indigenous lands with point data
+  (`convert_points_polygon()`).** Polygons whose reported area is 0 or missing
+  (common in WDPA) are no longer dropped, and a multipoint's reported area is
+  shared between its points instead of given to each.
+* **Threatened and under-represented ecosystems, urban heat
+  (`exact_rasterise()`).** `fun = mean` averaged each planning unit over *all*
+  features, including ones not touching it, and the method changed above 1,000
+  features. It is now the coverage-weighted mean of the features present, with
+  one rule for any number of features. `max` and `min` no longer shrink at the
+  edges of features. It is also much faster (one `exact_extract()` pass).
+
 ## Other changes
+
+* `exact_rasterise()` accepts `fun` as `mean`, `sum`, `max` or `min` (function,
+  terra generic or string); other functions now give an error. `cores` and
+  `max_exact_features` are ignored. With no features it returns zeros.
+* `make_kbas()` and `make_wetlands_ramsar()` require an `iso3` column and say
+  so, instead of silently keeping every site worldwide when it is missing.
+  `make_kbas()` also saves the empty layer it returns when AZE exclusion leaves
+  no sites, and geometries are re-validated after reprojection.
 
 * `make_managed_forests()` gains `rescaled` (default `TRUE`). When its output
   feeds `make_manage_zone()`, use `rescaled = FALSE`: the zone's

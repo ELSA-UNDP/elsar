@@ -108,60 +108,57 @@ convert_points_polygon <- function(
   if (!inherits(sf_layer, "sf")) {
     stop("sf_layer must be an sf object.")
   }
-
-  if (!area_attr %in% names(sf_layer)) {
-    stop(paste("The area attribute", area_attr, "does not exist in the input sf_layer."))
-  }
-
   if (!is.numeric(nQuadSegs) || nQuadSegs <= 0) {
     stop("nQuadSegs must be a positive integer.")
   }
 
-  # Filter for points with area values
-  points_with_area <- sf_layer %>%
-    dplyr::filter(!!rlang::sym(area_attr) > 0 &
-                    sf::st_geometry_type(.) %in% c("POINT", "MULTIPOINT"))
+  is_point <- sf::st_is(sf_layer, c("POINT", "MULTIPOINT"))
+  # Polygons are kept as they are: their area attribute is not needed (WDPA
+  # polygons often report 0 or NA). Before 0.4.2 they were dropped too.
+  polygons <- sf_layer[!is_point, ]
+  points <- sf_layer[is_point, ]
 
-  # Create circular buffers for valid point features
-  if (nrow(points_with_area) == 0) {
+  points_buffered <- NULL
+  if (nrow(points) > 0) {
+    if (!area_attr %in% names(sf_layer)) {
+      stop(paste("The area attribute", area_attr, "does not exist in the input sf_layer."))
+    }
+    area <- suppressWarnings(as.numeric(sf::st_drop_geometry(points)[[area_attr]]))
+    points <- points[!is.na(area) & area > 0, ]
+    area <- area[!is.na(area) & area > 0]
+  }
+
+  if (nrow(points) == 0) {
     warning("No point geometries with area attributes found.")
   } else {
-    points_transformed <- sf::st_transform(points_with_area, crs = area_crs)
+    # A multipoint's reported area is shared between its points (before 0.4.2
+    # each point got a circle of the full area)
+    points$.feature <- seq_len(nrow(points))
+    points$.area <- area
+    single <- suppressWarnings(sf::st_cast(points, "POINT"))
+    n_parts <- tabulate(single$.feature, nbins = nrow(points))
+    part_area <- single$.area / n_parts[single$.feature]
 
     points_buffered <- sf::st_buffer(
-      points_transformed,
-      dist = sqrt((as.numeric(sf::st_drop_geometry(points_with_area)[[area_attr]]) * area_multiplier) / pi),
+      sf::st_transform(single, crs = area_crs),
+      dist = sqrt(part_area * area_multiplier / pi),
       nQuadSegs = nQuadSegs
     )
-
-    # Reproject back to original CRS
     points_buffered <- sf::st_transform(points_buffered, crs = sf::st_crs(sf_layer))
+    points_buffered$.feature <- NULL
+    points_buffered$.area <- NULL
   }
 
-  # Append original polygons if requested
-  if (append_original_polygons) {
-    polygons_with_area <- sf_layer %>%
-      dplyr::filter(!!rlang::sym(area_attr) > 0 &
-                      !(sf::st_geometry_type(.) %in% c("POINT", "MULTIPOINT")))
-
-    if (nrow(polygons_with_area) == 0 && exists("points_buffered", inherits = FALSE)) {
-      return(points_buffered)
-    } else if (nrow(polygons_with_area) > 0 && exists("points_buffered", inherits = FALSE)) {
-      return(rbind(polygons_with_area, points_buffered))
-    } else if (nrow(polygons_with_area) > 0 && !exists("points_buffered", inherits = FALSE)) {
-      return(polygons_with_area)
-    } else {
-      warning("No valid point or polygon features found with area attributes. Returning an empty sf object.")
-      return(sf_layer[0, ])
-    }
+  out <- if (append_original_polygons) {
+    if (is.null(points_buffered)) polygons else dplyr::bind_rows(polygons, points_buffered)
   } else {
-    if (exists("points_buffered", inherits = FALSE)) {
-      return(points_buffered)
-    } else {
-      warning("No point features matched the criteria. Returning an empty sf object.")
-      return(sf_layer[0, ])
-    }
+    points_buffered
   }
+  if (is.null(out) || nrow(out) == 0) {
+    warning("No valid point or polygon features found. Returning an empty sf object.")
+    return(sf_layer[0, ])
+  }
+  out
 }
 
 
@@ -205,51 +202,43 @@ get_coverage <- function(zone_layer, pu_layer) {
     terra::global(pu_layer, sum, na.rm = TRUE)$sum * 100
 }
 
-# Map an aggregation `fun` (a function like mean/max, or a string) to the
-# equivalent terra::rasterize() `fun` name, or NA if it has no direct equivalent.
-.terra_fun_name <- function(fun) {
-  if (is.character(fun)) {
-    return(if (fun %in% c("mean", "sum", "max", "min", "modal", "first", "last")) fun else NA_character_)
-  }
-  for (nm in c("mean", "sum", "max", "min")) {
-    if (identical(fun, match.fun(nm))) return(nm)
-  }
-  NA_character_
-}
 
-#' Efficient Attribute-Weighted Rasterization Using Coverage Fraction
+#' Rasterise Feature Attributes onto Planning Units, Weighted by Coverage
 #'
-#' Rasterizes vector features to a raster grid defined by a planning unit (`pus`) layer,
-#' assigning values based on a given attribute and the actual coverage fraction of
-#' each feature over each raster cell. This method is optimized for speed and precision
-#' and is especially useful when features overlap or vary in size and shape.
+#' Rasterises an attribute of vector features onto the planning-unit grid,
+#' using the exact share of each planning unit that each feature covers.
 #'
-#' If multiple features are provided, each is rasterized independently and aggregated
-#' across the stack using the specified function (`fun`), typically `sum`, `mean`, or `max`.
+#' How features are combined in a planning unit depends on `fun`:
+#' * `mean` (default): the coverage-weighted mean of the features present,
+#'   `sum(value * coverage) / sum(coverage)`. A planning unit only partly
+#'   covered by one feature gets that feature's value.
+#' * `sum`: `sum(value * coverage)`, so uncovered parts count as 0 (use for
+#'   area-weighted totals or shares).
+#' * `max`, `min`: the largest or smallest value among the features present.
 #'
-#' @param features An `sf` or `SpatVector` object containing the vector features to rasterize.
-#' @param attribute Character. The column name in `features` to use as a weight for raster values.
-#' @param iso3 Character. ISO3 country code, passed to `make_normalised_raster()`.
-#' @param pus A `SpatRaster` object defining the resolution, extent, and CRS of the output raster.
-#' @param invert Logical. If `TRUE`, inverts the resulting values during normalization (default: `FALSE`).
-#' @param rescaled Logical. If `TRUE`, rescales the output to 0-1 using `make_normalised_raster()` (default: `TRUE`).
-#' @param fun Function. Aggregation function applied across overlapping rasterized features (default: `mean`).
-#' @param cores Integer. Number of CPU cores to use for multi-core processing (default: 4).
-#' @param max_exact_features Integer. Above this feature count the per-feature
-#'   coverage-fraction stack (which needs one raster and one open file handle per
-#'   feature) is skipped in favour of a single `terra::rasterize()` pass, provided
-#'   `fun` is a standard aggregation (`mean`/`sum`/`max`/`min`). This keeps
-#'   wall-to-wall class maps with tens of thousands of polygons from exhausting the
-#'   OS open-file limit and crawling. Set to `Inf` to always use the exact path
-#'   (default: 1000).
+#' Planning units with no feature are 0. Since 0.4.2 one
+#' [exactextractr::exact_extract()] pass handles any number of features with
+#' the same rule; before, `mean` averaged over *all* features (including ones
+#' not touching the planning unit) and the method changed above 1,000 features.
 #'
-#' @return A `SpatRaster` object representing the attribute-weighted rasterization of the input features.
+#' @param features An `sf` or `SpatVector` object containing the vector features to rasterise.
+#' @param attribute Character. The column name in `features` holding the value to rasterise.
+#' @param iso3 Character. ISO3 country code, passed to [make_normalised_raster()].
+#' @param pus A `SpatRaster` defining the planning-unit grid.
+#' @param invert Logical. If `TRUE`, inverts the resulting values during normalisation (default: `FALSE`).
+#' @param rescaled Logical. If `TRUE`, rescales the output to 0-1 using [make_normalised_raster()] (default: `TRUE`).
+#' @param fun How overlapping features are combined: `mean` (default), `sum`,
+#'   `max` or `min`, as a function or a string.
+#' @param cores,max_exact_features Ignored since 0.4.2 (kept so existing calls
+#'   still work).
+#'
+#' @return A `SpatRaster` on the planning-unit grid.
 #'
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' # Rasterize polygons using a 'score' attribute
+#' # Rasterise polygons using a 'score' attribute
 #' result <- exact_rasterise(features = my_polygons, attribute = "score", pus = my_raster, fun = sum)
 #' }
 exact_rasterise <- function(
@@ -263,101 +252,96 @@ exact_rasterise <- function(
     cores = 4,
     max_exact_features = 1000
 ) {
+  fun_name <- .rasterise_fun_name(fun, deparse(substitute(fun)))
 
   # Validate inputs
   assertthat::assert_that(
     inherits(features, "sf") || inherits(features, "SpatVector"),
     msg = "'features' must be an 'sf' or 'SpatVector' object."
   )
-
   assertthat::assert_that(
     attribute %in% colnames(features),
     msg = glue::glue("Attribute '{attribute}' not found in 'features'.")
   )
-
   assertthat::assert_that(
     inherits(pus, "SpatRaster"),
     msg = "'pus' must be a 'SpatRaster' object."
   )
-
   assertthat::assert_that(
     is_valid_iso3(iso3),
     msg = "'iso3' must be a 3-letter ISO3 code, optionally with a regional suffix (e.g. ECU_REG)."
   )
 
-  # Initialize an empty raster stack
-  r_stack <- terra::rast()
+  if (inherits(features, "SpatVector")) features <- sf::st_as_sf(features)
+  features <- features[!sf::st_is_empty(features), ]
 
-  nfeat <- nrow(features)
-  terra_fun <- .terra_fun_name(fun)
-  use_fast <- nfeat > max_exact_features && !is.na(terra_fun)
-
-  if (nfeat > max_exact_features && is.na(terra_fun)) {
-    warning(
-      glue::glue(
-        "exact_rasterise: {nfeat} features with a non-standard `fun`; falling back to ",
-        "the per-feature coverage stack, which needs one open file handle per feature ",
-        "and may hit the OS file-descriptor limit and run slowly. Pass fun = mean/sum/max/min ",
-        "to use the single-pass terra::rasterize path."
-      ),
-      call. = FALSE
-    )
-  }
-
-  if (use_fast) {
-    # Single-pass rasterisation for large feature counts: O(1) file handles and
-    # far faster than stacking one coverage raster per feature. `fun` aggregates
-    # polygons that share a cell. (Sub-cell coverage weighting is dropped here;
-    # it is negligible for the wall-to-wall class maps that reach this path.)
-    log_message("exact_rasterise: {nfeat} features (> {max_exact_features}); using single-pass terra::rasterize (fun = {terra_fun}).")
-    v <- if (inherits(features, "SpatVector")) features else terra::vect(features)
-    if (!terra::same.crs(v, pus)) v <- terra::project(v, pus)
-    r_stack <- terra::rasterize(v, pus, field = attribute, fun = terra_fun, background = NA)
-
-  } else if (nfeat > 1) {
-    # Handle multiple features by rasterizing each individually and stacking
-    for (i in 1:nrow(features)) {
-      f <- dplyr::slice(features, i)
-      attr_val <- dplyr::pull(f, attribute)        # Get attribute value directly
-
-      # Rasterize the coverage fraction of this feature
-      f_r <- exactextractr::coverage_fraction(pus, f)[[1]]
-
-      # Multiply by the attribute value (to weight by that attribute)
-      f_r <- f_r * attr_val
-
-      r_stack <- c(r_stack, f_r)
-
-      log_message("{round(100 * i / nrow(features), 1)}% complete")
-    }
-
-    # Aggregate across all rasterized layers using the specified function
-    log_message("Aggregating layers...")
-    r_stack <- terra::app(
-      r_stack,
-      cores = cores,
-      fun = fun,
-      na.rm = TRUE
-    )
-
+  if (nrow(features) == 0) {
+    log_message("exact_rasterise: no features; returning an empty layer.")
+    r <- terra::ifel(pus == 1, 0, NA)
   } else {
-    # Single feature: get coverage fraction directly.
-    log_message("Calculating weighted coverage fraction using a single feature...")
-    r_stack <- exactextractr::coverage_fraction(pus, features)[[1]]
-    r_stack <- r_stack * dplyr::pull(features, attribute)
+    features <- sf::st_make_valid(sf::st_transform(features, sf::st_crs(pus)))
+    values <- as.numeric(sf::st_drop_geometry(features)[[attribute]])
+    log_message("exact_rasterise: {nrow(features)} feature(s), fun = {fun_name}.")
+
+    cells <- exactextractr::exact_extract(
+      pus, features, include_cell = TRUE, progress = FALSE
+    )
+    cells <- dplyr::bind_rows(lapply(seq_along(cells), function(i) {
+      d <- cells[[i]]
+      d <- d[d$coverage_fraction > 0, c("cell", "coverage_fraction"), drop = FALSE]
+      if (nrow(d) > 0) d$value <- values[i]
+      d
+    }))
+    cells <- cells[!is.na(cells$value), , drop = FALSE]
+
+    r <- terra::ifel(pus == 1, 0, NA)
+    if (nrow(cells) > 0) {
+      by_cell <- switch(fun_name,
+        mean = dplyr::summarise(dplyr::group_by(cells, .data$cell),
+          v = sum(.data$value * .data$coverage_fraction) / sum(.data$coverage_fraction)),
+        sum = dplyr::summarise(dplyr::group_by(cells, .data$cell),
+          v = sum(.data$value * .data$coverage_fraction)),
+        max = dplyr::summarise(dplyr::group_by(cells, .data$cell), v = max(.data$value)),
+        min = dplyr::summarise(dplyr::group_by(cells, .data$cell), v = min(.data$value))
+      )
+      r[by_cell$cell] <- by_cell$v
+      r <- terra::mask(r, pus)
+    }
   }
 
   # Normalise the final result
   log_message("Normalising output...")
-  result <- elsar::make_normalised_raster(
-    raster_in = r_stack,
+  make_normalised_raster(
+    raster_in = r,
     pus = pus,
     iso3 = iso3,
     invert = invert,
     rescaled = rescaled
   )
+}
 
-  return(result)
+# The name of an aggregation for exact_rasterise(): "mean", "sum", "max" or
+# "min", given a function (base or terra versions) or a string
+.rasterise_fun_name <- function(fun, expr = "") {
+  allowed <- c("mean", "sum", "max", "min")
+  if (is.character(fun)) {
+    name <- fun
+  } else {
+    name <- NA_character_
+    # terra's mean, sum, ... are S4 generics: use their generic name
+    if (isS4(fun) && "generic" %in% methods::slotNames(fun)) name <- as.character(fun@generic)
+    for (nm in allowed) {
+      if (identical(fun, match.fun(nm)) || identical(fun, get(nm, envir = baseenv()))) {
+        name <- nm
+      }
+    }
+    if (is.na(name)) name <- sub("^.*::", "", expr) # e.g. a call written as terra::mean
+  }
+  assertthat::assert_that(
+    name %in% allowed,
+    msg = "'fun' must be mean, sum, max or min."
+  )
+  name
 }
 
 #' Crop a Global Raster to the Extent of Planning Units

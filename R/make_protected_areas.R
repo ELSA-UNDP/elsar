@@ -239,11 +239,15 @@ make_protected_areas <- function(
         sf::st_make_valid() %>%
         dissolve_sf()
     } else {
+      # Dissolve here too: coverage_fraction(...)[[1]] below reads only the
+      # first feature, so undissolved polygons kept a single protected area
+      # (before 0.4.2)
       protected_areas <- protected_areas %>%
         dplyr::filter(sf::st_is(., c("POLYGON", "MULTIPOLYGON"))) %>%
         sf::st_transform(sf::st_crs(pus)) %>%
         crop_to_extent(pus) %>%
-        sf::st_make_valid()
+        sf::st_make_valid() %>%
+        dissolve_sf()
     }
   } else {
     # If already polygonal, reproject and dissolve
