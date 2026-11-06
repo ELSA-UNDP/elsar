@@ -138,12 +138,6 @@ make_normalised_raster <- function(raster_in,
     # Just align and mask to PUs
     dat_aligned <- terra::project(raster_in, y = pus, threads = threads)
 
-    max_val <- suppressWarnings(terra::minmax(dat_aligned)[2])
-    if (is.null(dat_aligned) || isTRUE(is.na(max_val)) || isTRUE(max_val == 0)) {
-      log_message("No valid raster values found: returning empty raster.")
-      return(terra::ifel(pus == 1, 0, NA))
-    }
-
     # Apply input conditional expression if provided (for class extraction)
     if (!is.null(input_raster_conditional_expression)) {
       # Warn if applying class extraction to mode-aggregated categorical data
@@ -177,17 +171,8 @@ make_normalised_raster <- function(raster_in,
       }
     }
 
-    # Reproject and align raster to match PUs
-    dat_aligned <- terra::project(raster_in, y = pus, threads = threads)
-
-    max_val <- suppressWarnings(terra::minmax(dat_aligned)[2])
-    if (is.null(dat_aligned) || isTRUE(is.na(max_val)) || isTRUE(max_val == 0)) {
-      log_message("No valid raster values found: returning empty raster.")
-      return(terra::ifel(pus == 1, 0, NA))
-    }
-
-    # Resample using exactextractr to match PU resolution
-    dat_aligned <- exactextractr::exact_resample(x = dat_aligned, y = pus, fun = method)
+    # Align to the PU grid, aggregating with `method` (area-weighted)
+    dat_aligned <- .align_to_pus(raster_in, pus, method = method, threads = threads)
   }
 
   # Guard against unflagged NoData sentinels. An input with no proper NoData set
@@ -223,22 +208,36 @@ make_normalised_raster <- function(raster_in,
     dat_aligned <- conditional_expression(dat_aligned)
   }
 
-  if (!is.null(fill_na)) {
-    dat_aligned[is.na(dat_aligned)] <- fill_na
-    dat_aligned <- terra::mask(dat_aligned, pus, maskvalues = NA)
+  # Empty means no data at all. Checked after the conditional expression, so
+  # layers whose values are all <= 0 (e.g. differences) are not mistaken for
+  # empty ones.
+  if (isTRUE(suppressWarnings(terra::global(dat_aligned, "notNA")[[1]]) == 0)) {
+    log_message("No valid raster values found: returning empty raster.")
+    dat_aligned <- terra::ifel(pus == 1, 0, NA)
+    rescaled <- FALSE
+    invert <- FALSE
   }
 
+  # Invert and rescale the data first, then fill gaps, so missing data always
+  # gets `fill_na` in the final units (0 = the lowest score after rescaling)
+  # instead of becoming the maximum after inversion.
   if (invert) {
     dat_aligned <- -dat_aligned
   }
 
   if (rescaled) {
-    dat_aligned <- elsar::rescale_raster(dat_aligned)
+    dat_aligned <- rescale_raster(dat_aligned)
   } else {
     # A deliberate, common choice for presence/coverage layers - inform, don't
     # warn (warning() here fires dozens of times per pipeline run).
     log_message("Raster values are NOT rescaled (rescaled = FALSE).")
   }
+
+  if (!is.null(fill_na)) {
+    dat_aligned <- terra::ifel(is.na(dat_aligned), fill_na, dat_aligned)
+  }
+  dat_aligned <- terra::mask(dat_aligned, pus, maskvalues = NA)
+  names(dat_aligned) <- if (!missing(name_out)) name_out else names(raster_in)[1]
 
   if (!is.null(output_path)) {
     data_type <- if (terra::is.int(dat_aligned)) "INT1S" else "FLT4S"
@@ -267,4 +266,31 @@ make_normalised_raster <- function(raster_in,
   }
 
   return(dat_aligned)
+}
+
+# Align a raster to the planning-unit grid, aggregating with `method`.
+#
+# The input is cropped to the PU footprint, reprojected to the PU CRS at its
+# own resolution with nearest neighbour (so values are never smoothed), and
+# then resampled to the PU grid with exactextractr, which weights each input
+# cell by its coverage of the PU. `method` is any exactextractr summary
+# ("mean", "sum", "max", "mode", ...). This replaces an earlier version that
+# warped straight onto the PU grid with bilinear interpolation, which made the
+# area-weighted step a no-op.
+.align_to_pus <- function(x, pus, method = "mean", threads = TRUE) {
+  if (terra::compareGeom(x, pus, stopOnError = FALSE)) {
+    return(x)
+  }
+  if (!identical(terra::crs(x), terra::crs(pus))) {
+    # PU footprint in the input CRS, densified so curved edges are covered
+    footprint <- terra::as.polygons(terra::ext(pus), crs = terra::crs(pus))
+    step <- max(diff(terra::ext(pus)[1:2]), diff(terra::ext(pus)[3:4])) / 100
+    footprint <- terra::project(terra::densify(footprint, step), terra::crs(x))
+    if (!terra::relate(terra::ext(footprint), terra::ext(x), "intersects")[1, 1]) {
+      return(terra::ifel(pus == 1, NA, NA))
+    }
+    x <- terra::crop(x, footprint, snap = "out")
+    x <- terra::project(x, terra::crs(pus), method = "near", threads = threads)
+  }
+  exactextractr::exact_resample(x = x, y = pus, fun = method)
 }

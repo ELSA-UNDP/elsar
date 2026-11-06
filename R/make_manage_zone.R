@@ -196,6 +196,7 @@ make_manage_zone <- function(
       raster_in = lulc_raster,
       pus = pus,
       iso3 = iso3,
+      rescaled = FALSE, # compared with an absolute threshold below
       method_override = "mean",
       input_raster_conditional_expression = function(x)
         terra::ifel(x == agriculture_lulc_value, 1, 0)
@@ -208,6 +209,7 @@ make_manage_zone <- function(
     raster_in = pasturelands,
     pus = pus,
     iso3 = iso3,
+    rescaled = FALSE, # compared with an absolute threshold below
     method_override = "mean"
     )
 
@@ -227,6 +229,7 @@ make_manage_zone <- function(
       raster_in = lulc_raster,
       pus = pus,
       iso3 = iso3,
+      rescaled = FALSE, # compared with an absolute threshold below
       method_override = "mean",
       input_raster_conditional_expression = function(x)
         terra::ifel(x == built_area_lulc_value, 1, 0)

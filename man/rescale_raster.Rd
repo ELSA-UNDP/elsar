@@ -24,7 +24,9 @@ rescale_raster(
 \item{new_max}{Numeric. New maximum of rescaled raster (default = 1).}
 }
 \value{
-A \code{SpatRaster} with values rescaled to the specified range.
+A \code{SpatRaster} with values rescaled to the specified range. A
+constant layer returns \code{new_max} where its value is positive and \code{new_min}
+otherwise, with a warning, instead of \code{NaN}.
 }
 \description{
 This function rescales values in a raster to a range between 0 and 1.

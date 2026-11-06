@@ -200,7 +200,8 @@ make_restore_zone <- function(
     raster_in = degradation,
     pus = pus,
     iso3 = iso3,
-    method = "mean",
+    rescaled = FALSE, # compared with an absolute threshold below
+    method_override = "mean",
     input_raster_conditional_expression = function(x) terra::ifel(x == -1, 1, 0)
   )
 
@@ -222,6 +223,7 @@ make_restore_zone <- function(
       raster_in = lulc,
       pus = pus,
       iso3 = iso3,
+      rescaled = FALSE, # compared with an absolute threshold below
       method_override = "mean",
       input_raster_conditional_expression = function(x) terra::ifel(x == agriculture_lulc_value, 1, 0)
     )
@@ -245,6 +247,7 @@ make_restore_zone <- function(
       raster_in = lulc,
       pus = pus,
       iso3 = iso3,
+      rescaled = FALSE, # compared with an absolute threshold below
       method_override = "mean",
       input_raster_conditional_expression = function(x) terra::ifel(x == built_area_lulc_value, 1, 0)
     )
