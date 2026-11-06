@@ -15,7 +15,10 @@ make_restore_zone(
   built_areas = NULL,
   lulc = NULL,
   degradation_threshold = 0.1,
-  human_pressure_threshold = 4,
+  hii_min = 4,
+  hii_max = 21,
+  degradation_encoding = c("auto", "sdg", "binary"),
+  human_pressure_threshold = deprecated(),
   agriculture_threshold = 0.1,
   built_areas_threshold = 0.1,
   forest_threshold = 0.1,
@@ -32,8 +35,10 @@ make_restore_zone(
 
 \item{pus}{SpatRaster. Planning units raster defining the output resolution and extent.}
 
-\item{degradation}{SpatRaster. Raster indicating land degradation. Values of -1 are
-treated as degraded (e.g., SDG 15.3.1 productivity degradation layer).}
+\item{degradation}{SpatRaster. Raster indicating land degradation: either an
+SDG 15.3.1 productivity layer, where -1 means degraded, or a 0/1
+degraded-areas layer such as \code{\link[=make_degraded_areas]{make_degraded_areas()}} output, where values
+above 0 mean degraded. See \code{degradation_encoding}.}
 
 \item{human_pressure}{SpatRaster. Raster of human pressure/impact values
 (e.g., Human Footprint Index). Higher values indicate greater pressure.}
@@ -57,8 +62,19 @@ agriculture and built-up areas when not provided directly.}
 \item{degradation_threshold}{Numeric. Proportion threshold above which an area
 is considered degraded (default: 0.1).}
 
-\item{human_pressure_threshold}{Numeric. Human pressure value at or above which
-an area is considered degraded (default: 4).}
+\item{hii_min}{Numeric. Human pressure (HII) at or above which an area counts
+as degraded (default: 4).}
+
+\item{hii_max}{Numeric. Human pressure (HII) at or above which an area is too
+pressured to restore and is excluded (default: 21, as in the original ELSA
+design). Use \code{Inf} for no upper limit.}
+
+\item{degradation_encoding}{How to read \code{degradation}: \code{"auto"} (default:
+\code{"sdg"} if the layer contains -1, otherwise \code{"binary"}), \code{"sdg"} (-1 is
+degraded) or \code{"binary"} (values above 0 are degraded).}
+
+\item{human_pressure_threshold}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Use
+\code{hii_min} instead.}
 
 \item{agriculture_threshold}{Numeric. Proportion threshold above which an area
 is excluded as agricultural land (default: 0.1).}
@@ -109,11 +125,20 @@ The function generates two restore zone outputs:
 \item \code{restore_zone_v2}: Same as v1, but further masked to forest ecosystems only
 }
 
-Areas are classified as degraded based on either:
-\itemize{
-\item Land degradation indicators (e.g., productivity decline)
-\item Human pressure exceeding a threshold
-}
+The Restore Zone targets land that is degraded but still restorable:
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{restore = (degradation > degradation_threshold | HII >= hii_min)  # degraded, by either signal
+          & HII < hii_max                                         # but not too pressured to restore
+          & agriculture <= agriculture_threshold                  # farmland is managed, not restored
+          & built <= built_areas_threshold                        # as are built-up areas
+}\if{html}{\out{</div>}}
+
+Degraded land is identified both by a degradation layer and by human
+pressure (\code{HII >= hii_min}). Land under very high pressure
+(\code{HII >= hii_max}) is excluded as too far gone to restore, as in the
+original ELSA design ("HFP < 21"). Farmland and built-up areas may well be
+degraded, but they belong to the Manage Zone, so they are excluded here.
+Both HII thresholds are on the HII's own 0-50 scale.
 
 Agricultural and built-up areas can be provided directly as rasters, or derived
 from a land use/land cover (LULC) raster by specifying class values.

@@ -23,7 +23,9 @@
 #'   pre-computed class proportions. If provided, bands named "agriculture" and "built_area" will
 #'   be used automatically, overriding `agricultural_areas` and `built_areas`.
 #' @param agricultural_areas SpatRaster. A binary or categorical raster representing agricultural areas.
-#' @param pasturelands SpatRaster. A binary or categorical raster representing (actively managed/improved)pastures.
+#' @param pasturelands SpatRaster or NULL. A raster of (actively managed or
+#'   improved) pasture probability or share. Optional: without it the pasture
+#'   criterion is not used.
 #' @param built_areas SpatRaster. A binary or categorical raster representing built-up/urban areas.
 #' @param lulc_raster SpatRaster or NULL. Optional raw LULC input used to extract agriculture and built-up layers if those inputs are categorical.
 #' @param human_pressure SpatRaster. Human Footprint Index raster.
@@ -206,15 +208,21 @@ make_manage_zone <- function(
       )
   }
 
-  # Process pasturelands
-  log_message("Processing pasturelands...")
-  pasturelands_processed <- elsar::make_normalised_raster(
-    raster_in = pasturelands,
-    pus = pus,
-    iso3 = iso3,
-    rescaled = FALSE, # compared with an absolute threshold below
-    method_override = "mean"
+  # Process pasturelands (optional: without them the criterion never applies;
+  # before 0.4.2 a missing pasture layer made the function fail)
+  if (is.null(pasturelands)) {
+    log_message("No pasturelands layer: the manage zone uses HII, managed forests and agriculture only.")
+    pasturelands_processed <- terra::ifel(pus == 1, 0, NA)
+  } else {
+    log_message("Processing pasturelands...")
+    pasturelands_processed <- make_normalised_raster(
+      raster_in = pasturelands,
+      pus = pus,
+      iso3 = iso3,
+      rescaled = FALSE, # compared with an absolute threshold below
+      method_override = "mean"
     )
+  }
 
   # Process built-up areas
   log_message("Processing built-up areas...")
@@ -309,8 +317,8 @@ make_manage_zone <- function(
   # Filter out small patches
   if (filter_patch_size) {
     log_message("Sieving out patch sizes smaller than {min_patch_size} planning units...")
-    manage_zones[[1]] <- terra::sieve(manage_zones[[1]], threshold = min_patch_size)
-    manage_zones[[2]] <- terra::sieve(manage_zones[[2]], threshold = min_patch_size)
+    manage_zones[[1]] <- .sieve_zone(manage_zones[[1]], min_patch_size)
+    manage_zones[[2]] <- .sieve_zone(manage_zones[[2]], min_patch_size)
   }
 
   # Save to disk if needed

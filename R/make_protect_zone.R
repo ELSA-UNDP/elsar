@@ -10,8 +10,8 @@
 #'
 #' @param iso3 ISO3 country code (e.g., "NPL").
 #' @param pus A `SpatRaster` defining the planning units.
-#' @param current_protected_areas a `sf` or `SpatVector` object of current protected areas.
-#'        If NULL, `elsar::make_protected_areas()` will be used. May have 0 rows
+#' @param current_protected_areas a `sf` or `SpatVector` object of current protected areas,
+#'        in any CRS. May have 0 rows
 #'        (a country with no protected areas); `hii_threshold` is then required,
 #'        because there are no protected areas to derive it from.
 #' @param lulc_proportions A multi-band `SpatRaster` from [download_lulc_proportions()] containing
@@ -138,6 +138,13 @@ make_protect_zone <- function(
   assertthat::assert_that(
       inherits(current_protected_areas, "sf") || inherits(current_protected_areas, "SpatVector"),
       msg = "'current_protected_areas' must be an 'sf' or 'SpatVector' object.")
+  # Work in sf (dissolving and exact_extract need it); in the PU CRS
+  current_protected_areas <- sf::st_as_sf(current_protected_areas)
+  if (nrow(current_protected_areas) > 0) {
+    current_protected_areas <- sf::st_make_valid(
+      sf::st_transform(current_protected_areas, sf::st_crs(pus))
+    )
+  }
   if (!is.null(output_path)) {
     assertthat::assert_that(dir.exists(output_path),
                             msg = glue::glue("'output_path' directory does not exist: {output_path}"))
@@ -270,7 +277,7 @@ make_protect_zone <- function(
   # Optionally filter out small patches
   if (filter_patch_size) {
     log_message("Sieving out patch sizes smaller than {min_patch_size} planning units...")
-    protect_zone <- terra::sieve(protect_zone, threshold = min_patch_size)
+    protect_zone <- .sieve_zone(protect_zone, min_patch_size)
   }
 
   # Invert if locked-out zone required

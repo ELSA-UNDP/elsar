@@ -203,3 +203,14 @@ calculate_restore_and_urban_budgets <- function(iso3,
   # Return rounded named vector
   return(result)
 }
+
+# Remove eligible patches (cells == 1) smaller than `min_patch_size` cells
+# (8-connected), setting them to 0. terra::sieve() merges every small patch
+# into its neighbours, which also filled small excluded holes (farms, towns)
+# back into the zone before 0.4.2. Restoring the excluded cells afterwards
+# keeps them out, while small eligible patches, merged into their excluded
+# surroundings, are still removed. (terra::patches() would be exact too, but
+# takes minutes on fragmented national grids.)
+.sieve_zone <- function(zone, min_patch_size) {
+  terra::ifel(zone == 0, 0, terra::sieve(zone, threshold = min_patch_size, directions = 8))
+}

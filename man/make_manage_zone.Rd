@@ -46,7 +46,9 @@ be used automatically, overriding \code{agricultural_areas} and \code{built_area
 
 \item{agricultural_areas}{SpatRaster. A binary or categorical raster representing agricultural areas.}
 
-\item{pasturelands}{SpatRaster. A binary or categorical raster representing (actively managed/improved)pastures.}
+\item{pasturelands}{SpatRaster or NULL. A raster of (actively managed or
+improved) pasture probability or share. Optional: without it the pasture
+criterion is not used.}
 
 \item{built_areas}{SpatRaster. A binary or categorical raster representing built-up/urban areas.}
 

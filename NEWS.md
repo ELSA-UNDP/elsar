@@ -62,7 +62,27 @@ on 0.4.1 until a country is rerun.
   one rule for any number of features. `max` and `min` no longer shrink at the
   edges of features. It is also much faster (one `exact_extract()` pass).
 
+* **Restore Zone (`make_restore_zone()`).** It is now the intended band of
+  degraded but restorable land: `(degradation > degradation_threshold |
+  HII >= hii_min) & HII < hii_max`, excluding farmland and built-up areas
+  (they are managed, not restored). The upper cap (`hii_max`, default 21 on
+  the HII's 0-50 scale, as in the original ELSA design) had been lost, so land
+  under very high pressure was included. `human_pressure_threshold` is
+  deprecated in favour of `hii_min`. The `degradation` input can now be a 0/1
+  degraded-areas layer as well as an SDG 15.3.1 layer (-1 = degraded): before,
+  a 0/1 layer such as `make_degraded_areas()` output silently added no
+  degradation (`degradation_encoding = "auto"` detects which it is).
+* **All zones with `filter_patch_size = TRUE`.** Removing small patches used
+  `terra::sieve()`, which also filled small excluded holes (farms, towns)
+  back into the zone. Excluded cells now stay excluded; small eligible
+  patches are still removed.
+
 ## Other changes
+
+* `make_manage_zone()` works without a pasture layer (`pasturelands = NULL`,
+  the documented default, used to fail).
+* `make_protect_zone()` accepts protected areas as a multi-row `SpatVector`
+  and in any CRS; the docs no longer claim that `NULL` loads protected areas.
 
 * `exact_rasterise()` accepts `fun` as `mean`, `sum`, `max` or `min` (function,
   terra generic or string); other functions now give an error. `cores` and
