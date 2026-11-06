@@ -1,9 +1,11 @@
 #' Create a Representation Gap Raster for Ecosystems
 #'
 #' This function calculates the representation gap of ecosystems provided, identifying
-#' those that fall short of a 30% protection target. The resulting raster layer indicates
-#' the average degree of underrepresentation across each planning unit.
-#'#'
+#' those that fall short of a 30% protection target. For each ecosystem the gap is
+#' `target_percent` minus its protected percentage (0 once the target is met). Each
+#' planning unit takes the largest gap of the ecosystems it overlaps, divided by
+#' `target_percent`, so 0 means the target is met and 1 means no protection.
+#'
 #' @param ecosystems_sf `sf` object. Polygon features representing ecosystems, clipped to the analysis area.
 #' @param group_attribute `character`. Column name in `ecosystems_sf` used to group features (e.g., "econame" or "get_id").
 #' @param target_percent `numeric`. Target percentage of protection for each ecosystem group (default = 30).
@@ -14,7 +16,9 @@
 #' @param iso3 `character`, optional. ISO3 country code used for naming output files (e.g., "BRA").
 #' @param output_path `character`, optional. Directory path to save the output raster as a GeoTIFF.
 #'
-#' @return A `SpatRaster` with one layer: `"underrepresented_ecosystems"`, showing the maximum gap (0 to target_percent) per planning unit.
+#' @return A `SpatRaster` with one layer: `"underrepresented_ecosystems"`, showing the largest gap per planning unit as a share of the target (0-1). The
+#'   scale is absolute, not rescaled across ecosystems (before 0.4.2 the largest gap
+#'   in the region became 1, however small it was).
 #' @export
 #'
 #' @examples
@@ -104,27 +108,25 @@ make_underrepresented_ecosystems <- function(
       target_gap = dplyr::if_else(percent_protected < target_percent, target_percent - percent_protected, 0)
     )
 
-  # Rasterize. Without protected areas every ecosystem has the full gap, so a
-  # 0-1 rescale (min == max) is undefined; express the gap as a share of the
-  # target instead (1 wherever there is an ecosystem).
+  # Rasterize the gap as a share of the target: 0 where the target is met, 1
+  # for an ecosystem with no protection. (Before 0.4.2 the gaps were rescaled
+  # to 0-1 across ecosystems, so the largest gap became 1 however small it
+  # was, and a region with a single ecosystem became a constant 1.)
   no_pas <- nrow(protected_areas_sf) == 0 || all(sf::st_is_empty(protected_areas_sf))
   if (no_pas) {
     warning("No protected areas: every ecosystem is 0% protected, so the ",
             "representation gap is uniform (", target_percent, "%) and the ",
             "layer carries no information for prioritisation.", call. = FALSE)
   }
-  log_message("Rasterizing average target gap per planning unit...")
+  log_message("Rasterizing the largest target gap per planning unit...")
   underrepresented_ecosystems <- elsar::exact_rasterise(
     features = ecosystems_summary,
     pus = pus,
     fun = "max",
     iso3 = iso3,
     attribute = "target_gap",
-    rescaled = !no_pas
-  )
-  if (no_pas) {
-    underrepresented_ecosystems <- underrepresented_ecosystems / target_percent
-  }
+    rescaled = FALSE
+  ) / target_percent
   names(underrepresented_ecosystems) <- "underrepresented_ecosystems"
 
   if (!is.null(output_path)) {

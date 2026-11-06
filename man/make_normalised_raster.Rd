@@ -31,8 +31,10 @@ make_normalised_raster(
 
 \item{rescaled}{\code{logical} If \code{TRUE}, rescales the raster using \code{rescale_raster()} (default: \code{TRUE}).}
 
-\item{method_override}{\code{character} Optional method for \code{terra::project()}, overriding
-the default (default: \code{NULL}).}
+\item{method_override}{\code{character} How input cells are combined into each
+planning unit (default \code{NULL}, i.e. \code{"mean"}): one of the
+\code{\link[exactextractr:exact_resample]{exactextractr::exact_resample()}} summaries, e.g. \code{"mean"}, \code{"sum"},
+\code{"max"}, \code{"min"} or \code{"mode"}. All are area-weighted (see Details).}
 
 \item{crop_global_input}{\code{logical} If true the input (large global) raster is cropped
 to the PU extent before applying an \code{input_raster_conditional_expression}, to reduce
@@ -44,11 +46,11 @@ function to the raster before resampling to the PU layer (default: \code{NULL}).
 \item{conditional_expression}{\code{function} Optional method to apply a function to the
 raster after resampling to the PU layer (default: \code{NULL}).}
 
-\item{fill_na}{\code{numeric} or \code{NA} The fill value used for \code{NA} cells before
-masking (default: 0). When non-NULL (the default), filled cells are
-then masked back to the planning units, so the result is NoData outside
-the study area. Pass \code{NULL} to skip both the fill and this PU masking -
-in which case cells outside the planning units are NOT set to NoData.}
+\item{fill_na}{\code{numeric} or \code{NULL}. The value given to planning units with
+no data (default: 0). It is applied \emph{after} \code{invert} and \code{rescaled},
+so with the defaults missing data gets the lowest score (0). \code{NULL}
+leaves those cells \code{NA}. Cells outside the planning units are always
+NoData.}
 
 \item{name_out}{\code{character} The name of the output raster file (without the extension).}
 
@@ -67,11 +69,25 @@ optionally inverts, rescales, applies conditional expressions, and saves the pro
 raster to a specified output path.
 }
 \details{
-This function reprojects the input raster (\code{raster_in}) to match the CRS and resolution
-of the planning units (\code{pus}). The method for reprojection can be overridden using \code{method_override}.
-If \code{input_raster_conditional_expression} is provided, it is applied before any reprojection. Applying a
-\code{input_raster_conditional_expression} can also make processing times significantly longer
-for high resolution input rasters.The function can optionally rescale (0-1) and invert the raster values.
+The input is aggregated to the planning-unit grid with \code{method_override}
+(\code{"mean"} by default), weighting every input cell by the share of the
+planning unit it covers:
+\itemize{
+\item in the same CRS, with \code{\link[exactextractr:exact_resample]{exactextractr::exact_resample()}};
+\item in another CRS, by warping onto a sub-grid of up to 10 x 10 cells per
+planning unit with the matching GDAL method (average, max, min, mode;
+every overlapping input cell counts) and aggregating back. Very fine
+inputs are first aggregated in their own CRS. Results are area-weighted to
+within 1/100 of a planning unit, memory is bounded by the planning-unit
+grid, and inputs crossing the antimeridian are handled. \code{"sum"} keeps
+totals.
+}
+
+Steps, in order: \code{input_raster_conditional_expression} (on the input, before
+aggregation; it can be slow for high-resolution inputs), aggregation,
+\code{conditional_expression}, \code{invert}, rescaling to 0-1, \code{fill_na}, masking to
+the planning units. A layer with no data at all returns 0 inside the
+planning units.
 }
 \examples{
 \dontrun{

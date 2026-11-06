@@ -1,24 +1,5 @@
 # elsar (development version)
 
-## Bug fixes
-
-* `make_underrepresented_ecosystems()` gave ecosystems that no protected area
-  overlaps an `NA` gap, which ended up as the *lowest* value after rasterising.
-  They now get the full gap (they are 0% protected), so the least-protected
-  ecosystems score highest, as intended. Layers built with earlier versions
-  under-rate completely unprotected ecosystems and should be rebuilt.
-
-* Countries with no usable protected-area geometry (no records, none inside
-  the planning units, or only points without a reported area, e.g. Somalia in
-  WDPA) no longer fail:
-  - `make_protected_areas()` returns an all-0 layer and a 0-row `sf`, with a
-    warning that says why. New argument `return_sf` returns the cleaned
-    polygons for a supplied `sf_in` too (default unchanged).
-  - `make_protect_zone()` accepts 0-row protected areas; it then needs a fixed
-    `hii_threshold`, since there is nothing to derive it from.
-  - `make_underrepresented_ecosystems()` accepts 0-row protected areas and
-    warns that the result is uniform (1 wherever there is an ecosystem).
-
 ## New features
 
 * New tools to analyse ELSA results after a run. Areas are planar in the
@@ -50,52 +31,232 @@
   - New vignette: "Analysing and reporting ELSA results".
   - patchwork moves from Suggests to Imports.
 
-* `elsar_calibrate_weights()` computes per-feature calibration weights for an ELSA
-  prioritization so that features achieve more even representation relative to their
-  single-feature maxima. This is the ELSA pre-calibration step, previously living in
-  the downstream tool; the objective and framework are unchanged (spread-of-shortfall
-  minimisation via an additive, increase-only weight update), with added robustness:
-  it returns the best-seen weights, stops once the allocation freezes, and excludes
-  zero-total features instead of aborting. It returns a structured `elsar_calibration`
-  object (weights, representation profile, per-iteration trajectory, metadata) and
-  writes no files. `prioritizr` and a solver (`gurobi`, or `highs` for a free/local
-  option) are optional dependencies, checked at call time with an actionable message.
+# elsar 0.4.2
 
-* Sub-national region codes (e.g. `"USA_CA"`) now work with global datasets:
-  `make_kbas()`, `make_wetlands_ramsar()`, `make_urban_greening_opportunities()`
-  and `make_protected_areas(from_wdpca = TRUE)` filter or fetch by the national
-  part of the code (`"USA"`) instead of matching nothing.
-* `make_protected_areas()` drops protected areas outside the planning-unit
-  extent before dissolving them. Using a national WDPA dataset for a small
-  study area is now much cheaper (California: 48,010 of 50,976 US sites
-  skipped).
+## Values change: rebuild these layers
 
-## Installation / Dependencies
+0.4.2 fixes several calculations that gave wrong values without any error.
+Layers built with 0.4.1 or earlier should be rebuilt; the pipeline should stay
+on 0.4.1 until a country is rerun.
 
-* The core package is now much lighter to install. `wdpar`, `reticulate`,
-  `googledrive`, and `rappdirs` moved from `Imports` to `Suggests`, so installing
-  elsar no longer forces a Chromium browser, `libarchive`, conda/Python, or two
-  Google OAuth flows on users who only need the core (boundaries, planning units,
-  normalisation, zone builders from local rasters, plotting). The optional
-  features now check for their packages and give an actionable install message
-  when one is missing:
-  - `make_protected_areas(from_wdpca = TRUE)` requires `wdpar`;
-  - the `download_*` (Earth Engine) functions require `reticulate` and
-    `googledrive` (run `elsar_setup_gee()` to configure them).
+* **Every layer that goes through `make_normalised_raster()`** (almost all
+  feature layers). Inputs are now aggregated to the planning units with the
+  requested method (`method_override`: `"mean"`, `"sum"`, `"max"`, `"mode"`,
+  ...), weighting every input cell by the share of the planning unit it
+  covers. Before, they were warped onto the planning grid with bilinear
+  interpolation first, which made `method_override` a no-op, point-sampled
+  proportion layers (agriculture, built areas, LULC classes) and blurred
+  coarse inputs. Inputs in another CRS are aggregated through a sub-grid of up
+  to 10 x 10 cells per planning unit (area-weighted to within 1/100 of a
+  planning unit, with bounded memory, also across the antimeridian).
+* **Layers with gaps inside the planning units.** Missing data is now filled
+  (`fill_na`) *after* inversion and rescaling, so it always gets the lowest
+  score. Before, it was filled first: inverted layers ranked missing data
+  highest, and the fill value stretched the rescale of other layers. For a
+  layer with negative values (e.g. a difference), missing cells now score the
+  same as the lowest value instead of mid-scale.
+* **Constant layers** (e.g. a region fully covered by protected areas, or an
+  all-1 zone) are no longer turned into `NaN` by `rescale_raster()`; they
+  become 1 (or 0 when the value is 0), with a message.
+* **Zones built from LULC, degradation or pasture rasters**
+  (`make_protect_zone()`, `make_restore_zone()`, `make_manage_zone()`,
+  `make_urban_greening_zone()`, `make_urban_greening_opportunities()`).
+  Thresholds such as `agriculture_threshold = 0.1` are now compared with the
+  true share of each planning unit. Before, these paths rescaled the share to
+  the national maximum first, so the threshold meant something different in
+  every country.
+  Pasture probability given as a percentage (0-100, as in the Global Pasture
+  Watch layers) is divided by 100 first, so `pasturelands_threshold = 0.35`
+  means a 35% probability (new `pasturelands_scale`, `"auto"` by default).
+* **Layers whose values are all zero or negative** (e.g. differences) are no
+  longer mistaken for empty layers and returned as all 0.
+* **`make_urban_greening_opportunities()`** inverted NDVI twice, ranking green
+  cells as most in need of greening; low vegetation now ranks highest and water
+  lowest. It also no longer requires the planning-unit layer to be named
+  "Planning Units".
 
-* `scales` and `png` moved from `Suggests` to `Imports`: they are used
-  unconditionally by the core plotting functions, so they belong there.
+* **KBA layers (`make_kbas()`).** Point KBAs are now buffered to their reported
+  area: `repareakm2` is in km², but was converted as hectares, so the circles
+  were 100 times too small.
+* **Wetlands and Ramsar (`make_wetlands_ramsar()`).** Ramsar polygons are now
+  always rasterised, with buffered points added when `buffer_points = TRUE`
+  (centroids of sites that also have a boundary are ignored, via the new
+  `id_column`, so those sites are not counted twice).
+  Before, they were only rasterised when the data contained points and
+  `buffer_points = FALSE`, so Ramsar sites were usually missing. Any positive
+  wetland class now counts as wetland, so 0/1 wetland masks work (the CIFOR
+  map, coded 10-100, is unaffected).
+* **Protected areas with `buffer_points = FALSE`
+  (`make_protected_areas()`).** When the data contained points, only the first
+  protected-area polygon was rasterised; all are now included.
+* **Protected areas and indigenous lands with point data
+  (`convert_points_polygon()`).** Polygons whose reported area is 0 or missing
+  (common in WDPCA) are no longer dropped, and a multipoint's reported area is
+  shared between its points instead of given to each (also when points and
+  multipoints are mixed).
+* **Threatened and under-represented ecosystems, urban heat
+  (`exact_rasterise()`).** `fun = mean` averaged each planning unit over *all*
+  features, including ones not touching it, and the method changed above 1,000
+  features. It is now the coverage-weighted mean of the features present, with
+  one rule for any number of features. `max` and `min` no longer shrink at the
+  edges of features. (With tens of thousands of features it is slower than the
+  old approximate path; the callers in elsar pass tens to hundreds.)
 
-## Improvements
+* **Restore Zone (`make_restore_zone()`).** It is now the intended band of
+  degraded but restorable land: `(degradation > degradation_threshold |
+  HII >= hii_min) & HII < hii_max`, excluding farmland and built-up areas
+  (they are managed, not restored). The upper cap (`hii_max`, default 21 on
+  the HII's 0-50 scale, as in the original ELSA design) had been lost, so land
+  under very high pressure was included. `human_pressure_threshold` is
+  deprecated in favour of `hii_min`. The `degradation` input can now be a 0/1
+  degraded-areas layer as well as an SDG 15.3.1 layer (-1 = degraded): before,
+  a 0/1 layer such as `make_degraded_areas()` output silently added no
+  degradation. `degradation_encoding = "auto"` reads the values within the
+  planning region and stops when they are unclear. This affects any 0/1
+  "Degraded Areas" input, not only `compute_degraded_areas`. Note: the new
+  arguments come before `agriculture_threshold`, so positional calls shift.
+* **All zones with `filter_patch_size = TRUE`.** Removing small patches used
+  `terra::sieve()`, which also filled small excluded holes (farms, towns)
+  back into the zone, and could keep small patches next to other small
+  patches or NoData. Small eligible patches are now removed exactly and
+  excluded cells always stay excluded. Patches are now edge-connected: cells
+  touching only at a corner count as separate patches (they were joined
+  before).
 
-* `median_from_rast()` errors now say how to fix a missing or histogram-less
-  GDAL side-car: they give the `gdalinfo -hist` command (and the
-  `sf::gdal_utils()` equivalent) for the exact file terra opened, with a rough
-  time estimate for large rasters. Previously the message was only
-  "Side-car XML not found for <file>", which surfaced mid-run in
-  `make_threatened_ecosystems_protection()` with no hint.
+* **Planning-unit grids (`make_planning_units()`).** The grid now covers the
+  whole boundary: its extent is snapped outwards to whole cells, where before
+  up to one cell along the east and north edges could be lost. Grids can gain
+  a row or column, so every layer should be rebuilt on the new grid.
+* **Countries crossing the antimeridian** (Fiji, Kiribati, Russia, New Zealand
+  with the Chathams, the US with the Aleutians, the US Minor Outlying Islands).
+  The custom Mollweide projection was centred near 0 degrees instead of on the
+  country, which stretched it across the whole projection (Fiji and Russia
+  could not get planning units at all). Other regions keep their centre,
+  including wide ones that straddle 0 degrees (e.g. France with overseas
+  territories). Kiribati's planning units are slow to build at the default
+  threshold (minutes, several GB): consider a lower `pu_threshold`.
+* **`limit_to_mainland = TRUE`.** In `make_boundary()` it kept the largest
+  *province* when the boundary had several features; it now merges them and
+  keeps the largest polygon. In `make_planning_units()` it was accepted but
+  ignored; it now drops islands. "Mainland" is the single largest polygon:
+  the South Island for New Zealand, the contiguous states for the US.
 
-## Bug Fixes
+* **Calibrated weights with lock-ins (`elsar_calibrate_weights()`).** PA
+  lock-ins are now enforced, as in the original ELSA pre-calibration: locked
+  cells are added to their zone and removed from every other zone, including
+  `do_nothing`. Before, lock-ins only raised the zone's budget, so the weights
+  were fitted to a problem without the lock-in that the ELSA tool solves (in a
+  test, none of the locked cells went to Protect). Calibrations made since the
+  December 2025 rewrite should be rerun. Zone masks given as 0/1 (as the zone
+  builders return) are now read as 1/NA; a 0 used to make an ineligible cell
+  available. New `lockin_threshold` (default 0.1, as in the ELSA tool) and
+  `lockin_priority` (overlapping lock-ins go to the zone with the lowest
+  raster value, as in the tool: protect, manage, restore, urban greening). A
+  zone's budget floor now counts the locked cells, so fractional lock-ins no
+  longer make the problem infeasible.
+
+* **Forest integrity (`make_forest_integrity()`).** FLII (published on a
+  0-10000 scale) and FSII are now each rescaled to 0-1 before they are
+  averaged; before, FLII swamped FSII. Inputs that are all 0 give an all-0
+  layer with a warning instead of `NaN`.
+* **Flood abatement opportunities (`make_flood_abatement_opportunities()`).**
+  Now `rescale(flood_risk * (1 - NDVI))`: flood-prone land lacking vegetation
+  scores highest (where restoring, managing or greening it can reduce floods;
+  the ELSA impacts credit the layer fully to those actions and half to
+  protect), water 0. The old `flood_risk / (1 - NDVI)` inverted this (it rose
+  with vegetation) and grew without bound for dense vegetation. NDVI is used on
+  its own 0-1 scale, not rescaled within the region.
+* **Underrepresented ecosystems (`make_underrepresented_ecosystems()`).** The
+  value is now each planning unit's largest gap to the 30% target divided by
+  the target (0 = target met, 1 = unprotected), as published ("30% minus the
+  protected percent"). Before, the gaps were rescaled across ecosystems, so
+  the largest gap in the region became 1 however small it was, and a region
+  with a single ecosystem (such as Andorra) became a constant 1.
+* **Threatened ecosystems for protection
+  (`make_threatened_ecosystems_protection()`).** Ecosystems in another CRS
+  than the planning units gave an all-NA layer (the intact-area mask was
+  relabelled instead of transformed).
+* **Layers written with `save_raster()`.** Each data type now has its own
+  NoData value and predictor: `FLT8S` failed, and in `INT2U`/`INT4U` data the
+  valid value 255 was written as NoData.
+* **`get_binary_layers()`** tests each layer exactly: near-0 or near-1 floats
+  were classed as binary (and then written as integers, losing them), and an
+  all-NA layer shifted the labels of the others.
+
+## Other changes
+
+* elsar is now released under the Apache License 2.0 (was CC BY 4.0, which
+  is not meant for software), as agreed by the authors.
+* `make_postgres_connection()` is back (it was removed in 0.4.0 without
+  deprecation, but existing code, including the pipeline, calls it). It
+  returns a named list.
+* `get_coverage()` counts the zone only inside the planning units, whether
+  cells outside are NA or 0 (it could exceed 100%).
+* `crop_global_raster()` returns an empty layer only when the input does not
+  overlap the planning units; other errors are raised instead of becoming an
+  all-0 layer.
+* `filter_sf()` and `elsar_load_data()` warn when an ISO3 filter matches no
+  features (usually a wrong `iso3_column`); multi-layer loads warn once, only
+  if nothing matched. sf's "layer is ignored" warning is gone.
+* `save_raster()` returns the file path invisibly and no longer emits GDAL's
+  "MEM driver does not support creation option" warnings.
+
+* `make_planning_units()` accepts boundaries with several features (it failed
+  when estimating the cell size), and grows the cell size when the first
+  estimate gives too many planning units instead of stopping with an error.
+* ISO3 codes are matched regardless of case, both the argument (e.g. `"npl"`)
+  and the codes in the data; before, a case mismatch silently matched
+  nothing.
+
+* `make_manage_zone()` works without a pasture layer (`pasturelands = NULL`,
+  the documented default, used to fail), and its alternative zone (v2,
+  agriculture and pasture) now also excludes built-up areas, like the default
+  zone.
+* `make_protect_zone()` accepts protected areas as a multi-row `SpatVector`
+  and in any CRS; the docs no longer claim that `NULL` loads protected areas.
+
+* `exact_rasterise()` accepts `fun` as `mean`, `sum`, `max` or `min` (function,
+  terra generic or string); other functions now give an error. `cores` and
+  `max_exact_features` are ignored. With no features it returns zeros. It
+  accepts `SpatVector` input, uses a factor attribute's labels (not its level
+  codes), rejects non-numeric attributes and ignores non-polygon geometry.
+* `make_kbas()` and `make_wetlands_ramsar()` require an `iso3` column and say
+  so, instead of silently keeping every site worldwide when it is missing.
+  `make_kbas()` no longer fails when excluding AZE sites leaves no sites (it
+  returns, and saves, an empty layer), and geometries are re-validated after
+  reprojection.
+
+* `make_managed_forests()` gains `rescaled` (default `TRUE`). When its output
+  feeds `make_manage_zone()`, use `rescaled = FALSE`: the zone's
+  `forest_class_threshold` is a true share of each planning unit.
+* `make_normalised_raster()`: cells outside the planning units are now always
+  NoData, also with `fill_na = NULL` (which leaves gaps inside them `NA`).
+
+* `make_normalised_raster()` names its output layer after `name_out` (or the
+  input layer), and also saves the empty layer it returns when there is no
+  data.
+* R CMD check now runs on the `develop` branch and on pull requests into it.
+
+# elsar 0.4.1
+
+## Bug fixes
+
+* `make_underrepresented_ecosystems()` gave ecosystems that no protected area
+  overlaps an `NA` gap, which ended up as the *lowest* value after rasterising.
+  They now get the full gap (they are 0% protected), so the least-protected
+  ecosystems score highest, as intended. Layers built with earlier versions
+  under-rate completely unprotected ecosystems and should be rebuilt.
+
+* Countries with no usable protected-area geometry (no records, none inside
+  the planning units, or only points without a reported area, e.g. Somalia in
+  WDPA) no longer fail:
+  - `make_protected_areas()` returns an all-0 layer and a 0-row `sf`, with a
+    warning that says why. New argument `return_sf` returns the cleaned
+    polygons for a supplied `sf_in` too (default unchanged).
+  - `make_protect_zone()` accepts 0-row protected areas; it then needs a fixed
+    `hii_threshold`, since there is nothing to derive it from.
+  - `make_underrepresented_ecosystems()` accepts 0-row protected areas and
+    warns that the result is uniform (1 wherever there is an ecosystem).
 
 * `make_protected_areas()` now re-validates geometries after reprojecting to the
   planning-unit CRS and before dissolving. Reprojection can turn polygons that
@@ -153,7 +314,27 @@
   identifiers and the `iso3` literal to prevent SQL injection, and omits the
   `WHERE` clause when no `iso3`/`iso3_column` is supplied.
 
-## New Features
+## New features
+
+* `elsar_calibrate_weights()` computes per-feature calibration weights for an ELSA
+  prioritization so that features achieve more even representation relative to their
+  single-feature maxima. This is the ELSA pre-calibration step, previously living in
+  the downstream tool; the objective and framework are unchanged (spread-of-shortfall
+  minimisation via an additive, increase-only weight update), with added robustness:
+  it returns the best-seen weights, stops once the allocation freezes, and excludes
+  zero-total features instead of aborting. It returns a structured `elsar_calibration`
+  object (weights, representation profile, per-iteration trajectory, metadata) and
+  writes no files. `prioritizr` and a solver (`gurobi`, or `highs` for a free/local
+  option) are optional dependencies, checked at call time with an actionable message.
+
+* Sub-national region codes (e.g. `"USA_CA"`) now work with global datasets:
+  `make_kbas()`, `make_wetlands_ramsar()`, `make_urban_greening_opportunities()`
+  and `make_protected_areas(from_wdpca = TRUE)` filter or fetch by the national
+  part of the code (`"USA"`) instead of matching nothing.
+* `make_protected_areas()` drops protected areas outside the planning-unit
+  extent before dissolving them. Using a national WDPA dataset for a small
+  study area is now much cheaper (California: 48,010 of 50,976 US sites
+  skipped).
 
 * New `elsar_check_setup()` diagnoses your installation tier by tier (core /
   protected areas / Earth Engine) and reports what is present, what is missing,
@@ -168,7 +349,30 @@
   it once, ahead of time, instead of letting the first `download_*` call build
   the environment mid-analysis.
 
+## Installation / Dependencies
+
+* The core package is now much lighter to install. `wdpar`, `reticulate`,
+  `googledrive`, and `rappdirs` moved from `Imports` to `Suggests`, so installing
+  elsar no longer forces a Chromium browser, `libarchive`, conda/Python, or two
+  Google OAuth flows on users who only need the core (boundaries, planning units,
+  normalisation, zone builders from local rasters, plotting). The optional
+  features now check for their packages and give an actionable install message
+  when one is missing:
+  - `make_protected_areas(from_wdpca = TRUE)` requires `wdpar`;
+  - the `download_*` (Earth Engine) functions require `reticulate` and
+    `googledrive` (run `elsar_setup_gee()` to configure them).
+
+* `scales` and `png` moved from `Suggests` to `Imports`: they are used
+  unconditionally by the core plotting functions, so they belong there.
+
 ## Improvements
+
+* `median_from_rast()` errors now say how to fix a missing or histogram-less
+  GDAL side-car: they give the `gdalinfo -hist` command (and the
+  `sf::gdal_utils()` equivalent) for the exact file terra opened, with a rough
+  time estimate for large rasters. Previously the message was only
+  "Side-car XML not found for <file>", which surfaced mid-run in
+  `make_threatened_ecosystems_protection()` with no hint.
 
 * The Earth Engine conda environment is now **persistent and reused** across
   sessions rather than created per-process and removed after each download.

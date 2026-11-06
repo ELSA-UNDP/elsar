@@ -14,7 +14,13 @@
 #'   A soft threshold of `pu_threshold * (1 + pu_tolerance)` is used during optimization.
 #' @param pu_tolerance Numeric. Fractional tolerance (default is `0.05`, or 5%) above `pu_threshold` allowed
 #'   when estimating PU size automatically.
-#' @param limit_to_mainland Logical. Reserved for future use. If `TRUE`, limits planning units to mainland regions only.
+#' @param limit_to_mainland Logical. If `TRUE`, only the largest polygon of
+#'   `boundary_proj` (its mainland) gets planning units; islands and other
+#'   outlying parts are dropped (default `FALSE`; before 0.4.2 it was ignored).
+#'   Note that this is the single largest polygon after merging all
+#'   features: for New Zealand it is the South Island, for Indonesia the
+#'   Indonesian part of Borneo, for the United States the contiguous states
+#'   (Alaska and Hawaii are dropped).
 #' @param iso3 Character. ISO3 country code used to name the output raster (e.g., "KEN", "BRA").
 #' @param background_fill The value to apply to all pixels outside the boundary_proj. This default to NA (e.g., nodata).
 #'   You should have a good reason for wanting to use a different value.
@@ -70,6 +76,12 @@ make_planning_units <- function(boundary_proj,
 
   threshold_soft <- pu_threshold * (1 + pu_tolerance)
 
+  # Drop islands and other outlying parts (was accepted but ignored before 0.4.2)
+  if (isTRUE(limit_to_mainland)) {
+    log_message("limit_to_mainland = TRUE: keeping the largest polygon only.")
+    boundary_proj <- .keep_mainland(boundary_proj)
+  }
+
   # Clean rounding of PU sizes
   round_clean <- function(x) {
     if (x < 50 ) {
@@ -95,7 +107,8 @@ make_planning_units <- function(boundary_proj,
     log_message("pu_size not provided: estimating size to target <= {pu_threshold} PUs (allowing {round(pu_tolerance * 100, 0)}% tolerance).")
 
     # Estimate starting size from area
-    area_km2 <- units::drop_units(sf::st_area(boundary_proj)) / 1e6
+    # Total area of all features (a multi-feature boundary used to fail here)
+    area_km2 <- sum(as.numeric(sf::st_area(boundary_proj))) / 1e6
     initial_size <- sqrt((area_km2 / pu_threshold) * 1e6)
     pu_size <- round_clean(initial_size)
 
@@ -122,11 +135,7 @@ make_planning_units <- function(boundary_proj,
       }
 
       # Create raster template and rasterize
-      rasterMask <- terra::rast(
-        resolution = pu_size,
-        crs = terra::crs(boundary_proj),
-        extent = terra::ext(boundary_proj)
-      )
+      rasterMask <- .pu_template(boundary_proj, pu_size)
 
       r_temp <- terra::rasterize(
         terra::vect(boundary_proj),
@@ -155,17 +164,16 @@ make_planning_units <- function(boundary_proj,
           log_message("Exceeded soft threshold ({threshold_soft}); using best previous result.")
           break
         } else {
-          stop("No valid PU size found under soft threshold.")
+          # The first estimate was too fine (e.g. many small islands with
+          # touches = TRUE): grow the cell size until it fits, then refine
+          # (before 0.4.2 this stopped with an error)
+          pu_size <- round_clean(pu_size * 1.25)
         }
       }
     }
   } else {
     # Use user-defined PU size directly
-    rasterMask <- terra::rast(
-      resolution = pu_size,
-      crs = terra::crs(boundary_proj),
-      extent = terra::ext(boundary_proj)
-    )
+    rasterMask <- .pu_template(boundary_proj, pu_size)
 
     r1 <- terra::rasterize(
       terra::vect(boundary_proj),
@@ -195,4 +203,17 @@ make_planning_units <- function(boundary_proj,
   }
 
   return(r1)
+}
+
+# A raster template covering the whole boundary with cells of `size` metres.
+# The extent is snapped outwards to whole cells; before 0.4.2 the cell count
+# was rounded and up to one cell of the boundary could fall outside the grid
+# along the east and north edges.
+.pu_template <- function(boundary, size) {
+  e <- terra::ext(boundary)
+  e <- terra::ext(
+    e$xmin, e$xmin + ceiling((e$xmax - e$xmin) / size) * size,
+    e$ymin, e$ymin + ceiling((e$ymax - e$ymin) / size) * size
+  )
+  terra::rast(extent = e, resolution = size, crs = terra::crs(boundary))
 }
