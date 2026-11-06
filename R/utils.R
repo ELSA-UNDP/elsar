@@ -203,9 +203,9 @@ extract_filename_filetype <- function(data_name, file_path) {
 #' @return Numeric. Percentage of zone coverage across PUs.
 #' @export
 get_coverage <- function(zone_layer, pu_layer) {
-  # Count the zone only within the planning units, so coverage cannot exceed
-  # 100% (before 0.4.2 cells outside the planning units counted too)
-  zone_in_pus <- terra::mask(zone_layer, pu_layer)
+  # Count the zone only within the planning units (coded 1; NA or 0 outside),
+  # so coverage cannot exceed 100% (before 0.4.2 cells outside counted too)
+  zone_in_pus <- terra::mask(zone_layer, pu_layer, maskvalues = c(NA, 0))
   terra::global(zone_in_pus, sum, na.rm = TRUE)$sum /
     terra::global(pu_layer, sum, na.rm = TRUE)$sum * 100
 }
@@ -373,7 +373,7 @@ exact_rasterise <- function(
 #'
 #' @param raster_in SpatRaster. A large input raster (e.g., global dataset).
 #' @param pus SpatRaster. Planning units raster used to define the target extent.
-#' @param threads Optional method to use multi-core processing - to speed on some `terra` functions (default: `TRUE`).
+#' @param threads Ignored since 0.4.2 (kept so existing calls still work).
 #'
 #' @return A cropped SpatRaster with the same CRS as `raster_in` and extent matching the reprojected `pus`.
 #' @export
@@ -494,6 +494,9 @@ get_file_type <- function(path) {
 #' @param wkt_filter Character or NULL. Optional WKT string used for spatial filtering.
 #' @param file_type Character or NULL. File type used to determine if layer name inference is required.
 #'
+#' @param warn_empty Logical. Warn when an ISO3 filter matches no features
+#'   (default `TRUE`). Loaders that read several layers and combine them set it
+#'   to `FALSE` and check the combined result instead.
 #' @return An `sf` object with valid geometry, or `NULL` on failure.
 #' @export
 #'
@@ -508,7 +511,8 @@ filter_sf <- function(file_path,
                       layer_name = NULL,
                       drop3d = TRUE,
                       wkt_filter = NULL,
-                      file_type = NULL) {
+                      file_type = NULL,
+                      warn_empty = TRUE) {
 
   # If no layer name provided and the format supports layers, pick the first
   # one. Guard the read: st_layers() throws on an unreadable/corrupt file, and
@@ -570,7 +574,7 @@ filter_sf <- function(file_path,
 
   # An ISO3 filter that matches nothing usually means a wrong iso3_column or
   # code; say so instead of silently returning no features
-  if (!is.null(dat) && !is.null(query) && nrow(dat) == 0) {
+  if (warn_empty && !is.null(dat) && !is.null(query) && nrow(dat) == 0) {
     warning("No features in layer '", layer_name, "' where ", iso3_column, " = '", iso3,
             "'. Check 'iso3' and 'iso3_column'.", call. = FALSE)
   }
@@ -911,13 +915,10 @@ get_binary_layers <- function(raster_stack) {
   # (before 0.4.2: values were rounded to 4 digits first, so near-0 or near-1
   # floats counted as binary and were then written as integers, and an all-NA
   # layer shifted the labels of the others). All-NA layers are kept as float.
-  binary_mask <- vapply(seq_len(terra::nlyr(raster_stack)), function(i) {
-    r <- raster_stack[[i]]
-    rng <- suppressWarnings(terra::minmax(r, compute = TRUE)[, 1])
-    if (anyNA(rng) || rng[1] < 0 || rng[2] > 1) return(FALSE)
-    other <- terra::global(r != 0 & r != 1, "sum", na.rm = TRUE)[[1]]
-    isTRUE(other == 0)
-  }, logical(1))
+  # One pass over the whole stack (a per-layer loop was ~7x slower on disk)
+  other <- terra::global(raster_stack != 0 & raster_stack != 1, "sum", na.rm = TRUE)[[1]]
+  has_data <- terra::global(raster_stack, "notNA")[[1]] > 0
+  binary_mask <- other == 0 & has_data
 
   int_layers <- if (any(binary_mask)) raster_stack[[which(binary_mask)]] else NULL
   float_layers <- if (any(!binary_mask)) raster_stack[[which(!binary_mask)]] else NULL

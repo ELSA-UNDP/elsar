@@ -124,9 +124,12 @@ on 0.4.1 until a country is rerun.
   averaged; before, FLII swamped FSII. Inputs that are all 0 give an all-0
   layer with a warning instead of `NaN`.
 * **Flood abatement opportunities (`make_flood_abatement_opportunities()`).**
-  Now `rescale(flood_risk * vegetation)`: vegetated land in flood-prone places
-  scores highest, water 0. The old `flood_risk / (1 - vegetation)` pointed the
-  same way but grew without bound, so a few cells took the whole range.
+  Now `rescale(flood_risk * (1 - NDVI))`: flood-prone land lacking vegetation
+  scores highest (where restoring, managing or greening it can reduce floods;
+  the ELSA impacts credit the layer fully to those actions and half to
+  protect), water 0. The old `flood_risk / (1 - NDVI)` inverted this (it rose
+  with vegetation) and grew without bound for dense vegetation. NDVI is used on
+  its own 0-1 scale, not rescaled within the region.
 * **Threatened ecosystems for protection
   (`make_threatened_ecosystems_protection()`).** Ecosystems in another CRS
   than the planning units gave an all-NA layer (the intact-area mask was
@@ -143,13 +146,14 @@ on 0.4.1 until a country is rerun.
 * `make_postgres_connection()` is back (it was removed in 0.4.0 without
   deprecation, but existing code, including the pipeline, calls it). It
   returns a named list.
-* `get_coverage()` counts the zone only inside the planning units (it could
-  exceed 100%).
+* `get_coverage()` counts the zone only inside the planning units, whether
+  cells outside are NA or 0 (it could exceed 100%).
 * `crop_global_raster()` returns an empty layer only when the input does not
   overlap the planning units; other errors are raised instead of becoming an
   all-0 layer.
-* `filter_sf()` warns when an ISO3 filter matches no features (usually a wrong
-  `iso3_column`), and no longer triggers sf's "layer is ignored" warning.
+* `filter_sf()` and `elsar_load_data()` warn when an ISO3 filter matches no
+  features (usually a wrong `iso3_column`); multi-layer loads warn once, only
+  if nothing matched. sf's "layer is ignored" warning is gone.
 * `save_raster()` returns the file path invisibly and no longer emits GDAL's
   "MEM driver does not support creation option" warnings.
 

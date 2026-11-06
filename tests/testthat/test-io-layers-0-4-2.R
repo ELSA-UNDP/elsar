@@ -32,6 +32,7 @@ test_that("get_coverage counts only cells inside the planning units (F18)", {
   pus <- grid(c(NA, rep(1, 15)))
   zone <- grid(1)
   expect_equal(get_coverage(zone, pus), 100)
+  expect_equal(get_coverage(zone, grid(c(0, rep(1, 15)))), 100) # 0-coded outside
 })
 
 test_that("crop_global_raster gives zeros only when there is no overlap (F13)", {
@@ -52,7 +53,7 @@ test_that("filter_sf warns when an ISO3 filter matches nothing (F13)", {
   sf::st_write(sf::st_sf(code = "TST", geometry = sf::st_sfc(sf::st_point(c(0, 0)), crs = ea)),
                f, layer = "x", quiet = TRUE)
   expect_warning(out <- suppressMessages(filter_sf(f, iso3 = "TST", iso3_column = "code_wrong")),
-                 "iso3_column|Failed|No features")
+                 "No features")
 })
 
 test_that("forest integrity weights FLII and FSII equally (F4)", {
@@ -66,16 +67,16 @@ test_that("forest integrity weights FLII and FSII equally (F4)", {
   expect_true(all(terra::values(z) == 0))
 })
 
-test_that("flood abatement is bounded and ranks vegetated flood-prone land highest (F5)", {
+test_that("flood abatement ranks flood-prone land lacking vegetation highest (F5)", {
   pus <- grid(1)
-  ndvi <- grid(c(0.9, 0.95, 0.5, -0.1, rep(0.2, 12)))
+  ndvi <- grid(c(0.1, 0.5, 0.9, -0.1, rep(0.6, 12)))
   risk <- grid(c(1, 1, 1, 1, rep(0.1, 12)))
   out <- suppressMessages(make_flood_abatement_opportunities(risk, ndvi, pus, "TST"))
   v <- terra::values(out)[, 1]
-  expect_equal(which.max(v), 2)           # greenest flood-prone cell
-  expect_gt(v[1], v[3])                   # more vegetation scores more
+  expect_equal(which.max(v), 1)           # flood-prone, nearly bare
+  expect_gt(v[2], v[3])                   # less vegetation scores more
   expect_equal(v[4], 0)                   # water
-  expect_gt(v[1], 0.5)                    # no single cell takes the whole range
+  expect_gt(v[2], 0.3)                    # bounded: no single cell takes the whole range
 })
 
 test_that("make_postgres_connection is available again (P9)", {
@@ -83,4 +84,16 @@ test_that("make_postgres_connection is available again (P9)", {
   expect_equal(db$port, 5432L)
   expect_equal(db$host, "localhost")
   expect_error(make_postgres_connection(user = "u", password = "p"), "dbname")
+})
+
+test_that("loading several layers warns once, only if nothing matched", {
+  dir <- withr::local_tempdir()
+  f <- file.path(dir, "multi.gpkg")
+  pt <- function(code) sf::st_sf(code = code, geometry = sf::st_sfc(sf::st_point(c(0, 0)), crs = ea))
+  sf::st_write(pt("TST"), f, layer = "a", quiet = TRUE)
+  sf::st_write(pt("OTH"), f, layer = "b", quiet = TRUE, append = TRUE)
+  expect_no_warning(x <- suppressMessages(
+    elsar_load_data(file_name = "multi.gpkg", file_path = dir, iso3 = "TST", iso3_column = "code")
+  ))
+  expect_equal(nrow(x), 1)
 })

@@ -1,14 +1,15 @@
 #' Create a Flood Abatement Opportunities Raster
 #'
-#' Identifies areas where natural vegetation can reduce flood risk: vegetated
-#' land in flood-prone places. Flood risk (Global Flood Database) and vegetation
-#' (NDVI) are each normalised to 0-1, multiplied, and rescaled:
+#' Identifies flood-prone land that lacks vegetation, where restoring,
+#' managing or greening it can reduce flood risk (the ELSA impacts credit this
+#' layer fully to manage, restore and urban greening, and half to protect):
 #'
-#' `flood_abatement = rescale(flood_risk * vegetation)`
+#' `flood_abatement = rescale(flood_risk * (1 - NDVI))`
 #'
-#' Water (NDVI < 0) scores 0. Before 0.4.2 the layer was
-#' `flood_risk / (1 - vegetation)`, which pointed the same way but grew without
-#' bound for dense vegetation, so a few cells took the whole range.
+#' NDVI is used on its own 0-1 scale (not rescaled within the region), so bare
+#' land scores high everywhere. Water (NDVI < 0) scores 0. Before 0.4.2 the
+#' layer was `flood_risk / (1 - NDVI)`, which inverted the intent (it rose
+#' with vegetation) and grew without bound for dense vegetation.
 #'
 #' @param gfd_raster A `SpatRaster` representing flood risk data from the Global Flood Database.
 #' @param ndvi_raster A `SpatRaster` representing NDVI data.
@@ -45,13 +46,15 @@ make_flood_abatement_opportunities <- function(
                             msg = glue::glue("'output_path' directory does not exist: {output_path}"))
   }
 
-  # Vegetation from NDVI (0-1); water (NDVI < 0) has none
+  # Lack of vegetation, 1 - NDVI on NDVI's own 0-1 scale; water (NDVI < 0) has
+  # no greening opportunity (NA, filled with 0)
   log_message("Normalizing NDVI raster and removing negative (e.g., water) values...")
-  vegetation <- make_normalised_raster(
+  lack_of_vegetation <- make_normalised_raster(
     raster_in = ndvi_raster,
     pus = pus,
     iso3 = iso3,
-    conditional_expression = function(x) terra::ifel(x < 0, NA, x)
+    rescaled = FALSE,
+    conditional_expression = function(x) terra::ifel(x < 0, NA, terra::ifel(x > 1, 0, 1 - x))
   )
 
   # Normalize Global Flood Database
@@ -64,7 +67,7 @@ make_flood_abatement_opportunities <- function(
   )
 
   # Calculate flood abatement opportunities
-  flood_abatement_opportunities <- rescale_raster(gfd_risk * vegetation)
+  flood_abatement_opportunities <- rescale_raster(gfd_risk * lack_of_vegetation)
 
   names(flood_abatement_opportunities) <- "flood_abatement_opportunities"
 

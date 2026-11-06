@@ -31,16 +31,17 @@ A \code{SpatRaster} representing flood abatement opportunities, rescaled between
 If \code{output_path} is provided, the raster is saved as a Cloud-Optimized GeoTIFF (COG).
 }
 \description{
-Identifies areas where natural vegetation can reduce flood risk: vegetated
-land in flood-prone places. Flood risk (Global Flood Database) and vegetation
-(NDVI) are each normalised to 0-1, multiplied, and rescaled:
+Identifies flood-prone land that lacks vegetation, where restoring,
+managing or greening it can reduce flood risk (the ELSA impacts credit this
+layer fully to manage, restore and urban greening, and half to protect):
 }
 \details{
-\code{flood_abatement = rescale(flood_risk * vegetation)}
+\code{flood_abatement = rescale(flood_risk * (1 - NDVI))}
 
-Water (NDVI < 0) scores 0. Before 0.4.2 the layer was
-\code{flood_risk / (1 - vegetation)}, which pointed the same way but grew without
-bound for dense vegetation, so a few cells took the whole range.
+NDVI is used on its own 0-1 scale (not rescaled within the region), so bare
+land scores high everywhere. Water (NDVI < 0) scores 0. Before 0.4.2 the
+layer was \code{flood_risk / (1 - NDVI)}, which inverted the intent (it rose
+with vegetation) and grew without bound for dense vegetation.
 }
 \examples{
 \dontrun{
