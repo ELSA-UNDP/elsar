@@ -13,7 +13,7 @@ iso3_base(iso3)
 The first three characters of \code{iso3}.
 }
 \description{
-Global datasets (KBAs, Ramsar, WDPA, GHSL urban centres) carry a national
+Global datasets (KBAs, Ramsar, WDPCA, GHSL urban centres) carry a national
 ISO3 attribute, so a sub-national code such as \code{"USA_CA"} must be matched
 as \code{"USA"}. A plain 3-letter code is returned unchanged.
 }

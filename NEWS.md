@@ -55,7 +55,7 @@ on 0.4.1 until a country is rerun.
   protected-area polygon was rasterised; all are now included.
 * **Protected areas and indigenous lands with point data
   (`convert_points_polygon()`).** Polygons whose reported area is 0 or missing
-  (common in WDPA) are no longer dropped, and a multipoint's reported area is
+  (common in WDPCA) are no longer dropped, and a multipoint's reported area is
   shared between its points instead of given to each (also when points and
   multipoints are mixed).
 * **Threatened and under-represented ecosystems, urban heat
