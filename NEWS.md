@@ -77,7 +77,26 @@ on 0.4.1 until a country is rerun.
   back into the zone. Excluded cells now stay excluded; small eligible
   patches are still removed.
 
+* **Planning-unit grids (`make_planning_units()`).** The grid now covers the
+  whole boundary: its extent is snapped outwards to whole cells, where before
+  up to one cell along the east and north edges could be lost. Grids can gain
+  a row or column, so every layer should be rebuilt on the new grid.
+* **Countries crossing the antimeridian** (Fiji, Kiribati, Tuvalu, Russia, New
+  Zealand with the Chathams, the US with the Aleutians). The custom Mollweide
+  projection was centred near 0 degrees instead of on the country, which
+  stretched it across the whole projection.
+* **`limit_to_mainland = TRUE`.** In `make_boundary()` it kept the largest
+  *province* when the boundary had several features; it now merges them and
+  keeps the largest polygon. In `make_planning_units()` it was accepted but
+  ignored; it now drops islands.
+
 ## Other changes
+
+* `make_planning_units()` accepts boundaries with several features (it failed
+  when estimating the cell size), and grows the cell size when the first
+  estimate gives too many planning units instead of stopping with an error.
+* Lower-case ISO3 codes (e.g. `"npl"`) now match the upper-case codes in global
+  datasets; before, they silently matched nothing.
 
 * `make_manage_zone()` works without a pasture layer (`pasturelands = NULL`,
   the documented default, used to fail).

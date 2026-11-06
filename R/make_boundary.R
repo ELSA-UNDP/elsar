@@ -94,7 +94,7 @@ make_boundary <- function(boundary_in,
     )
     available <- unique(as.character(nb[[iso3_column]]))
     nb <- nb %>%
-      dplyr::filter(!!rlang::sym(iso3_column) == iso3)
+      dplyr::filter(toupper(!!rlang::sym(iso3_column)) == toupper(iso3)) # case-insensitive
     assertthat::assert_that(
       nrow(nb) > 0,
       msg = glue::glue(
@@ -109,12 +109,11 @@ make_boundary <- function(boundary_in,
     )
   }
 
-  # Limit to the largest (mainland) polygon, dropping islands etc.
+  # Limit to the largest (mainland) polygon, dropping islands etc. Merge the
+  # features first: with province-level input, picking the largest piece
+  # before merging kept the largest *province* (before 0.4.2).
   if (isTRUE(limit_to_mainland)) {
-    nb <- nb %>%
-      sf::st_cast("POLYGON")
-    nb <- nb %>%
-      dplyr::slice(which.max(as.numeric(sf::st_area(nb))))
+    nb <- .keep_mainland(nb)
   }
 
   # Normalise to WGS84 before any custom projection is applied. Check for a CRS
@@ -146,4 +145,16 @@ make_boundary <- function(boundary_in,
   }
 
   return(nb)
+}
+
+# Keep only the largest polygon of a region (its mainland), after merging all
+# features, with the first feature's attributes
+.keep_mainland <- function(x) {
+  pieces <- x %>%
+    sf::st_make_valid() %>%
+    sf::st_union() %>%
+    sf::st_cast("POLYGON")
+  mainland <- pieces[which.max(as.numeric(sf::st_area(pieces)))]
+  attrs <- sf::st_drop_geometry(x[1, ])
+  sf::st_sf(attrs, geometry = mainland)
 }
