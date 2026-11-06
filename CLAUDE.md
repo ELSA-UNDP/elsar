@@ -69,8 +69,8 @@ installed elsar, install to a scratch library first:
 - `inst/extdata/`: small example data used by examples and tests;
   `data-raw/` holds the scripts that build it.
 - `translations/`: es/fr/pt/ru copies of README, vignettes and
-  `_pkgdown.yml`. **Do not edit them**; change the English source and CI
-  flags the drift.
+  `_pkgdown.yml`. **Frozen until 1.0** (decided Nov 2026): do not edit
+  them; change only the English source.
 - `notes/`: internal notes and proposals (build-ignored).
 
 ## Geospatial invariants and traps

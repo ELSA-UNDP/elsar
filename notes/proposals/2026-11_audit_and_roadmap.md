@@ -322,6 +322,8 @@ elsar_export_results("04_ELSA_Action.tif", dir = "elsa_npl/post",
 
 ### Decided (November 2026)
 
+All six decisions are made.
+
 1. **Branch model: `develop` → `main`.**
    - Feature and fix PRs go into `develop`.
    - `main` only receives release PRs, plus agreed hotfixes, which are then
@@ -351,13 +353,21 @@ elsar_export_results("04_ELSA_Action.tif", dir = "elsa_npl/post",
    - Switch examples, tests and vignettes to them. Document the real-data
      workflow as "download it yourself", with citations.
 
-### Still open
-
-5. **How to ship the value-changing fixes** (§2 items 1–5). Recommended:
-   one 0.4.2 release with a "rebuild these layers" list, while
-   `elsar_pipeline` pins 0.4.1 until each country is rerun.
-6. **Translations.** Recommended: freeze them until 1.0, rather than keep
-   updating them.
+5. **One release for the value-changing fixes.**
+   - All of §2 (items 1–13) ships together as 0.4.2. NEWS lists every layer
+     whose values change and must be rebuilt.
+   - Before 0.4.2 merges to `main`: tag v0.4.1 and pin `elsar_pipeline` to
+     `elsar@v0.4.1`.
+   - The pipeline then moves to 0.4.2 deliberately, country by country, when
+     a rerun is planned.
+6. **Translations are frozen until the API is stable (1.0).**
+   - Don't update `translations/` meanwhile.
+   - Add a banner to the translated sites: "This translation describes
+     elsar 0.4; see the English site for current documentation."
+   - Relax the translation-staleness CI check to informational until the
+     freeze lifts.
+   - When it lifts: generated translated `_pkgdown.yml`, source-hash drift
+     tracking, and no `eval = FALSE` (§3).
 
 ## 8. Agent tooling added on this branch
 
