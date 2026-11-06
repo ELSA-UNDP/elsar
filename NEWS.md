@@ -108,6 +108,20 @@ on 0.4.1 until a country is rerun.
   ignored; it now drops islands. "Mainland" is the single largest polygon:
   the South Island for New Zealand, the contiguous states for the US.
 
+* **Calibrated weights with lock-ins (`elsar_calibrate_weights()`).** PA
+  lock-ins are now enforced, as in the original ELSA pre-calibration: locked
+  cells are added to their zone and removed from every other zone, including
+  `do_nothing`. Before, lock-ins only raised the zone's budget, so the weights
+  were fitted to a problem without the lock-in that the ELSA tool solves (in a
+  test, none of the locked cells went to Protect). Calibrations made since the
+  December 2025 rewrite should be rerun. Zone masks given as 0/1 (as the zone
+  builders return) are now read as 1/NA; a 0 used to make an ineligible cell
+  available. New `lockin_threshold` (default 0.1, as in the ELSA tool) and
+  `lockin_priority` (overlapping lock-ins go to the zone with the lowest
+  raster value, as in the tool: protect, manage, restore, urban greening). A
+  zone's budget floor now counts the locked cells, so fractional lock-ins no
+  longer make the problem infeasible.
+
 ## Other changes
 
 * `make_planning_units()` accepts boundaries with several features (it failed
