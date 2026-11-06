@@ -113,7 +113,11 @@ on 0.4.1 until a country is rerun.
   test, none of the locked cells went to Protect). Calibrations made since the
   December 2025 rewrite should be rerun. Zone masks given as 0/1 (as the zone
   builders return) are now read as 1/NA; a 0 used to make an ineligible cell
-  available. New `lockin_threshold` (default 0.1, as in the ELSA tool).
+  available. New `lockin_threshold` (default 0.1, as in the ELSA tool) and
+  `lockin_priority` (overlapping lock-ins go to the zone with the lowest
+  raster value, as in the tool: protect, manage, restore, urban greening). A
+  zone's budget floor now counts the locked cells, so fractional lock-ins no
+  longer make the problem infeasible.
 
 * **Forest integrity (`make_forest_integrity()`).** FLII (published on a
   0-10000 scale) and FSII are now each rescaled to 0-1 before they are

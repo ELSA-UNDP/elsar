@@ -12,6 +12,7 @@ elsar_calibrate_weights(
   budgets,
   lockins = NULL,
   lockin_threshold = 0.1,
+  lockin_priority = NULL,
   feature_totals = NULL,
   wgt_scale = 2,
   gap = 0.05,
@@ -52,13 +53,20 @@ zone (e.g. existing protected areas for \code{protect}), as the ELSA tool uses
 them. Cells with cover above \code{lockin_threshold} are locked into their zone:
 added to its planning units and removed from every other zone, including
 \code{do_nothing}, so the solver must allocate them there. Where lock-ins
-overlap, the zone listed first in \code{zones_pu} wins. A zone's budget is
-raised to its locked-in coverage when that is larger. Before 0.4.2
+overlap, the zone earlier in \code{lockin_priority} wins. A zone's budget is
+raised to its locked-in coverage (the number of locked cells) when that
+is larger. Before 0.4.2
 lock-ins only raised the budget and were not enforced, unlike the original
 ELSA pre-calibration.}
 
 \item{lockin_threshold}{Numeric. Lock-in cover above which a cell is locked
 in (default \code{0.1}, as in the ELSA tool).}
+
+\item{lockin_priority}{Character vector of zone names: where lock-ins
+overlap, the earlier zone wins. Default \code{NULL} uses the ELSA tool's order
+(lowest raster value first): protect, manage (or reduce pressures),
+restore, urban greening (or urban adapt), then any other zones in the
+order of \code{zones_pu}.}
 
 \item{feature_totals}{Optional named numeric vector of raw (non-impact-weighted)
 feature totals used as the representation denominator. Computed from \code{features}
