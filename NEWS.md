@@ -32,6 +32,9 @@ on 0.4.1 until a country is rerun.
   true share of each planning unit. Before, these paths rescaled the share to
   the national maximum first, so the threshold meant something different in
   every country.
+  Pasture probability given as a percentage (0-100, as in the Global Pasture
+  Watch layers) is divided by 100 first, so `pasturelands_threshold = 0.35`
+  means a 35% probability (new `pasturelands_scale`, `"auto"` by default).
 * **Layers whose values are all zero or negative** (e.g. differences) are no
   longer mistaken for empty layers and returned as all 0.
 * **`make_urban_greening_opportunities()`** inverted NDVI twice, ranking green

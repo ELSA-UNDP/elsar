@@ -29,7 +29,11 @@
 #' @param built_areas SpatRaster. A binary or categorical raster representing built-up/urban areas.
 #' @param lulc_raster SpatRaster or NULL. Optional raw LULC input used to extract agriculture and built-up layers if those inputs are categorical.
 #' @param human_pressure SpatRaster. Human Footprint Index raster.
-#' @param pasturelands_threshold Numeric. Probability threshold above which cells are considered pasturelands (default = 0.35).
+#' @param pasturelands_threshold Numeric. Probability (0-1) above which cells are considered pasturelands (default = 0.35).
+#' @param pasturelands_scale Character. Scale of the `pasturelands` values:
+#'   `"percent"` (0-100, as in the Global Pasture Watch probability layers),
+#'   `"fraction"` (0-1) or `"auto"` (default: percent if any value is above 1).
+#'   Percent values are divided by 100 before `pasturelands_threshold` applies.
 #' @param lulc_product Character. LULC product used for class value lookups: "esri_10m" (default),
 #'   "dynamic_world", "esa_worldcover", or "local". When "local", explicit class values must be provided.
 #' @param agriculture_lulc_value Integer or NULL. LULC value for agriculture. If NULL, automatically
@@ -82,6 +86,7 @@ make_manage_zone <- function(
     lulc_raster = NULL,
     human_pressure = NULL,
     pasturelands_threshold = 0.35,
+    pasturelands_scale = c("auto", "percent", "fraction"),
     lulc_product = c("esri_10m", "dynamic_world", "esa_worldcover", "local"),
     agriculture_lulc_value = NULL,
     built_area_lulc_value = NULL,
@@ -222,6 +227,7 @@ make_manage_zone <- function(
       rescaled = FALSE, # compared with an absolute threshold below
       method_override = "mean"
     )
+    pasturelands_processed <- .as_probability(pasturelands_processed, pasturelands_scale)
   }
 
   # Process built-up areas
@@ -356,4 +362,30 @@ make_manage_zone <- function(
   }
 
   return(manage_zones)
+}
+
+
+# Convert a probability layer to 0-1. Global Pasture Watch stores probability
+# as a percentage (0-100); before 0.4.2 the layer was rescaled to its own
+# maximum instead, so the threshold depended on each country's range.
+.as_probability <- function(x, scale = c("auto", "percent", "fraction")) {
+  scale <- match.arg(scale)
+  max_value <- terra::global(x, "max", na.rm = TRUE)[[1]]
+  if (scale == "auto") {
+    scale <- if (isTRUE(max_value > 1)) "percent" else "fraction"
+    log_message("Pasturelands values read as a {scale} (maximum {round(max_value, 2)}).")
+  }
+  if (scale == "percent") {
+    assertthat::assert_that(
+      !isTRUE(max_value > 100),
+      msg = "Pasturelands values exceed 100, so they are not a percentage."
+    )
+    x <- x / 100
+  } else {
+    assertthat::assert_that(
+      !isTRUE(max_value > 1),
+      msg = "Pasturelands values exceed 1: set pasturelands_scale = \"percent\"."
+    )
+  }
+  x
 }
