@@ -115,7 +115,39 @@ on 0.4.1 until a country is rerun.
   builders return) are now read as 1/NA; a 0 used to make an ineligible cell
   available. New `lockin_threshold` (default 0.1, as in the ELSA tool).
 
+* **Forest integrity (`make_forest_integrity()`).** FLII (published on a
+  0-10000 scale) and FSII are now each rescaled to 0-1 before they are
+  averaged; before, FLII swamped FSII. Inputs that are all 0 give an all-0
+  layer with a warning instead of `NaN`.
+* **Flood abatement opportunities (`make_flood_abatement_opportunities()`).**
+  Now `rescale(flood_risk * vegetation)`: vegetated land in flood-prone places
+  scores highest, water 0. The old `flood_risk / (1 - vegetation)` pointed the
+  same way but grew without bound, so a few cells took the whole range.
+* **Threatened ecosystems for protection
+  (`make_threatened_ecosystems_protection()`).** Ecosystems in another CRS
+  than the planning units gave an all-NA layer (the intact-area mask was
+  relabelled instead of transformed).
+* **Layers written with `save_raster()`.** Each data type now has its own
+  NoData value and predictor: `FLT8S` failed, and in `INT2U`/`INT4U` data the
+  valid value 255 was written as NoData.
+* **`get_binary_layers()`** tests each layer exactly: near-0 or near-1 floats
+  were classed as binary (and then written as integers, losing them), and an
+  all-NA layer shifted the labels of the others.
+
 ## Other changes
+
+* `make_postgres_connection()` is back (it was removed in 0.4.0 without
+  deprecation, but existing code, including the pipeline, calls it). It
+  returns a named list.
+* `get_coverage()` counts the zone only inside the planning units (it could
+  exceed 100%).
+* `crop_global_raster()` returns an empty layer only when the input does not
+  overlap the planning units; other errors are raised instead of becoming an
+  all-0 layer.
+* `filter_sf()` warns when an ISO3 filter matches no features (usually a wrong
+  `iso3_column`), and no longer triggers sf's "layer is ignored" warning.
+* `save_raster()` returns the file path invisibly and no longer emits GDAL's
+  "MEM driver does not support creation option" warnings.
 
 * `make_planning_units()` accepts boundaries with several features (it failed
   when estimating the cell size), and grows the cell size when the first
