@@ -59,10 +59,12 @@ The fix is a sequence:
 
 1. **Stop wrong numbers** (0.4.2, small patches with regression tests).
 2. **Build a safety net** (CI, tags, tests).
-3. **Consolidate the core**: one alignment primitive and one
-   vector-to-raster helper.
-4. **Bring the pipeline's stable core into elsar** (0.6), so elsar becomes
-   the supported, config-driven path from boundary to ELSA-ready stack.
+3. **Consolidate the core**: one alignment primitive, one vector-to-raster
+   helper, a region object and a layer registry, so the building blocks are
+   consistent and dependable for the private pipeline and for public users.
+
+The pipeline stays private (decided November 2026, §7), so elsar does not
+take over its orchestration.
 
 ---
 
@@ -259,8 +261,10 @@ engine, sinks, merge, product registry. Then:
 
 ## 6. Target architecture: elsar 1.0
 
-**Goal:** one config file and three calls take an analyst from boundary to
-an ELSA-ready stack. The building blocks stay available underneath.
+**Goal:** consistent, dependable building blocks with one contract that the
+private pipeline and public users can rely on. The pipeline stays private
+(§7), so points 1, 2, 4 and 5 below apply as written, and point 3 is
+**deferred**. It is kept here as the option if the pipeline is ever opened.
 
 1. **Region object.** `elsar_region()` holds the projected boundary, planning
    units, `iso3`, CRS and output directory. It is the first argument to
@@ -308,35 +312,52 @@ elsar_export_results("04_ELSA_Action.tif", dir = "elsa_npl/post",
 |---|---|
 | **0.4.2** (patch, now) | Everything in §2. Fix R1–R5 before the results branch merges. Retro-tags. CI on `develop`. Fix the GEE test. Delete or repair the broken template. |
 | **0.5** (non-breaking) | Results tools + map style merged (names aligned to the glossary). #96 `exclude =`. LULC product checks. Glossary aliases with soft deprecation. Lifecycle everywhere. Docs-accuracy pass and runnable examples. Reference index by workflow stage. CI hardening and Dependabot. Imports diet. |
-| **0.6** (the big one) | `align_to_pus()` and `vector_coverage()`. `elsar_region()`. Layer registry and `elsar_write()`. Config, stack builder, stack checks and export, ported from the pipeline. Earth Engine module split, correct aggregation and provenance cache. cli messaging. Deprecate `get_all_features()`, variable return types and the generic helper exports. |
-| **0.7** | Pipeline rebuilt on the public API. "Run one country" and "Setup" articles. Old plotting trio deprecated in favour of the map-style building blocks. |
+| **0.6** (the big one) | `align_to_pus()` and `vector_coverage()`. `elsar_region()`. Layer registry and `elsar_write()`. `elsar_check_stack()` (a QA step the pipeline can call). Earth Engine module split, correct aggregation and provenance cache. cli messaging. Deprecate `get_all_features()`, variable return types and the generic helper exports. |
+| **0.7** | Pipeline moved onto the 0.6 contract, in its own repo. "Run one country on example data" and "Setup" articles. Old plotting trio deprecated in favour of the map-style building blocks. |
 | **1.0** | Remove the deprecated functions. Freeze config schema v1. Refresh translations. |
 
 ---
 
-## 7. Decisions needed from maintainers
+## 7. Decisions
 
-1. **Branch model.** Either trunk-based (`main` plus tags; simpler for a
-   small team) or `develop` → `main` (then protect both and make `develop`
-   the default PR base). CONTRIBUTING and CLAUDE.md follow whichever is
-   chosen.
-2. **Pipeline consolidation.** Move the pipeline's config, registry and
-   stack builder into public elsar (recommended), or keep elsar as building
-   blocks only and document that the supported workflow is private.
-3. **Licence.** CC BY 4.0 is not designed for software. Consider MIT or
-   Apache-2.0 for code, with data terms per dataset. This needs agreement
-   from both authors.
-4. **Bundled data.** Confirm redistribution terms for the UN boundaries and
-   WDPA-derived data, or replace them with Natural Earth or synthetic data
-   (the results branch already uses synthetic data).
-5. **Behaviour-changing fixes.** §2 items 1–5 change values in existing
-   layers. Agree whether 0.4.2 ships them together (recommended, with a
-   "rebuild these layers" note) and whether `elsar_pipeline` pins the
-   previous version until countries are rerun.
-6. **Translations.** Freeze until 1.0, or keep them updated as the API
-   changes.
+### Decided (November 2026)
 
----
+1. **Branch model: `develop` → `main`.**
+   - Feature and fix PRs go into `develop`.
+   - `main` only receives release PRs, plus agreed hotfixes, which are then
+     merged back into `develop`.
+   - Follow-ups:
+     - run CI on `develop` (§3);
+     - make `develop` the default branch for PRs;
+     - protect both branches;
+     - update CONTRIBUTING, which currently says `main`.
+2. **The pipeline stays private.** elsar remains a set of building blocks,
+   and §6 is scoped accordingly. Because elsar's public API is the
+   pipeline's contract, tagged releases and pinning (§3) matter more, not
+   less.
+3. **Licence: Apache-2.0 for code (proposed).**
+   - It needs explicit agreement from both authors, and from anyone else
+     with a substantial code contribution.
+   - It adds a patent grant and is OSI-approved. Documentation and data keep
+     their own terms.
+   - Steps: `usethis::use_apache_license()`, a `NOTICE` file, `cph` (UNDP)
+     and `fnd` roles in `Authors@R`, and a NEWS entry.
+4. **Bundled real data will be replaced.**
+   - Redistribution of the UN boundaries and the WDPA-derived data probably
+     can't be cleared.
+   - Ship a public-domain or synthetic boundary (Natural Earth, or a
+     synthetic country like the results branch's "Elsaland") and **dummy
+     protected areas** generated by a script in `data-raw/`.
+   - Switch examples, tests and vignettes to them. Document the real-data
+     workflow as "download it yourself", with citations.
+
+### Still open
+
+5. **How to ship the value-changing fixes** (§2 items 1–5). Recommended:
+   one 0.4.2 release with a "rebuild these layers" list, while
+   `elsar_pipeline` pins 0.4.1 until each country is rerun.
+6. **Translations.** Recommended: freeze them until 1.0, rather than keep
+   updating them.
 
 ## 8. Agent tooling added on this branch
 

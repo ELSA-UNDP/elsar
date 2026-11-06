@@ -13,7 +13,7 @@ Read it before any structural work.
 
 | Repo (`~/gitrepos/`) | Relationship to elsar |
 |---|---|
-| `elsar_pipeline` | **Main consumer.** Runs elsar per country (Docker). It installs `ELSA-UNDP/elsar` from the default branch **unpinned**, so whatever reaches `main` ships in its next build. |
+| `elsar_pipeline` | **Main consumer; private, and staying private.** Runs elsar per country (Docker) and owns the orchestration: config, layer list and stack building. It installs `ELSA-UNDP/elsar` from the default branch **unpinned**, so whatever reaches `main` ships in its next build. |
 | `elsa_national` | Shiny app that solves ELSA. It copies `get_target()`, `get_coverage()` and `log_message()` from elsar (elsar is canonical) and writes the action rasters that elsar's results tools read. |
 | `elsa-config-mapper` | Produces the ELSA `config.json` (actions, `rasterValue`s, colours, fallbacks). |
 | `unbl-elsa` | UN Biodiversity Lab hosted ELSA. Reference implementation of the solve. |
@@ -27,10 +27,10 @@ deprecation and a NEWS entry. Before you do, grep `../elsar_pipeline` and
 
 ## Branches and PRs
 
-- Release PRs go `develop` → `main`. Feature and fix PRs have gone into
-  both branches (CONTRIBUTING says `main`), and the choice of model is open
-  (see the audit). Until it is settled, **ask which base to use**; default
-  to `develop` for features.
+- **`develop` → `main`.** Branch from `develop` and open feature and fix
+  PRs into `develop`. `main` only receives release PRs (`develop` → `main`)
+  and agreed hotfixes, which are then merged back into `develop`.
+  CONTRIBUTING still says `main`; it is being updated.
 - R CMD check CI runs only for `main` (pushes and PRs), so a PR into
   `develop` gets no checks. Run the `check-package` skill yourself.
 - One logical change per PR. Commit or push only when asked.
