@@ -2,6 +2,13 @@
 
 ## Bug fixes
 
+* `elsar_plot_distribution(categorical = TRUE, col_interest = ...)` failed
+  because of a missing pipe; it now uses the given column. With
+  `categorical = FALSE` and no `col_interest`, it uses the first data column.
+
+* `elsar_plot_static_raster(data_type = "discrete")` now defaults
+  `data_layer` to the first layer instead of failing when it is not given.
+
 * `make_underrepresented_ecosystems()` gave ecosystems that no protected area
   overlaps an `NA` gap, which ended up as the *lowest* value after rasterising.
   They now get the full gap (they are 0% protected), so the least-protected
@@ -20,6 +27,39 @@
     warns that the result is uniform (1 wherever there is an ecosystem).
 
 ## New features
+
+* A new, modern map style for every map elsar draws, exposed as small
+  functions that return ordinary ggplot2 components (see
+  `vignette("map-style")`):
+  - `elsar_theme_map()` (maps) and `elsar_theme()` (other charts): no panel
+    border, axes or graticule on maps, a clear title / subtitle / caption
+    hierarchy, legends under the title with long thin colourbars or stepped
+    keys, and a `dark = TRUE` mode.
+  - `elsar_palette()`, `elsar_inks()`, `scale_fill_elsar_c()`,
+    `scale_fill_elsar_d()` and their `scale_colour_*` versions: viridis
+    sequential ramps, a two-hue diverging palette with a neutral midpoint,
+    colour-blind-safe categorical hues, and the established ELSA action
+    colours (Protect `#06C723`, Restore `#8803FC`, Manage `#FFEA00`, Urban
+    Greening `#FF0000`). Guides: `guide_elsar_colourbar()`,
+    `guide_elsar_legend()`, `guide_elsar_steps()`.
+  - Map furniture: `elsar_map_context()` / `elsar_map_outline()` (study area
+    with optional neighbours, soft halo and drop shadow),
+    `elsar_map_furniture()` (compact scale bar and north arrow),
+    `elsar_map_caption()` / `elsar_attribution()` (attribution as a caption),
+    and `elsar_map_locator()` / `elsar_add_locator()` (inset locator map;
+    needs `patchwork`).
+
+* `elsar_plot_static_raster()`, `elsar_plot_feature()`,
+  `elsar_plot_distribution()`, `elsar_plot_background()` and
+  `elsar_plot_optics()` use the modern style by default. All existing
+  arguments keep working. New argument `style = "classic"` (or
+  `options(elsar.plot_style = "classic")` for a whole session) restores the
+  previous look. Also new: `boundary` in `elsar_plot_static_raster()` (study
+  area context and outline), `plot_title` in `elsar_plot_feature()` (and
+  `plot_title` is now used by `elsar_plot_static_raster()` in the modern
+  style), and `dark` in `elsar_plot_optics()`. In the modern style
+  `elsar_plot_optics()` puts the attribution in a caption instead of a boxed
+  label over the data.
 
 * New tools to analyse ELSA results after a run, with area-correct summaries
   for any projection:
@@ -71,6 +111,14 @@
   skipped).
 
 ## Installation / Dependencies
+
+* `ggplot2 (>= 3.5.0)` is now required (for the legend layout of the new map
+  style). `systemfonts` (font fallback) and `withr` (tests) are new
+  `Suggests`.
+
+* The deprecated `elsar_plot_static_raster_c()`, `elsar_plot_static_raster_d()`,
+  `elsar_plot_background_c()` and `elsar_plot_background_d()` now signal
+  deprecation through lifecycle (once per session) instead of `.Deprecated()`.
 
 * The core package is now much lighter to install. `wdpar`, `reticulate`,
   `googledrive`, and `rappdirs` moved from `Imports` to `Suggests`, so installing

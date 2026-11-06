@@ -1,0 +1,213 @@
+---
+title: "Map style"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Map style}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  warning = FALSE,
+  message = FALSE,
+  fig.align = "center",
+  fig.width = 8,
+  fig.height = 5.5,
+  dpi = 96
+)
+options(elsar.verbose = FALSE)
+has_patchwork <- requireNamespace("patchwork", quietly = TRUE)
+```
+
+Every map elsar draws shares one cartographic style. It is built from a few
+small functions that return ordinary ggplot2 themes, scales and layers, so
+you can add them with `+` to any plot, including your own.
+
+| Function | What it adds |
+|---|---|
+| `elsar_theme_map()`, `elsar_theme()` | Theme for maps / for other charts |
+| `scale_fill_elsar_c()`, `scale_fill_elsar_d()` (and `scale_colour_*`) | Colour scales |
+| `elsar_palette()`, `elsar_inks()` | The raw colours |
+| `elsar_map_context()`, `elsar_map_outline()` | Study area with halo, shadow and neighbours |
+| `elsar_map_furniture()` | Scale bar and north arrow |
+| `elsar_map_caption()`, `elsar_attribution()` | Attribution caption |
+| `elsar_map_locator()`, `elsar_add_locator()` | Inset locator map |
+
+```{r setup}
+library(elsar)
+library(ggplot2)
+
+boundary_proj <- make_boundary(
+  boundary_in = boundary_dat,
+  iso3 = "NPL",
+  iso3_column = "iso3cd"
+)
+pus <- make_planning_units(
+  boundary_proj = boundary_proj,
+  pu_threshold = 8e4,
+  limit_to_mainland = FALSE,
+  iso3 = "NPL"
+)
+wad <- get_wad_data()
+wad_npl <- make_normalised_raster(raster_in = wad, pus = pus, iso3 = "NPL")
+names(wad_npl) <- "wad"
+```
+
+## Before and after
+
+The plotting functions use the modern style by default. `style = "classic"`
+gives the look of elsar 0.4 and earlier, so existing scripts can keep their
+figures unchanged.
+
+```{r classic}
+elsar_plot_static_raster(
+  wad_npl,
+  background = wad,
+  legend_title = "WAD",
+  style = "classic"
+) +
+  elsar_plot_optics(include_north_scale = TRUE, style = "classic")
+```
+
+The same call in the modern style. The background data recede into light
+greys so the country's data carry the page, axes and graticule are gone, the
+legend becomes a long, thin colourbar under the title, and the attribution
+moves from a boxed label on top of the data into a quiet caption.
+
+```{r modern}
+elsar_plot_static_raster(
+  wad_npl,
+  background = wad,
+  boundary = boundary_proj,
+  legend_title = "Convergence of pressures (normalised)",
+  plot_title = "Land under pressure in Nepal"
+) +
+  elsar_plot_optics(include_north_scale = TRUE)
+```
+
+To use the classic look for a whole session, set an option once:
+
+```{r, eval = FALSE}
+options(elsar.plot_style = "classic")
+```
+
+## Binned data
+
+Binned (discrete) data get a stepped legend, read left to right like a
+colour bar. Passing a `boundary` adds a soft halo and a thin outline.
+
+```{r discrete}
+elsar_plot_static_raster(
+  wad_npl,
+  data_type = "discrete",
+  number_categories = 6,
+  boundary = boundary_proj,
+  legend_title = "Convergence of pressures",
+  plot_title = "Pressure classes"
+) +
+  elsar_map_caption(source = "World Atlas of Desertification")
+```
+
+## Building your own maps
+
+The style functions work with any ggplot2 map. Here is an ELSA action map,
+using the established ELSA action colours from `elsar_palette("actions")`.
+
+```{r actions, fig.width = 7, fig.height = 6.5}
+ex <- elsar_example_results()
+actions <- ex$actions
+levels(actions) <- data.frame(id = 1:5, action = names(elsar_palette("actions")))
+
+ggplot() +
+  elsar_map_context(actions, shadow = TRUE) +
+  tidyterra::geom_spatraster(data = actions) +
+  scale_fill_elsar_d(palette = "actions", name = NULL, na.translate = FALSE) +
+  geom_sf(data = ex$regions, fill = NA, colour = "white", linewidth = 0.5) +
+  elsar_map_outline(actions) +
+  elsar_map_furniture() +
+  coord_sf(datum = NA) +
+  labs(
+    title = "ELSA action map, Elsaland",
+    subtitle = "Where to protect, restore and manage nature for people",
+    caption = elsar_attribution(source = "Synthetic example")
+  ) +
+  elsar_theme_map()
+```
+
+An inset locator map shows where the study area is. It needs the
+**patchwork** package.
+
+```{r locator, eval = has_patchwork}
+npl <- boundary_dat[boundary_dat$iso3cd == "NPL", ]
+
+map <- elsar_plot_static_raster(
+  wad_npl,
+  boundary = boundary_proj,
+  legend_title = "Convergence of pressures",
+  plot_title = "Land under pressure in Nepal"
+) +
+  elsar_map_furniture(north_arrow = FALSE) +
+  elsar_map_caption()
+
+elsar_add_locator(map, elsar_map_locator(npl, context = boundary_dat))
+```
+
+## Colour
+
+* **Sequential** data use the perceptually uniform viridis family (choose a
+  member with `option`, e.g. `"mako"` or `"rocket"`). Rainbow ramps are
+  never used.
+* **Diverging** data (change, distance from a target) use two hues around a
+  neutral grey midpoint: `scale_fill_elsar_c(palette = "diverging", midpoint = 0)`.
+* **Categories** use six colour-blind-safe hues
+  (`elsar_palette("categorical")`). On a map every category touches every
+  other, so keep to four or fewer where you can; fold the rest into "Other".
+* **ELSA actions** keep their established colours: Protect `#06C723`,
+  Restore `#8803FC`, Manage `#FFEA00`, Urban Greening `#FF0000`.
+* **Text** always uses the neutral inks from `elsar_inks()`, never a data
+  colour.
+
+```{r palettes, fig.height = 2.6}
+pals <- list(
+  actions = elsar_palette("actions"),
+  categorical = elsar_palette("categorical"),
+  sequential = elsar_palette("sequential", n = 9),
+  diverging = elsar_palette("diverging", n = 9)
+)
+swatches <- do.call(rbind, lapply(names(pals), function(p) {
+  data.frame(palette = p, i = seq_along(pals[[p]]), colour = unname(pals[[p]]))
+}))
+swatches$palette <- factor(swatches$palette, levels = rev(names(pals)))
+
+ggplot(swatches, aes(i, palette, fill = colour)) +
+  geom_tile(colour = "white", linewidth = 1) +
+  scale_fill_identity() +
+  elsar_theme(grid = "none") +
+  theme(axis.text.x = element_blank(), axis.title = element_blank(), axis.line = element_blank())
+```
+
+## Dark mode
+
+Every style function takes `dark = TRUE`.
+
+```{r dark}
+ggplot() +
+  elsar_map_context(boundary_proj, dark = TRUE) +
+  tidyterra::geom_spatraster(data = wad_npl) +
+  scale_fill_elsar_c(option = "mako", name = "Convergence of pressures") +
+  elsar_map_outline(boundary_proj, dark = TRUE) +
+  elsar_map_furniture(dark = TRUE) +
+  coord_sf(datum = NA) +
+  labs(title = "Land under pressure in Nepal", caption = elsar_attribution()) +
+  elsar_theme_map(dark = TRUE)
+```
+
+## Fonts
+
+The themes use the graphics device's default sans-serif font. Pass any
+installed family with `base_family`, e.g. `elsar_theme_map(base_family = "Inter")`.
+When the **systemfonts** package is installed, an unavailable family falls
+back to the default with a warning instead of failing.

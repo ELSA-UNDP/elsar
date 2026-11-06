@@ -58,7 +58,10 @@ elsar_plot_static_raster_d <- function(raster_in,
                                        color_map = "viridis",
                                        expand_plot = FALSE,
                                        raster_df_out = FALSE) {
-  .Deprecated("elsar_plot_static_raster")
+  lifecycle::deprecate_warn(
+    "0.0.7", "elsar_plot_static_raster_d()", "elsar_plot_static_raster()",
+    details = "Use `data_type = \"discrete\"`."
+  )
   elsar_plot_static_raster(
     raster_in = raster_in,
     data_type = "discrete",

@@ -9,10 +9,17 @@
 #' @param legend_title character, optional. Title for the legend. Defaults to NULL.
 #' @param color_map character. Name of the viridis palette to use. Defaults to "viridis".
 #' @param invert_palette logical. If TRUE, reverses the palette direction. Defaults to FALSE.
-#' @param figure_path character, optional. If provided, path to save the figure as a PNG.
+#' @param figure_path character, optional. If provided, path to save the figure as a PNG. The file name is built
+#'   from `legend_title` (or the layer name) and `iso3`.
 #' @param no_legend logical. If TRUE, suppresses the legend. Defaults to FALSE.
 #' @param custom_resolution A value that is used in ggsave() for dpi. Default is 200.
 #' @param iso3 iso3 code of the country of interest.
+#' @param plot_title Character, optional. Plot title (modern style).
+#' @param style Character. `"modern"` (default) draws the map in the
+#'   current elsar style ([elsar_theme_map()], [elsar_palette()] scales,
+#'   neutral context); `"classic"` reproduces the look of elsar 0.4 and
+#'   earlier. Set `options(elsar.plot_style = "classic")` to change the
+#'   default for a whole session.
 #'
 #' @return A `ggplot` object displaying the raster with optional planning unit outlines.
 #'
@@ -62,7 +69,10 @@ elsar_plot_feature <- function(raster_in,
                                figure_path = NULL,
                                iso3 = NULL,
                                no_legend = FALSE,
-                               custom_resolution = 200) {
+                               custom_resolution = 200,
+                               plot_title = NULL,
+                               style = getOption("elsar.plot_style", "modern")) {
+  style <- .resolve_style(style)
   # Input validation
   assertthat::assert_that(
     inherits(raster_in, "SpatRaster"),
@@ -113,6 +123,13 @@ elsar_plot_feature <- function(raster_in,
   }
 
   # Create Plot
+  if (style == "modern") {
+    gg_feature <- .plot_feature_modern(
+      raster_in = raster_in, pus = pus, outlines = outlines, legend_title = legend_title,
+      color_map = color_map, palette_direction = palette_direction,
+      no_legend = no_legend, plot_title = plot_title
+    )
+  } else {
   gg_feature <- ggplot2::ggplot() +
     tidyterra::geom_spatraster(data = raster_in) +
     ggplot2::theme_bw() +
@@ -158,10 +175,11 @@ elsar_plot_feature <- function(raster_in,
     gg_feature <-   gg_feature +
       ggplot2::theme(legend.position="none")
   }
+  }
 
   if (!is.null(figure_path)) {
     # Clean filename: replace spaces/special chars, collapse underscores, lowercase
-    clean_title <- gsub("[^a-zA-Z0-9_-]", "_", legend_title)
+    clean_title <- gsub("[^a-zA-Z0-9_-]", "_", plot_label)
     clean_title <- gsub("-", "_", clean_title)
     clean_title <- gsub("_+", "_", clean_title)
     clean_title <- gsub("^_|_$", "", clean_title)
@@ -175,10 +193,39 @@ elsar_plot_feature <- function(raster_in,
       plot = gg_feature,
       device = "png",
       width = 8, height = 6,
-      dpi = custom_resolution
+      dpi = custom_resolution,
+      bg = if (style == "modern") elsar_inks()[["surface"]] else NULL
     )
   }
 
   log_message("Feature plot created successfully.")
   return(gg_feature)
+}
+
+# Modern style ------------------------------------------------------------------
+
+.plot_feature_modern <- function(raster_in, pus, outlines, legend_title, color_map,
+                                 palette_direction, no_legend, plot_title) {
+  ink <- elsar_inks()
+  p <- ggplot2::ggplot() +
+    elsar_map_context(pus) +
+    tidyterra::geom_spatraster(data = raster_in[[1]], maxcell = 1e6) +
+    scale_fill_elsar_c(
+      option = color_map,
+      direction = palette_direction,
+      name = legend_title,
+      guide = if (no_legend) "none" else guide_elsar_colourbar()
+    ) +
+    tidyterra::geom_spatvector(
+      data = outlines,
+      colour = ink[["ink_secondary"]],
+      linewidth = 0.25
+    ) +
+    elsar_map_furniture(north_arrow = FALSE) +
+    ggplot2::coord_sf(crs = sf::st_crs(terra::crs(raster_in)), datum = NA) +
+    elsar_theme_map()
+  if (!is.null(plot_title) && any(nzchar(plot_title))) {
+    p <- p + ggplot2::labs(title = plot_title)
+  }
+  p
 }

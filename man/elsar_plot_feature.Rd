@@ -13,7 +13,9 @@ elsar_plot_feature(
   figure_path = NULL,
   iso3 = NULL,
   no_legend = FALSE,
-  custom_resolution = 200
+  custom_resolution = 200,
+  plot_title = NULL,
+  style = getOption("elsar.plot_style", "modern")
 )
 }
 \arguments{
@@ -27,13 +29,22 @@ elsar_plot_feature(
 
 \item{invert_palette}{logical. If TRUE, reverses the palette direction. Defaults to FALSE.}
 
-\item{figure_path}{character, optional. If provided, path to save the figure as a PNG.}
+\item{figure_path}{character, optional. If provided, path to save the figure as a PNG. The file name is built
+from \code{legend_title} (or the layer name) and \code{iso3}.}
 
 \item{iso3}{iso3 code of the country of interest.}
 
 \item{no_legend}{logical. If TRUE, suppresses the legend. Defaults to FALSE.}
 
 \item{custom_resolution}{A value that is used in ggsave() for dpi. Default is 200.}
+
+\item{plot_title}{Character, optional. Plot title (modern style).}
+
+\item{style}{Character. \code{"modern"} (default) draws the map in the
+current elsar style (\code{\link[=elsar_theme_map]{elsar_theme_map()}}, \code{\link[=elsar_palette]{elsar_palette()}} scales,
+neutral context); \code{"classic"} reproduces the look of elsar 0.4 and
+earlier. Set \code{options(elsar.plot_style = "classic")} to change the
+default for a whole session.}
 }
 \value{
 A \code{ggplot} object displaying the raster with optional planning unit outlines.

@@ -16,7 +16,9 @@ elsar_plot_optics(
   text_to_display = "UNBL | www.unbiodiversitylab.org",
   text_location = "bottom_right",
   move_horizontal = NULL,
-  move_vertical = NULL
+  move_vertical = NULL,
+  style = getOption("elsar.plot_style", "modern"),
+  dark = FALSE
 )
 }
 \arguments{
@@ -43,12 +45,29 @@ elsar_plot_optics(
 \item{move_horizontal}{After setting a text location, this attribute allows to move the text block horizontally if needed.}
 
 \item{move_vertical}{After setting a text location, this attribute allows to move the text block vertically if needed.}
+
+\item{style}{Character. \code{"modern"} (default) uses the current elsar
+style; \code{"classic"} reproduces the look of elsar 0.4 and
+earlier. Set \code{options(elsar.plot_style = "classic")} to change the
+default for a whole session.}
+
+\item{dark}{Logical. Modern style only: use the dark-mode theme and inks.}
 }
 \value{
-For \code{ggplot} returns a list that can simply be added to a \code{ggplot}, e.g. \code{\link[=elsar_plot_static_raster_c]{elsar_plot_static_raster_c()}}.
+For \code{ggplot} returns a list that can simply be added to a \code{ggplot}, e.g. \code{\link[=elsar_plot_static_raster]{elsar_plot_static_raster()}}.
 }
 \description{
 \code{elsar_plot_optics()} allows to use specific themes for plotting and add north arrows and scales if wanted.
+}
+\details{
+In the default \code{"modern"} style it adds \code{\link[=elsar_theme_map]{elsar_theme_map()}}, a compact
+scale bar and north arrow (\code{\link[=elsar_map_furniture]{elsar_map_furniture()}}) when
+\code{include_north_scale = TRUE}, and the attribution as a muted caption under
+the map (or, for the top corners, as unboxed text inside the map) instead
+of a boxed label on top of the data. \code{move_horizontal} and \code{move_vertical}
+only adjust the top-corner text in this style. For new code, the
+individual functions (\code{\link[=elsar_theme_map]{elsar_theme_map()}}, \code{\link[=elsar_map_furniture]{elsar_map_furniture()}},
+\code{\link[=elsar_map_caption]{elsar_map_caption()}}) give finer control.
 }
 \examples{
 \dontrun{
