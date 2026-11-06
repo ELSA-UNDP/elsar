@@ -32,6 +32,9 @@ on 0.4.1 until a country is rerun.
   true share of each planning unit. Before, these paths rescaled the share to
   the national maximum first, so the threshold meant something different in
   every country.
+  Pasture probability given as a percentage (0-100, as in the Global Pasture
+  Watch layers) is divided by 100 first, so `pasturelands_threshold = 0.35`
+  means a 35% probability (new `pasturelands_scale`, `"auto"` by default).
 * **Layers whose values are all zero or negative** (e.g. differences) are no
   longer mistaken for empty layers and returned as all 0.
 * **`make_urban_greening_opportunities()`** inverted NDVI twice, ranking green
@@ -66,7 +69,35 @@ on 0.4.1 until a country is rerun.
   edges of features. (With tens of thousands of features it is slower than the
   old approximate path; the callers in elsar pass tens to hundreds.)
 
+* **Restore Zone (`make_restore_zone()`).** It is now the intended band of
+  degraded but restorable land: `(degradation > degradation_threshold |
+  HII >= hii_min) & HII < hii_max`, excluding farmland and built-up areas
+  (they are managed, not restored). The upper cap (`hii_max`, default 21 on
+  the HII's 0-50 scale, as in the original ELSA design) had been lost, so land
+  under very high pressure was included. `human_pressure_threshold` is
+  deprecated in favour of `hii_min`. The `degradation` input can now be a 0/1
+  degraded-areas layer as well as an SDG 15.3.1 layer (-1 = degraded): before,
+  a 0/1 layer such as `make_degraded_areas()` output silently added no
+  degradation. `degradation_encoding = "auto"` reads the values within the
+  planning region and stops when they are unclear. This affects any 0/1
+  "Degraded Areas" input, not only `compute_degraded_areas`. Note: the new
+  arguments come before `agriculture_threshold`, so positional calls shift.
+* **All zones with `filter_patch_size = TRUE`.** Removing small patches used
+  `terra::sieve()`, which also filled small excluded holes (farms, towns)
+  back into the zone, and could keep small patches next to other small
+  patches or NoData. Small eligible patches are now removed exactly and
+  excluded cells always stay excluded. Patches are now edge-connected: cells
+  touching only at a corner count as separate patches (they were joined
+  before).
+
 ## Other changes
+
+* `make_manage_zone()` works without a pasture layer (`pasturelands = NULL`,
+  the documented default, used to fail), and its alternative zone (v2,
+  agriculture and pasture) now also excludes built-up areas, like the default
+  zone.
+* `make_protect_zone()` accepts protected areas as a multi-row `SpatVector`
+  and in any CRS; the docs no longer claim that `NULL` loads protected areas.
 
 * `exact_rasterise()` accepts `fun` as `mean`, `sum`, `max` or `min` (function,
   terra generic or string); other functions now give an error. `cores` and

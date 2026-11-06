@@ -134,7 +134,7 @@ make_urban_greening_zone <- function(
   # Optionally filter out small patches
   if (filter_patch_size) {
     log_message("Sieving out patch sizes smaller than {min_patch_size} planning units...")
-    urban_greening_zone <- terra::sieve(urban_greening_zone, threshold = min_patch_size)
+    urban_greening_zone <- .sieve_zone(urban_greening_zone, min_patch_size)
   }
 
   names(urban_greening_zone) <- "urban_greening_zone"

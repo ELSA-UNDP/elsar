@@ -23,11 +23,17 @@
 #'   pre-computed class proportions. If provided, bands named "agriculture" and "built_area" will
 #'   be used automatically, overriding `agricultural_areas` and `built_areas`.
 #' @param agricultural_areas SpatRaster. A binary or categorical raster representing agricultural areas.
-#' @param pasturelands SpatRaster. A binary or categorical raster representing (actively managed/improved)pastures.
+#' @param pasturelands SpatRaster or NULL. A raster of (actively managed or
+#'   improved) pasture probability or share. Optional: without it the pasture
+#'   criterion is not used.
 #' @param built_areas SpatRaster. A binary or categorical raster representing built-up/urban areas.
 #' @param lulc_raster SpatRaster or NULL. Optional raw LULC input used to extract agriculture and built-up layers if those inputs are categorical.
 #' @param human_pressure SpatRaster. Human Footprint Index raster.
-#' @param pasturelands_threshold Numeric. Probability threshold above which cells are considered pasturelands (default = 0.35).
+#' @param pasturelands_threshold Numeric. Probability (0-1) above which cells are considered pasturelands (default = 0.35).
+#' @param pasturelands_scale Character. Scale of the `pasturelands` values:
+#'   `"percent"` (0-100, as in the Global Pasture Watch probability layers),
+#'   `"fraction"` (0-1) or `"auto"` (default: percent if any value is above 1).
+#'   Percent values are divided by 100 before `pasturelands_threshold` applies.
 #' @param lulc_product Character. LULC product used for class value lookups: "esri_10m" (default),
 #'   "dynamic_world", "esa_worldcover", or "local". When "local", explicit class values must be provided.
 #' @param agriculture_lulc_value Integer or NULL. LULC value for agriculture. If NULL, automatically
@@ -80,6 +86,7 @@ make_manage_zone <- function(
     lulc_raster = NULL,
     human_pressure = NULL,
     pasturelands_threshold = 0.35,
+    pasturelands_scale = c("auto", "percent", "fraction"),
     lulc_product = c("esri_10m", "dynamic_world", "esa_worldcover", "local"),
     agriculture_lulc_value = NULL,
     built_area_lulc_value = NULL,
@@ -206,15 +213,22 @@ make_manage_zone <- function(
       )
   }
 
-  # Process pasturelands
-  log_message("Processing pasturelands...")
-  pasturelands_processed <- elsar::make_normalised_raster(
-    raster_in = pasturelands,
-    pus = pus,
-    iso3 = iso3,
-    rescaled = FALSE, # compared with an absolute threshold below
-    method_override = "mean"
+  # Process pasturelands (optional: without them the criterion never applies;
+  # before 0.4.2 a missing pasture layer made the function fail)
+  if (is.null(pasturelands)) {
+    log_message("No pasturelands layer: the manage zone uses HII, managed forests and agriculture only.")
+    pasturelands_processed <- terra::ifel(pus == 1, 0, NA)
+  } else {
+    log_message("Processing pasturelands...")
+    pasturelands_processed <- make_normalised_raster(
+      raster_in = pasturelands,
+      pus = pus,
+      iso3 = iso3,
+      rescaled = FALSE, # compared with an absolute threshold below
+      method_override = "mean"
     )
+    pasturelands_processed <- .as_probability(pasturelands_processed, pasturelands_scale)
+  }
 
   # Process built-up areas
   log_message("Processing built-up areas...")
@@ -295,9 +309,12 @@ make_manage_zone <- function(
 
   # Secondary zone (agriculture and pastureland only)
   log_message("Creating the alternative manage zone using agricultural areas and pasturelands only...")
+  # Built-up areas are excluded here too, as in the default zone (they were
+  # not before 0.4.2)
   manage_zone_alt <- terra::ifel(
-    agricultural_areas_processed > agriculture_threshold |
-      pasturelands_processed > pasturelands_threshold,
+    (agricultural_areas_processed > agriculture_threshold |
+      pasturelands_processed > pasturelands_threshold) &
+      built_areas_processed <= built_areas_threshold,
     1, 0
     ) %>%
     make_normalised_raster(pus = pus, iso3 = iso3)
@@ -309,8 +326,8 @@ make_manage_zone <- function(
   # Filter out small patches
   if (filter_patch_size) {
     log_message("Sieving out patch sizes smaller than {min_patch_size} planning units...")
-    manage_zones[[1]] <- terra::sieve(manage_zones[[1]], threshold = min_patch_size)
-    manage_zones[[2]] <- terra::sieve(manage_zones[[2]], threshold = min_patch_size)
+    manage_zones[[1]] <- .sieve_zone(manage_zones[[1]], min_patch_size)
+    manage_zones[[2]] <- .sieve_zone(manage_zones[[2]], min_patch_size)
   }
 
   # Save to disk if needed
@@ -345,4 +362,30 @@ make_manage_zone <- function(
   }
 
   return(manage_zones)
+}
+
+
+# Convert a probability layer to 0-1. Global Pasture Watch stores probability
+# as a percentage (0-100); before 0.4.2 the layer was rescaled to its own
+# maximum instead, so the threshold depended on each country's range.
+.as_probability <- function(x, scale = c("auto", "percent", "fraction")) {
+  scale <- match.arg(scale)
+  max_value <- terra::global(x, "max", na.rm = TRUE)[[1]]
+  if (scale == "auto") {
+    scale <- if (isTRUE(max_value > 1)) "percent" else "fraction"
+    log_message("Pasturelands values read as a {scale} (maximum {round(max_value, 2)}).")
+  }
+  if (scale == "percent") {
+    assertthat::assert_that(
+      !isTRUE(max_value > 100),
+      msg = "Pasturelands values exceed 100, so they are not a percentage."
+    )
+    x <- x / 100
+  } else {
+    assertthat::assert_that(
+      !isTRUE(max_value > 1),
+      msg = "Pasturelands values exceed 1: set pasturelands_scale = \"percent\"."
+    )
+  }
+  x
 }
