@@ -18,6 +18,7 @@ params:
   scheme: NULL
   pa_threshold: NULL
   target: 0.3
+  protect_actions: NULL
   units: "ha"
 ---
 
@@ -51,16 +52,20 @@ has_layers <- !is.null(p$layers)
 national <- elsar_summarise_actions(x, units = p$units)
 by_region <- if (has_regions) elsar_summarise_actions(x, p$regions, p$region_col, units = p$units)
 main <- if (has_regions) by_region else national
-gap_national <- if (has_pa) elsar_protection_gap(national, target = p$target)
-gap <- gap_national
-if (has_pa && has_regions) {
-  # Use the true national row (regions can miss planning cells along borders)
-  gap <- rbind(
-    elsar_protection_gap(by_region, target = p$target, include_national = FALSE),
-    gap_national
-  )
-  gap$region <- factor(gap$region, levels = unique(as.character(gap$region)))
-  attr(gap, "national_label") <- "National"
+# elsar_results_report() passes NA for "no target" (a NULL param would fall
+# back to the default above)
+if (length(p$target) == 0 || is.na(p$target)) p["target"] <- list(NULL)
+has_target <- !is.null(p$target)
+gap_national <- if (has_pa) {
+  elsar_protection_gap(national, target = p$target, protect_actions = p$protect_actions)
+}
+# By region, with the true national row (regions can miss planning cells along
+# borders), exactly as elsar_export_results() writes it
+gap <- if (has_pa && has_regions) {
+  elsar_protection_gap(by_region, target = p$target, protect_actions = p$protect_actions,
+                       national = national)
+} else {
+  gap_national
 }
 overlap <- if (has_layers) elsar_summarise_overlap(x, p$layers, units = p$units)
 
@@ -83,14 +88,17 @@ g <- gap_national
 cat(sprintf(
   paste0(
     "Existing protected areas cover **%s** of the planning area. ",
-    "ELSA proposes a further **%s** of new protection, ",
-    "bringing the total to **%s** against a target of %s"
+    "ELSA proposes a further **%s** of new protection, bringing the total to **%s**"
   ),
-  fmt_pct(g$pct_current), fmt_pct(g$pct_new), fmt_pct(g$pct_total),
-  fmt_pct(100 * p$target, 0)
+  fmt_pct(g$pct_current), fmt_pct(g$pct_new), fmt_pct(g$pct_total)
 ))
-cat(if (g$target_met) ": the target is met.\n" else
-  sprintf(", leaving a gap of %s.\n", fmt_area(g$gap)))
+if (has_target) {
+  cat(sprintf(" against a target of %s", fmt_pct(100 * p$target, 0)))
+  cat(if (g$target_met) ": the target is met.\n" else
+    sprintf(", leaving a gap of %s.\n", fmt_area(g$gap)))
+} else {
+  cat(".\n")
+}
 ```
 
 ```{r national-map, fig.height = 6}
@@ -113,10 +121,11 @@ kable(tbl, caption = paste0("Area of each action (", unit_label, ")."))
 ```
 
 ```{r protection-heading, results = "asis", eval = has_pa}
-cat("\n## Protection and the", fmt_pct(100 * p$target, 0), "target\n\n")
+cat(if (has_target) paste("\n## Protection and the", fmt_pct(100 * p$target, 0), "target\n\n")
+    else "\n## Protection\n\n")
 cat(
   "*Existing PAs* is all area inside existing protected areas. ",
-  "*New protection* is area ELSA assigns to Protect outside them.\n\n"
+  "*New protection* is area ELSA assigns to protection outside them.\n\n"
 )
 ```
 
@@ -125,14 +134,17 @@ elsar_plot_protection_gap(gap)
 ```
 
 ```{r protection-table, eval = has_pa}
-kable(data.frame(
+tbl <- data.frame(
   Region = gap$region,
   `Existing PAs (%)` = round(gap$pct_current, 1),
   `New protection (%)` = round(gap$pct_new, 1),
   `Total (%)` = round(gap$pct_total, 1),
-  `Gap to target` = round(gap$gap),
   check.names = FALSE
-), caption = paste0("Protection by region. Gap to target in ", unit_label, "."))
+)
+if (has_target) tbl$`Gap to target` <- round(gap$gap)
+kable(tbl, caption = paste0(
+  "Protection by region.", if (has_target) paste0(" Gap to target in ", unit_label, ".")
+))
 ```
 
 ```{r regions-heading, results = "asis", eval = has_regions}

@@ -19,8 +19,10 @@ elsar_summarise_overlap(
 
 \item{layers}{The layers to overlay, as one of:
 \itemize{
-\item a \code{SpatRaster} (or path) with one or more named layers, e.g. the
-feature stack from \code{\link[=get_all_features]{get_all_features()}} or a layer from \code{\link[=make_kbas]{make_kbas()}};
+\item a \code{SpatRaster} (or path) with one or more named numeric layers, e.g.
+the feature stack from \code{\link[=get_all_features]{get_all_features()}} or a layer from
+\code{\link[=make_kbas]{make_kbas()}}. Categorical rasters (e.g. ecosystem types) must first be
+split into one 0/1 layer per class, e.g. with \code{\link[terra:segregate]{terra::segregate()}};
 \item a named list of \code{SpatRaster}, \code{sf} or \code{SpatVector} objects. Polygons are
 converted to the share of each cell they cover.
 }

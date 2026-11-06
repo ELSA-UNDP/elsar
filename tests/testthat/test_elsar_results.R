@@ -461,3 +461,140 @@ test_that("the results report renders", {
   expect_match(html, "Regional profiles")
   expect_match(html, "Overlap with other layers")
 })
+
+# Regression tests from the November 2026 review --------------------------------
+
+far_region <- function(name = "Far") {
+  sf::st_sf(name = name, geometry = sf::st_sfc(
+    sf::st_polygon(list(rbind(c(9e5, 9e5), c(9.1e5, 9e5), c(9.1e5, 9.1e5), c(9e5, 9.1e5), c(9e5, 9e5)))),
+    crs = ea_crs
+  ))
+}
+
+test_that("one region without planning units does not zero the others", {
+  x <- elsar_prepare_actions(toy_actions(), pas = toy_pas())
+  s <- elsar_summarise_actions(x, rbind(toy_regions(), far_region()), region_col = "name")
+  expect_equal(sum(s$area[s$region != "Far"]), 1500, tolerance = 1e-3)
+  expect_true(all(s$area[s$region == "Far"] == 0))
+  ov <- elsar_summarise_overlap(x, list(PA = toy_pas()), rbind(toy_regions(), far_region()), "name")
+  expect_equal(sum(ov$amount[ov$region == "West"]), 400, tolerance = 1e-3)
+})
+
+test_that("a region column named like an internal column works", {
+  regions <- toy_regions()
+  names(regions)[names(regions) == "name"] <- "area"
+  sf::st_geometry(regions) <- "geometry"
+  s <- elsar_summarise_actions(elsar_prepare_actions(toy_actions()), regions, region_col = "area")
+  expect_equal(sum(s$area), 1500, tolerance = 1e-3)
+})
+
+test_that("float action rasters are rounded before checking the scheme", {
+  x <- expect_no_warning(elsar_prepare_actions(toy_actions() + 1e-7))
+  expect_equal(sum(elsar_summarise_actions(x)$area), 1500, tolerance = 1e-3)
+})
+
+test_that("a run without the no-action value triggers a scheme warning", {
+  three_actions <- terra::classify(toy_actions(), cbind(5, 4)) # Do Nothing written as 4
+  expect_warning(elsar_prepare_actions(three_actions), "no-action value")
+})
+
+test_that("the raster's own labels are checked against the scheme", {
+  tool <- toy_actions()
+  levels(tool) <- data.frame(value = 1:5, label = c("Protect", "Reduce Pressures", "Restore",
+                                                     "Urban Adapt", "Do Nothing"))
+  expect_no_warning(x <- elsar_prepare_actions(tool))
+  expect_equal(sum(elsar_summarise_actions(x)$area), 1500, tolerance = 1e-3)
+  fallback <- toy_actions()
+  levels(fallback) <- data.frame(value = 1:5, label = c("Protect", "Reduce Pressures", "Restore",
+                                                         "Avoid Loss", "Do Nothing"))
+  expect_warning(elsar_prepare_actions(fallback), "Avoid Loss")
+})
+
+test_that("protect actions are derived from the scheme", {
+  scheme <- elsar_action_scheme(
+    labels = c("Proteger", "Manejar", "Restaurar", "Verde urbano", "Nada"),
+    no_action = "Nada"
+  )
+  s <- elsar_summarise_actions(elsar_prepare_actions(toy_actions(), scheme, pas = toy_pas()))
+  g <- elsar_protection_gap(s)
+  expect_equal(g$current, 400, tolerance = 1e-3)
+  # A scheme without any protect-like label falls back to the first action
+  plain <- elsar_action_scheme(labels = c("A", "B", "C", "D", "None"), no_action = "None")
+  s2 <- elsar_summarise_actions(elsar_prepare_actions(toy_actions(), plain, pas = toy_pas()))
+  expect_equal(elsar_protection_gap(s2)$new, elsar_protection_gap(s, protect_actions = "Proteger")$new)
+})
+
+test_that("the national row can come from the national summary", {
+  x <- elsar_prepare_actions(toy_actions(), pas = toy_pas())
+  regions <- toy_regions()
+  regions <- regions[regions$name == "West", ] # covers only part of the grid
+  s <- elsar_summarise_actions(x, regions, region_col = "name")
+  n <- elsar_summarise_actions(x)
+  g_sum <- elsar_protection_gap(s, include_national = TRUE)
+  g_true <- elsar_protection_gap(s, national = n)
+  expect_equal(g_true$region_area[g_true$region == "National"], 1500, tolerance = 1e-3)
+  expect_equal(nrow(g_sum), 1) # one region, no national row from the sum
+})
+
+test_that("target_met has a small tolerance and gap is then 0", {
+  x <- elsar_prepare_actions(toy_actions(), pas = toy_pas())
+  s <- elsar_summarise_actions(x)
+  pct <- elsar_protection_gap(s, target = NULL)$pct_total
+  g <- elsar_protection_gap(s, target = (pct + 0.005) / 100)
+  expect_true(g$target_met)
+  expect_equal(g$gap, 0)
+  expect_false(elsar_protection_gap(s, target = (pct + 1) / 100)$target_met)
+})
+
+test_that("a region called like the national row is rejected", {
+  regions <- toy_regions()
+  regions$name[1] <- "National"
+  s <- elsar_summarise_actions(elsar_prepare_actions(toy_actions(), pas = toy_pas()), regions, "name")
+  expect_error(elsar_protection_gap(s), "national_label")
+})
+
+test_that("regional panels skip regions without planning area", {
+  x <- elsar_prepare_actions(toy_actions(), pas = toy_pas())
+  regions <- rbind(toy_regions(), far_region())
+  s <- elsar_summarise_actions(x, regions, region_col = "name")
+  expect_message(p <- elsar_plot_regions(x, s, regions, "name", metrics = "percent"), "Far")
+  expect_named(p, c("West", "East"))
+  expect_error(elsar_plot_region(x, s, regions, "name", "Far"), "does not overlap")
+})
+
+test_that("categorical overlap layers and pa_threshold = 0 are rejected", {
+  x <- elsar_prepare_actions(toy_actions())
+  eco <- toy_actions()
+  levels(eco) <- data.frame(value = 1:5, eco = letters[1:5])
+  expect_error(elsar_summarise_overlap(x, list(eco = eco)), "segregate")
+  expect_error(elsar_prepare_actions(toy_actions(), pas = toy_pas(), pa_threshold = 0), "above 0")
+})
+
+test_that("plot file names are unique regardless of case", {
+  p <- ggplot2::ggplot()
+  dir <- withr::local_tempdir()
+  paths <- suppressMessages(elsar_save_plots(list(North = p, north = p), dir, dpi = 20,
+                                             width = 1, height = 1))
+  expect_equal(length(unique(tolower(paths))), 2)
+})
+
+test_that("the report handles no target, a non-English scheme and a Word file name", {
+  skip_on_cran()
+  skip_if_not_installed("rmarkdown")
+  skip_if_not(rmarkdown::pandoc_available())
+  scheme <- elsar_action_scheme(
+    labels = c("Proteger", "Manejar", "Restaurar", "Verde urbano", "Nada"),
+    no_action = "Nada"
+  )
+  x <- elsar_prepare_actions(toy_actions(), scheme, pas = toy_pas())
+  out <- withr::local_tempfile(fileext = ".html")
+  path <- suppressMessages(elsar_results_report(
+    x, toy_regions(), "name", target = NULL, output_file = out, open = FALSE
+  ))
+  html <- paste(readLines(path, warn = FALSE), collapse = "\n")
+  expect_false(grepl("Gap to target", html))
+  docx <- suppressMessages(elsar_results_report(
+    x, output_file = out, format = "word", open = FALSE
+  ))
+  expect_match(docx, "\\.docx$")
+})

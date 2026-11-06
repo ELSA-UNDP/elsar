@@ -21,8 +21,8 @@
 
 ## New features
 
-* New tools to analyse ELSA results after a run, with area-correct summaries
-  for any projection:
+* New tools to analyse ELSA results after a run. Areas are planar in the
+  equal-area projections ELSA uses and geodesic for lon/lat rasters:
   - `elsar_action_scheme()` defines the action values, labels, colours and
     reporting groups, so custom ELSA runs carry their own legend through every
     table and plot.
