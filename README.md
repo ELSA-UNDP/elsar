@@ -73,4 +73,4 @@ elsar_plot_static_raster(
 - [Getting started vignette](https://elsa-undp.github.io/elsar/articles/elsaR.html)
 
 ## License
-CC BY 4.0
+[Apache License 2.0](LICENSE.md)

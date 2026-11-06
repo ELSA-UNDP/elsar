@@ -45,7 +45,11 @@ elsar_save_plots <- function(plots,
   dir.create(dir, showWarnings = FALSE, recursive = TRUE)
 
   stems <- if (single) prefix else paste(prefix, .safe_name(names(plots)), sep = "_")
-  stems <- make.unique(stems, sep = "_")
+  # Case-insensitive file systems (Windows, macOS) treat "North" and "north" as
+  # one file, so make names unique ignoring case
+  stems <- stems[seq_along(stems)]
+  dup <- duplicated(tolower(stems)) | duplicated(tolower(stems), fromLast = TRUE)
+  stems[dup] <- make.unique(tolower(stems[dup]), sep = "_")
   paths <- file.path(dir, paste0(stems, ".", device))
 
   for (i in seq_along(plots)) {
@@ -81,7 +85,7 @@ elsar_save_plots <- function(plots,
 #'   [elsar_summarise_actions()].
 #' @param pas,scheme,pa_threshold Passed to [elsar_prepare_actions()] when `x`
 #'   is not yet prepared.
-#' @param target Passed to [elsar_protection_gap()].
+#' @param target,protect_actions Passed to [elsar_protection_gap()].
 #' @param units Area units, as in [elsar_summarise_actions()].
 #' @param region_plots Logical. Save a panel per region. Default `TRUE`.
 #' @param prefix Character. Prefix for output file names. Default `"elsa"`.
@@ -111,6 +115,7 @@ elsar_export_results <- function(x,
                                  scheme = elsar_action_scheme(),
                                  pa_threshold = NULL,
                                  target = 0.30,
+                                 protect_actions = NULL,
                                  units = c("ha", "km2", "m2"),
                                  region_plots = TRUE,
                                  prefix = "elsa",
@@ -143,7 +148,11 @@ elsar_export_results <- function(x,
 
   gap <- NULL
   if (has_pa) {
-    gap <- elsar_protection_gap(main_summary, target = target)
+    # The national row comes from the national summary, not the sum of the
+    # regions, so the CSV, the plot and the report agree
+    gap <- elsar_protection_gap(main_summary, target = target,
+                                protect_actions = protect_actions,
+                                national = if (!is.null(by_region)) national)
     files <- c(files, write_csv(gap, "protection_gap"))
   }
 
@@ -190,7 +199,10 @@ elsar_export_results <- function(x,
 }
 
 .safe_name <- function(x) {
-  x <- gsub("[^[:alnum:]]+", "_", iconv(x, to = "ASCII//TRANSLIT", sub = ""))
+  x <- iconv(x, to = "ASCII//TRANSLIT", sub = "")
+  # macOS's iconv writes accents as separate marks ("São" -> "S~ao"): drop them
+  x <- gsub("[`'^~\"]", "", x)
+  x <- gsub("[^[:alnum:]]+", "_", x)
   x <- gsub("^_+|_+$", "", x)
   ifelse(nzchar(x), x, "region")
 }
@@ -241,6 +253,7 @@ elsar_results_report <- function(x,
                                  scheme = elsar_action_scheme(),
                                  pa_threshold = NULL,
                                  target = 0.30,
+                                 protect_actions = NULL,
                                  units = c("ha", "km2", "m2"),
                                  output_file = "elsa_results_report.html",
                                  format = c("html", "word"),
@@ -278,6 +291,11 @@ elsar_results_report <- function(x,
   rmd <- file.path(work, "elsa_results_report.Rmd")
   file.copy(template, rmd)
 
+  # The extension follows the format, so a Word report is never named .html
+  ext <- if (format == "html") "html" else "docx"
+  if (!grepl(paste0("\\.", ext, "$"), output_file, ignore.case = TRUE)) {
+    output_file <- paste0(tools::file_path_sans_ext(output_file), ".", ext)
+  }
   output_file <- normalizePath(output_file, mustWork = FALSE)
   dir.create(dirname(output_file), showWarnings = FALSE, recursive = TRUE)
   output_format <- if (format == "html") {
@@ -295,7 +313,9 @@ elsar_results_report <- function(x,
     intermediates_dir = work,
     params = list(
       title = title, country = country, actions = x, regions = regions,
-      region_col = region_col, layers = layers, target = target, units = units
+      # NULL params fall back to the template default, so "no target" is NA
+      region_col = region_col, layers = layers, target = target %||% NA,
+      protect_actions = protect_actions, units = units
     ),
     envir = new.env(parent = globalenv()),
     quiet = quiet

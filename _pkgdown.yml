@@ -97,6 +97,7 @@ reference:
 - title: Helper Functions
 - contents:
   - elsar_load_data
+  - make_postgres_connection
   - check_and_download_required_layers
   - download_dynamic_world_data
   - download_esa_worldcover_data

@@ -7,9 +7,11 @@
 elsar_protection_gap(
   summary,
   target = 0.3,
-  protect_actions = "Protect",
+  protect_actions = NULL,
   include_national = TRUE,
-  national_label = "National"
+  national = NULL,
+  national_label = "National",
+  tolerance = 0.01
 )
 }
 \arguments{
@@ -20,19 +22,30 @@ action map with a protected-area layer.}
 area to compare against. Default \code{0.30}. Use \code{NULL} for no target.}
 
 \item{protect_actions}{Character vector. The action label(s) that count as
-new protection. Default \code{"Protect"}.}
+new protection. Default \code{NULL}: the actions whose label or group is
+"Protect" (in any common language or casing, e.g. "Proteger"), or else the
+first action in the scheme, which is protection in ELSA runs.}
 
 \item{include_national}{Logical. If \code{TRUE} (default) and \code{summary} has
-several regions, adds a row that totals them, named \code{national_label}.}
+several regions, adds a national row named \code{national_label}.}
+
+\item{national}{A national summary from \code{\link[=elsar_summarise_actions]{elsar_summarise_actions()}} (no
+\code{regions}) for the national row. Recommended: regions can miss planning
+cells along borders and coasts, so adding them up can understate the
+national figure. If \code{NULL} (default), the regions are added up.}
 
 \item{national_label}{Character. Name of the national row.}
+
+\item{tolerance}{Numeric. Shortfall, in percentage points of the planning
+area, still counted as meeting the target. Default \code{0.01}, so that
+rounding (e.g. 29.99997\% against 30\%) does not decide the result.}
 }
 \value{
 A tibble with one row per region and columns \code{region},
 \code{region_area}, \code{current}, \code{new}, \code{total} (areas in the summary's units),
 \code{pct_current}, \code{pct_new}, \code{pct_total}, and, if \code{target} is set,
-\code{target_pct}, \code{gap} (area still needed to reach the target, never below
-0) and \code{target_met}.
+\code{target_pct}, \code{gap} (area still needed to reach the target; 0 when the
+target is met) and \code{target_met}.
 }
 \description{
 From an action summary, calculates for each region the area already in

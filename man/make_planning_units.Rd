@@ -28,7 +28,13 @@ A soft threshold of \code{pu_threshold * (1 + pu_tolerance)} is used during opti
 \item{pu_tolerance}{Numeric. Fractional tolerance (default is \code{0.05}, or 5\%) above \code{pu_threshold} allowed
 when estimating PU size automatically.}
 
-\item{limit_to_mainland}{Logical. Reserved for future use. If \code{TRUE}, limits planning units to mainland regions only.}
+\item{limit_to_mainland}{Logical. If \code{TRUE}, only the largest polygon of
+\code{boundary_proj} (its mainland) gets planning units; islands and other
+outlying parts are dropped (default \code{FALSE}; before 0.4.2 it was ignored).
+Note that this is the single largest polygon after merging all
+features: for New Zealand it is the South Island, for Indonesia the
+Indonesian part of Borneo, for the United States the contiguous states
+(Alaska and Hawaii are dropped).}
 
 \item{iso3}{Character. ISO3 country code used to name the output raster (e.g., "KEN", "BRA").}
 

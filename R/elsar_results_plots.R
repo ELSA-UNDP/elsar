@@ -381,6 +381,10 @@ elsar_plot_region <- function(x,
   poly <- regions[regions[[region_col]] == region, ]
   poly <- sf::st_sf(geometry = sf::st_union(poly))
   v <- terra::vect(poly)
+  assertthat::assert_that(
+    terra::relate(terra::ext(v), terra::ext(x), "intersects")[1, 1],
+    msg = paste0("Region '", region, "' does not overlap the action raster.")
+  )
   x_region <- terra::mask(terra::crop(x, v, snap = "out"), v)
 
   p_map <- elsar_plot_actions(
@@ -432,10 +436,18 @@ elsar_plot_region <- function(x,
 elsar_plot_regions <- function(x, summary, regions, region_col, ...) {
   .check_summary(summary)
   names_in_summary <- levels(summary$region) %||% unique(as.character(summary$region))
-  plots <- lapply(names_in_summary, function(r) {
+  # Regions with no planning area (e.g. outside the action raster) have
+  # nothing to map: skip them with a message instead of failing
+  region_area <- tapply(summary$area, summary$region, sum)
+  empty <- names(region_area)[region_area <= 0]
+  if (length(empty) > 0) {
+    message("Skipping regions with no planning area: ", toString(empty))
+  }
+  keep <- setdiff(names_in_summary, empty)
+  plots <- lapply(keep, function(r) {
     elsar_plot_region(x, summary, regions, region_col, r, ...)
   })
-  stats::setNames(plots, names_in_summary)
+  stats::setNames(plots, keep)
 }
 
 # Internal plotting helpers -------------------------------------------------------
@@ -592,4 +604,3 @@ elsar_plot_regions <- function(x, summary, regions, region_col, ...) {
   sf::st_transform(regions, terra::crs(x))
 }
 
-`%||%` <- function(a, b) if (is.null(a)) b else a

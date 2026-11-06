@@ -13,6 +13,7 @@ elsar_export_results(
   scheme = elsar_action_scheme(),
   pa_threshold = NULL,
   target = 0.3,
+  protect_actions = NULL,
   units = c("ha", "km2", "m2"),
   region_plots = TRUE,
   prefix = "elsa",
@@ -31,7 +32,7 @@ already prepared with \code{\link[=elsar_prepare_actions]{elsar_prepare_actions(
 \item{pas, scheme, pa_threshold}{Passed to \code{\link[=elsar_prepare_actions]{elsar_prepare_actions()}} when \code{x}
 is not yet prepared.}
 
-\item{target}{Passed to \code{\link[=elsar_protection_gap]{elsar_protection_gap()}}.}
+\item{target, protect_actions}{Passed to \code{\link[=elsar_protection_gap]{elsar_protection_gap()}}.}
 
 \item{units}{Area units, as in \code{\link[=elsar_summarise_actions]{elsar_summarise_actions()}}.}
 

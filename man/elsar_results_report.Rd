@@ -13,6 +13,7 @@ elsar_results_report(
   scheme = elsar_action_scheme(),
   pa_threshold = NULL,
   target = 0.3,
+  protect_actions = NULL,
   units = c("ha", "km2", "m2"),
   output_file = "elsa_results_report.html",
   format = c("html", "word"),
@@ -35,7 +36,7 @@ is not yet prepared.}
 \item{layers}{Optional layers to report overlap for, as in
 \code{\link[=elsar_summarise_overlap]{elsar_summarise_overlap()}}.}
 
-\item{target}{Passed to \code{\link[=elsar_protection_gap]{elsar_protection_gap()}}.}
+\item{target, protect_actions}{Passed to \code{\link[=elsar_protection_gap]{elsar_protection_gap()}}.}
 
 \item{units}{Area units, as in \code{\link[=elsar_summarise_actions]{elsar_summarise_actions()}}.}
 

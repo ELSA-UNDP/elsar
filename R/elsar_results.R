@@ -223,10 +223,18 @@ elsar_prepare_actions <- function(actions,
   if (!is.null(pa_threshold)) {
     assertthat::assert_that(
       is.numeric(pa_threshold), length(pa_threshold) == 1,
-      pa_threshold >= 0, pa_threshold <= 1,
-      msg = "'pa_threshold' must be NULL or a single number between 0 and 1."
+      pa_threshold > 0, pa_threshold <= 1,
+      msg = "'pa_threshold' must be NULL or a single number above 0 and at most 1."
     )
   }
+
+  # A raster written by the ELSA tool may carry its own category labels.
+  # Work on the raw values, and keep the labels to check against the scheme.
+  raster_labels <- .raster_category_labels(actions)
+  levels(actions) <- NULL
+
+  # Round first, in case a float raster was written (e.g. 1.0000001)
+  actions <- terra::round(actions)
 
   # Values outside the scheme become NA, with a warning
   present <- terra::unique(actions)[[1]]
@@ -239,9 +247,8 @@ elsar_prepare_actions <- function(actions,
     )
     actions <- terra::classify(actions, cbind(unknown, NA))
   }
+  .check_scheme_fits(scheme, present, raster_labels)
 
-  # Round in case a float raster was written (e.g. 1.0000001)
-  actions <- terra::round(actions)
   levels(actions) <- as.data.frame(scheme[, c("value", "label", "colour", "group", "is_action")])
   terra::coltab(actions) <- data.frame(value = scheme$value, col = scheme$colour)
   # Set after levels(), which renames the layer to the active category
@@ -393,16 +400,25 @@ elsar_summarise_actions <- function(x,
 #' @param target Numeric between 0 and 1. The share of each region's planning
 #'   area to compare against. Default `0.30`. Use `NULL` for no target.
 #' @param protect_actions Character vector. The action label(s) that count as
-#'   new protection. Default `"Protect"`.
+#'   new protection. Default `NULL`: the actions whose label or group is
+#'   "Protect" (in any common language or casing, e.g. "Proteger"), or else the
+#'   first action in the scheme, which is protection in ELSA runs.
 #' @param include_national Logical. If `TRUE` (default) and `summary` has
-#'   several regions, adds a row that totals them, named `national_label`.
+#'   several regions, adds a national row named `national_label`.
+#' @param national A national summary from [elsar_summarise_actions()] (no
+#'   `regions`) for the national row. Recommended: regions can miss planning
+#'   cells along borders and coasts, so adding them up can understate the
+#'   national figure. If `NULL` (default), the regions are added up.
 #' @param national_label Character. Name of the national row.
+#' @param tolerance Numeric. Shortfall, in percentage points of the planning
+#'   area, still counted as meeting the target. Default `0.01`, so that
+#'   rounding (e.g. 29.99997% against 30%) does not decide the result.
 #'
 #' @return A tibble with one row per region and columns `region`,
 #'   `region_area`, `current`, `new`, `total` (areas in the summary's units),
 #'   `pct_current`, `pct_new`, `pct_total`, and, if `target` is set,
-#'   `target_pct`, `gap` (area still needed to reach the target, never below
-#'   0) and `target_met`.
+#'   `target_pct`, `gap` (area still needed to reach the target; 0 when the
+#'   target is met) and `target_met`.
 #'
 #' @seealso [elsar_plot_protection_gap()]
 #' @export
@@ -414,9 +430,11 @@ elsar_summarise_actions <- function(x,
 #' elsar_protection_gap(s)
 elsar_protection_gap <- function(summary,
                                  target = 0.30,
-                                 protect_actions = "Protect",
+                                 protect_actions = NULL,
                                  include_national = TRUE,
-                                 national_label = "National") {
+                                 national = NULL,
+                                 national_label = "National",
+                                 tolerance = 0.01) {
   .check_summary(summary)
   assertthat::assert_that(
     isTRUE(attr(summary, "has_pa")),
@@ -425,6 +443,7 @@ elsar_protection_gap <- function(summary,
       "Pass 'pas' to elsar_prepare_actions() before summarising."
     )
   )
+  protect_actions <- protect_actions %||% .default_protect_actions(summary)
   assertthat::assert_that(
     all(protect_actions %in% levels(summary$action)),
     msg = paste0(
@@ -448,15 +467,33 @@ elsar_protection_gap <- function(summary,
       .groups = "drop"
     )
 
-  if (include_national && nrow(out) > 1) {
-    national <- out |>
-      dplyr::summarise(
-        region = national_label,
-        dplyr::across(c("region_area", "current", "new"), sum)
+  if (include_national && (nrow(out) > 1 || !is.null(national))) {
+    assertthat::assert_that(
+      !national_label %in% as.character(out$region),
+      msg = paste0(
+        "A region is already called '", national_label,
+        "'. Choose another 'national_label'."
       )
+    )
+    national_row <- if (is.null(national)) {
+      dplyr::summarise(out, dplyr::across(c("region_area", "current", "new"), sum))
+    } else {
+      .check_summary(national)
+      assertthat::assert_that(
+        nlevels(national$region) == 1,
+        msg = "'national' must be a national summary (elsar_summarise_actions() without regions)."
+      )
+      dplyr::summarise(
+        national,
+        region_area = sum(.data$area),
+        current = sum(.data$area_in_pa),
+        new = sum(.data$area_outside_pa[.data$action %in% protect_actions])
+      )
+    }
+    national_row$region <- national_label
     out <- dplyr::bind_rows(
       dplyr::mutate(out, region = as.character(.data$region)),
-      national
+      national_row
     ) |>
       dplyr::mutate(region = factor(.data$region, levels = .data$region))
   }
@@ -473,8 +510,9 @@ elsar_protection_gap <- function(summary,
     out <- out |>
       dplyr::mutate(
         target_pct = 100 * target,
-        gap = pmax(0, target * .data$region_area - .data$total),
-        target_met = .data$total >= target * .data$region_area
+        target_met = .data$pct_total >= 100 * target - tolerance,
+        gap = dplyr::if_else(.data$target_met, 0,
+                             pmax(0, target * .data$region_area - .data$total))
       )
   }
 
@@ -531,6 +569,71 @@ elsar_example_results <- function() {
     msg = paste0("'", arg, "' must be a SpatRaster or a path to a raster file.")
   )
   x
+}
+
+# Category labels stored in a raster (e.g. the ELSA tool's .aux.xml), as a
+# value -> label data frame, or NULL when the raster has none
+.raster_category_labels <- function(x) {
+  if (!terra::is.factor(x)) return(NULL)
+  ct <- terra::cats(x)[[1]]
+  if (!is.data.frame(ct) || ncol(ct) < 2) return(NULL)
+  label_col <- which(vapply(ct, is.character, logical(1)))[1]
+  if (is.na(label_col)) return(NULL)
+  data.frame(value = as.numeric(ct[[1]]), label = ct[[label_col]])
+}
+
+# Warn when the scheme probably does not describe the raster. The ELSA tool
+# numbers primary actions 1..n, then fallback zones, then Do Nothing last, so
+# the default 5-value scheme mislabels runs with other actions without any
+# value falling outside it.
+.check_scheme_fits <- function(scheme, present, raster_labels = NULL) {
+  hint <- paste(
+    "Build the scheme from the run's configuration with",
+    "elsar_action_scheme_from_config(), or pass one to elsar_action_scheme()."
+  )
+  no_action_values <- scheme$value[!scheme$is_action]
+  if (length(no_action_values) > 0 && !any(no_action_values %in% present)) {
+    warning(
+      "No cells have the scheme's no-action value (", toString(no_action_values),
+      "). If the ELSA run had a different number of actions or a fallback zone ",
+      "(e.g. Avoid Loss), the scheme mislabels the actions. ", hint,
+      call. = FALSE
+    )
+  }
+  if (!is.null(raster_labels)) {
+    m <- merge(raster_labels, scheme[, c("value", "label")], by = "value",
+               suffixes = c("_raster", "_scheme"))
+    differ <- .label_key(m$label_raster) != .label_key(m$label_scheme)
+    if (any(differ)) {
+      warning(
+        "The raster's own labels differ from the scheme: ",
+        paste0(m$value[differ], " = '", m$label_raster[differ], "' (raster) vs '",
+               m$label_scheme[differ], "' (scheme)", collapse = "; "),
+        ". ", hint,
+        call. = FALSE
+      )
+    }
+  }
+  invisible(TRUE)
+}
+
+# Compare labels across naming conventions (ELSA tool vs elsar zone names)
+.label_key <- function(x) {
+  key <- tolower(gsub("[^[:alnum:]]", "", x))
+  synonyms <- c(reducepressures = "manage", urbanadapt = "urbangreening",
+                donothing = "donothing", nothing = "donothing", noaction = "donothing")
+  ifelse(key %in% names(synonyms), synonyms[key], key)
+}
+
+# The action(s) that count as protection: labels or groups that mean
+# "protect" in common languages, else the first action (ELSA's first zone)
+.default_protect_actions <- function(summary) {
+  acts <- unique(summary[summary$is_action, c("action", "group")])
+  is_protect <- grepl("^(protect|proteg|prot\u00e9g|protec)",
+                      tolower(c(as.character(acts$action))), perl = TRUE) |
+    grepl("^(protect|proteg|prot\u00e9g|protec)", tolower(acts$group), perl = TRUE)
+  if (any(is_protect)) return(as.character(acts$action[is_protect]))
+  as.character(acts$action[order(as.integer(acts$action))][1])
 }
 
 .check_scheme <- function(scheme) {
@@ -651,27 +754,32 @@ elsar_example_results <- function() {
 
   regions <- .prepare_regions(regions, region_col, x)
   region_names <- unique(regions[[region_col]])
+  # Carry the name in a reserved column, so a region_col such as "area" cannot
+  # collide with the extracted layers or exactextractr's own columns
+  regions <- sf::st_sf(.region = regions[[region_col]], geometry = sf::st_geometry(regions))
+  empty <- data.frame(region = character(0), value = numeric(0))
+  for (nm in weight_names) empty[[nm]] <- numeric(0)
+
   per_region <- exactextractr::exact_extract(
     c(action, weights), regions,
     fun = function(df) {
       # With summarize_df, include_cols arrive as columns of df
       df <- df[!is.na(df$.action), , drop = FALSE]
+      # Regions with no action cells return zero rows, not NULL: a NULL turns
+      # the whole result into a list
       if (nrow(df) == 0) {
-        return(NULL)
+        return(empty)
       }
       w <- df$coverage_fraction
       vals <- lapply(df[weight_names], function(v) dplyr::coalesce(v, 0) * w)
-      data.frame(region = df[[region_col]][1], value = df$.action, vals)
+      data.frame(region = df$.region[1], value = df$.action, vals)
     },
     summarize_df = TRUE,
-    include_cols = region_col,
+    include_cols = ".region",
     progress = FALSE
   )
-  if (!all(c("region", "value") %in% names(per_region))) {
-    # No region overlaps any action cell
-    per_region <- data.frame(region = character(0), value = numeric(0))
-    for (nm in weight_names) per_region[[nm]] <- numeric(0)
-  }
+  if (!is.data.frame(per_region)) per_region <- dplyr::bind_rows(per_region)
+  if (!all(c("region", "value") %in% names(per_region))) per_region <- empty
   sums <- per_region |>
     dplyr::group_by(.data$region, .data$value) |>
     dplyr::summarise(dplyr::across(dplyr::all_of(weight_names), sum), .groups = "drop")

@@ -55,8 +55,11 @@ make_custom_mollweide_projection <- function(boundary,
     log_message("Warning: boundary has no CRS; assuming geographic (WGS84) coordinates.")
   }
 
-  xmid <- mean(c(sf::st_bbox(boundary)$xmin, sf::st_bbox(boundary)$xmax))
+  xmid <- .central_longitude(boundary)
   ymid <- mean(c(sf::st_bbox(boundary)$ymin, sf::st_bbox(boundary)$ymax))
+  # (false_northing below is set to ymid, a value in degrees used as metres:
+  # a constant offset of under 100 m with no effect on accuracy. It is kept so
+  # planning-unit grids stay aligned with those built by earlier versions.)
 
   # Create WKT projection string
   wkt <- glue::glue('PROJCS["Mollweide_{iso3_label}",GEOGCS["GCS_unknown",
@@ -67,7 +70,6 @@ make_custom_mollweide_projection <- function(boundary,
                   PARAMETER["false_easting",0],PARAMETER["false_northing",
                   {ymid}],UNIT["metre",1,AUTHORITY["EPSG","9001"]],
                   AXIS["Easting",EAST],AXIS["Northing",NORTH]]')
-  # note: for marine it's not this straight forward if EEZ goes across date line
 
   if (!is.null(output_path)) {
     writeLines(wkt, glue::glue("{output_path}/Mollweide_{toupper(iso3_label)}.wkt")) # save wkt
@@ -93,4 +95,32 @@ make_custom_projection <- function(boundary,
     iso3_column = iso3_column,
     iso3 = iso3
   )
+}
+
+# Central longitude of a lon/lat boundary. A region crossing the antimeridian
+# (Fiji, Kiribati, Russia, New Zealand with the Chathams, the US with the
+# Aleutians) has a plain bounding box near 360 degrees wide, and its plain
+# midpoint lies near 0 degrees, far from the region (before 0.4.2). Its
+# longitude-shifted (0-360) box is much narrower: use the shifted midpoint
+# when the shifted box is narrower and fits within 180 degrees. Regions that straddle 0 degrees and are
+# wide for other reasons (France with Polynesia, an EEZ) and pole-enclosing
+# rings (Antarctica) keep the plain midpoint, as before.
+.central_longitude <- function(boundary) {
+  g <- sf::st_geometry(boundary)
+  if (is.na(sf::st_crs(g))) sf::st_crs(g) <- 4326
+  bb <- sf::st_bbox(g)
+  plain_mid <- mean(c(bb$xmin, bb$xmax))
+  if (bb$xmax - bb$xmin <= 180) {
+    return(plain_mid)
+  }
+  shifted <- sf::st_bbox(sf::st_shift_longitude(g))
+  shifted_width <- shifted$xmax - shifted$xmin
+  # A region that really crosses the antimeridian fits in 180 degrees once
+  # shifted (Russia 172, the US with the Aleutians 122, Fiji 4); pole-enclosing
+  # rings and wide regions straddling 0 degrees do not
+  if (shifted_width <= 0 || shifted_width > 180 || shifted_width >= bb$xmax - bb$xmin) {
+    return(plain_mid)
+  }
+  mid <- mean(c(shifted$xmin, shifted$xmax))
+  if (mid > 180) mid - 360 else mid
 }

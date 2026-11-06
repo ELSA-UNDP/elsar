@@ -17,8 +17,10 @@
 #'
 #' @inheritParams elsar_summarise_actions
 #' @param layers The layers to overlay, as one of:
-#'   * a `SpatRaster` (or path) with one or more named layers, e.g. the
-#'     feature stack from [get_all_features()] or a layer from [make_kbas()];
+#'   * a `SpatRaster` (or path) with one or more named numeric layers, e.g.
+#'     the feature stack from [get_all_features()] or a layer from
+#'     [make_kbas()]. Categorical rasters (e.g. ecosystem types) must first be
+#'     split into one 0/1 layer per class, e.g. with [terra::segregate()];
 #'   * a named list of `SpatRaster`, `sf` or `SpatVector` objects. Polygons are
 #'     converted to the share of each cell they cover.
 #'
@@ -217,6 +219,13 @@ elsar_plot_overlap <- function(overlap,
       msg = paste0("Layer '", nm, "' must be a SpatRaster, sf or SpatVector.")
     )
     l <- l[[1]]
+    assertthat::assert_that(
+      !terra::is.factor(l),
+      msg = paste0(
+        "Layer '", nm, "' is categorical; adding up class codes is meaningless. ",
+        "Split it into one 0/1 layer per class first, e.g. with terra::segregate()."
+      )
+    )
     if (!terra::compareGeom(l, template, stopOnError = FALSE)) {
       message("Resampling layer '", nm, "' to the action raster grid.")
       l <- terra::project(l, template, method = method)

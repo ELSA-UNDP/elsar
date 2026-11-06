@@ -190,8 +190,9 @@ elsar_load_data <- function(file_name = NULL,
     }
     log_message("Loading {length(shapefiles)} shapefile(s)...")
     all_data <- lapply(shapefiles, function(f)
-      filter_sf(f, iso3, iso3_column, drop3d = drop3d, wkt_filter = filter_geom, file_type = file_type))
-    return(combine_layers(all_data, shapefiles, noun = "file"))
+      filter_sf(f, iso3, iso3_column, drop3d = drop3d, wkt_filter = filter_geom,
+                file_type = file_type, warn_empty = FALSE))
+    return(.warn_if_empty(combine_layers(all_data, shapefiles, noun = "file"), iso3, iso3_column))
   }
 
   # Vector formats - multi-layer files without specified layer
@@ -199,8 +200,9 @@ elsar_load_data <- function(file_name = NULL,
     all_layers <- sf::st_layers(input_path)$name
     log_message("Loading all {length(all_layers)} layers from '{file_type}' file...")
     all_data <- lapply(all_layers, function(lyr)
-      filter_sf(input_path, iso3, iso3_column, lyr, drop3d, filter_geom, file_type))
-    return(combine_layers(all_data, all_layers, noun = "layer"))
+      filter_sf(input_path, iso3, iso3_column, lyr, drop3d, filter_geom, file_type,
+                warn_empty = FALSE))
+    return(.warn_if_empty(combine_layers(all_data, all_layers, noun = "layer"), iso3, iso3_column))
   }
 
   # Single vector layer
@@ -285,4 +287,14 @@ combine_layers <- function(results, sources, noun = "layer") {
   result <- dplyr::bind_rows(ok)
   log_message("Loaded {nrow(result)} features from {length(ok)} {noun}(s).")
   result
+}
+
+# Warn once when a combined, ISO3-filtered load has no features (individual
+# layers or files may legitimately have none)
+.warn_if_empty <- function(x, iso3, iso3_column) {
+  if (!is.null(iso3) && !is.null(iso3_column) && inherits(x, "sf") && nrow(x) == 0) {
+    warning("No features where ", iso3_column, " = '", iso3,
+            "'. Check 'iso3' and 'iso3_column'.", call. = FALSE)
+  }
+  x
 }
