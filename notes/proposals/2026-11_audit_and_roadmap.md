@@ -343,13 +343,14 @@ All six decisions are made.
    and §6 is scoped accordingly. Because elsar's public API is the
    pipeline's contract, tagged releases and pinning (§3) matter more, not
    less.
-3. **Licence: Apache-2.0 for code (proposed).**
-   - It needs explicit agreement from both authors, and from anyone else
-     with a substantial code contribution.
-   - It adds a patent grant and is OSI-approved. Documentation and data keep
-     their own terms.
-   - Steps: `usethis::use_apache_license()`, a `NOTICE` file, `cph` (UNDP)
-     and `fnd` roles in `Authors@R`, and a NEWS entry.
+3. **Licence: Apache-2.0 (agreed by the authors).**
+   - Replaces CC BY 4.0, which is not meant for software. It adds a patent
+     grant and is OSI-approved.
+   - Done in ELSA-UNDP/elsar#111: `License: Apache License (== 2.0)`, the
+     licence text, README, CONTRIBUTING, the licence line of the translated
+     READMEs, and NEWS.
+   - Still open: whether to name a copyright holder (`cph`, e.g. UNDP) in
+     `Authors@R` and add a `NOTICE` file.
 4. **Bundled real data will be replaced.**
    - Redistribution of the UN boundaries and the WDPCA-derived data probably
      can't be cleared.
@@ -374,6 +375,21 @@ All six decisions are made.
      freeze lifts.
    - When it lifts: generated translated `_pkgdown.yml`, source-hash drift
      tracking, and no `eval = FALSE` (§3).
+
+### Decided while testing 0.4.2 on Andorra (November 2026)
+
+7. **Pasture threshold stays at 0.35, read as a 35% probability.** Global
+   Pasture Watch stores probability as 0-100; elsar now converts it
+   (`pasturelands_scale`). In Andorra this puts 0.6% of planning units in
+   manage zone v2, where 0.4.1 put 14.6% (its threshold was effectively about
+   17.5%).
+8. **Constant features are kept, with a warning.** Users still weight them as
+   important or not. The pipeline logs a WARN line for each one.
+9. **Underrepresented ecosystems is the gap to 30% divided by 30%**, not
+   rescaled across ecosystems.
+10. **Out-of-date input sheets are deferred.** The stale Andorra sheet and the
+    broken data-folder links can be revisited if needed.
+11. **This audit stays a local branch**, with no PR.
 
 ## 8. Agent tooling added on this branch
 
