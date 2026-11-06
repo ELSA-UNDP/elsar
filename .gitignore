@@ -13,3 +13,6 @@ spat*
 # Rendered pkgdown site — built and deployed by CI to the gh-pages branch;
 # GitHub Pages serves from gh-pages (root), so the built site must not be tracked here.
 docs/
+
+# Personal Claude Code settings (the shared ones in .claude/ are committed)
+.claude/settings.local.json

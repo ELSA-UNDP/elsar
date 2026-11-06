@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(Rscript -e 'devtools::document()')",
+      "Bash(Rscript -e 'devtools::test:*)",
+      "Bash(Rscript -e 'devtools::check:*)",
+      "Bash(Rscript -e 'devtools::run_examples:*)",
+      "Bash(Rscript -e 'pkgdown::check_pkgdown()')",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(git rev-list:*)",
+      "Bash(git merge-base:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr diff:*)",
+      "Bash(gh pr checks:*)",
+      "Bash(gh issue list:*)",
+      "Bash(gh issue view:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)",
+      "Read(../elsar_pipeline/**)",
+      "Read(../elsa_national/**)",
+      "Read(../elsa-config-mapper/**)",
+      "Read(../unbl-elsa/**)"
+    ],
+    "deny": [
+      "Read(./.httr-oauth)",
+      "Read(**/.Renviron)",
+      "Read(~/.Renviron)",
+      "Read(~/.config/earthengine/**)",
+      "Read(**/*service-account*.json)",
+      "Read(**/*credentials*.json)",
+      "Bash(cat .Renviron:*)",
+      "Bash(cat ~/.Renviron:*)"
+    ],
+    "ask": [
+      "Bash(git push:*)",
+      "Bash(gh pr create:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(gh pr comment:*)",
+      "Bash(gh release:*)",
+      "Bash(gh api -X:*)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/check-file.sh",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}
