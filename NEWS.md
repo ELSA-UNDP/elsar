@@ -21,6 +21,19 @@
 
 ## New features
 
+* New tools to analyse ELSA results after a run, with area-correct summaries
+  for any projection:
+  - `elsar_action_scheme()` defines the action values, labels, colours and
+    reporting groups, so custom ELSA runs carry their own legend through every
+    table and plot.
+  - `elsar_prepare_actions()` applies the scheme to an ELSA action raster and
+    aligns existing protected areas (fractional raster or polygons).
+  - `elsar_summarise_actions()` reports the area of each action nationally or
+    by region, split into inside and outside existing protected areas.
+  - `elsar_protection_gap()` compares current and ELSA-proposed new protection
+    against an area-based target (30% by default, as in KMGBF Target 3).
+  - `elsar_example_results()` loads a small synthetic ELSA result to try them.
+
 * `elsar_calibrate_weights()` computes per-feature calibration weights for an ELSA
   prioritization so that features achieve more even representation relative to their
   single-feature maxima. This is the ELSA pre-calibration step, previously living in
