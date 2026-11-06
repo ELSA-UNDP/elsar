@@ -57,8 +57,14 @@ make_kbas <- function(
   # A sub-national code ("USA_CA") is matched by its national part ("USA").
   iso3_filter <- iso3_base(iso3)
 
+  # Without an `iso3` column, `iso3` in filter() would silently match the
+  # function argument and keep every site worldwide
+  assertthat::assert_that(
+    "iso3" %in% names(kba_in),
+    msg = "'kba_in' must have an 'iso3' column with each site's country code."
+  )
   kba <- kba_in %>%
-    dplyr::filter(iso3 == iso3_filter)
+    dplyr::filter(.data$iso3 == iso3_filter)
 
   if (nrow(kba) > 0) {
     if (aze_only) {
@@ -77,26 +83,26 @@ make_kbas <- function(
         if (nrow(kba) == 0) {
           log_message("After excluding AZEs, there are no KBA sites found: returning empty raster.")
           kba <- terra::ifel(pus == 1, 0, NA)
-          return(kba)
         }
       } else {
         log_message("Including AZE sites in KBAs.")
       }
 
-      if (!include_regional_kba) {
+      # (kba is already an empty raster if AZE exclusion left no sites)
+      if (!include_regional_kba && !inherits(kba, "SpatRaster")) {
         log_message("Excluding Regional KBAs or those with undetermined Global status.")
         kba <- dplyr::filter(kba, !kbaclass %in% c("Regional", "Global/ Regional to be determined"))
       }
 
-      if (nrow(kba) == 0) {
+      if (!inherits(kba, "SpatRaster") && nrow(kba) == 0) {
         log_message("No sites founds after removing Regional sites and those with undetermined Global status: returning empty raster.")
         kba <- terra::ifel(pus == 1, 0, NA)
       }
     }
 
-    if (inherits(kba, "SpatRaster")) {
-      return(kba)
-    } else {
+    # An empty raster from the filters above skips rasterising but is still
+    # saved below
+    if (!inherits(kba, "SpatRaster")) {
       # Separate polygons and points - exactextractr only works with polygons
       geom_types <- sf::st_geometry_type(kba)
       has_points <- any(geom_types %in% c("POINT", "MULTIPOINT"))
@@ -122,7 +128,7 @@ make_kbas <- function(
             area_crs = sf::st_crs(pus),
             area_attr = area_column,
             nQuadSegs = nQuadSegs,
-            area_multiplier = 1e4,
+            area_multiplier = 1e6, # repareakm2 is in km2
             append_original_polygons = FALSE
           )
           # Combine with polygons
@@ -144,13 +150,15 @@ make_kbas <- function(
         kba <- terra::ifel(pus == 1, 0, NA)
       } else {
         log_message("Rasterising {nrow(polygons)} polygon features...")
+        # Re-validate after transforming: reprojection can invalidate geometries
         kba <- polygons %>%
           sf::st_transform(sf::st_crs(pus)) %>%
+          sf::st_make_valid() %>%
           dplyr::summarise() %>%
           sf::st_make_valid()
 
         kba <- exactextractr::coverage_fraction(pus, kba)[[1]] %>%
-          elsar::make_normalised_raster(pus = pus, iso3 = iso3)
+          make_normalised_raster(pus = pus, iso3 = iso3)
       }
     }
   } else {
