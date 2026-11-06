@@ -29,7 +29,7 @@ is_valid_iso3 <- function(iso3) {
 #' @return The first three characters of `iso3`, in upper case.
 #' @keywords internal
 iso3_base <- function(iso3) {
-  # Upper case: global datasets (KBA, Ramsar, WDPA, GHSL) use upper-case
+  # Upper case: global datasets (KBA, Ramsar, WDPCA, GHSL) use upper-case
   # codes, and a lower-case code ("npl") used to match nothing, silently
   toupper(substr(iso3, 1, 3))
 }
