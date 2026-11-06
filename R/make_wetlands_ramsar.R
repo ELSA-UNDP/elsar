@@ -16,6 +16,9 @@
 #'   If `TRUE`, circular buffers are generated from the area attribute (default: TRUE).
 #' @param area_column A string indicating the name of the column containing site area (in hectares).
 #'   Used when buffering point geometries (default: "area_ha").
+#' @param id_column Character. Site identifier column in `ramsar_in` (default
+#'   `"ramsarid"`). Centroids of sites that also have a boundary polygon are
+#'   ignored, so those sites are not counted twice.
 #' @param nQuadSegs An integer specifying the number of segments used to approximate circular buffer (default: 50).
 #' @param wetland_threshold Numeric. Threshold for binarising wetlands raster (default: 0.25).
 #' @param return_all Logical. If `TRUE`, returns a raster stack containing the combined wetlands+ramsar raster,
@@ -31,6 +34,7 @@ make_wetlands_ramsar <- function(
     iso3,
     buffer_points = TRUE,
     area_column = "area_ha",
+    id_column = "ramsarid",
     nQuadSegs = 50,
     wetland_threshold = 0.25,
     return_all = FALSE) {
@@ -142,6 +146,17 @@ make_wetlands_ramsar <- function(
     # buffer_points = FALSE, so Ramsar sites were usually dropped.)
     is_point <- sf::st_is(ramsar, c("POINT", "MULTIPOINT"))
     polygons <- ramsar[!is_point, ]
+    # The Ramsar data has a centroid for every site, including sites that also
+    # have a boundary: buffering those centroids would count the site twice
+    if (any(is_point) && id_column %in% names(ramsar) && nrow(polygons) > 0) {
+      duplicate <- is_point & ramsar[[id_column]] %in% polygons[[id_column]]
+      if (any(duplicate)) {
+        log_message("Ignoring {sum(duplicate)} Ramsar centroid(s) of sites that have a boundary.")
+        is_point <- is_point & !duplicate
+        ramsar <- ramsar[!duplicate, ]
+        is_point <- sf::st_is(ramsar, c("POINT", "MULTIPOINT"))
+      }
+    }
     if (any(is_point)) {
       if (buffer_points) {
         buffered <- convert_points_polygon(
@@ -170,6 +185,7 @@ make_wetlands_ramsar <- function(
       log_message("Rasterising and normalising {nrow(polygons)} Ramsar site(s)...")
       polygons <- polygons %>%
         sf::st_make_valid() %>%
+        .polygons_only() %>%
         dplyr::summarise() %>%
         sf::st_make_valid()
       ramsar <- exactextractr::coverage_fraction(pus, polygons)[[1]] %>%
