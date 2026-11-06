@@ -1,5 +1,58 @@
 # elsar (development version)
 
+## Earth Engine downloads
+
+These fixes are tested with mocked Drive and Earth Engine calls; they still
+need a live run.
+
+* **Exports are matched exactly in Drive.** A file now counts only if it is
+  `<export>.tif` or one of its tiles (`<export>-0000000000-0000000000.tif`).
+  Before, any name starting with the export's name matched, so the `ECU`
+  export could pick up `ECU_REG` files, or an old copy.
+* **The wait follows the export task.** Downloads start when Earth Engine
+  reports the task COMPLETED, and a FAILED or CANCELLED task is an error with
+  Earth Engine's message. Before, the wait only watched for files to appear
+  in Drive.
+* **Every tile is downloaded.** `download_lulc_proportions()` took only the
+  first tile of a split export, and `download_lulc_class_proportion()`
+  stopped at the first file to appear. Running out of `wait_time` is now
+  always an error: `download_gee_layer()` used to merge whatever tiles had
+  arrived, with a warning.
+* **A rerun waits for a task that is still running** instead of exporting the
+  same layer again. That applies to all three export functions; before, only
+  `download_gee_layer()` checked.
+* **`force_download = TRUE` refreshes.** `download_lulc_proportions()` now
+  moves the previous export's Drive files to the bin before exporting again.
+  Before, the wait picked up the old file straight away.
+* **Cached proportions are found without Earth Engine.**
+  `download_lulc_proportions(year = NULL)` uses the newest year already
+  downloaded in `output_dir`, without starting Python or Earth Engine. Before,
+  it looked only for last year's files, which miss whenever the data lag a
+  year.
+* **`download_gee_layer(aggregate_to_pus = TRUE)` now aggregates in Earth
+  Engine** (`reduceResolution()` with `aggregation_reducer`). Before, it
+  exported at planning-unit scale without aggregating, so Earth Engine
+  resampled categorical data by averaging class codes. Files read from the
+  cache now get the same `pre_aggregated` tag as fresh downloads.
+* **`download_gee_layer()` looks for the latest year with data in the region**,
+  not anywhere in the world.
+* **`wait_time` is the maximum wait in minutes and may be fractional.** It must
+  be positive: 0 was accepted and timed out at once, and 2.5 was rejected.
+* **`year` is passed on for ESRI.** `download_lulc_data(product = "esri_10m",
+  year = )` used the latest year whatever was asked. For ESA WorldCover, a year
+  other than 2021 now gives a warning.
+* **`merge_tiles()` takes the files to merge** (a directory still works).
+  Tiles with another CRS or resolution are an error, where GDAL used to drop
+  them silently. The output is written atomically, so an interrupted write no
+  longer leaves a truncated file that later runs reuse.
+* **`initialize_earthengine()` stops at once if Python is already running
+  without `ee`.** Before, it went on to build a conda environment that
+  reticulate could not switch to.
+* `download_lulc_class_proportion()` warns about arguments passed in `...`,
+  which it never used.
+* The GEE download test called a function that does not exist
+  (`elsar_download_gee_layer()`). It still needs `GEE_PROJECT` set to run.
+
 ## Bug fixes
 
 * `make_underrepresented_ecosystems()` gave ecosystems that no protected area

@@ -50,7 +50,9 @@ Default is "INT1U".}
 Currently defaults to NULL (Drive root) to avoid a GEE folder duplication bug.}
 
 \item{wait_time}{Numeric. Maximum time in minutes to wait for the GEE export
-to appear in Google Drive. Default is 5. Increase for large exports.}
+task to finish (fractions allowed). Default is 5. Increase for large
+exports. On a timeout the task keeps running; a rerun waits for it rather
+than exporting again.}
 
 \item{band}{Character or NULL. Specific band to select from the image. If NULL,
 uses all bands. Useful for datasets like Dynamic World ("label") or
@@ -68,15 +70,19 @@ When provided with \code{aggregate_to_pus = TRUE}, the export will be resampled
 to match the PU resolution and projection in GEE before download.}
 
 \item{aggregate_to_pus}{Logical. If TRUE and \code{pus} is provided, aggregate the
-data to planning unit resolution in GEE before export. This significantly
-speeds up processing by eliminating local resampling. Default is FALSE.}
+native pixels to planning unit size in GEE (\code{reduceResolution()} with
+\code{aggregation_reducer}) before export, then reproject the result to the
+planning units locally. Default is FALSE.}
 
 \item{aggregation_reducer}{Character. Reducer to use for GEE-side aggregation:
 "mode" (default, for categorical data), "mean", or "sum".}
 }
 \value{
-A \code{SpatRaster} object written to disk, or NULL if export timed out.
-When \code{aggregate_to_pus = TRUE}, the result has attribute \code{pre_aggregated = TRUE}.
+A \code{SpatRaster} object written to disk. If the export does not finish
+within \code{wait_time} minutes, or fails, the function stops with an error.
+When \code{aggregate_to_pus = TRUE}, the result has attribute
+\code{pre_aggregated = TRUE}, whether it was downloaded or read from an
+existing file.
 }
 \description{
 Generic function for downloading any raster data from Google Earth Engine.

@@ -10,7 +10,7 @@ safe_task_status(task)
 \item{task}{A GEE task object}
 }
 \value{
-List with state and description fields, or NULL on error
+List with state, description and error_message fields, or NULL on error
 }
 \description{
 Wraps task status() calls to handle Python integer overflow on Windows.
