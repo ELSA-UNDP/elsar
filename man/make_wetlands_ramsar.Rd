@@ -11,6 +11,7 @@ make_wetlands_ramsar(
   iso3,
   buffer_points = TRUE,
   area_column = "area_ha",
+  id_column = "ramsarid",
   nQuadSegs = 50,
   wetland_threshold = 0.25,
   return_all = FALSE
@@ -35,6 +36,10 @@ If \code{TRUE}, circular buffers are generated from the area attribute (default:
 
 \item{area_column}{A string indicating the name of the column containing site area (in hectares).
 Used when buffering point geometries (default: "area_ha").}
+
+\item{id_column}{Character. Site identifier column in \code{ramsar_in} (default
+\code{"ramsarid"}). Centroids of sites that also have a boundary polygon are
+ignored, so those sites are not counted twice.}
 
 \item{nQuadSegs}{An integer specifying the number of segments used to approximate circular buffer (default: 50).}
 

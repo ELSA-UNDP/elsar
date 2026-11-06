@@ -88,20 +88,21 @@ make_kbas <- function(
         log_message("Including AZE sites in KBAs.")
       }
 
-      if (!include_regional_kba) {
+      # (kba is already an empty raster if AZE exclusion left no sites)
+      if (!include_regional_kba && !inherits(kba, "SpatRaster")) {
         log_message("Excluding Regional KBAs or those with undetermined Global status.")
         kba <- dplyr::filter(kba, !kbaclass %in% c("Regional", "Global/ Regional to be determined"))
       }
 
-      if (nrow(kba) == 0) {
+      if (!inherits(kba, "SpatRaster") && nrow(kba) == 0) {
         log_message("No sites founds after removing Regional sites and those with undetermined Global status: returning empty raster.")
         kba <- terra::ifel(pus == 1, 0, NA)
       }
     }
 
-    if (inherits(kba, "SpatRaster")) {
-      return(kba)
-    } else {
+    # An empty raster from the filters above skips rasterising but is still
+    # saved below
+    if (!inherits(kba, "SpatRaster")) {
       # Separate polygons and points - exactextractr only works with polygons
       geom_types <- sf::st_geometry_type(kba)
       has_points <- any(geom_types %in% c("POINT", "MULTIPOINT"))
