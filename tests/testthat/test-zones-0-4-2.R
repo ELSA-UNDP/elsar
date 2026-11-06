@@ -75,6 +75,25 @@ test_that("the Manage Zone works without a pasture layer (F17)", {
   expect_equal(unname(terra::values(zb[[2]])[1, 1]), 0)
 })
 
+test_that("pasture probability in percent is read as 0-1", {
+  # Global Pasture Watch stores probability as 0-100: 40% passes the 0.35
+  # threshold, 20% does not, whatever the region's maximum is
+  mz <- function(pasture, ...) suppressMessages(make_manage_zone(
+    iso3 = "TST", pus = pus(), human_pressure = grid(1:16),
+    agricultural_areas = grid(0), built_areas = grid(0), managed_forests = grid(0),
+    pasturelands = grid(pasture), filter_patch_size = FALSE, ...
+  ))
+  v <- terra::values(mz(c(40, 20, rep(0, 14)))[[2]])[, 1]
+  expect_equal(v[1:3], c(1, 0, 0))
+  v2 <- terra::values(mz(c(0.4, 0.2, rep(0, 14)))[[2]])[, 1]
+  expect_equal(v2[1:3], c(1, 0, 0))
+  # A small percent layer is read correctly when the scale is given
+  v3 <- terra::values(mz(c(0.8, rep(0, 15)), pasturelands_scale = "percent")[[2]])[, 1]
+  expect_equal(v3[1], 0)
+  expect_error(mz(c(40, rep(0, 15)), pasturelands_scale = "fraction"), "percent")
+  expect_error(mz(c(140, rep(0, 15))), "not a percentage")
+})
+
 test_that("protected areas can be a multi-row SpatVector in another CRS", {
   pas <- terra::vect(sf::st_transform(sf::st_sf(geometry = sf::st_sfc(
     sf::st_polygon(list(rbind(c(0, 0), c(1000, 0), c(1000, 1000), c(0, 1000), c(0, 0)))),
