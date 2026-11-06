@@ -1,5 +1,59 @@
 # elsar (development version)
 
+## Values change: rebuild these layers
+
+0.4.2 fixes several calculations that gave wrong values without any error.
+Layers built with 0.4.1 or earlier should be rebuilt; the pipeline should stay
+on 0.4.1 until a country is rerun.
+
+* **Every layer that goes through `make_normalised_raster()`** (almost all
+  feature layers). Inputs are now aggregated to the planning units with the
+  requested method (`method_override`: `"mean"`, `"sum"`, `"max"`, `"mode"`,
+  ...), weighting every input cell by the share of the planning unit it
+  covers. Before, they were warped onto the planning grid with bilinear
+  interpolation first, which made `method_override` a no-op, point-sampled
+  proportion layers (agriculture, built areas, LULC classes) and blurred
+  coarse inputs. Inputs in another CRS are aggregated through a sub-grid of up
+  to 10 x 10 cells per planning unit (area-weighted to within 1/100 of a
+  planning unit, with bounded memory, also across the antimeridian).
+* **Layers with gaps inside the planning units.** Missing data is now filled
+  (`fill_na`) *after* inversion and rescaling, so it always gets the lowest
+  score. Before, it was filled first: inverted layers ranked missing data
+  highest, and the fill value stretched the rescale of other layers. For a
+  layer with negative values (e.g. a difference), missing cells now score the
+  same as the lowest value instead of mid-scale.
+* **Constant layers** (e.g. a region fully covered by protected areas, or an
+  all-1 zone) are no longer turned into `NaN` by `rescale_raster()`; they
+  become 1 (or 0 when the value is 0), with a message.
+* **Zones built from LULC, degradation or pasture rasters**
+  (`make_protect_zone()`, `make_restore_zone()`, `make_manage_zone()`,
+  `make_urban_greening_zone()`, `make_urban_greening_opportunities()`).
+  Thresholds such as `agriculture_threshold = 0.1` are now compared with the
+  true share of each planning unit. Before, these paths rescaled the share to
+  the national maximum first, so the threshold meant something different in
+  every country.
+* **Layers whose values are all zero or negative** (e.g. differences) are no
+  longer mistaken for empty layers and returned as all 0.
+* **`make_urban_greening_opportunities()`** inverted NDVI twice, ranking green
+  cells as most in need of greening; low vegetation now ranks highest and water
+  lowest. It also no longer requires the planning-unit layer to be named
+  "Planning Units".
+
+## Other changes
+
+* `make_managed_forests()` gains `rescaled` (default `TRUE`). When its output
+  feeds `make_manage_zone()`, use `rescaled = FALSE`: the zone's
+  `forest_class_threshold` is a true share of each planning unit.
+* `make_normalised_raster()`: cells outside the planning units are now always
+  NoData, also with `fill_na = NULL` (which leaves gaps inside them `NA`).
+
+* `make_normalised_raster()` names its output layer after `name_out` (or the
+  input layer), and also saves the empty layer it returns when there is no
+  data.
+* R CMD check now runs on the `develop` branch and on pull requests into it.
+
+# elsar 0.4.1
+
 ## Bug fixes
 
 * `make_underrepresented_ecosystems()` gave ecosystems that no protected area

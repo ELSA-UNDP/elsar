@@ -42,7 +42,11 @@ iso3_base <- function(iso3) {
 #' @param new_min Numeric. New minimum of rescaled raster (default = 0).
 #' @param new_max Numeric. New maximum of rescaled raster (default = 1).
 #'
-#' @return A `SpatRaster` with values rescaled to the specified range.
+#' @return A `SpatRaster` with values rescaled to the specified range. A
+#'   constant layer returns `new_max` where its value is positive and `new_min`
+#'   otherwise (with a message), instead of `NaN`. Note that with
+#'   `invert = TRUE` in [make_normalised_raster()], a constant positive layer
+#'   is inverted first and so becomes `new_min` everywhere.
 #' @export
 rescale_raster <- function(
     raster_in,
@@ -52,6 +56,16 @@ rescale_raster <- function(
     new_max = 1) {
   if (is.null(raster_in_min)) raster_in_min <- terra::global(raster_in, min, na.rm = TRUE)$min
   if (is.null(raster_in_max)) raster_in_max <- terra::global(raster_in, max, na.rm = TRUE)$max
+  if (isTRUE(raster_in_max - raster_in_min <= 0)) {
+    # A constant layer has no range: dividing by zero would give NaN everywhere
+    # (e.g. a region fully covered by protected areas). Keep the information
+    # that it is uniformly present (new_max) or absent (new_min).
+    value <- if (isTRUE(raster_in_max > 0)) new_max else new_min
+    # Common and harmless for empty layers (e.g. no KBAs in the country), so
+    # report it without a warning
+    log_message("rescale_raster: the layer is constant ({signif(raster_in_max, 4)}); returning {value} wherever it has data.")
+    return(terra::ifel(is.na(raster_in), NA, value))
+  }
   new_min + (raster_in - raster_in_min) * ((new_max - new_min) / (raster_in_max - raster_in_min))
 }
 

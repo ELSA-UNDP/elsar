@@ -9,8 +9,10 @@
 #' @param iso3 `character` ISO3 country code used for naming the output file.
 #' @param invert `logical` If `TRUE`, inverts the raster values (default: `FALSE`).
 #' @param rescaled `logical` If `TRUE`, rescales the raster using `rescale_raster()` (default: `TRUE`).
-#' @param method_override `character` Optional method for `terra::project()`, overriding
-#'        the default (default: `NULL`).
+#' @param method_override `character` How input cells are combined into each
+#'        planning unit (default `NULL`, i.e. `"mean"`): one of the
+#'        [exactextractr::exact_resample()] summaries, e.g. `"mean"`, `"sum"`,
+#'        `"max"`, `"min"` or `"mode"`. All are area-weighted (see Details).
 #' @param crop_global_input  `logical` If true the input (large global) raster is cropped
 #'        to the PU extent before applying an `input_raster_conditional_expression`, to reduce
 #'        the are of processing (default: `TRUE`).
@@ -18,21 +20,33 @@
 #'        function to the raster before resampling to the PU layer (default: `NULL`).
 #' @param conditional_expression `function` Optional method to apply a function to the
 #'        raster after resampling to the PU layer (default: `NULL`).
-#' @param fill_na `numeric` or `NA` The fill value used for `NA` cells before
-#'        masking (default: 0). When non-NULL (the default), filled cells are
-#'        then masked back to the planning units, so the result is NoData outside
-#'        the study area. Pass `NULL` to skip both the fill and this PU masking -
-#'        in which case cells outside the planning units are NOT set to NoData.
+#' @param fill_na `numeric` or `NULL`. The value given to planning units with
+#'        no data (default: 0). It is applied *after* `invert` and `rescaled`,
+#'        so with the defaults missing data gets the lowest score (0). `NULL`
+#'        leaves those cells `NA`. Cells outside the planning units are always
+#'        NoData.
 #' @param name_out `character` The name of the output raster file (without the extension).
 #' @param output_path `character` The directory path to save the output raster (default: `NULL`, i.e., not saved).
 #' @param threads Optional method to use multi-core processing - to speed on some `terra`
 #'        functions (default: `TRUE`).
 #'
-#' @details This function reprojects the input raster (`raster_in`) to match the CRS and resolution
-#' of the planning units (`pus`). The method for reprojection can be overridden using `method_override`.
-#' If `input_raster_conditional_expression` is provided, it is applied before any reprojection. Applying a
-#' `input_raster_conditional_expression` can also make processing times significantly longer
-#' for high resolution input rasters.The function can optionally rescale (0-1) and invert the raster values.
+#' @details The input is aggregated to the planning-unit grid with `method_override`
+#' (`"mean"` by default), weighting every input cell by the share of the
+#' planning unit it covers:
+#' * in the same CRS, with [exactextractr::exact_resample()];
+#' * in another CRS, by warping onto a sub-grid of up to 10 x 10 cells per
+#'   planning unit with the matching GDAL method (average, max, min, mode;
+#'   every overlapping input cell counts) and aggregating back. Very fine
+#'   inputs are first aggregated in their own CRS. Results are area-weighted to
+#'   within 1/100 of a planning unit, memory is bounded by the planning-unit
+#'   grid, and inputs crossing the antimeridian are handled. `"sum"` keeps
+#'   totals.
+#'
+#' Steps, in order: `input_raster_conditional_expression` (on the input, before
+#' aggregation; it can be slow for high-resolution inputs), aggregation,
+#' `conditional_expression`, `invert`, rescaling to 0-1, `fill_na`, masking to
+#' the planning units. A layer with no data at all returns 0 inside the
+#' planning units.
 #'
 #' @return Returns a `SpatRaster` object that has been reprojected and processed.
 #' If `output_path` is specified, saves the raster as a COG (Cloud Optimized GeoTIFF).
@@ -138,12 +152,6 @@ make_normalised_raster <- function(raster_in,
     # Just align and mask to PUs
     dat_aligned <- terra::project(raster_in, y = pus, threads = threads)
 
-    max_val <- suppressWarnings(terra::minmax(dat_aligned)[2])
-    if (is.null(dat_aligned) || isTRUE(is.na(max_val)) || isTRUE(max_val == 0)) {
-      log_message("No valid raster values found: returning empty raster.")
-      return(terra::ifel(pus == 1, 0, NA))
-    }
-
     # Apply input conditional expression if provided (for class extraction)
     if (!is.null(input_raster_conditional_expression)) {
       # Warn if applying class extraction to mode-aggregated categorical data
@@ -177,17 +185,8 @@ make_normalised_raster <- function(raster_in,
       }
     }
 
-    # Reproject and align raster to match PUs
-    dat_aligned <- terra::project(raster_in, y = pus, threads = threads)
-
-    max_val <- suppressWarnings(terra::minmax(dat_aligned)[2])
-    if (is.null(dat_aligned) || isTRUE(is.na(max_val)) || isTRUE(max_val == 0)) {
-      log_message("No valid raster values found: returning empty raster.")
-      return(terra::ifel(pus == 1, 0, NA))
-    }
-
-    # Resample using exactextractr to match PU resolution
-    dat_aligned <- exactextractr::exact_resample(x = dat_aligned, y = pus, fun = method)
+    # Align to the PU grid, aggregating with `method` (area-weighted)
+    dat_aligned <- .align_to_pus(raster_in, pus, method = method, threads = threads)
   }
 
   # Guard against unflagged NoData sentinels. An input with no proper NoData set
@@ -223,22 +222,36 @@ make_normalised_raster <- function(raster_in,
     dat_aligned <- conditional_expression(dat_aligned)
   }
 
-  if (!is.null(fill_na)) {
-    dat_aligned[is.na(dat_aligned)] <- fill_na
-    dat_aligned <- terra::mask(dat_aligned, pus, maskvalues = NA)
+  # Empty means no data at all. Checked after the conditional expression, so
+  # layers whose values are all <= 0 (e.g. differences) are not mistaken for
+  # empty ones.
+  if (isTRUE(suppressWarnings(terra::global(dat_aligned, "notNA")[[1]]) == 0)) {
+    log_message("No valid raster values found: returning empty raster.")
+    dat_aligned <- terra::ifel(pus == 1, 0, NA)
+    rescaled <- FALSE
+    invert <- FALSE
   }
 
+  # Invert and rescale the data first, then fill gaps, so missing data always
+  # gets `fill_na` in the final units (0 = the lowest score after rescaling)
+  # instead of becoming the maximum after inversion.
   if (invert) {
     dat_aligned <- -dat_aligned
   }
 
   if (rescaled) {
-    dat_aligned <- elsar::rescale_raster(dat_aligned)
+    dat_aligned <- rescale_raster(dat_aligned)
   } else {
     # A deliberate, common choice for presence/coverage layers - inform, don't
     # warn (warning() here fires dozens of times per pipeline run).
     log_message("Raster values are NOT rescaled (rescaled = FALSE).")
   }
+
+  if (!is.null(fill_na)) {
+    dat_aligned <- terra::ifel(is.na(dat_aligned), fill_na, dat_aligned)
+  }
+  dat_aligned <- terra::mask(dat_aligned, pus, maskvalues = NA)
+  names(dat_aligned) <- if (!missing(name_out)) name_out else names(raster_in)[1]
 
   if (!is.null(output_path)) {
     data_type <- if (terra::is.int(dat_aligned)) "INT1S" else "FLT4S"
@@ -267,4 +280,108 @@ make_normalised_raster <- function(raster_in,
   }
 
   return(dat_aligned)
+}
+
+# Align a raster to the planning-unit grid, aggregating with `method`.
+#
+# Same CRS: exactextractr::exact_resample() weights every input cell by the
+# share of the planning unit it covers, for inputs finer or coarser than the
+# PUs.
+#
+# Different CRS: the input is cropped to the PU footprint, pre-aggregated in
+# its own CRS if it is much finer than needed, warped onto a sub-grid of n x n
+# cells per PU (aligned with the PUs, so the warp is bounded by the PU extent,
+# also across the antimeridian) with the GDAL method matching `method`
+# (average, max, min, mode: every source cell overlapping a sub-cell counts,
+# so small features are not skipped), and aggregated back to the PUs. The
+# sub-grid makes the result area-weighted to within 1/n^2 of a PU. `sum` is
+# carried as a density so totals are kept.
+#
+# This replaces two earlier versions: warping straight onto the PU grid with
+# bilinear interpolation (which made the area-weighted step a no-op), and
+# reprojecting at the input's native resolution (unbounded memory, and worse
+# for coarse inputs).
+.align_to_pus <- function(x, pus, method = "mean", threads = TRUE,
+                          max_subcells = 10, max_cells = 1e8) {
+  if (terra::compareGeom(x, pus, stopOnError = FALSE)) {
+    return(x)
+  }
+
+  if (terra::same.crs(x, pus)) {
+    x <- .crop_to(x, pus)
+    if (is.null(x)) return(terra::ifel(pus == 1, NA, NA))
+    return(exactextractr::exact_resample(x = x, y = pus, fun = method))
+  }
+
+  x <- .crop_to(x, pus)
+  if (is.null(x)) return(terra::ifel(pus == 1, NA, NA))
+
+  # Sub-cells per PU side: enough to resolve the input, bounded in total size
+  pu_m <- terra::res(pus)[1] * .metres_per_unit(pus)
+  in_m <- .cell_size_m(x)
+  n <- if (in_m < pu_m) ceiling(pu_m / in_m) else 5
+  n <- max(1, min(n, max_subcells, floor(sqrt(max_cells / terra::ncell(pus)))))
+
+  agg_fun <- switch(method,
+    mean = "mean", sum = "sum", min = "min", max = "max",
+    mode = "modal", majority = "modal", NULL
+  )
+
+  # Inputs much finer than a sub-cell: aggregate them in their own CRS first,
+  # so sampling does not skip small features or blow up memory
+  fact <- floor(pu_m / n / in_m)
+  if (!is.null(agg_fun) && fact >= 2) {
+    x <- terra::aggregate(x, fact = fact, fun = agg_fun, na.rm = TRUE)
+  }
+
+  if (identical(method, "sum")) {
+    # Carry totals as a density, so cells of different size add up correctly
+    x <- x / terra::cellSize(x, unit = "m", transform = FALSE)
+  }
+
+  template <- terra::disagg(terra::rast(pus), fact = n)
+  warp_method <- switch(method,
+    mean = "average", sum = "average", min = "min", max = "max",
+    mode = "mode", majority = "mode", "near"
+  )
+  sampled <- terra::project(x, template, method = warp_method, threads = threads)
+
+  if (is.null(agg_fun)) {
+    return(exactextractr::exact_resample(x = sampled, y = pus, fun = method))
+  }
+  if (identical(method, "sum")) {
+    density <- terra::aggregate(sampled, fact = n, fun = "mean", na.rm = TRUE)
+    return(density * terra::cellSize(pus, unit = "m", transform = FALSE))
+  }
+  terra::aggregate(sampled, fact = n, fun = agg_fun, na.rm = TRUE)
+}
+
+# Crop x to the planning-unit footprint (densified, so curved edges in x's CRS
+# are covered). NULL when they do not overlap.
+.crop_to <- function(x, pus) {
+  footprint <- terra::as.polygons(terra::ext(pus), crs = terra::crs(pus))
+  if (!terra::same.crs(x, pus)) {
+    step <- max(diff(terra::ext(pus)[1:2]), diff(terra::ext(pus)[3:4])) / 100
+    footprint <- terra::project(terra::densify(footprint, step), terra::crs(x))
+  }
+  if (!terra::relate(terra::ext(footprint), terra::ext(x), "intersects")[1, 1]) {
+    return(NULL)
+  }
+  terra::crop(x, footprint, snap = "out")
+}
+
+# Metres per CRS unit (projected rasters; elsar's planning units are in metres)
+.metres_per_unit <- function(x) {
+  u <- terra::linearUnits(x)
+  if (is.na(u) || u <= 0) 1 else u
+}
+
+# Approximate cell size of x in metres
+.cell_size_m <- function(x) {
+  if (terra::is.lonlat(x)) {
+    lat <- mean(terra::ext(x)[3:4])
+    sqrt(prod(terra::res(x)) * 111320 * max(cos(lat * pi / 180), 0.01) * 110574)
+  } else {
+    sqrt(prod(terra::res(x))) * .metres_per_unit(x)
+  }
 }
