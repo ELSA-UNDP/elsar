@@ -77,3 +77,44 @@ test_that("lower-case ISO3 codes match upper-case data (P8)", {
                                       custom_projection = FALSE))
   expect_equal(nrow(b), 3)
 })
+
+test_that("wide regions straddling 0 degrees keep their centre", {
+  fra <- sf::st_sf(iso3cd = "FRA", geometry = ll(sf::st_multipolygon(list(
+    box(-5, 8, 42, 51), box(-151, -149, -18, -16), box(164, 167, -23, -20)
+  ))))
+  expect_equal(.central_longitude(fra), mean(c(-151, 167)))
+  # A pole-enclosing ring with vertices all the way round (like Antarctica)
+  lon <- seq(-180, 180, by = 30)
+  ring <- sf::st_sf(geometry = ll(sf::st_polygon(list(rbind(
+    cbind(lon, -65), cbind(rev(lon), -90), c(-180, -65)
+  )))))
+  expect_equal(.central_longitude(ring), 0)
+  nocrs <- sf::st_sf(geometry = sf::st_sfc(sf::st_multipolygon(list(
+    box(177, 179.99, -19, -16), box(-180, -178, -19, -16)))))
+  expect_gt(abs(.central_longitude(nocrs)), 170)
+})
+
+test_that("the mainland keeps shared attributes and the geometry column name", {
+  x <- provinces()
+  sf::st_geometry(x) <- "geom"
+  m <- .keep_mainland(x)
+  expect_equal(attr(m, "sf_column"), "geom")
+  expect_equal(names(sf::st_drop_geometry(m)), "iso3cd") # province names dropped
+  expect_error(.keep_mainland(x[0, ]), "no features")
+})
+
+test_that("an extent that is an exact multiple of the cell size gains no cell", {
+  b <- sf::st_sf(geometry = sf::st_sfc(box(0, 10000, 0, 10000), crs = "ESRI:54009"))
+  pus <- suppressMessages(make_planning_units(b, pu_size = 1000, iso3 = "TST"))
+  expect_equal(dim(pus)[1:2], c(10, 10))
+})
+
+test_that("lower-case ISO3 codes in the data match too", {
+  ea <- "ESRI:54009"
+  pus <- terra::rast(nrows = 4, ncols = 4, xmin = 0, xmax = 4000, ymin = 0, ymax = 4000,
+                     crs = ea, vals = 1)
+  kba <- sf::st_sf(iso3 = "tst", azestatus = NA, kbaclass = "Global", repareakm2 = NA,
+                   geometry = sf::st_sfc(box(0, 2000, 0, 2000), crs = ea))
+  r <- suppressMessages(make_kbas(kba, pus, "TST"))
+  expect_equal(sum(terra::values(r) > 0), 4)
+})

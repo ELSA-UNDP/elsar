@@ -30,7 +30,11 @@ when estimating PU size automatically.}
 
 \item{limit_to_mainland}{Logical. If \code{TRUE}, only the largest polygon of
 \code{boundary_proj} (its mainland) gets planning units; islands and other
-outlying parts are dropped (default \code{FALSE}).}
+outlying parts are dropped (default \code{FALSE}; before 0.4.2 it was ignored).
+Note that this is the single largest polygon after merging all
+features: for New Zealand it is the South Island, for Indonesia the
+Indonesian part of Borneo, for the United States the contiguous states
+(Alaska and Hawaii are dropped).}
 
 \item{iso3}{Character. ISO3 country code used to name the output raster (e.g., "KEN", "BRA").}
 

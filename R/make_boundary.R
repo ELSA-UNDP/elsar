@@ -6,6 +6,10 @@
 #'   polygon (the mainland), dropping islands and other outlying parts. Applied
 #'   after any `iso3` filter, so the largest polygon is chosen within the target
 #'   region. Default `FALSE`.
+#'   Note that this is the single largest polygon after merging all
+#'   features: for New Zealand it is the South Island, for Indonesia the
+#'   Indonesian part of Borneo, for the United States the contiguous states
+#'   (Alaska and Hawaii are dropped).
 #' @param col_name A string of the column containing the actual extent of the planning region (not outside area). Can be `NULL`.
 #' @param filter_out A value representing the outside area in the data (e.g. `0`)
 #' @param custom_projection Logical. `TRUE`if custom projection for planning region is wanted.
@@ -147,14 +151,21 @@ make_boundary <- function(boundary_in,
   return(nb)
 }
 
-# Keep only the largest polygon of a region (its mainland), after merging all
-# features, with the first feature's attributes
+# Keep only the largest single polygon of a region (its "mainland"), after
+# merging all features. Attributes that are the same for every feature (such
+# as the ISO3 code) are kept; others (e.g. province names) are dropped. The
+# geometry column keeps its name.
 .keep_mainland <- function(x) {
-  pieces <- x %>%
-    sf::st_make_valid() %>%
-    sf::st_union() %>%
-    sf::st_cast("POLYGON")
+  assertthat::assert_that(nrow(x) > 0, msg = "The boundary has no features.")
+  geom_col <- attr(x, "sf_column")
+  merged <- sf::st_union(sf::st_make_valid(x))
+  if (any(sf::st_is(merged, "GEOMETRYCOLLECTION"))) {
+    merged <- sf::st_collection_extract(merged, "POLYGON")
+  }
+  pieces <- sf::st_cast(sf::st_cast(merged, "MULTIPOLYGON"), "POLYGON")
   mainland <- pieces[which.max(as.numeric(sf::st_area(pieces)))]
-  attrs <- sf::st_drop_geometry(x[1, ])
-  sf::st_sf(attrs, geometry = mainland)
+  attrs <- sf::st_drop_geometry(x)
+  constant <- vapply(attrs, function(v) length(unique(v)) == 1, logical(1))
+  out <- sf::st_sf(attrs[1, constant, drop = FALSE], geometry = mainland)
+  sf::st_set_geometry(out, geom_col)
 }

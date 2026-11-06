@@ -97,17 +97,30 @@ make_custom_projection <- function(boundary,
   )
 }
 
-# Central longitude of a lon/lat boundary. A bounding box wider than 180
-# degrees means the region crosses the antimeridian (Fiji, Kiribati, Russia,
-# New Zealand with the Chathams): use the midpoint of the longitude-shifted
-# (0-360) box instead, so the projection is centred on the region and not
-# near 0 degrees (before 0.4.2).
+# Central longitude of a lon/lat boundary. A region crossing the antimeridian
+# (Fiji, Kiribati, Russia, New Zealand with the Chathams, the US with the
+# Aleutians) has a plain bounding box near 360 degrees wide, and its plain
+# midpoint lies near 0 degrees, far from the region (before 0.4.2). Its
+# longitude-shifted (0-360) box is much narrower: use the shifted midpoint
+# when the shifted box is narrower and fits within 180 degrees. Regions that straddle 0 degrees and are
+# wide for other reasons (France with Polynesia, an EEZ) and pole-enclosing
+# rings (Antarctica) keep the plain midpoint, as before.
 .central_longitude <- function(boundary) {
-  bb <- sf::st_bbox(boundary)
+  g <- sf::st_geometry(boundary)
+  if (is.na(sf::st_crs(g))) sf::st_crs(g) <- 4326
+  bb <- sf::st_bbox(g)
+  plain_mid <- mean(c(bb$xmin, bb$xmax))
   if (bb$xmax - bb$xmin <= 180) {
-    return(mean(c(bb$xmin, bb$xmax)))
+    return(plain_mid)
   }
-  shifted <- sf::st_bbox(sf::st_shift_longitude(sf::st_geometry(boundary)))
+  shifted <- sf::st_bbox(sf::st_shift_longitude(g))
+  shifted_width <- shifted$xmax - shifted$xmin
+  # A region that really crosses the antimeridian fits in 180 degrees once
+  # shifted (Russia 172, the US with the Aleutians 122, Fiji 4); pole-enclosing
+  # rings and wide regions straddling 0 degrees do not
+  if (shifted_width <= 0 || shifted_width > 180 || shifted_width >= bb$xmax - bb$xmin) {
+    return(plain_mid)
+  }
   mid <- mean(c(shifted$xmin, shifted$xmax))
   if (mid > 180) mid - 360 else mid
 }

@@ -16,7 +16,11 @@
 #'   when estimating PU size automatically.
 #' @param limit_to_mainland Logical. If `TRUE`, only the largest polygon of
 #'   `boundary_proj` (its mainland) gets planning units; islands and other
-#'   outlying parts are dropped (default `FALSE`).
+#'   outlying parts are dropped (default `FALSE`; before 0.4.2 it was ignored).
+#'   Note that this is the single largest polygon after merging all
+#'   features: for New Zealand it is the South Island, for Indonesia the
+#'   Indonesian part of Borneo, for the United States the contiguous states
+#'   (Alaska and Hawaii are dropped).
 #' @param iso3 Character. ISO3 country code used to name the output raster (e.g., "KEN", "BRA").
 #' @param background_fill The value to apply to all pixels outside the boundary_proj. This default to NA (e.g., nodata).
 #'   You should have a good reason for wanting to use a different value.
