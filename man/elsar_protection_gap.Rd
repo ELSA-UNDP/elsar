@@ -54,5 +54,5 @@ s <- elsar_summarise_actions(x, ex$regions, region_col = "region_name")
 elsar_protection_gap(s)
 }
 \seealso{
-\code{\link[=elsar_summarise_actions]{elsar_summarise_actions()}}
+\code{\link[=elsar_plot_protection_gap]{elsar_plot_protection_gap()}}
 }

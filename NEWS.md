@@ -32,7 +32,16 @@
     by region, split into inside and outside existing protected areas.
   - `elsar_protection_gap()` compares current and ELSA-proposed new protection
     against an area-based target (30% by default, as in KMGBF Target 3).
+  - `elsar_plot_actions()`, `elsar_plot_action_bars()`,
+    `elsar_plot_protection_gap()` and `elsar_plot_region()` /
+    `elsar_plot_regions()` draw maps, stacked bars, the protection gap and
+    regional map-and-bars panels, all coloured by the action scheme.
+  - `elsar_export_results()` runs the whole workflow in one call and writes
+    CSV tables and figures; `elsar_save_plots()` saves plot lists with safe
+    file names.
   - `elsar_example_results()` loads a small synthetic ELSA result to try them.
+  - New vignette: "Analysing and reporting ELSA results".
+  - patchwork moves from Suggests to Imports.
 
 * `elsar_calibrate_weights()` computes per-feature calibration weights for an ELSA
   prioritization so that features achieve more even representation relative to their

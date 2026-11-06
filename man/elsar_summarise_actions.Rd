@@ -71,5 +71,5 @@ elsar_summarise_actions(x)
 elsar_summarise_actions(x, ex$regions, region_col = "region_name", units = "km2")
 }
 \seealso{
-\code{\link[=elsar_protection_gap]{elsar_protection_gap()}}
+\code{\link[=elsar_protection_gap]{elsar_protection_gap()}}, \code{\link[=elsar_plot_action_bars]{elsar_plot_action_bars()}}, \code{\link[=elsar_export_results]{elsar_export_results()}}
 }

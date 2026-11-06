@@ -219,7 +219,7 @@ elsar_prepare_actions <- function(actions,
 #' The planning area of each region is stored in the `region_area`
 #' attribute.
 #'
-#' @seealso [elsar_protection_gap()]
+#' @seealso [elsar_protection_gap()], [elsar_plot_action_bars()], [elsar_export_results()]
 #' @export
 #'
 #' @examples
@@ -363,7 +363,7 @@ elsar_summarise_actions <- function(x,
 #'   `target_pct`, `gap` (area still needed to reach the target, never below
 #'   0) and `target_met`.
 #'
-#' @seealso [elsar_summarise_actions()]
+#' @seealso [elsar_plot_protection_gap()]
 #' @export
 #'
 #' @examples

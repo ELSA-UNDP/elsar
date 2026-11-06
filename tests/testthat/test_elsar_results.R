@@ -242,3 +242,95 @@ test_that("example results load and summarise", {
   s <- elsar_summarise_actions(x, ex$regions, region_col = "region_name")
   expect_equal(nlevels(s$region), 3)
 })
+
+# Plots and export ----------------------------------------------------------------
+
+example_inputs <- function() {
+  ex <- elsar_example_results()
+  x <- elsar_prepare_actions(ex$actions, pas = ex$pas)
+  s <- elsar_summarise_actions(x, ex$regions, region_col = "region_name")
+  list(ex = ex, x = x, s = s, g = elsar_protection_gap(s))
+}
+
+builds <- function(p) {
+  expect_no_error(suppressMessages(ggplot2::ggplot_build(p)))
+}
+
+test_that("action map builds, with and without PAs and regions", {
+  d <- example_inputs()
+  builds(elsar_plot_actions(d$x, regions = d$ex$regions))
+  builds(elsar_plot_actions(elsar_prepare_actions(d$ex$actions), show_no_action = FALSE))
+  builds(elsar_plot_actions(d$x, legend = FALSE))
+})
+
+test_that("bar charts use the scheme colours and the PA segment", {
+  d <- example_inputs()
+  p <- elsar_plot_action_bars(d$s)
+  built <- ggplot2::ggplot_build(p)
+  fills <- unique(built$data[[1]]$fill)
+  expect_true(all(c("#005000", "#06C723", "#8803FC") %in% fills))
+  # Segments of each region add up to the action share of the region
+  expect_equal(
+    sum(built$data[[1]]$x[built$data[[1]]$y == 3] - built$data[[1]]$xmin[built$data[[1]]$y == 3]),
+    sum(d$s$pct_of_region[d$s$region == "Westmoor" & d$s$is_action]),
+    tolerance = 1e-6
+  )
+  builds(elsar_plot_action_bars(d$s, metric = "area", by = "action"))
+  builds(elsar_plot_action_bars(d$s, split_pa = FALSE))
+})
+
+test_that("bar charts warn when asked to split PAs without PA data", {
+  s <- elsar_summarise_actions(elsar_prepare_actions(toy_actions()))
+  expect_warning(p <- elsar_plot_action_bars(s, split_pa = TRUE), "split_pa")
+  builds(p)
+})
+
+test_that("protection gap plot builds, with and without a target", {
+  d <- example_inputs()
+  builds(elsar_plot_protection_gap(d$g))
+  builds(elsar_plot_protection_gap(d$g, metric = "area"))
+  s_no_target <- elsar_protection_gap(d$s, target = NULL)
+  builds(elsar_plot_protection_gap(s_no_target))
+  expect_error(elsar_plot_protection_gap(d$s), "elsar_protection_gap")
+})
+
+test_that("region panels are made for every region", {
+  d <- example_inputs()
+  plots <- elsar_plot_regions(d$x, d$s, d$ex$regions, "region_name", metrics = "percent")
+  expect_named(plots, levels(d$s$region))
+  expect_s3_class(plots[[1]], "patchwork")
+  expect_error(
+    elsar_plot_region(d$x, d$s, d$ex$regions, "region_name", "Atlantis"),
+    "Atlantis"
+  )
+})
+
+test_that("elsar_export_results() writes summaries, plots and region panels", {
+  d <- example_inputs()
+  dir <- withr::local_tempdir()
+  out <- suppressMessages(elsar_export_results(
+    d$ex$actions, dir, regions = d$ex$regions, region_col = "region_name",
+    pas = d$ex$pas, dpi = 30
+  ))
+  expect_true(all(file.exists(out$files)))
+  expect_setequal(
+    basename(out$files),
+    c("elsa_actions_national.csv", "elsa_actions_by_region.csv", "elsa_protection_gap.csv",
+      "elsa_map.png", "elsa_bars.png", "elsa_protection_gap.png",
+      "elsa_Westmoor.png", "elsa_Central_Highlands.png", "elsa_Eastern_Delta.png")
+  )
+  csv <- utils::read.csv(file.path(dir, "elsa_protection_gap.csv"))
+  expect_equal(csv$total, out$gap$total, tolerance = 1e-6)
+})
+
+test_that("elsar_export_results() works without regions or PAs", {
+  dir <- withr::local_tempdir()
+  out <- suppressMessages(elsar_export_results(toy_actions(), dir, dpi = 30))
+  expect_null(out$gap)
+  expect_setequal(basename(out$files),
+                  c("elsa_actions_national.csv", "elsa_map.png", "elsa_bars.png"))
+})
+
+test_that("plot file names are safe and unique", {
+  expect_equal(.safe_name(c("São Tomé", "A/B", "")), c("Sao_Tome", "A_B", "region"))
+})

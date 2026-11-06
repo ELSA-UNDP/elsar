@@ -34,7 +34,6 @@ Suggests:
     highs,
     kableExtra,
     knitr,
-    patchwork,
     prioritizr,
     progressr,
     rappdirs,
@@ -43,7 +42,8 @@ Suggests:
     rmarkdown,
     RPostgres,
     testthat (>= 3.0.0),
-    wdpar
+    wdpar,
+    withr
 VignetteBuilder: knitr
 Depends:
     R (>= 3.5.0)
@@ -57,10 +57,12 @@ Imports:
     ggridges,
     ggspatial,
     glue,
+    grDevices,
     here,
     jsonlite,
     lifecycle,
     magrittr,
+    patchwork,
     plyr,
     png,
     purrr,
@@ -73,6 +75,7 @@ Imports:
     tibble,
     tidyterra,
     units,
+    utils,
     xml2
 Config/testthat/edition: 3
 LazyData: true

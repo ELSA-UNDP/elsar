@@ -82,6 +82,12 @@ reference:
   - elsar_prepare_actions
   - elsar_summarise_actions
   - elsar_protection_gap
+  - elsar_plot_actions
+  - elsar_plot_action_bars
+  - elsar_plot_protection_gap
+  - elsar_plot_region
+  - elsar_save_plots
+  - elsar_export_results
   - elsar_example_results
 
 - title: Helper Functions
