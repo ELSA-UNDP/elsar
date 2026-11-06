@@ -354,9 +354,10 @@ elsar_plot_region <- function(x,
   bars <- lapply(seq_along(metrics), function(i) {
     b <- .bar_plot(d, colours, metrics[i], "action", attr(summary, "units"), NULL, base_size,
                    legend_breaks = names(colours))
-    # Only the first chart needs the action labels
+    # Only the first chart needs the action labels; the right margin keeps the
+    # last axis label clear of the next chart
     if (i > 1) b <- b + ggplot2::theme(axis.text.y = ggplot2::element_blank())
-    b
+    b + ggplot2::theme(plot.margin = ggplot2::margin(5, 18, 5, 5))
   })
 
   right <- patchwork::wrap_plots(bars, nrow = 1)
