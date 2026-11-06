@@ -65,6 +65,14 @@ test_that("the Manage Zone works without a pasture layer (F17)", {
   ))
   expect_s4_class(z, "SpatRaster")
   expect_equal(unname(terra::values(z[[2]])[1, 1]), 1) # farmland is manageable
+  # Built-up farmland is excluded from both zones
+  zb <- suppressMessages(make_manage_zone(
+    iso3 = "TST", pus = pus(), human_pressure = grid(1:16),
+    agricultural_areas = grid(c(1, rep(0, 15))), built_areas = grid(c(1, rep(0, 15))),
+    managed_forests = grid(0), filter_patch_size = FALSE
+  ))
+  expect_equal(unname(terra::values(zb[[1]])[1, 1]), 0)
+  expect_equal(unname(terra::values(zb[[2]])[1, 1]), 0)
 })
 
 test_that("protected areas can be a multi-row SpatVector in another CRS", {
