@@ -1,5 +1,36 @@
 # elsar (development version)
 
+## New features
+
+* New tools to analyse ELSA results after a run. Areas are planar in the
+  equal-area projections ELSA uses and geodesic for lon/lat rasters:
+  - `elsar_action_scheme()` defines the action values, labels, colours and
+    reporting groups, so custom ELSA runs carry their own legend through every
+    table and plot.
+  - `elsar_prepare_actions()` applies the scheme to an ELSA action raster and
+    aligns existing protected areas (fractional raster or polygons).
+  - `elsar_summarise_actions()` reports the area of each action nationally or
+    by region, split into inside and outside existing protected areas.
+  - `elsar_protection_gap()` compares current and ELSA-proposed new protection
+    against an area-based target (30% by default, as in KMGBF Target 3).
+  - `elsar_plot_actions()`, `elsar_plot_action_bars()`,
+    `elsar_plot_protection_gap()` and `elsar_plot_region()` /
+    `elsar_plot_regions()` draw maps, stacked bars, the protection gap and
+    regional map-and-bars panels, all coloured by the action scheme.
+  - `elsar_export_results()` runs the whole workflow in one call and writes
+    CSV tables and figures; `elsar_save_plots()` saves plot lists with safe
+    file names.
+  - `elsar_summarise_overlap()` and `elsar_plot_overlap()` show how much of
+    any layer (KBAs, IPLC lands, ELSA features, policy overlays) falls under
+    each action, nationally or by region, and inside existing protected
+    areas. They complement the national representation reported by the run.
+  - `elsar_results_report()` renders an HTML or Word report (key figures,
+    maps, tables, protection gap, overlap and regional profiles) from a new
+    R Markdown template, also available in RStudio's template list.
+  - `elsar_example_results()` loads a small synthetic ELSA result to try them.
+  - New vignette: "Analysing and reporting ELSA results".
+  - patchwork moves from Suggests to Imports.
+
 # elsar 0.4.2
 
 ## Values change: rebuild these layers

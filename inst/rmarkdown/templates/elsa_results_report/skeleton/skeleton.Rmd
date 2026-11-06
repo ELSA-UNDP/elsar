@@ -1,0 +1,210 @@
+---
+title: "`r params$title`"
+subtitle: "`r params$country`"
+date: "`r format(Sys.Date(), '%d %B %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 2
+params:
+  title: "ELSA results report"
+  country: "Elsaland (example data)"
+  actions: NULL
+  pas: NULL
+  regions: NULL
+  region_col: NULL
+  layers: NULL
+  scheme: NULL
+  pa_threshold: NULL
+  target: 0.3
+  protect_actions: NULL
+  units: "ha"
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE, message = FALSE, warning = FALSE,
+  fig.width = 7.5, fig.height = 4, dpi = 150, out.width = "100%"
+)
+library(elsar)
+
+p <- params
+# With no inputs, render the bundled example so the template works out of the box
+if (is.null(p$actions)) {
+  ex <- elsar_example_results()
+  p$actions <- ex$actions
+  p$pas <- ex$pas
+  p$regions <- ex$regions
+  p$region_col <- "region_name"
+}
+scheme <- if (is.null(p$scheme)) elsar_action_scheme() else p$scheme
+
+x <- if (isTRUE(try(elsar:::.is_prepared(p$actions), silent = TRUE))) {
+  p$actions
+} else {
+  elsar_prepare_actions(p$actions, scheme = scheme, pas = p$pas, pa_threshold = p$pa_threshold)
+}
+has_pa <- "pa_fraction" %in% names(x)
+has_regions <- !is.null(p$regions)
+has_layers <- !is.null(p$layers)
+
+national <- elsar_summarise_actions(x, units = p$units)
+by_region <- if (has_regions) elsar_summarise_actions(x, p$regions, p$region_col, units = p$units)
+main <- if (has_regions) by_region else national
+# elsar_results_report() passes NA for "no target" (a NULL param would fall
+# back to the default above)
+if (length(p$target) == 0 || is.na(p$target)) p["target"] <- list(NULL)
+has_target <- !is.null(p$target)
+gap_national <- if (has_pa) {
+  elsar_protection_gap(national, target = p$target, protect_actions = p$protect_actions)
+}
+# By region, with the true national row (regions can miss planning cells along
+# borders), exactly as elsar_export_results() writes it
+gap <- if (has_pa && has_regions) {
+  elsar_protection_gap(by_region, target = p$target, protect_actions = p$protect_actions,
+                       national = national)
+} else {
+  gap_national
+}
+overlap <- if (has_layers) elsar_summarise_overlap(x, p$layers, units = p$units)
+
+unit_label <- c(ha = "ha", km2 = "km²", m2 = "m²")[[p$units]]
+fmt_area <- function(v) paste(format(round(v), big.mark = ",", trim = TRUE), unit_label)
+fmt_pct <- function(v, digits = 1) paste0(formatC(v, format = "f", digits = digits), "%")
+kable <- function(d, ...) knitr::kable(d, format.args = list(big.mark = ","), ...)
+
+planning_area <- sum(national$area)
+action_area <- sum(national$area[national$is_action])
+```
+
+## Key figures
+
+ELSA assigned an action to **`r fmt_pct(100 * action_area / planning_area)`** of
+the planning area (`r fmt_area(action_area)` of `r fmt_area(planning_area)`).
+
+```{r key-protection, results = "asis", eval = has_pa}
+g <- gap_national
+cat(sprintf(
+  paste0(
+    "Existing protected areas cover **%s** of the planning area. ",
+    "ELSA proposes a further **%s** of new protection, bringing the total to **%s**"
+  ),
+  fmt_pct(g$pct_current), fmt_pct(g$pct_new), fmt_pct(g$pct_total)
+))
+if (has_target) {
+  cat(sprintf(" against a target of %s", fmt_pct(100 * p$target, 0)))
+  cat(if (g$target_met) ": the target is met.\n" else
+    sprintf(", leaving a gap of %s.\n", fmt_area(g$gap)))
+} else {
+  cat(".\n")
+}
+```
+
+```{r national-map, fig.height = 6}
+elsar_plot_actions(x, regions = p$regions)
+```
+
+```{r national-table}
+national_tbl <- national[national$is_action, ]
+tbl <- data.frame(
+  Action = national_tbl$action,
+  Area = round(national_tbl$area),
+  `% of planning area` = round(national_tbl$pct_of_region, 1),
+  check.names = FALSE
+)
+if (has_pa) {
+  tbl$`In existing PAs` <- round(national_tbl$area_in_pa)
+  tbl$`Outside existing PAs` <- round(national_tbl$area_outside_pa)
+}
+kable(tbl, caption = paste0("Area of each action (", unit_label, ")."))
+```
+
+```{r protection-heading, results = "asis", eval = has_pa}
+cat(if (has_target) paste("\n## Protection and the", fmt_pct(100 * p$target, 0), "target\n\n")
+    else "\n## Protection\n\n")
+cat(
+  "*Existing PAs* is all area inside existing protected areas. ",
+  "*New protection* is area ELSA assigns to protection outside them.\n\n"
+)
+```
+
+```{r protection-plot, eval = has_pa, fig.height = 4.2}
+elsar_plot_protection_gap(gap)
+```
+
+```{r protection-table, eval = has_pa}
+tbl <- data.frame(
+  Region = gap$region,
+  `Existing PAs (%)` = round(gap$pct_current, 1),
+  `New protection (%)` = round(gap$pct_new, 1),
+  `Total (%)` = round(gap$pct_total, 1),
+  check.names = FALSE
+)
+if (has_target) tbl$`Gap to target` <- round(gap$gap)
+kable(tbl, caption = paste0(
+  "Protection by region.", if (has_target) paste0(" Gap to target in ", unit_label, ".")
+))
+```
+
+```{r regions-heading, results = "asis", eval = has_regions}
+cat("\n## Actions by region\n\n")
+```
+
+```{r regions-plot, eval = has_regions, fig.height = 4.2}
+elsar_plot_action_bars(by_region)
+```
+
+```{r regions-table, eval = has_regions}
+acts <- by_region[by_region$is_action, ]
+wide <- tapply(round(acts$pct_of_region, 1), list(acts$region, acts$action), sum)
+wide <- wide[, colSums(!is.na(wide)) > 0, drop = FALSE]
+kable(
+  data.frame(Region = rownames(wide), wide, check.names = FALSE, row.names = NULL),
+  caption = "Share of each region's planning area assigned to each action (%)."
+)
+```
+
+```{r overlap-heading, results = "asis", eval = has_layers}
+cat("\n## Overlap with other layers\n\n")
+cat(
+  "The share of each layer that falls under each action. National representation",
+  "of the features used in the ELSA run is reported by the run itself.\n\n"
+)
+```
+
+```{r overlap-plot, eval = has_layers, fig.height = 4}
+elsar_plot_overlap(overlap)
+```
+
+```{r region-profiles, results = "asis", eval = has_regions, fig.width = 9, fig.height = 4}
+cat("\n## Regional profiles\n\n")
+for (r in levels(by_region$region)) {
+  s <- by_region[by_region$region == r, ]
+  top <- s[s$is_action, ][which.max(s$area[s$is_action]), ]
+  cat("\n### ", r, "\n\n", sep = "")
+  cat(sprintf(
+    "ELSA assigns an action to %s of the planning area. The largest is %s (%s).",
+    fmt_pct(sum(s$pct_of_region[s$is_action])), top$action, fmt_area(top$area)
+  ))
+  if (has_pa) {
+    g <- gap[gap$region == r, ]
+    cat(sprintf(" Protection rises from %s to %s.", fmt_pct(g$pct_current), fmt_pct(g$pct_total)))
+  }
+  cat("\n\n")
+  print(elsar_plot_region(x, by_region, p$regions, p$region_col, r, title = NULL))
+  cat("\n\n")
+}
+```
+
+## Methods
+
+* Areas are calculated from the ELSA action map with
+  `elsar_summarise_actions()`. Cell areas are planar in the equal-area
+  projection used by ELSA (geodesic for longitude/latitude rasters), and cells
+  cut by a region boundary are weighted by the share inside the region.
+* Percentages are of the *planning area*: all cells with an ELSA value,
+  including cells with no action.
+`r if (has_pa) "* Protected-area cover is used as a fraction of each cell, unless a threshold was set. When protected areas are locked into Protect, *existing PAs* are Protect cells inside them and *new protection* is Protect outside them."`
+
+*Generated with elsar `r utils::packageVersion("elsar")`.*

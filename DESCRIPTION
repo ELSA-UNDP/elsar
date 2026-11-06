@@ -34,7 +34,6 @@ Suggests:
     highs,
     kableExtra,
     knitr,
-    patchwork,
     prioritizr,
     progressr,
     rappdirs,
@@ -58,11 +57,13 @@ Imports:
     ggridges,
     ggspatial,
     glue,
+    grDevices,
     here,
     jsonlite,
     lifecycle,
     magrittr,
     methods,
+    patchwork,
     plyr,
     png,
     purrr,
@@ -75,6 +76,7 @@ Imports:
     tibble,
     tidyterra,
     units,
+    utils,
     xml2
 Config/testthat/edition: 3
 LazyData: true

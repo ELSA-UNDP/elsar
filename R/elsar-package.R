@@ -4,7 +4,7 @@
 ## usethis namespace: start
 #' @importFrom lifecycle deprecated is_present deprecate_warn
 #' @importFrom rlang :=
-#' @importFrom rlang .data
+#' @importFrom rlang .data %||%
 #' @importFrom stats quantile setNames
 #' @importFrom utils head select.list tail
 ## usethis namespace: end

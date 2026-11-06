@@ -18,5 +18,6 @@ utils::globalVariables(c(
   "group",
   "kbaclass",
   "occurrence",
+  "pa_area",
   "percent_protected"
 ))

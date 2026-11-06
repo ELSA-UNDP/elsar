@@ -75,6 +75,25 @@ reference:
   - get_min_lockin_target
   - get_target
 
+- title: Analyse ELSA results
+  desc: Summarise, compare and report the action map produced by an ELSA run
+- contents:
+  - elsar_action_scheme
+  - elsar_action_scheme_from_config
+  - elsar_prepare_actions
+  - elsar_summarise_actions
+  - elsar_protection_gap
+  - elsar_plot_actions
+  - elsar_plot_action_bars
+  - elsar_plot_protection_gap
+  - elsar_summarise_overlap
+  - elsar_plot_overlap
+  - elsar_plot_region
+  - elsar_save_plots
+  - elsar_export_results
+  - elsar_results_report
+  - elsar_example_results
+
 - title: Helper Functions
 - contents:
   - elsar_load_data

@@ -1,0 +1,226 @@
+---
+title: "Analysing and reporting ELSA results"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Analysing and reporting ELSA results}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE, comment = "#>",
+  fig.width = 7, fig.height = 4, dpi = 96, out.width = "100%"
+)
+```
+
+An ELSA run produces an **action map**: every planning unit is assigned an
+action (Protect, Manage, Restore, Urban Greening) or no action. elsar's results
+functions turn that map into the tables and figures that go into national and
+subnational reports:
+
+* how much area each action covers, nationally and in each region;
+* how much of it lies inside existing protected areas;
+* how far current and ELSA-proposed protection go towards an area-based target
+  such as Target 3 of the Kunming-Montreal Global Biodiversity Framework (30%).
+
+This vignette uses a small synthetic result for the fictional country
+"Elsaland", bundled with the package.
+
+```{r setup}
+library(elsar)
+ex <- elsar_example_results()
+names(ex)
+```
+
+## The quick route: one call
+
+`elsar_export_results()` runs the whole workflow and writes every table and
+figure to a folder.
+
+```{r quick, eval = FALSE}
+elsar_export_results(
+  "results/04_ELSA_Action.tif", # the action raster from your ELSA run
+  dir = "results/post_analysis",
+  regions = admin1, # an sf of admin-1 regions
+  region_col = "adm1nm",
+  pas = "data/protected_areas.tif" # e.g. from make_protected_areas()
+)
+```
+
+The rest of this vignette goes through the steps it runs, for when you want
+more control.
+
+## 1. Prepare the action map
+
+`elsar_prepare_actions()` reads the action raster and attaches an **action
+scheme**: the label, colour and reporting group for each raster value. The
+default matches a standard run of the ELSA tool: 1 Protect, 2 Manage ("Reduce
+Pressures" in the tool), 3 Restore, 4 Urban Greening ("Urban Adapt") and 5 Do
+Nothing.
+
+```{r scheme}
+elsar_action_scheme()
+```
+
+If your run used other actions, the simplest route is to read the scheme from
+the run's `config.json`, which also picks up fallback zones such as South
+Africa's "Avoid Loss":
+
+```{r config-scheme, eval = FALSE}
+scheme <- elsar_action_scheme_from_config("inputs/config.json")
+```
+
+Or describe it yourself, once; every table and plot follows. The ELSA tool
+numbers fallback zones after the primary actions and puts Do Nothing last:
+
+```{r custom-scheme, eval = FALSE}
+zaf_scheme <- elsar_action_scheme(
+  values = 1:6,
+  labels = c("Protect", "Manage", "Restore", "Urban Greening", "Avoid Loss", "Do Nothing"),
+  colours = c("#06C723", "#FFEA00", "#8803FC", "#FF0000", "#A3BA95", "#E5E5E5")
+)
+```
+
+Pass the existing protected areas too, either as a fractional raster (such as
+`make_protected_areas(binary = FALSE)`) or as polygons:
+
+```{r prepare}
+x <- elsar_prepare_actions(ex$actions, pas = ex$pas)
+x
+```
+
+### How protected areas are counted
+
+By default ELSA **locks existing protected areas into Protect**, so every
+protected cell is Protect. The protected-area layer then separates:
+
+* **current protection**: Protect inside existing protected areas, and
+* **new protection**: Protect that ELSA proposes outside them.
+
+If protected areas were not locked in, the same split shows which actions ELSA
+assigned *inside* them, for example restoration needs within reserves.
+
+Protected-area cover is used as a fraction, so a cell that is 30% protected
+contributes 30% of its area. To match a lock-in rule instead (e.g. cells at
+least 50% protected count as protected), set `pa_threshold = 0.5`.
+
+## 2. Summarise
+
+```{r map, fig.height = 5.5}
+elsar_plot_actions(x, regions = ex$regions)
+```
+
+`elsar_summarise_actions()` gives the area of each action. Without regions you
+get national totals:
+
+```{r national}
+national <- elsar_summarise_actions(x)
+national[, c("action", "area", "area_in_pa", "area_outside_pa", "pct_of_region")]
+```
+
+With regions, you get one row per region and action:
+
+```{r regional}
+by_region <- elsar_summarise_actions(x, ex$regions, region_col = "region_name")
+by_region[by_region$action == "Restore", c("region", "area", "pct_of_region", "pct_of_action")]
+```
+
+* `pct_of_region` is the share of the region's planning area (including
+  no-action cells) assigned to the action.
+* `pct_of_action` is the share of the action's total area that falls in the
+  region, i.e. where the action is concentrated.
+
+Areas are in hectares by default (`units = "km2"` or `"m2"` also work) and are
+correct for any projection: cell areas are planar in the equal-area projections
+ELSA uses, geodesic for lon/lat rasters, and cells cut by a region boundary are
+weighted by the share inside it.
+
+```{r bars, fig.height = 4}
+elsar_plot_action_bars(by_region)
+```
+
+The dark green segment at the base of each bar is the part inside existing
+protected areas. To see each action instead, with one panel per region:
+
+```{r bars-action, fig.width = 9, fig.height = 3.5}
+elsar_plot_action_bars(by_region, metric = "area", by = "action")
+```
+
+## 3. Compare protection with a target
+
+```{r gap}
+gap <- elsar_protection_gap(by_region, target = 0.30)
+gap[, c("region", "pct_current", "pct_new", "pct_total", "gap", "target_met")]
+```
+
+```{r gap-plot, fig.height = 4}
+elsar_plot_protection_gap(gap)
+```
+
+`gap` is the additional area (in the summary's units) still needed to reach
+the target after ELSA's proposed protection.
+
+## 4. Overlap with other layers
+
+`elsar_summarise_overlap()` shows how much of any layer falls under each
+action: Key Biodiversity Areas, indigenous and community lands, ecosystem
+types, or the ELSA input features themselves. Layers can be rasters (cover
+fractions, normalised features, or counts with `measure = "sum"`) or polygons.
+
+An ELSA run already reports national representation for the features it used,
+and those are the figures to cite for the run. This function adds regional
+breakdowns, the split by existing protected areas, and layers that were not
+part of the run.
+
+```{r overlap, fig.height = 4}
+crs <- terra::crs(x)
+kba <- sf::st_sf(geometry = sf::st_buffer(sf::st_sfc(sf::st_point(c(38000, 40000)), crs = crs), 9000))
+wetland <- sf::st_sf(geometry = sf::st_buffer(sf::st_sfc(sf::st_point(c(65000, 15000)), crs = crs), 8000))
+
+ov <- elsar_summarise_overlap(x, list("Key Biodiversity Area" = kba, "Eastern wetland" = wetland))
+ov[ov$layer == "Key Biodiversity Area", c("action", "amount", "amount_in_pa", "pct_of_layer")]
+elsar_plot_overlap(ov)
+```
+
+## 5. Regional panels and export
+
+`elsar_plot_region()` combines a map and bar charts for one region, and
+`elsar_plot_regions()` makes one per region:
+
+```{r region, fig.width = 10, fig.height = 4.5}
+elsar_plot_region(x, by_region, ex$regions, "region_name", "Eastern Delta")
+```
+
+```{r save, eval = FALSE}
+panels <- elsar_plot_regions(x, by_region, ex$regions, "region_name")
+elsar_save_plots(panels, "results/regions", prefix = "region")
+```
+
+## 6. A full report
+
+`elsar_results_report()` renders everything above into one HTML or Word report:
+key figures in words, the national map and tables, protection against the
+target, overlap with your layers, and a profile for each region.
+
+```{r report, eval = FALSE}
+elsar_results_report(
+  x,
+  regions = ex$regions, region_col = "region_name",
+  layers = list("Key Biodiversity Area" = kba),
+  output_file = "elsaland_report.html",
+  country = "Elsaland"
+)
+```
+
+The same template is in RStudio under *File > New File > R Markdown > From
+Template > ELSA results report*.
+
+## Customising plots
+
+All plots are ordinary ggplot2 or patchwork objects, so you can add themes,
+titles or elsar's map furniture:
+
+```{r optics, eval = FALSE}
+elsar_plot_actions(x) + elsar_plot_optics(include_north_scale = TRUE)
+```
