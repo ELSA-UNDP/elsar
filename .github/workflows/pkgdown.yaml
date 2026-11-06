@@ -24,10 +24,12 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # Newer pushes to the same PR cancel older builds; main builds always finish
+    # One build per branch at a time, so an older build can never finish (and
+    # deploy) after a newer one. On PRs a new push cancels the running build;
+    # on main a new push waits for the running build to finish.
     concurrency:
-      group: pkgdown-build-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
-      cancel-in-progress: true
+      group: pkgdown-build-${{ github.ref }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
     steps:
@@ -49,13 +51,13 @@ jobs:
         shell: Rscript {0}
 
       - name: Upload Pages artifact
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@v5
         with:
           path: docs
 
       - name: Upload site preview
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' || github.ref != 'refs/heads/main'
         uses: actions/upload-artifact@v7
         with:
           name: site-preview
@@ -73,7 +75,8 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   deploy:
-    if: github.event_name != 'pull_request'
+    # Only main is published (a manual run on another branch builds but does not deploy)
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
     permissions:
