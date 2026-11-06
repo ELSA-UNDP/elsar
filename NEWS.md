@@ -39,6 +39,13 @@
   - `elsar_export_results()` runs the whole workflow in one call and writes
     CSV tables and figures; `elsar_save_plots()` saves plot lists with safe
     file names.
+  - `elsar_summarise_overlap()` and `elsar_plot_overlap()` show how much of
+    any layer (KBAs, IPLC lands, ELSA features, policy overlays) falls under
+    each action, nationally or by region, and inside existing protected
+    areas. They complement the national representation reported by the run.
+  - `elsar_results_report()` renders an HTML or Word report (key figures,
+    maps, tables, protection gap, overlap and regional profiles) from a new
+    R Markdown template, also available in RStudio's template list.
   - `elsar_example_results()` loads a small synthetic ELSA result to try them.
   - New vignette: "Analysing and reporting ELSA results".
   - patchwork moves from Suggests to Imports.

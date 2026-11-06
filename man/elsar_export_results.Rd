@@ -76,5 +76,5 @@ basename(out$files)
 }
 }
 \seealso{
-\code{\link[=elsar_save_plots]{elsar_save_plots()}}
+\code{\link[=elsar_save_plots]{elsar_save_plots()}}, \code{\link[=elsar_results_report]{elsar_results_report()}}
 }

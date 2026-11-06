@@ -89,7 +89,7 @@ elsar_save_plots <- function(plots,
 #'
 #' @return Invisibly, a list with the `actions` map, `summary` (national),
 #'   `summary_regions`, `gap`, `plots` and the written `files`.
-#' @seealso [elsar_save_plots()]
+#' @seealso [elsar_save_plots()], [elsar_results_report()]
 #' @export
 #'
 #' @examples
@@ -192,4 +192,114 @@ elsar_export_results <- function(x,
   x <- gsub("[^[:alnum:]]+", "_", iconv(x, to = "ASCII//TRANSLIT", sub = ""))
   x <- gsub("^_+|_+$", "", x)
   ifelse(nzchar(x), x, "region")
+}
+
+#' Render an ELSA results report
+#'
+#' Renders a report of an ELSA action map from the package's R Markdown
+#' template: key figures, a national map and table, protection against a
+#' target, actions by region, overlap with other layers and a profile with a
+#' map-and-bars panel for each region. Sections are left out when their inputs
+#' are not given.
+#'
+#' The template is also available in RStudio under *File > New File > R
+#' Markdown > From Template > ELSA results report*. Rendered as is, it reports
+#' on the bundled example data.
+#'
+#' @inheritParams elsar_export_results
+#' @param layers Optional layers to report overlap for, as in
+#'   [elsar_summarise_overlap()].
+#' @param output_file Character. Path of the report to write.
+#' @param format `"html"` (default) or `"word"`.
+#' @param title,country Character. Report title and subtitle.
+#' @param open Logical. Open the report when done. Default: in interactive
+#'   sessions.
+#' @param quiet Logical. Suppress rendering progress. Default `TRUE`.
+#'
+#' @return The path of the report, invisibly.
+#' @seealso [elsar_export_results()]
+#' @export
+#'
+#' @examples
+#' \donttest{
+#' if (rmarkdown::pandoc_available()) {
+#'   ex <- elsar_example_results()
+#'   path <- elsar_results_report(
+#'     ex$actions,
+#'     regions = ex$regions, region_col = "region_name", pas = ex$pas,
+#'     output_file = file.path(tempdir(), "elsaland_report.html"),
+#'     country = "Elsaland", open = FALSE
+#'   )
+#' }
+#' }
+elsar_results_report <- function(x,
+                                 regions = NULL,
+                                 region_col = NULL,
+                                 pas = NULL,
+                                 layers = NULL,
+                                 scheme = elsar_action_scheme(),
+                                 pa_threshold = NULL,
+                                 target = 0.30,
+                                 units = c("ha", "km2", "m2"),
+                                 output_file = "elsa_results_report.html",
+                                 format = c("html", "word"),
+                                 title = "ELSA results report",
+                                 country = "",
+                                 open = interactive(),
+                                 quiet = TRUE) {
+  assertthat::assert_that(
+    requireNamespace("rmarkdown", quietly = TRUE),
+    requireNamespace("knitr", quietly = TRUE),
+    msg = "Rendering the report needs the 'rmarkdown' and 'knitr' packages."
+  )
+  assertthat::assert_that(
+    rmarkdown::pandoc_available(),
+    msg = "Rendering the report needs pandoc (bundled with RStudio, or see https://pandoc.org)."
+  )
+  units <- match.arg(units)
+  format <- match.arg(format)
+  if (!.is_prepared(x)) {
+    x <- elsar_prepare_actions(x, scheme = scheme, pas = pas, pa_threshold = pa_threshold)
+  }
+  # Read regions now so the report gets a validated sf
+  if (!is.null(regions)) regions <- .prepare_regions(regions, region_col, x)
+
+  template <- system.file(
+    "rmarkdown", "templates", "elsa_results_report", "skeleton", "skeleton.Rmd",
+    package = "elsar"
+  )
+  assertthat::assert_that(nzchar(template), msg = "Report template not found in elsar.")
+
+  # Render from a temporary copy so intermediate files never touch the package
+  work <- tempfile("elsa_report_")
+  dir.create(work)
+  on.exit(unlink(work, recursive = TRUE), add = TRUE)
+  rmd <- file.path(work, "elsa_results_report.Rmd")
+  file.copy(template, rmd)
+
+  output_file <- normalizePath(output_file, mustWork = FALSE)
+  dir.create(dirname(output_file), showWarnings = FALSE, recursive = TRUE)
+  output_format <- if (format == "html") {
+    rmarkdown::html_document(toc = TRUE, toc_float = TRUE, toc_depth = 2)
+  } else {
+    rmarkdown::word_document(toc = TRUE)
+  }
+
+  log_message("Rendering ELSA results report...")
+  out <- rmarkdown::render(
+    rmd,
+    output_format = output_format,
+    output_file = basename(output_file),
+    output_dir = dirname(output_file),
+    intermediates_dir = work,
+    params = list(
+      title = title, country = country, actions = x, regions = regions,
+      region_col = region_col, layers = layers, target = target, units = units
+    ),
+    envir = new.env(parent = globalenv()),
+    quiet = quiet
+  )
+  log_message("Report written to {out}")
+  if (open) utils::browseURL(out)
+  invisible(out)
 }

@@ -404,7 +404,7 @@ elsar_plot_regions <- function(x, summary, regions, region_col, ...) {
   if (metric == "percent") {
     paste("%", what)
   } else {
-    paste0("Area (", c(ha = "ha", km2 = "km²", m2 = "m²")[[units]], ")")
+    paste0("Area (", c(ha = "ha", km2 = "km\u00b2", m2 = "m\u00b2")[[units]], ")")
   }
 }
 

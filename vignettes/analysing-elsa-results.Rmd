@@ -153,7 +153,29 @@ elsar_plot_protection_gap(gap)
 `gap` is the additional area (in the summary's units) still needed to reach
 the target after ELSA's proposed protection.
 
-## 4. Regional panels and export
+## 4. Overlap with other layers
+
+`elsar_summarise_overlap()` shows how much of any layer falls under each
+action: Key Biodiversity Areas, indigenous and community lands, ecosystem
+types, or the ELSA input features themselves. Layers can be rasters (cover
+fractions, normalised features, or counts with `measure = "sum"`) or polygons.
+
+An ELSA run already reports national representation for the features it used,
+and those are the figures to cite for the run. This function adds regional
+breakdowns, the split by existing protected areas, and layers that were not
+part of the run.
+
+```{r overlap, fig.height = 2.5}
+crs <- terra::crs(x)
+kba <- sf::st_sf(geometry = sf::st_buffer(sf::st_sfc(sf::st_point(c(38000, 40000)), crs = crs), 9000))
+wetland <- sf::st_sf(geometry = sf::st_buffer(sf::st_sfc(sf::st_point(c(65000, 15000)), crs = crs), 8000))
+
+ov <- elsar_summarise_overlap(x, list("Key Biodiversity Area" = kba, "Eastern wetland" = wetland))
+ov[ov$layer == "Key Biodiversity Area", c("action", "amount", "amount_in_pa", "pct_of_layer")]
+elsar_plot_overlap(ov)
+```
+
+## 5. Regional panels and export
 
 `elsar_plot_region()` combines a map and bar charts for one region, and
 `elsar_plot_regions()` makes one per region:
@@ -166,6 +188,27 @@ elsar_plot_region(x, by_region, ex$regions, "region_name", "Eastern Delta")
 panels <- elsar_plot_regions(x, by_region, ex$regions, "region_name")
 elsar_save_plots(panels, "results/regions", prefix = "region")
 ```
+
+## 6. A full report
+
+`elsar_results_report()` renders everything above into one HTML or Word report:
+key figures in words, the national map and tables, protection against the
+target, overlap with your layers, and a profile for each region.
+
+```{r report, eval = FALSE}
+elsar_results_report(
+  x,
+  regions = ex$regions, region_col = "region_name",
+  layers = list("Key Biodiversity Area" = kba),
+  output_file = "elsaland_report.html",
+  country = "Elsaland"
+)
+```
+
+The same template is in RStudio under *File > New File > R Markdown > From
+Template > ELSA results report*.
+
+## Customising plots
 
 All plots are ordinary ggplot2 or patchwork objects, so you can add themes,
 titles or elsar's map furniture:

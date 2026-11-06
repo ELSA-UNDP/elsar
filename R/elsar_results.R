@@ -241,58 +241,15 @@ elsar_summarise_actions <- function(x,
   unit_factor <- c(m2 = 1, ha = 1e-4, km2 = 1e-6)[[units]]
   has_pa <- "pa_fraction" %in% names(x)
 
-  # Per-cell layers: action, area (m2) and protected area (m2)
-  # Planar cell areas for projected rasters (ELSA uses equal-area projections,
-  # so a 1 km cell is exactly 100 ha); geodesic areas for lon/lat rasters.
-  cell_area <- terra::cellSize(x[["action"]], unit = "m", mask = TRUE, transform = FALSE)
+  # Per-cell weights: area and protected area (m2)
+  cell_area <- .cell_area(x)
   pa_area <- if (has_pa) cell_area * x[["pa_fraction"]] else cell_area * 0
-  action <- x[["action"]]
-  levels(action) <- NULL
-  layers <- c(action, cell_area, pa_area)
-  names(layers) <- c("action", "area", "pa_area")
+  weights <- c(cell_area, pa_area)
+  names(weights) <- c("area", "pa_area")
 
-  if (is.null(regions)) {
-    sums <- terra::zonal(layers[[c("area", "pa_area")]], layers[["action"]],
-                         fun = "sum", na.rm = TRUE)
-    names(sums) <- c("value", "area", "pa_area")
-    sums$region <- national_label
-    region_names <- national_label
-  } else {
-    regions <- .prepare_regions(regions, region_col, x)
-    region_names <- unique(regions[[region_col]])
-    per_region <- exactextractr::exact_extract(
-      layers, regions,
-      fun = function(df) {
-        # With summarize_df, include_cols arrive as columns of df
-        df <- df[!is.na(df$action), , drop = FALSE]
-        if (nrow(df) == 0) {
-          return(NULL)
-        }
-        w <- df$coverage_fraction
-        data.frame(
-          region = df[[region_col]][1],
-          value = df$action,
-          area = df$area * w,
-          pa_area = df$pa_area * w
-        )
-      },
-      summarize_df = TRUE,
-      include_cols = region_col,
-      progress = FALSE
-    )
-    if (!all(c("region", "value") %in% names(per_region))) {
-      # No region overlaps any action cell
-      per_region <- data.frame(region = character(0), value = numeric(0),
-                               area = numeric(0), pa_area = numeric(0))
-    }
-    sums <- per_region |>
-      dplyr::group_by(.data$region, .data$value) |>
-      dplyr::summarise(
-        area = sum(.data$area),
-        pa_area = sum(.data$pa_area),
-        .groups = "drop"
-      )
-  }
+  zs <- .action_zonal_sums(x, weights, regions, region_col, national_label)
+  sums <- zs$sums
+  region_names <- zs$region_names
 
   # One row per region x scheme value, zero-filled
   grid <- expand.grid(region = region_names, value = scheme$value,
@@ -584,6 +541,60 @@ elsar_example_results <- function() {
   terra::ifel(is.na(pa), 0, pa)
 }
 
+
+# Planar cell areas (m2) for projected rasters (ELSA uses equal-area
+# projections, so a 1 km cell is exactly 100 ha); geodesic for lon/lat.
+.cell_area <- function(x) {
+  terra::cellSize(x[["action"]], unit = "m", mask = TRUE, transform = FALSE)
+}
+
+# Sum each weight layer by action value, nationally or per region. Cells cut by
+# a region boundary are weighted by their coverage fraction. Returns a list with
+# `sums` (region, value and one column per weight layer) and `region_names`.
+.action_zonal_sums <- function(x, weights, regions, region_col, national_label) {
+  weight_names <- names(weights)
+  action <- x[["action"]]
+  levels(action) <- NULL
+  names(action) <- ".action"
+
+  if (is.null(regions)) {
+    sums <- terra::zonal(weights, action, fun = "sum", na.rm = TRUE)
+    names(sums) <- c("value", weight_names)
+    sums$region <- national_label
+    return(list(sums = sums, region_names = national_label))
+  }
+
+  regions <- .prepare_regions(regions, region_col, x)
+  region_names <- unique(regions[[region_col]])
+  per_region <- exactextractr::exact_extract(
+    c(action, weights), regions,
+    fun = function(df) {
+      # With summarize_df, include_cols arrive as columns of df
+      df <- df[!is.na(df$.action), , drop = FALSE]
+      if (nrow(df) == 0) {
+        return(NULL)
+      }
+      w <- df$coverage_fraction
+      vals <- lapply(df[weight_names], function(v) dplyr::coalesce(v, 0) * w)
+      data.frame(region = df[[region_col]][1], value = df$.action, vals)
+    },
+    summarize_df = TRUE,
+    include_cols = region_col,
+    progress = FALSE
+  )
+  if (!all(c("region", "value") %in% names(per_region))) {
+    # No region overlaps any action cell
+    per_region <- data.frame(region = character(0), value = numeric(0))
+    for (nm in weight_names) per_region[[nm]] <- numeric(0)
+  }
+  sums <- per_region |>
+    dplyr::group_by(.data$region, .data$value) |>
+    dplyr::summarise(dplyr::across(dplyr::all_of(weight_names), sum), .groups = "drop")
+  list(sums = as.data.frame(sums), region_names = region_names)
+}
+
 .safe_pct <- function(x, total) {
+  # Recycle first: ifelse() returns a result as long as its test
+  total <- rep_len(total, length(x))
   ifelse(total > 0, 100 * x / total, 0)
 }

@@ -334,3 +334,75 @@ test_that("elsar_export_results() works without regions or PAs", {
 test_that("plot file names are safe and unique", {
   expect_equal(.safe_name(c("São Tomé", "A/B", "")), c("Sao_Tome", "A_B", "region"))
 })
+
+# Overlap -------------------------------------------------------------------------
+
+test_that("overlap gives exact amounts for polygons and rasters", {
+  x <- elsar_prepare_actions(toy_actions(), pas = toy_pas())
+  # Polygon over the left half: columns 1-2 (actions 1,1 / 1,3 / 5,5 / 5,NA)
+  left <- sf::st_sf(geometry = sf::st_sfc(
+    sf::st_polygon(list(rbind(c(0, 0), c(2000, 0), c(2000, 4000), c(0, 4000), c(0, 0)))),
+    crs = ea_crs
+  ))
+  ov <- elsar_summarise_overlap(x, list(Left = left, PA = toy_pas()))
+  left_ov <- ov[ov$layer == "Left", ]
+  expect_equal(left_ov$amount, c(300, 0, 100, 0, 300), tolerance = 1e-3)
+  # The NA cell is outside the planning area, so 7 cells make 100%
+  expect_equal(left_ov$pct_of_layer, 100 * c(3, 0, 1, 0, 3) / 7, tolerance = 1e-3)
+  expect_equal(left_ov$amount_in_pa + left_ov$amount_outside_pa, left_ov$amount)
+  # The PA layer overlaps itself completely: amount in PA = amount
+  pa_ov <- ov[ov$layer == "PA", ]
+  expect_equal(pa_ov$amount_in_pa, pa_ov$amount)
+  expect_equal(sum(pa_ov$amount), 400, tolerance = 1e-3)
+})
+
+test_that("overlap works by region, with sums and multi-layer rasters", {
+  x <- elsar_prepare_actions(toy_actions())
+  counts <- toy_actions() * 0 + 2
+  names(counts) <- "people"
+  stack <- c(counts, toy_pas())
+  names(stack) <- c("people", "pa")
+  ov <- elsar_summarise_overlap(x, stack, toy_regions(), "name", measure = "sum")
+  expect_equal(levels(ov$layer), c("people", "pa"))
+  expect_equal(sum(ov$amount[ov$layer == "people"]), 2 * 15)
+  expect_equal(sum(ov$amount[ov$layer == "people" & ov$region == "East"]), 2 * 8)
+  expect_true(all(is.na(ov$amount_in_pa)))
+  expect_true(is.na(attr(ov, "units")))
+})
+
+test_that("overlap validates layers", {
+  x <- elsar_prepare_actions(toy_actions())
+  expect_error(elsar_summarise_overlap(x, list(toy_pas())), "named")
+  expect_error(elsar_summarise_overlap(x, list(a = 1)), "SpatRaster, sf or SpatVector")
+  neg <- toy_pas() - 1
+  expect_warning(elsar_summarise_overlap(x, list(neg = neg)), "negative")
+})
+
+test_that("overlap plot builds and bars reach 100%", {
+  x <- elsar_prepare_actions(toy_actions())
+  ov <- elsar_summarise_overlap(x, list(PA = toy_pas()), toy_regions(), "name")
+  p <- elsar_plot_overlap(ov)
+  built <- ggplot2::ggplot_build(p)
+  ends <- tapply(built$data[[1]]$xmax, list(built$data[[1]]$PANEL, built$data[[1]]$y), max)
+  # West holds the whole PA; East has none (bar of 0)
+  expect_equal(max(ends, na.rm = TRUE), 100, tolerance = 1e-6)
+  builds(elsar_plot_overlap(ov, show_no_action = FALSE))
+})
+
+# Report --------------------------------------------------------------------------
+
+test_that("the results report renders", {
+  skip_on_cran()
+  skip_if_not_installed("rmarkdown")
+  skip_if_not(rmarkdown::pandoc_available())
+  d <- example_inputs()
+  out <- withr::local_tempfile(fileext = ".html")
+  path <- suppressMessages(elsar_results_report(
+    d$x, d$ex$regions, "region_name",
+    layers = list(PA = d$ex$pas), output_file = out, open = FALSE
+  ))
+  expect_true(file.exists(path))
+  html <- paste(readLines(path, warn = FALSE), collapse = "\n")
+  expect_match(html, "Regional profiles")
+  expect_match(html, "Overlap with other layers")
+})
