@@ -20,6 +20,10 @@
 #' @param name_out Character. Name stem for output file(s) (optional, not currently used).
 #' @param output_path Optional character. Directory to save output raster(s) if provided.
 #'
+#' @param rescaled Logical. Rescale the managed-forest share to 0-1 (default
+#'   `TRUE`, for use as a feature layer). Use `FALSE` when the result feeds
+#'   [make_manage_zone()]: its `forest_class_threshold` is a true share of
+#'   each planning unit, so the share must not be rescaled first.
 #' @return A `SpatRaster` with either one layer (managed forests) or two layers (managed forests and productive managed forests).
 #' @export
 #'
@@ -43,7 +47,8 @@ make_managed_forests <- function(
     make_productive = FALSE,
     raster_npp = NULL,
     name_out,
-    output_path = NULL) {
+    output_path = NULL,
+    rescaled = TRUE) {
   lulc_product <- match.arg(lulc_product)
 
   # Resolve forest classes from product if not explicitly provided
@@ -85,6 +90,7 @@ make_managed_forests <- function(
     raster_in = raster_in,
     pus = pus,
     iso3 = iso3,
+    rescaled = rescaled,
     method_override = "mean",
     input_raster_conditional_expression = function(x) {
       terra::classify(

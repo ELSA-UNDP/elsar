@@ -14,7 +14,10 @@
 #'
 #' @param iso3 Character. ISO3 country code (e.g., "CHL").
 #' @param pus SpatRaster. Planning units raster to which all inputs are aligned.
-#' @param managed_forests SpatRaster. A preprocssed raster of managed forest extent.
+#' @param managed_forests SpatRaster. The share (0-1) of each planning unit
+#'   under managed forest. It is compared with `forest_class_threshold`, so it
+#'   must be the true share, not rescaled: build it with
+#'   `make_managed_forests(..., rescaled = FALSE)`.
 #' @param raster_mf SpatRaster A raster of forest classes to identify managed forests.
 #' @param lulc_proportions A multi-band `SpatRaster` from [download_lulc_proportions()] containing
 #'   pre-computed class proportions. If provided, bands named "agriculture" and "built_area" will

@@ -33,7 +33,10 @@ make_manage_zone(
 
 \item{pus}{SpatRaster. Planning units raster to which all inputs are aligned.}
 
-\item{managed_forests}{SpatRaster. A preprocssed raster of managed forest extent.}
+\item{managed_forests}{SpatRaster. The share (0-1) of each planning unit
+under managed forest. It is compared with \code{forest_class_threshold}, so it
+must be the true share, not rescaled: build it with
+\code{make_managed_forests(..., rescaled = FALSE)}.}
 
 \item{raster_mf}{SpatRaster A raster of forest classes to identify managed forests.}
 

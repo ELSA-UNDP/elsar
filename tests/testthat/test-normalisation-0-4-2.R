@@ -53,10 +53,10 @@ test_that("aggregation works across CRSs", {
 
 test_that("a constant layer is not turned into NaN (audit §2 #2)", {
   r <- pus_1km() * 7
-  expect_warning(out <- rescale_raster(r), "constant")
+  expect_message(out <- rescale_raster(r), "constant")
   expect_true(all(terra::values(out) == 1))
   zero <- pus_1km() * 0
-  expect_warning(out0 <- rescale_raster(zero), "constant")
+  expect_message(out0 <- rescale_raster(zero), "constant")
   expect_true(all(terra::values(out0) == 0))
 })
 
@@ -72,9 +72,11 @@ test_that("missing data gets the lowest score, also when inverted (audit §2 #4)
 
 test_that("layers with only non-positive values are not treated as empty (F3)", {
   r <- pus_1km()
-  terra::values(r) <- -(1:16)
+  terra::values(r) <- c(0, -(1:15)) # maximum exactly 0: the old check returned all 0
   out <- suppressMessages(make_normalised_raster(r, pus_1km(), "TST", name_out = "neg"))
-  expect_equal(range(terra::values(out)), c(0, 1))
+  v <- terra::values(out)[, 1]
+  expect_equal(v[1], 1)
+  expect_equal(v[16], 0)
   expect_equal(names(out), "neg")
 })
 
@@ -121,4 +123,87 @@ test_that("urban greening ranks low vegetation highest and water lowest", {
   v <- terra::values(out[[1]])[, 1]
   expect_true(v[2] > v[3] && v[3] > v[4])
   expect_equal(v[1], 0)
+})
+
+# Cases from the independent review of PR #105 ----------------------------------
+
+pus_offset <- function() {
+  terra::rast(nrows = 20, ncols = 20, xmin = 1e6, xmax = 1.02e6, ymin = 5e6, ymax = 5.02e6,
+              crs = ea, vals = 1)
+}
+
+# Exact area-weighted mean of a lon/lat raster over each planning unit
+truth_mean <- function(x, pus) {
+  polys <- sf::st_as_sf(terra::as.polygons(pus, dissolve = FALSE, aggregate = FALSE))
+  polys <- sf::st_transform(sf::st_segmentize(polys, 50), terra::crs(x))
+  exactextractr::exact_extract(x, polys, "mean", progress = FALSE)
+}
+
+test_that("inputs coarser than the PUs in another CRS are area-weighted", {
+  pus <- pus_offset()
+  e <- terra::ext(terra::project(terra::as.polygons(terra::ext(pus), crs = ea), "EPSG:4326"))
+  coarse <- terra::rast(terra::ext(e[1] - 0.2, e[2] + 0.2, e[3] - 0.2, e[4] + 0.2),
+                        res = 0.05, crs = "EPSG:4326")
+  set.seed(42)
+  terra::values(coarse) <- stats::runif(terra::ncell(coarse))
+  out <- .align_to_pus(coarse, pus)
+  # Cell order of as.polygons() follows the raster, so values line up
+  expect_lt(mean(abs(terra::values(out)[, 1] - truth_mean(coarse, pus))), 0.01)
+})
+
+test_that("max keeps small features and sum keeps totals across CRSs", {
+  pus <- pus_offset()
+  e <- terra::ext(terra::project(terra::as.polygons(terra::ext(pus), crs = ea), "EPSG:4326"))
+  fine <- terra::rast(terra::ext(e[1] - 0.01, e[2] + 0.01, e[3] - 0.01, e[4] + 0.01),
+                      res = 0.001, crs = "EPSG:4326", vals = 0)
+  set.seed(7)
+  hits <- sample(terra::ncell(fine), 150)
+  fine[hits] <- 1
+  mx <- .align_to_pus(fine, pus, method = "max")
+  found <- terra::extract(mx, terra::project(terra::vect(terra::xyFromCell(fine, hits),
+                                                         crs = "EPSG:4326"), ea))[, 2]
+  expect_gte(mean(found == 1, na.rm = TRUE), 0.97)
+
+  counts <- terra::rast(fine)
+  terra::values(counts) <- 2
+  inside <- terra::crop(counts, terra::project(terra::as.polygons(terra::ext(pus), crs = ea),
+                                               "EPSG:4326"), mask = TRUE)
+  total_in <- terra::global(inside * 0 + 2, "sum", na.rm = TRUE)[[1]]
+  s <- .align_to_pus(counts, pus, method = "sum")
+  expect_equal(terra::global(s, "sum", na.rm = TRUE)[[1]], total_in, tolerance = 0.02)
+})
+
+test_that("planning units across the antimeridian stay fast and correct", {
+  moll <- "+proj=moll +lon_0=178 +datum=WGS84 +units=m"
+  pus <- terra::rast(nrows = 10, ncols = 40, xmin = -2e5, xmax = 2e5, ymin = -1.9e6,
+                     ymax = -1.8e6, crs = moll, vals = 1)
+  lon <- terra::rast(terra::ext(-180, 180, -20, -10), res = 0.1, crs = "EPSG:4326")
+  terra::values(lon) <- terra::xFromCell(lon, seq_len(terra::ncell(lon)))
+  elapsed <- system.time(out <- .align_to_pus(lon, pus))[["elapsed"]]
+  expect_lt(elapsed, 10)
+  expect_false(anyNA(terra::values(out)))
+})
+
+test_that("partial and no overlap give 0 inside the PUs", {
+  pus <- pus_1km()
+  half <- terra::rast(nrows = 4, ncols = 2, xmin = 2000, xmax = 4000, ymin = 0, ymax = 4000,
+                      crs = ea, vals = 1)
+  out <- suppressMessages(make_normalised_raster(half, pus, "TST", rescaled = FALSE, name_out = "h"))
+  v <- matrix(terra::values(out)[, 1], 4, byrow = TRUE)
+  expect_true(all(v[, 1:2] == 0) && all(v[, 3:4] == 1))
+  far <- terra::rast(nrows = 2, ncols = 2, xmin = 1e7, xmax = 1.0002e7, ymin = 0, ymax = 2000,
+                     crs = ea, vals = 1)
+  out2 <- suppressMessages(make_normalised_raster(far, pus, "TST", name_out = "f"))
+  expect_true(all(terra::values(out2) == 0))
+})
+
+test_that("fill_na = NULL leaves gaps NA but still masks to the PUs", {
+  pus <- pus_1km()
+  pus[16] <- NA
+  r <- pus_1km()
+  terra::values(r) <- c(NA, 1:15)
+  out <- suppressMessages(make_normalised_raster(r, pus, "TST", fill_na = NULL, name_out = "x"))
+  v <- terra::values(out)[, 1]
+  expect_true(is.na(v[1]))
+  expect_true(is.na(v[16]))
 })
