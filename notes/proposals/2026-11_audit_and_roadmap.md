@@ -70,6 +70,12 @@ take over its orchestration.
 
 ## 2. Fix first: silent wrong results (proposed 0.4.2)
 
+> **See also** [`2026-11_function_review.md`](2026-11_function_review.md),
+> the per-function review. It adds 20 more findings for 0.4.2 (F1–F20) and
+> ten mismatches between elsar and the pipeline (P1–P10), such as `wait_time`
+> units, the unused `limit_to_mainland` option and the dropped degradation
+> term. Those belong in the same release.
+
 Each item is small (S) unless marked. Each one needs a regression test that
 fails before the fix. Many change numbers in existing outputs, so NEWS must
 say which layers change and that they should be rebuilt.
