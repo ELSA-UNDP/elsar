@@ -16,6 +16,7 @@ make_manage_zone(
   lulc_raster = NULL,
   human_pressure = NULL,
   pasturelands_threshold = 0.35,
+  pasturelands_scale = c("auto", "percent", "fraction"),
   lulc_product = c("esri_10m", "dynamic_world", "esa_worldcover", "local"),
   agriculture_lulc_value = NULL,
   built_area_lulc_value = NULL,
@@ -56,7 +57,12 @@ criterion is not used.}
 
 \item{human_pressure}{SpatRaster. Human Footprint Index raster.}
 
-\item{pasturelands_threshold}{Numeric. Probability threshold above which cells are considered pasturelands (default = 0.35).}
+\item{pasturelands_threshold}{Numeric. Probability (0-1) above which cells are considered pasturelands (default = 0.35).}
+
+\item{pasturelands_scale}{Character. Scale of the \code{pasturelands} values:
+\code{"percent"} (0-100, as in the Global Pasture Watch probability layers),
+\code{"fraction"} (0-1) or \code{"auto"} (default: percent if any value is above 1).
+Percent values are divided by 100 before \code{pasturelands_threshold} applies.}
 
 \item{lulc_product}{Character. LULC product used for class value lookups: "esri_10m" (default),
 "dynamic_world", "esa_worldcover", or "local". When "local", explicit class values must be provided.}
