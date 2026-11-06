@@ -49,7 +49,8 @@ test_that("the patch filter removes small zones but never fills excluded holes (
   z[c(19, 20, 27, 28)] <- 0          # a 2 x 2 excluded hole (e.g. a town)
   z[1] <- 1
   z[c(2, 9, 10)] <- 0                # an isolated single eligible cell in the corner
-  out <- .sieve_zone(z, min_patch_size = 3)
+  # min_patch_size 10 > the 4-cell hole: terra::sieve() alone fills the hole
+  out <- .sieve_zone(z, min_patch_size = 10)
   v <- terra::values(out)[, 1]
   expect_true(all(v[c(19, 20, 27, 28)] == 0))
   expect_equal(v[1], 0)
@@ -75,5 +76,35 @@ test_that("protected areas can be a multi-row SpatVector in another CRS", {
     iso3 = "TST", pus = pus(), current_protected_areas = pas, human_pressure = grid(1:16),
     agricultural_areas = grid(0), built_areas = grid(0), filter_patch_size = FALSE
   )))
+  expect_s4_class(z, "SpatRaster")
+})
+
+test_that("auto encoding is read from the region and fails on unclear values", {
+  # An SDG layer cropped to a region with degradation reads as SDG
+  v <- terra::values(restore(rep(2, 16), c(-1, 1, 0, rep(0, 13))))[, 1]
+  expect_equal(v[1:3], c(1, 0, 0))
+  # A 0/1 layer with a negative NoData sentinel is an error, not silently SDG
+  expect_error(restore(rep(2, 16), c(-9999, 1, rep(0, 14))), "degradation_encoding")
+  # An explicit encoding is used as given
+  v2 <- terra::values(restore(rep(2, 16), c(1, 0, rep(0, 14)), degradation_encoding = "sdg"))[, 1]
+  expect_equal(v2[1], 0)
+})
+
+test_that("exact HII and threshold boundaries of the Restore Zone", {
+  hii <- c(3.999, 4, 20.999, 21, rep(2, 12))
+  v <- terra::values(restore(hii, 0))[, 1]
+  expect_equal(v[1:4], c(0, 1, 1, 0))
+  built <- c(0.1, 0.1000001, rep(0, 14))
+  v2 <- terra::values(restore(rep(10, 16), 0, built = built))[, 1]
+  expect_equal(v2[1:2], c(1, 0))
+})
+
+test_that("protected areas without a CRS are assumed to be in the PU CRS", {
+  pas <- sf::st_sf(geometry = sf::st_sfc(
+    sf::st_polygon(list(rbind(c(0, 0), c(1000, 0), c(1000, 1000), c(0, 1000), c(0, 0))))))
+  expect_warning(z <- suppressMessages(make_protect_zone(
+    iso3 = "TST", pus = pus(), current_protected_areas = pas, human_pressure = grid(1:16),
+    agricultural_areas = grid(0), built_areas = grid(0), filter_patch_size = FALSE
+  )), "no CRS")
   expect_s4_class(z, "SpatRaster")
 })

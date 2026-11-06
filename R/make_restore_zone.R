@@ -21,7 +21,9 @@
 #' (`HII >= hii_max`) is excluded as too far gone to restore, as in the
 #' original ELSA design ("HFP < 21"). Farmland and built-up areas may well be
 #' degraded, but they belong to the Manage Zone, so they are excluded here.
-#' Both HII thresholds are on the HII's own 0-50 scale.
+#' Both HII thresholds are on the HII's own 0-50 scale. Cells with no HII data
+#' (e.g. water) are judged on the degradation layer alone: they enter the zone
+#' only if degraded, and the upper cap does not apply to them.
 #'
 #' Agricultural and built-up areas can be provided directly as rasters, or derived
 #' from a land use/land cover (LULC) raster by specifying class values.
@@ -32,9 +34,12 @@
 #'   SDG 15.3.1 productivity layer, where -1 means degraded, or a 0/1
 #'   degraded-areas layer such as [make_degraded_areas()] output, where values
 #'   above 0 mean degraded. See `degradation_encoding`.
-#' @param degradation_encoding How to read `degradation`: `"auto"` (default:
-#'   `"sdg"` if the layer contains -1, otherwise `"binary"`), `"sdg"` (-1 is
-#'   degraded) or `"binary"` (values above 0 are degraded).
+#' @param degradation_encoding How to read `degradation`: `"sdg"` (-1 is
+#'   degraded), `"binary"` (values above 0 are degraded) or `"auto"` (default),
+#'   which looks at the values within the planning region: -1 to 1 is read as
+#'   `"sdg"`, 0 to 1 as `"binary"` (with a message: an SDG layer with no
+#'   degraded cells in the region looks the same, so set the encoding
+#'   explicitly in that case), and anything else is an error.
 #' @param human_pressure SpatRaster. Raster of human pressure/impact values
 #'   (e.g., Human Footprint Index). Higher values indicate greater pressure.
 #' @param forest_mask SpatRaster. Raster indicating forest ecosystem extent, used
@@ -156,12 +161,17 @@ make_restore_zone <- function(
     lifecycle::deprecate_warn(
       "0.4.2", "make_restore_zone(human_pressure_threshold)", "make_restore_zone(hii_min)"
     )
+    assertthat::assert_that(
+      missing(hii_min),
+      msg = "Give 'hii_min' or the deprecated 'human_pressure_threshold', not both."
+    )
     hii_min <- human_pressure_threshold
   }
-  assertthat::assert_that(
-    is.numeric(hii_min), is.numeric(hii_max), hii_min < hii_max,
-    msg = "'hii_min' must be smaller than 'hii_max'."
-  )
+  assertthat::assert_that(assertthat::is.number(hii_min), !is.na(hii_min),
+                          msg = "'hii_min' must be a single number.")
+  assertthat::assert_that(assertthat::is.number(hii_max), !is.na(hii_max),
+                          msg = "'hii_max' must be a single number (Inf for no cap).")
+  assertthat::assert_that(hii_min < hii_max, msg = "'hii_min' must be smaller than 'hii_max'.")
 
   # If lulc_proportions provided, extract agriculture and built_area
   # Supports both list format (new) and SpatRaster format (legacy)
@@ -234,7 +244,7 @@ make_restore_zone <- function(
   # degraded-areas layer such as make_degraded_areas() output (> 0 = degraded).
   # Before 0.4.2 only -1 counted, so a 0/1 layer silently added no degradation.
   if (degradation_encoding == "auto") {
-    degradation_encoding <- if (isTRUE(terra::minmax(degradation, compute = TRUE)[1] < 0)) "sdg" else "binary"
+    degradation_encoding <- .detect_degradation_encoding(degradation, pus)
   }
   log_message("Processing degradation layer ({degradation_encoding} encoding)...")
   is_degraded <- if (degradation_encoding == "sdg") {
@@ -384,4 +394,30 @@ make_restore_zone <- function(
 
   log_message("Successfully created {terra::nlyr(restore_zones)} restore zone layer(s)")
   return(restore_zones)
+}
+
+# Work out how a degradation layer is coded from its values within the
+# planning region (cheap, and not misled by values elsewhere in a global file)
+.detect_degradation_encoding <- function(degradation, pus) {
+  local <- .crop_to(degradation, pus)
+  rng <- if (is.null(local)) c(NA, NA) else terra::minmax(local, compute = TRUE)[, 1]
+  if (anyNA(rng)) {
+    stop("The degradation layer has no data in the planning region; ",
+         "set 'degradation_encoding'.", call. = FALSE)
+  }
+  if (rng[1] >= -1 && rng[1] < 0 && rng[2] <= 1) {
+    log_message("Degradation layer read as SDG 15.3.1 (-1 = degraded).")
+    return("sdg")
+  }
+  if (rng[1] >= 0 && rng[2] <= 1) {
+    log_message(paste(
+      "Degradation layer read as 0/1 degraded areas (values above 0 = degraded).",
+      "If it is an SDG 15.3.1 layer with no degraded cells in this region, set",
+      "degradation_encoding = 'sdg'."
+    ))
+    return("binary")
+  }
+  stop("Cannot tell how the degradation layer is coded (values ", rng[1], " to ",
+       rng[2], " in the planning region); set degradation_encoding to 'sdg' ",
+       "(-1 = degraded) or 'binary' (values above 0 = degraded).", call. = FALSE)
 }

@@ -75,11 +75,17 @@ on 0.4.1 until a country is rerun.
   deprecated in favour of `hii_min`. The `degradation` input can now be a 0/1
   degraded-areas layer as well as an SDG 15.3.1 layer (-1 = degraded): before,
   a 0/1 layer such as `make_degraded_areas()` output silently added no
-  degradation (`degradation_encoding = "auto"` detects which it is).
+  degradation. `degradation_encoding = "auto"` reads the values within the
+  planning region and stops when they are unclear. This affects any 0/1
+  "Degraded Areas" input, not only `compute_degraded_areas`. Note: the new
+  arguments come before `agriculture_threshold`, so positional calls shift.
 * **All zones with `filter_patch_size = TRUE`.** Removing small patches used
   `terra::sieve()`, which also filled small excluded holes (farms, towns)
-  back into the zone. Excluded cells now stay excluded; small eligible
-  patches are still removed.
+  back into the zone, and could keep small patches next to other small
+  patches or NoData. Small eligible patches are now removed exactly and
+  excluded cells always stay excluded. Patches are now edge-connected: cells
+  touching only at a corner count as separate patches (they were joined
+  before).
 
 ## Other changes
 
