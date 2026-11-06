@@ -97,3 +97,24 @@ test_that("loading several layers warns once, only if nothing matched", {
   ))
   expect_equal(nrow(x), 1)
 })
+
+
+test_that("the representation gap is a share of the target, not rescaled", {
+  ea <- "ESRI:54009"
+  pus <- terra::rast(nrows = 4, ncols = 4, xmin = 0, xmax = 4000, ymin = 0,
+                     ymax = 4000, crs = ea, vals = 1)
+  sq <- function(x0, x1, y1 = 4000) sf::st_polygon(list(rbind(
+    c(x0, 0), c(x1, 0), c(x1, y1), c(x0, y1), c(x0, 0))))
+  # One ecosystem, 25% protected: a 5-point gap is 5/30 everywhere, not 1
+  eco <- sf::st_sf(eco_id = 1, geometry = sf::st_sfc(sq(0, 4000), crs = ea))
+  pa <- sf::st_sf(geometry = sf::st_sfc(sq(0, 1000), crs = ea))
+  r <- suppressMessages(make_underrepresented_ecosystems(
+    eco, "eco_id", protected_areas_sf = pa, pus = pus, iso3 = "TST"))
+  expect_equal(unique(terra::values(r)[, 1]), 5 / 30, tolerance = 1e-6)
+  # Two ecosystems: 50% protected (gap 0) and unprotected (gap 30)
+  eco2 <- sf::st_sf(eco_id = c(1, 2),
+                    geometry = sf::st_sfc(sq(0, 2000), sq(2000, 4000), crs = ea))
+  r2 <- suppressMessages(make_underrepresented_ecosystems(
+    eco2, "eco_id", protected_areas_sf = pa, pus = pus, iso3 = "TST"))
+  expect_equal(terra::values(r2)[1:4, 1], c(0, 0, 1, 1))
+})

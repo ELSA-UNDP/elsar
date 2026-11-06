@@ -133,6 +133,12 @@ on 0.4.1 until a country is rerun.
   protect), water 0. The old `flood_risk / (1 - NDVI)` inverted this (it rose
   with vegetation) and grew without bound for dense vegetation. NDVI is used on
   its own 0-1 scale, not rescaled within the region.
+* **Underrepresented ecosystems (`make_underrepresented_ecosystems()`).** The
+  value is now each planning unit's largest gap to the 30% target divided by
+  the target (0 = target met, 1 = unprotected), as published ("30% minus the
+  protected percent"). Before, the gaps were rescaled across ecosystems, so
+  the largest gap in the region became 1 however small it was, and a region
+  with a single ecosystem (such as Andorra) became a constant 1.
 * **Threatened ecosystems for protection
   (`make_threatened_ecosystems_protection()`).** Ecosystems in another CRS
   than the planning units gave an all-NA layer (the intact-area mask was
