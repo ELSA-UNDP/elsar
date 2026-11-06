@@ -199,7 +199,10 @@ elsar_export_results <- function(x,
 }
 
 .safe_name <- function(x) {
-  x <- gsub("[^[:alnum:]]+", "_", iconv(x, to = "ASCII//TRANSLIT", sub = ""))
+  x <- iconv(x, to = "ASCII//TRANSLIT", sub = "")
+  # macOS's iconv writes accents as separate marks ("São" -> "S~ao"): drop them
+  x <- gsub("[`'^~\"]", "", x)
+  x <- gsub("[^[:alnum:]]+", "_", x)
   x <- gsub("^_+|_+$", "", x)
   ifelse(nzchar(x), x, "region")
 }
