@@ -1,4 +1,4 @@
-# elsar (development version)
+# elsar 0.4.2
 
 ## Values change: rebuild these layers
 
@@ -223,55 +223,6 @@ on 0.4.1 until a country is rerun.
   - `make_underrepresented_ecosystems()` accepts 0-row protected areas and
     warns that the result is uniform (1 wherever there is an ecosystem).
 
-## New features
-
-* `elsar_calibrate_weights()` computes per-feature calibration weights for an ELSA
-  prioritization so that features achieve more even representation relative to their
-  single-feature maxima. This is the ELSA pre-calibration step, previously living in
-  the downstream tool; the objective and framework are unchanged (spread-of-shortfall
-  minimisation via an additive, increase-only weight update), with added robustness:
-  it returns the best-seen weights, stops once the allocation freezes, and excludes
-  zero-total features instead of aborting. It returns a structured `elsar_calibration`
-  object (weights, representation profile, per-iteration trajectory, metadata) and
-  writes no files. `prioritizr` and a solver (`gurobi`, or `highs` for a free/local
-  option) are optional dependencies, checked at call time with an actionable message.
-
-* Sub-national region codes (e.g. `"USA_CA"`) now work with global datasets:
-  `make_kbas()`, `make_wetlands_ramsar()`, `make_urban_greening_opportunities()`
-  and `make_protected_areas(from_wdpca = TRUE)` filter or fetch by the national
-  part of the code (`"USA"`) instead of matching nothing.
-* `make_protected_areas()` drops protected areas outside the planning-unit
-  extent before dissolving them. Using a national WDPA dataset for a small
-  study area is now much cheaper (California: 48,010 of 50,976 US sites
-  skipped).
-
-## Installation / Dependencies
-
-* The core package is now much lighter to install. `wdpar`, `reticulate`,
-  `googledrive`, and `rappdirs` moved from `Imports` to `Suggests`, so installing
-  elsar no longer forces a Chromium browser, `libarchive`, conda/Python, or two
-  Google OAuth flows on users who only need the core (boundaries, planning units,
-  normalisation, zone builders from local rasters, plotting). The optional
-  features now check for their packages and give an actionable install message
-  when one is missing:
-  - `make_protected_areas(from_wdpca = TRUE)` requires `wdpar`;
-  - the `download_*` (Earth Engine) functions require `reticulate` and
-    `googledrive` (run `elsar_setup_gee()` to configure them).
-
-* `scales` and `png` moved from `Suggests` to `Imports`: they are used
-  unconditionally by the core plotting functions, so they belong there.
-
-## Improvements
-
-* `median_from_rast()` errors now say how to fix a missing or histogram-less
-  GDAL side-car: they give the `gdalinfo -hist` command (and the
-  `sf::gdal_utils()` equivalent) for the exact file terra opened, with a rough
-  time estimate for large rasters. Previously the message was only
-  "Side-car XML not found for <file>", which surfaced mid-run in
-  `make_threatened_ecosystems_protection()` with no hint.
-
-## Bug Fixes
-
 * `make_protected_areas()` now re-validates geometries after reprojecting to the
   planning-unit CRS and before dissolving. Reprojection can turn polygons that
   were valid in the source CRS invalid, and dissolving them failed with a GEOS
@@ -328,7 +279,27 @@ on 0.4.1 until a country is rerun.
   identifiers and the `iso3` literal to prevent SQL injection, and omits the
   `WHERE` clause when no `iso3`/`iso3_column` is supplied.
 
-## New Features
+## New features
+
+* `elsar_calibrate_weights()` computes per-feature calibration weights for an ELSA
+  prioritization so that features achieve more even representation relative to their
+  single-feature maxima. This is the ELSA pre-calibration step, previously living in
+  the downstream tool; the objective and framework are unchanged (spread-of-shortfall
+  minimisation via an additive, increase-only weight update), with added robustness:
+  it returns the best-seen weights, stops once the allocation freezes, and excludes
+  zero-total features instead of aborting. It returns a structured `elsar_calibration`
+  object (weights, representation profile, per-iteration trajectory, metadata) and
+  writes no files. `prioritizr` and a solver (`gurobi`, or `highs` for a free/local
+  option) are optional dependencies, checked at call time with an actionable message.
+
+* Sub-national region codes (e.g. `"USA_CA"`) now work with global datasets:
+  `make_kbas()`, `make_wetlands_ramsar()`, `make_urban_greening_opportunities()`
+  and `make_protected_areas(from_wdpca = TRUE)` filter or fetch by the national
+  part of the code (`"USA"`) instead of matching nothing.
+* `make_protected_areas()` drops protected areas outside the planning-unit
+  extent before dissolving them. Using a national WDPA dataset for a small
+  study area is now much cheaper (California: 48,010 of 50,976 US sites
+  skipped).
 
 * New `elsar_check_setup()` diagnoses your installation tier by tier (core /
   protected areas / Earth Engine) and reports what is present, what is missing,
@@ -343,7 +314,30 @@ on 0.4.1 until a country is rerun.
   it once, ahead of time, instead of letting the first `download_*` call build
   the environment mid-analysis.
 
+## Installation / Dependencies
+
+* The core package is now much lighter to install. `wdpar`, `reticulate`,
+  `googledrive`, and `rappdirs` moved from `Imports` to `Suggests`, so installing
+  elsar no longer forces a Chromium browser, `libarchive`, conda/Python, or two
+  Google OAuth flows on users who only need the core (boundaries, planning units,
+  normalisation, zone builders from local rasters, plotting). The optional
+  features now check for their packages and give an actionable install message
+  when one is missing:
+  - `make_protected_areas(from_wdpca = TRUE)` requires `wdpar`;
+  - the `download_*` (Earth Engine) functions require `reticulate` and
+    `googledrive` (run `elsar_setup_gee()` to configure them).
+
+* `scales` and `png` moved from `Suggests` to `Imports`: they are used
+  unconditionally by the core plotting functions, so they belong there.
+
 ## Improvements
+
+* `median_from_rast()` errors now say how to fix a missing or histogram-less
+  GDAL side-car: they give the `gdalinfo -hist` command (and the
+  `sf::gdal_utils()` equivalent) for the exact file terra opened, with a rough
+  time estimate for large rasters. Previously the message was only
+  "Side-car XML not found for <file>", which surfaced mid-run in
+  `make_threatened_ecosystems_protection()` with no hint.
 
 * The Earth Engine conda environment is now **persistent and reused** across
   sessions rather than created per-process and removed after each download.
