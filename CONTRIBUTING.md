@@ -110,5 +110,5 @@ By contributing, you agree to abide by our
 
 ## Licence
 
-elsar is released under [CC BY 4.0](LICENSE.md). By contributing, you agree that
+elsar is released under the [Apache License 2.0](LICENSE.md). By contributing, you agree that
 your contributions will be licensed under the same terms.

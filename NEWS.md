@@ -152,6 +152,8 @@ on 0.4.1 until a country is rerun.
 
 ## Other changes
 
+* elsar is now released under the Apache License 2.0 (was CC BY 4.0, which
+  is not meant for software), as agreed by the authors.
 * `make_postgres_connection()` is back (it was removed in 0.4.0 without
   deprecation, but existing code, including the pipeline, calls it). It
   returns a named list.

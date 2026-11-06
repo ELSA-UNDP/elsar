@@ -22,7 +22,7 @@ Description: Provides tools and data pipelines to support Essential Life Support
     global spatial datasets, prepare raster layers for spatial prioritization,
     create zone layers (protect, restore, manage), and calculate coverage metrics
     over planning units.
-License: CC BY 4.0
+License: Apache License (== 2.0)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 Suggests:
