@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{exact_rasterise}
 \alias{exact_rasterise}
-\title{Efficient Attribute-Weighted Rasterization Using Coverage Fraction}
+\title{Rasterise Feature Attributes onto Planning Units, Weighted by Coverage}
 \usage{
 exact_rasterise(
   features,
@@ -17,46 +17,50 @@ exact_rasterise(
 )
 }
 \arguments{
-\item{features}{An \code{sf} or \code{SpatVector} object containing the vector features to rasterize.}
+\item{features}{An \code{sf} or \code{SpatVector} object containing the vector features to rasterise.}
 
-\item{attribute}{Character. The column name in \code{features} to use as a weight for raster values.}
+\item{attribute}{Character. The column name in \code{features} holding the value to rasterise.}
 
-\item{iso3}{Character. ISO3 country code, passed to \code{make_normalised_raster()}.}
+\item{iso3}{Character. ISO3 country code, passed to \code{\link[=make_normalised_raster]{make_normalised_raster()}}.}
 
-\item{pus}{A \code{SpatRaster} object defining the resolution, extent, and CRS of the output raster.}
+\item{pus}{A \code{SpatRaster} defining the planning-unit grid.}
 
-\item{invert}{Logical. If \code{TRUE}, inverts the resulting values during normalization (default: \code{FALSE}).}
+\item{invert}{Logical. If \code{TRUE}, inverts the resulting values during normalisation (default: \code{FALSE}).}
 
-\item{rescaled}{Logical. If \code{TRUE}, rescales the output to 0-1 using \code{make_normalised_raster()} (default: \code{TRUE}).}
+\item{rescaled}{Logical. If \code{TRUE}, rescales the output to 0-1 using \code{\link[=make_normalised_raster]{make_normalised_raster()}} (default: \code{TRUE}).}
 
-\item{fun}{Function. Aggregation function applied across overlapping rasterized features (default: \code{mean}).}
+\item{fun}{How overlapping features are combined: \code{mean} (default), \code{sum},
+\code{max} or \code{min}, as a function or a string.}
 
-\item{cores}{Integer. Number of CPU cores to use for multi-core processing (default: 4).}
-
-\item{max_exact_features}{Integer. Above this feature count the per-feature
-coverage-fraction stack (which needs one raster and one open file handle per
-feature) is skipped in favour of a single \code{terra::rasterize()} pass, provided
-\code{fun} is a standard aggregation (\code{mean}/\code{sum}/\code{max}/\code{min}). This keeps
-wall-to-wall class maps with tens of thousands of polygons from exhausting the
-OS open-file limit and crawling. Set to \code{Inf} to always use the exact path
-(default: 1000).}
+\item{cores, max_exact_features}{Ignored since 0.4.2 (kept so existing calls
+still work).}
 }
 \value{
-A \code{SpatRaster} object representing the attribute-weighted rasterization of the input features.
+A \code{SpatRaster} on the planning-unit grid.
 }
 \description{
-Rasterizes vector features to a raster grid defined by a planning unit (\code{pus}) layer,
-assigning values based on a given attribute and the actual coverage fraction of
-each feature over each raster cell. This method is optimized for speed and precision
-and is especially useful when features overlap or vary in size and shape.
+Rasterises an attribute of vector features onto the planning-unit grid,
+using the exact share of each planning unit that each feature covers.
 }
 \details{
-If multiple features are provided, each is rasterized independently and aggregated
-across the stack using the specified function (\code{fun}), typically \code{sum}, \code{mean}, or \code{max}.
+How features are combined in a planning unit depends on \code{fun}:
+\itemize{
+\item \code{mean} (default): the coverage-weighted mean of the features present,
+\code{sum(value * coverage) / sum(coverage)}. A planning unit only partly
+covered by one feature gets that feature's value.
+\item \code{sum}: \code{sum(value * coverage)}, so uncovered parts count as 0 (use for
+area-weighted totals or shares).
+\item \code{max}, \code{min}: the largest or smallest value among the features present.
+}
+
+Planning units with no feature are 0. Since 0.4.2 one
+\code{\link[exactextractr:exact_extract]{exactextractr::exact_extract()}} pass handles any number of features with
+the same rule; before, \code{mean} averaged over \emph{all} features (including ones
+not touching the planning unit) and the method changed above 1,000 features.
 }
 \examples{
 \dontrun{
-# Rasterize polygons using a 'score' attribute
+# Rasterise polygons using a 'score' attribute
 result <- exact_rasterise(features = my_polygons, attribute = "score", pus = my_raster, fun = sum)
 }
 }

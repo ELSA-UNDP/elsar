@@ -20,16 +20,18 @@ is_valid_iso3 <- function(iso3) {
 
 #' National part of an ISO3-style region code
 #'
-#' Global datasets (KBAs, Ramsar, WDPA, GHSL urban centres) carry a national
+#' Global datasets (KBAs, Ramsar, WDPCA, GHSL urban centres) carry a national
 #' ISO3 attribute, so a sub-national code such as `"USA_CA"` must be matched
 #' as `"USA"`. A plain 3-letter code is returned unchanged.
 #'
 #' @param iso3 Character. An ISO3-style code accepted by [is_valid_iso3()].
 #'
-#' @return The first three characters of `iso3`.
+#' @return The first three characters of `iso3`, in upper case.
 #' @keywords internal
 iso3_base <- function(iso3) {
-  substr(iso3, 1, 3)
+  # Upper case: global datasets (KBA, Ramsar, WDPCA, GHSL) use upper-case
+  # codes, and a lower-case code ("npl") used to match nothing, silently
+  toupper(substr(iso3, 1, 3))
 }
 
 #' Rescale Raster to 0-1 Range
@@ -42,7 +44,11 @@ iso3_base <- function(iso3) {
 #' @param new_min Numeric. New minimum of rescaled raster (default = 0).
 #' @param new_max Numeric. New maximum of rescaled raster (default = 1).
 #'
-#' @return A `SpatRaster` with values rescaled to the specified range.
+#' @return A `SpatRaster` with values rescaled to the specified range. A
+#'   constant layer returns `new_max` where its value is positive and `new_min`
+#'   otherwise (with a message), instead of `NaN`. Note that with
+#'   `invert = TRUE` in [make_normalised_raster()], a constant positive layer
+#'   is inverted first and so becomes `new_min` everywhere.
 #' @export
 rescale_raster <- function(
     raster_in,
@@ -52,6 +58,16 @@ rescale_raster <- function(
     new_max = 1) {
   if (is.null(raster_in_min)) raster_in_min <- terra::global(raster_in, min, na.rm = TRUE)$min
   if (is.null(raster_in_max)) raster_in_max <- terra::global(raster_in, max, na.rm = TRUE)$max
+  if (isTRUE(raster_in_max - raster_in_min <= 0)) {
+    # A constant layer has no range: dividing by zero would give NaN everywhere
+    # (e.g. a region fully covered by protected areas). Keep the information
+    # that it is uniformly present (new_max) or absent (new_min).
+    value <- if (isTRUE(raster_in_max > 0)) new_max else new_min
+    # Common and harmless for empty layers (e.g. no KBAs in the country), so
+    # report it without a warning
+    log_message("rescale_raster: the layer is constant ({signif(raster_in_max, 4)}); returning {value} wherever it has data.")
+    return(terra::ifel(is.na(raster_in), NA, value))
+  }
   new_min + (raster_in - raster_in_min) * ((new_max - new_min) / (raster_in_max - raster_in_min))
 }
 
@@ -94,60 +110,60 @@ convert_points_polygon <- function(
   if (!inherits(sf_layer, "sf")) {
     stop("sf_layer must be an sf object.")
   }
-
-  if (!area_attr %in% names(sf_layer)) {
-    stop(paste("The area attribute", area_attr, "does not exist in the input sf_layer."))
-  }
-
   if (!is.numeric(nQuadSegs) || nQuadSegs <= 0) {
     stop("nQuadSegs must be a positive integer.")
   }
 
-  # Filter for points with area values
-  points_with_area <- sf_layer %>%
-    dplyr::filter(!!rlang::sym(area_attr) > 0 &
-                    sf::st_geometry_type(.) %in% c("POINT", "MULTIPOINT"))
+  is_point <- sf::st_is(sf_layer, c("POINT", "MULTIPOINT"))
+  # Polygons are kept as they are: their area attribute is not needed (WDPCA
+  # polygons often report 0 or NA). Before 0.4.2 they were dropped too.
+  polygons <- sf_layer[!is_point, ]
+  points <- sf_layer[is_point, ]
 
-  # Create circular buffers for valid point features
-  if (nrow(points_with_area) == 0) {
-    warning("No point geometries with area attributes found.")
+  points_buffered <- NULL
+  had_points <- nrow(points) > 0
+  if (had_points) {
+    if (!area_attr %in% names(sf_layer)) {
+      stop(paste("The area attribute", area_attr, "does not exist in the input sf_layer."))
+    }
+    area <- suppressWarnings(as.numeric(sf::st_drop_geometry(points)[[area_attr]]))
+    points <- points[!is.na(area) & area > 0, ]
+    area <- area[!is.na(area) & area > 0]
+  }
+
+  if (nrow(points) == 0) {
+    if (had_points) warning("No point geometries with area attributes found.")
   } else {
-    points_transformed <- sf::st_transform(points_with_area, crs = area_crs)
+    # A multipoint's reported area is shared between its points (before 0.4.2
+    # each point got a circle of the full area)
+    points$.feature <- seq_len(nrow(points))
+    points$.area <- area
+    # Cast to MULTIPOINT first: casting a mixed POINT/MULTIPOINT column straight
+    # to POINT keeps only the first point of each multipoint
+    single <- suppressWarnings(sf::st_cast(sf::st_cast(points, "MULTIPOINT"), "POINT"))
+    n_parts <- tabulate(single$.feature, nbins = nrow(points))
+    part_area <- single$.area / n_parts[single$.feature]
 
     points_buffered <- sf::st_buffer(
-      points_transformed,
-      dist = sqrt((as.numeric(sf::st_drop_geometry(points_with_area)[[area_attr]]) * area_multiplier) / pi),
+      sf::st_transform(single, crs = area_crs),
+      dist = sqrt(part_area * area_multiplier / pi),
       nQuadSegs = nQuadSegs
     )
-
-    # Reproject back to original CRS
     points_buffered <- sf::st_transform(points_buffered, crs = sf::st_crs(sf_layer))
+    points_buffered$.feature <- NULL
+    points_buffered$.area <- NULL
   }
 
-  # Append original polygons if requested
-  if (append_original_polygons) {
-    polygons_with_area <- sf_layer %>%
-      dplyr::filter(!!rlang::sym(area_attr) > 0 &
-                      !(sf::st_geometry_type(.) %in% c("POINT", "MULTIPOINT")))
-
-    if (nrow(polygons_with_area) == 0 && exists("points_buffered", inherits = FALSE)) {
-      return(points_buffered)
-    } else if (nrow(polygons_with_area) > 0 && exists("points_buffered", inherits = FALSE)) {
-      return(rbind(polygons_with_area, points_buffered))
-    } else if (nrow(polygons_with_area) > 0 && !exists("points_buffered", inherits = FALSE)) {
-      return(polygons_with_area)
-    } else {
-      warning("No valid point or polygon features found with area attributes. Returning an empty sf object.")
-      return(sf_layer[0, ])
-    }
+  out <- if (append_original_polygons) {
+    if (is.null(points_buffered)) polygons else dplyr::bind_rows(polygons, points_buffered)
   } else {
-    if (exists("points_buffered", inherits = FALSE)) {
-      return(points_buffered)
-    } else {
-      warning("No point features matched the criteria. Returning an empty sf object.")
-      return(sf_layer[0, ])
-    }
+    points_buffered
   }
+  if (is.null(out) || nrow(out) == 0) {
+    warning("No valid point or polygon features found. Returning an empty sf object.")
+    return(sf_layer[0, ])
+  }
+  out
 }
 
 
@@ -187,55 +203,50 @@ extract_filename_filetype <- function(data_name, file_path) {
 #' @return Numeric. Percentage of zone coverage across PUs.
 #' @export
 get_coverage <- function(zone_layer, pu_layer) {
-  terra::global(zone_layer, sum, na.rm = TRUE)$sum /
+  # Count the zone only within the planning units (coded 1; NA or 0 outside),
+  # so coverage cannot exceed 100% (before 0.4.2 cells outside counted too)
+  zone_in_pus <- terra::mask(zone_layer, pu_layer, maskvalues = c(NA, 0))
+  terra::global(zone_in_pus, sum, na.rm = TRUE)$sum /
     terra::global(pu_layer, sum, na.rm = TRUE)$sum * 100
 }
 
-# Map an aggregation `fun` (a function like mean/max, or a string) to the
-# equivalent terra::rasterize() `fun` name, or NA if it has no direct equivalent.
-.terra_fun_name <- function(fun) {
-  if (is.character(fun)) {
-    return(if (fun %in% c("mean", "sum", "max", "min", "modal", "first", "last")) fun else NA_character_)
-  }
-  for (nm in c("mean", "sum", "max", "min")) {
-    if (identical(fun, match.fun(nm))) return(nm)
-  }
-  NA_character_
-}
 
-#' Efficient Attribute-Weighted Rasterization Using Coverage Fraction
+#' Rasterise Feature Attributes onto Planning Units, Weighted by Coverage
 #'
-#' Rasterizes vector features to a raster grid defined by a planning unit (`pus`) layer,
-#' assigning values based on a given attribute and the actual coverage fraction of
-#' each feature over each raster cell. This method is optimized for speed and precision
-#' and is especially useful when features overlap or vary in size and shape.
+#' Rasterises an attribute of vector features onto the planning-unit grid,
+#' using the exact share of each planning unit that each feature covers.
 #'
-#' If multiple features are provided, each is rasterized independently and aggregated
-#' across the stack using the specified function (`fun`), typically `sum`, `mean`, or `max`.
+#' How features are combined in a planning unit depends on `fun`:
+#' * `mean` (default): the coverage-weighted mean of the features present,
+#'   `sum(value * coverage) / sum(coverage)`. A planning unit only partly
+#'   covered by one feature gets that feature's value.
+#' * `sum`: `sum(value * coverage)`, so uncovered parts count as 0 (use for
+#'   area-weighted totals or shares).
+#' * `max`, `min`: the largest or smallest value among the features present.
 #'
-#' @param features An `sf` or `SpatVector` object containing the vector features to rasterize.
-#' @param attribute Character. The column name in `features` to use as a weight for raster values.
-#' @param iso3 Character. ISO3 country code, passed to `make_normalised_raster()`.
-#' @param pus A `SpatRaster` object defining the resolution, extent, and CRS of the output raster.
-#' @param invert Logical. If `TRUE`, inverts the resulting values during normalization (default: `FALSE`).
-#' @param rescaled Logical. If `TRUE`, rescales the output to 0-1 using `make_normalised_raster()` (default: `TRUE`).
-#' @param fun Function. Aggregation function applied across overlapping rasterized features (default: `mean`).
-#' @param cores Integer. Number of CPU cores to use for multi-core processing (default: 4).
-#' @param max_exact_features Integer. Above this feature count the per-feature
-#'   coverage-fraction stack (which needs one raster and one open file handle per
-#'   feature) is skipped in favour of a single `terra::rasterize()` pass, provided
-#'   `fun` is a standard aggregation (`mean`/`sum`/`max`/`min`). This keeps
-#'   wall-to-wall class maps with tens of thousands of polygons from exhausting the
-#'   OS open-file limit and crawling. Set to `Inf` to always use the exact path
-#'   (default: 1000).
+#' Planning units with no feature are 0. Since 0.4.2 one
+#' [exactextractr::exact_extract()] pass handles any number of features with
+#' the same rule; before, `mean` averaged over *all* features (including ones
+#' not touching the planning unit) and the method changed above 1,000 features.
 #'
-#' @return A `SpatRaster` object representing the attribute-weighted rasterization of the input features.
+#' @param features An `sf` or `SpatVector` object containing the vector features to rasterise.
+#' @param attribute Character. The column name in `features` holding the value to rasterise.
+#' @param iso3 Character. ISO3 country code, passed to [make_normalised_raster()].
+#' @param pus A `SpatRaster` defining the planning-unit grid.
+#' @param invert Logical. If `TRUE`, inverts the resulting values during normalisation (default: `FALSE`).
+#' @param rescaled Logical. If `TRUE`, rescales the output to 0-1 using [make_normalised_raster()] (default: `TRUE`).
+#' @param fun How overlapping features are combined: `mean` (default), `sum`,
+#'   `max` or `min`, as a function or a string.
+#' @param cores,max_exact_features Ignored since 0.4.2 (kept so existing calls
+#'   still work).
+#'
+#' @return A `SpatRaster` on the planning-unit grid.
 #'
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' # Rasterize polygons using a 'score' attribute
+#' # Rasterise polygons using a 'score' attribute
 #' result <- exact_rasterise(features = my_polygons, attribute = "score", pus = my_raster, fun = sum)
 #' }
 exact_rasterise <- function(
@@ -249,101 +260,108 @@ exact_rasterise <- function(
     cores = 4,
     max_exact_features = 1000
 ) {
+  fun_name <- .rasterise_fun_name(fun, deparse(substitute(fun)))
 
   # Validate inputs
   assertthat::assert_that(
     inherits(features, "sf") || inherits(features, "SpatVector"),
     msg = "'features' must be an 'sf' or 'SpatVector' object."
   )
-
+  if (inherits(features, "SpatVector")) features <- sf::st_as_sf(features)
   assertthat::assert_that(
-    attribute %in% colnames(features),
+    attribute %in% names(features),
     msg = glue::glue("Attribute '{attribute}' not found in 'features'.")
   )
-
   assertthat::assert_that(
     inherits(pus, "SpatRaster"),
     msg = "'pus' must be a 'SpatRaster' object."
   )
-
   assertthat::assert_that(
     is_valid_iso3(iso3),
     msg = "'iso3' must be a 3-letter ISO3 code, optionally with a regional suffix (e.g. ECU_REG)."
   )
 
-  # Initialize an empty raster stack
-  r_stack <- terra::rast()
+  features <- features[!sf::st_is_empty(features), ]
 
-  nfeat <- nrow(features)
-  terra_fun <- .terra_fun_name(fun)
-  use_fast <- nfeat > max_exact_features && !is.na(terra_fun)
-
-  if (nfeat > max_exact_features && is.na(terra_fun)) {
-    warning(
-      glue::glue(
-        "exact_rasterise: {nfeat} features with a non-standard `fun`; falling back to ",
-        "the per-feature coverage stack, which needs one open file handle per feature ",
-        "and may hit the OS file-descriptor limit and run slowly. Pass fun = mean/sum/max/min ",
-        "to use the single-pass terra::rasterize path."
-      ),
-      call. = FALSE
-    )
-  }
-
-  if (use_fast) {
-    # Single-pass rasterisation for large feature counts: O(1) file handles and
-    # far faster than stacking one coverage raster per feature. `fun` aggregates
-    # polygons that share a cell. (Sub-cell coverage weighting is dropped here;
-    # it is negligible for the wall-to-wall class maps that reach this path.)
-    log_message("exact_rasterise: {nfeat} features (> {max_exact_features}); using single-pass terra::rasterize (fun = {terra_fun}).")
-    v <- if (inherits(features, "SpatVector")) features else terra::vect(features)
-    if (!terra::same.crs(v, pus)) v <- terra::project(v, pus)
-    r_stack <- terra::rasterize(v, pus, field = attribute, fun = terra_fun, background = NA)
-
-  } else if (nfeat > 1) {
-    # Handle multiple features by rasterizing each individually and stacking
-    for (i in 1:nrow(features)) {
-      f <- dplyr::slice(features, i)
-      attr_val <- dplyr::pull(f, attribute)        # Get attribute value directly
-
-      # Rasterize the coverage fraction of this feature
-      f_r <- exactextractr::coverage_fraction(pus, f)[[1]]
-
-      # Multiply by the attribute value (to weight by that attribute)
-      f_r <- f_r * attr_val
-
-      r_stack <- c(r_stack, f_r)
-
-      log_message("{round(100 * i / nrow(features), 1)}% complete")
-    }
-
-    # Aggregate across all rasterized layers using the specified function
-    log_message("Aggregating layers...")
-    r_stack <- terra::app(
-      r_stack,
-      cores = cores,
-      fun = fun,
-      na.rm = TRUE
-    )
-
+  if (nrow(features) == 0) {
+    log_message("exact_rasterise: no features; returning an empty layer.")
+    r <- terra::ifel(pus == 1, 0, NA)
   } else {
-    # Single feature: get coverage fraction directly.
-    log_message("Calculating weighted coverage fraction using a single feature...")
-    r_stack <- exactextractr::coverage_fraction(pus, features)[[1]]
-    r_stack <- r_stack * dplyr::pull(features, attribute)
+    features <- sf::st_make_valid(sf::st_transform(features, sf::st_crs(pus)))
+    features <- .polygons_only(features)
+    raw <- sf::st_drop_geometry(features)[[attribute]]
+    # A factor's level codes are not its values (factor("10") is code 1)
+    if (is.factor(raw)) raw <- as.character(raw)
+    values <- suppressWarnings(as.numeric(raw))
+    assertthat::assert_that(
+      sum(is.na(values)) == sum(is.na(raw)),
+      msg = glue::glue("Attribute '{attribute}' must be numeric.")
+    )
+    log_message("exact_rasterise: {nrow(features)} feature(s), fun = {fun_name}.")
+
+    cells <- exactextractr::exact_extract(
+      pus, features, include_cell = TRUE, progress = FALSE
+    )
+    cells <- dplyr::bind_rows(lapply(seq_along(cells), function(i) {
+      d <- cells[[i]]
+      d <- d[d$coverage_fraction > 0, c("cell", "coverage_fraction"), drop = FALSE]
+      if (nrow(d) > 0) d$value <- values[i]
+      d
+    }))
+    cells <- cells[!is.na(cells$value), , drop = FALSE]
+
+    r <- terra::ifel(pus == 1, 0, NA)
+    if (nrow(cells) > 0) {
+      # Base rowsum()/ordering: far faster than grouped dplyr on millions of rows
+      if (fun_name %in% c("mean", "sum")) {
+        totals <- rowsum(cbind(cells$value * cells$coverage_fraction, cells$coverage_fraction),
+                         cells$cell, reorder = FALSE)
+        cell_ids <- as.numeric(rownames(totals))
+        v <- if (fun_name == "mean") totals[, 1] / totals[, 2] else totals[, 1]
+      } else {
+        ord <- order(cells$cell, if (fun_name == "max") -cells$value else cells$value)
+        first <- ord[!duplicated(cells$cell[ord])]
+        cell_ids <- cells$cell[first]
+        v <- cells$value[first]
+      }
+      r[cell_ids] <- v
+      r <- terra::mask(r, pus)
+    }
   }
 
   # Normalise the final result
   log_message("Normalising output...")
-  result <- elsar::make_normalised_raster(
-    raster_in = r_stack,
+  make_normalised_raster(
+    raster_in = r,
     pus = pus,
     iso3 = iso3,
     invert = invert,
     rescaled = rescaled
   )
+}
 
-  return(result)
+# The name of an aggregation for exact_rasterise(): "mean", "sum", "max" or
+# "min", given a function (base or terra versions) or a string
+.rasterise_fun_name <- function(fun, expr = "") {
+  allowed <- c("mean", "sum", "max", "min")
+  if (is.character(fun)) {
+    name <- fun
+  } else {
+    name <- NA_character_
+    # terra's mean, sum, ... are S4 generics: use their generic name
+    if (isS4(fun) && "generic" %in% methods::slotNames(fun)) name <- as.character(fun@generic)
+    for (nm in allowed) {
+      if (identical(fun, match.fun(nm)) || identical(fun, get(nm, envir = baseenv()))) {
+        name <- nm
+      }
+    }
+    if (is.na(name)) name <- sub("^.*::", "", expr) # e.g. a call written as terra::mean
+  }
+  assertthat::assert_that(
+    name %in% allowed,
+    msg = "'fun' must be mean, sum, max or min."
+  )
+  name
 }
 
 #' Crop a Global Raster to the Extent of Planning Units
@@ -355,7 +373,7 @@ exact_rasterise <- function(
 #'
 #' @param raster_in SpatRaster. A large input raster (e.g., global dataset).
 #' @param pus SpatRaster. Planning units raster used to define the target extent.
-#' @param threads Optional method to use multi-core processing - to speed on some `terra` functions (default: `TRUE`).
+#' @param threads Ignored since 0.4.2 (kept so existing calls still work).
 #'
 #' @return A cropped SpatRaster with the same CRS as `raster_in` and extent matching the reprojected `pus`.
 #' @export
@@ -371,28 +389,16 @@ crop_global_raster <- function(raster_in, pus, threads = TRUE) {
   assertthat::assert_that(inherits(pus, "SpatRaster"),
                           msg = "'pus' must be a SpatRaster.")
 
-  # Attempt to project and crop
-  tryCatch({
-    log_message("Projecting PUs to match global input raster...")
-    pus_extent <- pus %>%
-      terra::project(
-        terra::crs(raster_in),
-        threads = threads
-        ) %>%
-      terra::ext()
-
-    log_message("Cropping raster to PU layer...")
-    cropped <- terra::crop(
-      raster_in,
-      pus_extent,
-      extend = TRUE
-    )
-
-    return(cropped)
-  }, error = function(e) {
-    log_message("Warning: crop failed: {e$message}; returning an empty raster.")
-    return(terra::ifel(pus == 1, 0, NA))  # Or NULL if you want to explicitly handle failure
-  })
+  # Crop to the planning-unit footprint, projected into the input's CRS. Only
+  # "no overlap" gives an empty layer; any other error (memory, a bad file) is
+  # raised. Before 0.4.2 every error became an all-0 layer without notice.
+  log_message("Cropping raster to PU layer...")
+  cropped <- .crop_to(raster_in, pus)
+  if (is.null(cropped)) {
+    log_message("The input raster does not overlap the planning units; returning an empty raster.")
+    return(terra::ifel(pus == 1, 0, NA))
+  }
+  cropped
 }
 
 #' Log a message with timestamp
@@ -488,6 +494,9 @@ get_file_type <- function(path) {
 #' @param wkt_filter Character or NULL. Optional WKT string used for spatial filtering.
 #' @param file_type Character or NULL. File type used to determine if layer name inference is required.
 #'
+#' @param warn_empty Logical. Warn when an ISO3 filter matches no features
+#'   (default `TRUE`). Loaders that read several layers and combine them set it
+#'   to `FALSE` and check the combined result instead.
 #' @return An `sf` object with valid geometry, or `NULL` on failure.
 #' @export
 #'
@@ -502,7 +511,8 @@ filter_sf <- function(file_path,
                       layer_name = NULL,
                       drop3d = TRUE,
                       wkt_filter = NULL,
-                      file_type = NULL) {
+                      file_type = NULL,
+                      warn_empty = TRUE) {
 
   # If no layer name provided and the format supports layers, pick the first
   # one. Guard the read: st_layers() throws on an unreadable/corrupt file, and
@@ -552,7 +562,8 @@ filter_sf <- function(file_path,
   # Dynamically build st_read() call
   dat <- tryCatch({
     args <- list(dsn = file_path, quiet = TRUE)
-    if (!is.null(layer_name)) args$layer <- layer_name
+    # (sf ignores, and warns about, a layer when a query is given)
+    if (!is.null(layer_name) && is.null(query)) args$layer <- layer_name
     if (!is.null(query)) args$query <- query
     if (!is.null(wkt_filter)) args$wkt_filter <- wkt_filter
     do.call(sf::st_read, args)
@@ -560,6 +571,13 @@ filter_sf <- function(file_path,
     message("Failed to read layer: ", layer_name, " in file: ", file_path, "\nError: ", e$message)
     return(NULL)
   })
+
+  # An ISO3 filter that matches nothing usually means a wrong iso3_column or
+  # code; say so instead of silently returning no features
+  if (warn_empty && !is.null(dat) && !is.null(query) && nrow(dat) == 0) {
+    warning("No features in layer '", layer_name, "' where ", iso3_column, " = '", iso3,
+            "'. Check 'iso3' and 'iso3_column'.", call. = FALSE)
+  }
 
   # Drop Z/M geometry dimensions if requested
   if (!is.null(dat) && drop3d) {
@@ -711,11 +729,24 @@ conditionally_subdivide_bbox <- function(bbox_sf,
 #' }
 #'
 save_raster <- function(raster, filename, datatype = "FLT4S", resampling = NULL) {
-  # Determine GDAL predictor: 3 for float (better for continuous), 2 for integer (better for categorical)
-  predictor_value <- ifelse(datatype == "FLT4S", "3", "2")
-
-  # Define nodata value: NaN for float, 255 for integer (common convention)
-  nodata_value <- if (datatype == "FLT4S") NaN else 255
+  # NoData and compression predictor per data type. Before 0.4.2 every type
+  # other than FLT4S got NoData 255 and predictor 2: FLT8S failed, and in
+  # INT2U/INT4U data the valid value 255 became NoData.
+  types <- list(
+    FLT4S = list(nodata = NaN, predictor = "3"),
+    FLT8S = list(nodata = NaN, predictor = "3"),
+    INT1U = list(nodata = 255, predictor = "2"),
+    INT1S = list(nodata = -128, predictor = "2"),
+    INT2U = list(nodata = 65535, predictor = "2"),
+    INT2S = list(nodata = -32768, predictor = "2"),
+    INT4U = list(nodata = 4294967295, predictor = "2"),
+    INT4S = list(nodata = -2147483648, predictor = "2")
+  )
+  assertthat::assert_that(
+    datatype %in% names(types),
+    msg = paste0("'datatype' must be one of: ", paste(names(types), collapse = ", "), ".")
+  )
+  type <- types[[datatype]]
 
   # Overview resampling. Caller may override; otherwise default by datatype:
   #   - float    -> AVERAGE  (smooth downsampling of continuous values)
@@ -724,7 +755,7 @@ save_raster <- function(raster, filename, datatype = "FLT4S", resampling = NULL)
   # so overviews keep the dominant class instead of an arbitrary pixel.
   resampling_value <- if (!is.null(resampling)) {
     toupper(resampling)
-  } else if (datatype == "FLT4S") {
+  } else if (startsWith(datatype, "FLT")) {
     "AVERAGE"
   } else {
     "NEAREST"
@@ -733,24 +764,33 @@ save_raster <- function(raster, filename, datatype = "FLT4S", resampling = NULL)
   # Write raster to disk as Cloud Optimized GeoTIFF (COG). Overviews are built
   # (OVERVIEWS=AUTO) so the output is a fully valid COG - required by strict COG
   # readers/servers such as TiTiler/rio-cogeo, which reject COGs without them.
-  terra::writeRaster(
-    raster,
-    filename = filename,
-    filetype = "COG",
-    datatype = datatype,
-    NAflag = nodata_value,
-    gdal = c(
-      "COMPRESS=ZSTD",
-      glue::glue("PREDICTOR={predictor_value}"),
-      "NUM_THREADS=ALL_CPUS",
-      "OVERVIEWS=AUTO",
-      glue::glue("OVERVIEW_RESAMPLING={resampling_value}")
+  # GDAL builds COGs through an in-memory copy and warns that the MEM driver
+  # ignores the creation options; those warnings are harmless and muffled.
+  withCallingHandlers(
+    terra::writeRaster(
+      raster,
+      filename = filename,
+      filetype = "COG",
+      datatype = datatype,
+      NAflag = type$nodata,
+      gdal = c(
+        "COMPRESS=ZSTD",
+        glue::glue("PREDICTOR={type$predictor}"),
+        "NUM_THREADS=ALL_CPUS",
+        "OVERVIEWS=AUTO",
+        glue::glue("OVERVIEW_RESAMPLING={resampling_value}")
+      ),
+      overwrite = TRUE
     ),
-    overwrite = TRUE
+    warning = function(w) {
+      if (grepl("driver MEM does not support creation option", conditionMessage(w))) {
+        invokeRestart("muffleWarning")
+      }
+    }
   )
 
-  # Log saved file path
   log_message("Saved: {filename}.")
+  invisible(filename)
 }
 
 # Instruction appended to median_from_rast() errors. The side-car must sit next
@@ -864,8 +904,6 @@ get_binary_layers <- function(raster_stack) {
     msg = "'raster_stack' must be a SpatRaster object."
   )
 
-  # Handle empty raster stacks
-
   if (terra::nlyr(raster_stack) == 0) {
     log_message("Raster stack has 0 layers - returning empty result.")
     return(list(NULL, NULL))
@@ -873,33 +911,30 @@ get_binary_layers <- function(raster_stack) {
 
   log_message("Analyzing {terra::nlyr(raster_stack)} layer(s) for binary values...")
 
-  # get frequency of values per raster layer
-  freq_tab <- terra::freq(raster_stack, digits = 4, bylayer = TRUE)
+  # A layer is binary when every value is exactly 0 or 1, tested layer by layer
+  # (before 0.4.2: values were rounded to 4 digits first, so near-0 or near-1
+  # floats counted as binary and were then written as integers, and an all-NA
+  # layer shifted the labels of the others). All-NA layers are kept as float.
+  # One pass over the whole stack (a per-layer loop was ~7x slower on disk)
+  other <- terra::global(raster_stack != 0 & raster_stack != 1, "sum", na.rm = TRUE)[[1]]
+  has_data <- terra::global(raster_stack, "notNA")[[1]] > 0
+  binary_mask <- other == 0 & has_data
 
-  # Split frequency table by layer
-  freq_by_layer <- split(freq_tab, freq_tab$layer)
+  int_layers <- if (any(binary_mask)) raster_stack[[which(binary_mask)]] else NULL
+  float_layers <- if (any(!binary_mask)) raster_stack[[which(!binary_mask)]] else NULL
+  log_message("Found {sum(binary_mask)} binary layer(s) and {sum(!binary_mask)} float layer(s).")
 
-  # Identify binary layers: only values 0, 1, or both
-  binary_mask <- sapply(freq_by_layer, function(df) {
-    all(df$value %in% c(0, 1))
-  })
-
-  # Subset only if binary layers were found
-  if (any(binary_mask, na.rm = TRUE)) {
-    binary_idx <- which(binary_mask)
-    float_idx <- which(!binary_mask)
-
-    int_layers <- if (length(binary_idx) > 0) raster_stack[[binary_idx]] else NULL
-    float_layers <- if (length(float_idx) > 0) raster_stack[[float_idx]] else NULL
-
-    log_message("Found {sum(binary_mask)} binary layer(s) and {sum(!binary_mask)} float layer(s).")
-  } else {
-    log_message("No binary layers found in raster stack.")
-    int_layers <- NULL
-    float_layers <- raster_stack
-  }
-
-  return(list(int_layers, float_layers))
+  list(int_layers, float_layers)
 }
 
 
+
+# Keep only polygon geometry: extract polygons from geometry collections (which
+# st_make_valid() can produce) and drop points and lines, which coverage
+# fractions cannot use
+.polygons_only <- function(x) {
+  if (any(sf::st_is(x, "GEOMETRYCOLLECTION"))) {
+    x <- sf::st_collection_extract(x, "POLYGON")
+  }
+  x[sf::st_is(x, c("POLYGON", "MULTIPOLYGON")), ]
+}

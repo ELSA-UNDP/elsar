@@ -120,6 +120,7 @@ make_urban_greening_zone <- function(
       raster_in = lulc_raster,
       pus = pus,
       iso3 = iso3,
+      rescaled = FALSE, # compared with an absolute threshold below
       method_override = "mean",
       input_raster_conditional_expression = function(x)
         terra::ifel(x == built_area_lulc_value, 1, 0)
@@ -133,7 +134,7 @@ make_urban_greening_zone <- function(
   # Optionally filter out small patches
   if (filter_patch_size) {
     log_message("Sieving out patch sizes smaller than {min_patch_size} planning units...")
-    urban_greening_zone <- terra::sieve(urban_greening_zone, threshold = min_patch_size)
+    urban_greening_zone <- .sieve_zone(urban_greening_zone, min_patch_size)
   }
 
   names(urban_greening_zone) <- "urban_greening_zone"

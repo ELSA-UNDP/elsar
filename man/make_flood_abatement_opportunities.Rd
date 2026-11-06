@@ -31,10 +31,17 @@ A \code{SpatRaster} representing flood abatement opportunities, rescaled between
 If \code{output_path} is provided, the raster is saved as a Cloud-Optimized GeoTIFF (COG).
 }
 \description{
-This function generates a raster that identifies flood abatement opportunities
-by integrating the Global Flood Database (GFD) and NDVI (Normalized Difference Vegetation Index).
-The function normalizes NDVI and flood risk data, then calculates potential areas for flood
-abatement based on their relationship.
+Identifies flood-prone land that lacks vegetation, where restoring,
+managing or greening it can reduce flood risk (the ELSA impacts credit this
+layer fully to manage, restore and urban greening, and half to protect):
+}
+\details{
+\code{flood_abatement = rescale(flood_risk * (1 - NDVI))}
+
+NDVI is used on its own 0-1 scale (not rescaled within the region), so bare
+land scores high everywhere. Water (NDVI < 0) scores 0. Before 0.4.2 the
+layer was \code{flood_risk / (1 - NDVI)}, which inverted the intent (it rose
+with vegetation) and grew without bound for dense vegetation.
 }
 \examples{
 \dontrun{
