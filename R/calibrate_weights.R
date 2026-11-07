@@ -435,8 +435,15 @@ elsar_calibrate_weights <- function(features,
     default = prioritizr::add_default_solver(problem, gap = gap, verbose = FALSE)
   )
 
-  # objective: maximise utility, budget = total PU count
-  problem <- prioritizr::add_max_utility_objective(
+  # objective: maximise utility, budget = total PU count. prioritizr 9 renamed
+  # add_max_utility_objective() to add_max_wtd_sum_objective() (the old name
+  # still works there but warns), so use whichever this version has.
+  add_objective <- if (exists("add_max_wtd_sum_objective", asNamespace("prioritizr"))) {
+    prioritizr::add_max_wtd_sum_objective
+  } else {
+    prioritizr::add_max_utility_objective
+  }
+  problem <- add_objective(
     problem, terra::global(planning_units, "sum", na.rm = TRUE)[[1]]
   )
 
