@@ -13,7 +13,12 @@ elsar_plot_feature(
   figure_path = NULL,
   iso3 = NULL,
   no_legend = FALSE,
-  custom_resolution = 200
+  custom_resolution = 200,
+  plot_title = NULL,
+  binary_labels = c("Outside", "Inside"),
+  legend_position = "auto",
+  graticule = TRUE,
+  style = getOption("elsar.plot_style", "modern")
 )
 }
 \arguments{
@@ -27,13 +32,34 @@ elsar_plot_feature(
 
 \item{invert_palette}{logical. If TRUE, reverses the palette direction. Defaults to FALSE.}
 
-\item{figure_path}{character, optional. If provided, path to save the figure as a PNG.}
+\item{figure_path}{character, optional. If provided, path to save the figure as a PNG. The file name is built
+from \code{legend_title} (or the layer name) and \code{iso3}.}
 
 \item{iso3}{iso3 code of the country of interest.}
 
 \item{no_legend}{logical. If TRUE, suppresses the legend. Defaults to FALSE.}
 
 \item{custom_resolution}{A value that is used in ggsave() for dpi. Default is 200.}
+
+\item{plot_title}{Character, optional. Plot title (modern style).}
+
+\item{binary_labels}{Character, length 2. Modern style: legend labels for
+the 0 and 1 classes when the layer only holds 0 and 1 (zones, lock-ins,
+presence layers), which get a two-class legend instead of a colour bar.
+Default \code{c("Outside", "Inside")}.}
+
+\item{legend_position}{Character. Modern style: \code{"auto"} (default) puts the
+legend on the right for maps clearly taller than wide and on top
+otherwise. Or any \code{legend_position} of \code{\link[=elsar_theme_map]{elsar_theme_map()}}.}
+
+\item{graticule}{Logical. Modern style: frame the map with a box and a
+latitude/longitude graticule labelled in degrees (default \code{TRUE}).}
+
+\item{style}{Character. \code{"modern"} (default) draws the map in the
+current elsar style (\code{\link[=elsar_theme_map]{elsar_theme_map()}}, \code{\link[=elsar_palette]{elsar_palette()}} scales,
+neutral context); \code{"classic"} reproduces the look of elsar 0.4 and
+earlier. Set \code{options(elsar.plot_style = "classic")} to change the
+default for a whole session.}
 }
 \value{
 A \code{ggplot} object displaying the raster with optional planning unit outlines.

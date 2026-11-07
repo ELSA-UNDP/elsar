@@ -100,7 +100,10 @@ make_threatened_ecosystems_protection <- function(
     sf::st_as_sf() %>%
     dplyr::filter(.[[1]] == 1) %>%
     sf::st_make_valid() %>%
-    sf::st_set_crs(sf::st_crs(ecosystems_sf)) %>%
+    # The mask is on the planning-unit grid: transform it to the ecosystems'
+    # CRS (before 0.4.2 it was relabelled, giving an all-NA layer whenever the
+    # ecosystems were in another CRS)
+    sf::st_transform(sf::st_crs(ecosystems_sf)) %>%
     sf::st_cast("POLYGON")
 
   log_message("Calculating intact areas within each ecosystem...")
@@ -143,7 +146,7 @@ make_threatened_ecosystems_protection <- function(
         message("Error processing ecosystem ID ", eco[[group_attribute]], ": ", conditionMessage(e))
         return(data.frame(group = eco[[group_attribute]], area_intact = NA))
       })
-    })
+    }, future.seed = TRUE)
   })
 
   # Combine and aggregate intact area results

@@ -18,7 +18,8 @@ elsar_plot_background(
   custom_palette = NULL,
   categorical = FALSE,
   number_categories = 10,
-  data_layer = NULL
+  data_layer = NULL,
+  style = getOption("elsar.plot_style", "modern")
 )
 
 elsar_plot_background_c(
@@ -72,6 +73,11 @@ If extend_background > 1 all sides will be extended by the absolute value provid
 \item{number_categories}{Integer. Only used when \code{data_type = "discrete"}. Number of categories to split continuous data into.}
 
 \item{data_layer}{Character. Only used when \code{data_type = "discrete"}. The data layer name for categorization.}
+
+\item{style}{Character. \code{"modern"} (default) draws the background in
+light neutral greys (\code{background_alpha} is then ignored for continuous data); \code{"classic"} reproduces the look of elsar 0.4 and
+earlier. Set \code{options(elsar.plot_style = "classic")} to change the
+default for a whole session.}
 }
 \value{
 A \code{list} of a \code{ggplot} or \code{tmap} object and a data frame with the background data.

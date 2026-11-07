@@ -1,0 +1,7 @@
+name: "ELSA results report"
+description: >
+  Report summarising an ELSA action map: national and regional action areas,
+  protection against a target, overlap with other layers and a profile for
+  each region. Renders the bundled example if no inputs are given; use
+  elsar_results_report() to render it for your own results.
+create_dir: false

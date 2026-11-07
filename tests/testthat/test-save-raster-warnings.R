@@ -1,0 +1,11 @@
+test_that("save_raster() writes a COG without GDAL option warnings when terra writes to disk", {
+  old <- terra::terraOptions(print = FALSE)
+  on.exit(terra::terraOptions(todisk = old$todisk, steps = old$steps, progress = old$progress), add = TRUE)
+  terra::terraOptions(todisk = TRUE, steps = 6, progress = 0)
+  r <- terra::rast(nrows = 600, ncols = 600, vals = stats::runif(360000))
+  f <- withr::local_tempfile(fileext = ".tif")
+  expect_no_warning(suppressMessages(save_raster(r, f, datatype = "FLT4S")))
+  info <- terra::describe(f)
+  expect_true(any(grepl("LAYOUT=COG", info)))
+  expect_true(any(grepl("Overviews", info)))
+})

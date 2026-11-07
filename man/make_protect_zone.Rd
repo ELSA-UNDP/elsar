@@ -31,8 +31,8 @@ make_protect_zone(
 
 \item{pus}{A \code{SpatRaster} defining the planning units.}
 
-\item{current_protected_areas}{a \code{sf} or \code{SpatVector} object of current protected areas.
-If NULL, \code{elsar::make_protected_areas()} will be used. May have 0 rows
+\item{current_protected_areas}{a \code{sf} or \code{SpatVector} object of current protected areas,
+in any CRS. May have 0 rows
 (a country with no protected areas); \code{hii_threshold} is then required,
 because there are no protected areas to derive it from.}
 

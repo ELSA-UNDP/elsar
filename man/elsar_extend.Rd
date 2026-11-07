@@ -17,7 +17,7 @@ elsar_extend(raster_main = NULL, raster_to_crop = NULL, extend_by = 0.05)
 A \code{SpatRaster} file with the new dimensions.
 }
 \description{
-When plotting (e.g. with \code{\link[=elsar_plot_static_raster_c]{elsar_plot_static_raster_c()}}, the extent of the main data will be used. \code{elsar_extend()} allows to extract background data to be plotted with an extent that is a bit greater than the extent of the main data.
+When plotting (e.g. with \code{\link[=elsar_plot_static_raster]{elsar_plot_static_raster()}}), the extent of the main data will be used. \code{elsar_extend()} allows to extract background data to be plotted with an extent that is a bit greater than the extent of the main data.
 }
 \examples{
 \dontrun{
