@@ -15,7 +15,8 @@ elsar_plot_actions(
   title = NULL,
   legend = TRUE,
   maxcell = 5e+05,
-  base_size = 10
+  base_size = 10,
+  graticule = TRUE
 )
 }
 \arguments{
@@ -45,6 +46,10 @@ are outlined as protected. Default \code{0.5}.}
 resampled for display only (see \code{\link[tidyterra:geom_spatraster]{tidyterra::geom_spatraster()}}).}
 
 \item{base_size}{Base font size in points.}
+
+\item{graticule}{Logical. Frame the map with a box and a latitude/longitude
+graticule labelled in degrees, drawn in the map's own projection (default
+\code{TRUE}). \code{FALSE} draws the map without box, graticule or axes.}
 }
 \value{
 A \code{ggplot} object.

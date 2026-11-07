@@ -33,7 +33,9 @@
   - `elsar_theme_map()` (maps) and `elsar_theme()` (other charts): maps in a
     thin box with a light latitude/longitude graticule labelled in degrees,
     also for elsar's custom Mollweide projections (`graticule = FALSE` for a
-    frameless map), a clear title / subtitle / caption hierarchy, legends
+    frameless map; the ELSA results maps of `elsar_plot_actions()` and
+    `elsar_plot_region()` get the same box and graticule, inset locator maps
+    stay frameless), a clear title / subtitle / caption hierarchy, legends
     with long thin colourbars or stepped keys, and a `dark = TRUE` mode.
   - Legends go on the right of maps that are clearly taller than wide, and
     under the title otherwise (`legend_position = "auto"` in

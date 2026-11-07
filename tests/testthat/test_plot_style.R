@@ -279,3 +279,16 @@ test_that("elsar_plot_background() builds in both styles", {
     build_ok(out[[1]])
   }
 })
+
+test_that("results maps get the graticule by default and keep their legend", {
+  ex <- elsar_example_results()
+  x <- suppressMessages(elsar_prepare_actions(ex$actions, pas = ex$pas))
+  p <- elsar_plot_actions(x, regions = ex$regions)
+  b <- ggplot2::ggplot_build(p)
+  expect_equal(b$plot$coordinates$datum, sf::st_crs(4326))
+  expect_s3_class(b$plot$theme$panel.border, "element_rect")
+  expect_false(identical(b$plot$guides$guides$fill, "none"))
+  p0 <- elsar_plot_actions(x, graticule = FALSE)
+  expect_true(is.na(ggplot2::ggplot_build(p0)$plot$coordinates$datum))
+  expect_error(elsar_plot_actions(x, graticule = "yes"), "graticule")
+})

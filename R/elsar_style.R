@@ -290,12 +290,19 @@ elsar_theme_map <- function(base_size = 10,
   if (!graticule) {
     return(base)
   }
-  base + ggplot2::theme(
+  base + .graticule_theme(base_size, ink)
+}
+
+# Box, light graticule and degree labels for a map (with coord_sf(datum =
+# .map_datum(TRUE))). Shared by elsar_theme_map() and the results maps.
+.graticule_theme <- function(base_size = 10, ink = elsar_inks()) {
+  ggplot2::theme(
     panel.border = ggplot2::element_rect(colour = ink[["ink_muted"]], fill = NA, linewidth = 0.4),
     panel.grid.major = ggplot2::element_line(colour = ink[["rule"]], linewidth = 0.3),
     axis.text = ggplot2::element_text(colour = ink[["ink_secondary"]], size = ggplot2::rel(0.75)),
     axis.text.x = ggplot2::element_text(margin = ggplot2::margin(t = base_size * 0.25)),
     axis.text.y = ggplot2::element_text(margin = ggplot2::margin(r = base_size * 0.25), hjust = 1),
+    axis.title = ggplot2::element_blank(),
     axis.ticks = ggplot2::element_line(colour = ink[["ink_muted"]], linewidth = 0.3),
     axis.ticks.length = grid::unit(base_size * 0.25, "pt")
   )

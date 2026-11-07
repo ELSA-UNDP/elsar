@@ -25,6 +25,9 @@
 #' @param maxcell Integer. Maximum number of cells drawn; larger rasters are
 #'   resampled for display only (see [tidyterra::geom_spatraster()]).
 #' @param base_size Base font size in points.
+#' @param graticule Logical. Frame the map with a box and a latitude/longitude
+#'   graticule labelled in degrees, drawn in the map's own projection (default
+#'   `TRUE`). `FALSE` draws the map without box, graticule or axes.
 #'
 #' @return A `ggplot` object.
 #' @seealso [elsar_plot_action_bars()], [elsar_plot_region()],
@@ -45,7 +48,11 @@ elsar_plot_actions <- function(x,
                                title = NULL,
                                legend = TRUE,
                                maxcell = 5e5,
-                               base_size = 10) {
+                               base_size = 10,
+                               graticule = TRUE) {
+  assertthat::assert_that(assertthat::is.flag(graticule), !is.na(graticule),
+    msg = "'graticule' must be TRUE or FALSE."
+  )
   scheme <- .scheme_from_actions(x)
   shown <- if (show_no_action) scheme else scheme[scheme$is_action, ]
   fill_values <- stats::setNames(scheme$colour, scheme$label)
@@ -85,14 +92,18 @@ elsar_plot_actions <- function(x,
   }
 
   p +
-    ggplot2::coord_sf(crs = terra::crs(x), datum = NA, expand = FALSE) +
+    ggplot2::coord_sf(crs = terra::crs(x), datum = .map_datum(graticule), expand = FALSE) +
     ggplot2::labs(title = title) +
     .results_theme(base_size) +
-    ggplot2::theme(
-      axis.text = ggplot2::element_blank(),
-      axis.title = ggplot2::element_blank(),
-      panel.grid = ggplot2::element_blank()
-    ) +
+    (if (graticule) {
+      .graticule_theme(base_size)
+    } else {
+      ggplot2::theme(
+        axis.text = ggplot2::element_blank(),
+        axis.title = ggplot2::element_blank(),
+        panel.grid = ggplot2::element_blank()
+      )
+    }) +
     if (legend) {
       ggplot2::guides(
         fill = ggplot2::guide_legend(order = 1, nrow = 1),
@@ -333,7 +344,7 @@ elsar_plot_protection_gap <- function(gap,
 #'   the map. Default `0.45`.
 #' @param title Plot title. Defaults to the region name.
 #' @param ... Passed to [elsar_plot_actions()] (e.g. `show_pas`,
-#'   `pa_threshold`, `maxcell`).
+#'   `pa_threshold`, `maxcell`, `graticule = FALSE` for a frameless map).
 #' @param pa_colour,pa_label Colour and label of existing protected areas, used
 #'   by both the map and the bars.
 #' @param base_size Base font size in points.
