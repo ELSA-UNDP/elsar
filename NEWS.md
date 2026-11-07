@@ -2,6 +2,13 @@
 
 ## Bug fixes
 
+* `elsar_plot_distribution(categorical = TRUE, col_interest = ...)` failed
+  because of a missing pipe; it now uses the given column. With
+  `categorical = FALSE` and no `col_interest`, it uses the first data column.
+
+* `elsar_plot_static_raster(data_type = "discrete")` now defaults
+  `data_layer` to the first layer instead of failing when it is not given.
+
 * `elsar_calibrate_weights()` uses `add_max_wtd_sum_objective()` with
   prioritizr 9 or later, which renamed `add_max_utility_objective()` and warns
   on every solve when the old name is used. Earlier prioritizr versions keep
@@ -19,6 +26,47 @@
   `future.seed = TRUE`. Results are unchanged.
 
 ## New features
+
+* A new, modern map style for every map elsar draws, exposed as small
+  functions that return ordinary ggplot2 components (see
+  `vignette("map-style")`):
+  - `elsar_theme_map()` (maps) and `elsar_theme()` (other charts): maps in a
+    thin box with a light latitude/longitude graticule labelled in degrees,
+    also for elsar's custom Mollweide projections (`graticule = FALSE` for a
+    frameless map; the ELSA results maps of `elsar_plot_actions()` and
+    `elsar_plot_region()` get the same box and graticule, inset locator maps
+    stay frameless), a clear title / subtitle / caption hierarchy, legends
+    with long thin colourbars or stepped keys, and a `dark = TRUE` mode.
+  - Legends go on the right of maps that are clearly taller than wide, and
+    under the title otherwise (`legend_position = "auto"` in
+    `elsar_plot_static_raster()` and `elsar_plot_feature()`).
+  - 0/1 layers (zones, lock-ins, presence layers) get a two-class legend,
+    "Outside" / "Inside" (`binary_labels`), instead of value ranges such as
+    "0-0.1" / "0.9-1", in both styles.
+  - `elsar_palette()`, `elsar_inks()`, `scale_fill_elsar_c()`,
+    `scale_fill_elsar_d()` and their `scale_colour_*` versions: viridis
+    sequential ramps, a two-hue diverging palette with a neutral midpoint,
+    colour-blind-safe categorical hues, and the established ELSA action
+    colours (Protect `#06C723`, Restore `#8803FC`, Manage `#FFEA00`, Urban
+    Greening `#FF0000`). Guides: `guide_elsar_colourbar()`,
+    `guide_elsar_legend()`, `guide_elsar_steps()`.
+  - Map furniture: `elsar_map_context()` / `elsar_map_outline()` (study area
+    with optional neighbours, soft halo and drop shadow),
+    `elsar_map_furniture()` (compact scale bar and north arrow),
+    `elsar_map_caption()` / `elsar_attribution()` (attribution as a caption),
+    and `elsar_map_locator()` / `elsar_add_locator()` (inset locator map).
+
+* `elsar_plot_static_raster()`, `elsar_plot_feature()`,
+  `elsar_plot_distribution()`, `elsar_plot_background()` and
+  `elsar_plot_optics()` use the modern style by default. All existing
+  arguments keep working. New argument `style = "classic"` (or
+  `options(elsar.plot_style = "classic")` for a whole session) restores the
+  previous look. Also new: `boundary` in `elsar_plot_static_raster()` (study
+  area context and outline), `plot_title` in `elsar_plot_feature()` (and
+  `plot_title` is now used by `elsar_plot_static_raster()` in the modern
+  style), and `dark` in `elsar_plot_optics()`. In the modern style
+  `elsar_plot_optics()` puts the attribution in a caption instead of a boxed
+  label over the data.
 
 * New tools to analyse ELSA results after a run. Areas are planar in the
   equal-area projections ELSA uses and geodesic for lon/lat rasters:
@@ -48,6 +96,15 @@
   - `elsar_example_results()` loads a small synthetic ELSA result to try them.
   - New vignette: "Analysing and reporting ELSA results".
   - patchwork moves from Suggests to Imports.
+
+## Installation / Dependencies
+
+* `ggplot2 (>= 3.5.0)` is now required (for the legend layout of the new map
+  style). `systemfonts` (font fallback) is a new `Suggests`.
+
+* The deprecated `elsar_plot_static_raster_c()`, `elsar_plot_static_raster_d()`,
+  `elsar_plot_background_c()` and `elsar_plot_background_d()` now signal
+  deprecation through lifecycle (once per session) instead of `.Deprecated()`.
 
 # elsar 0.4.2
 

@@ -12,7 +12,8 @@ elsar_plot_distribution(
   bin_number = 10,
   custom_palette = NULL,
   show_legend = FALSE,
-  color_map = "viridis"
+  color_map = "viridis",
+  style = getOption("elsar.plot_style", "modern")
 )
 }
 \arguments{
@@ -22,7 +23,8 @@ elsar_plot_distribution(
 
 \item{raster_df}{A \code{df} object of the data to include in the histogram.}
 
-\item{col_interest}{A character of the column of interest. Uses "interval" if nothing is provided.}
+\item{col_interest}{A character of the column of interest. If \code{NULL}, uses "interval" for categorical data and
+the first column other than \code{x} and \code{y} for continuous data.}
 
 \item{bin_number}{An integer value of how many bins to split the data into (default = 10).}
 
@@ -31,9 +33,14 @@ elsar_plot_distribution(
 \item{show_legend}{logical. Whether to include legend in plot or not. Default is FALSE.}
 
 \item{color_map}{The name of the \code{viridis} palette to be used. Default is "viridis".}
+
+\item{style}{Character. \code{"modern"} (default) uses \code{\link[=elsar_theme]{elsar_theme()}}
+and \code{\link[=elsar_palette]{elsar_palette()}} scales; \code{"classic"} reproduces the look of elsar 0.4 and
+earlier. Set \code{options(elsar.plot_style = "classic")} to change the
+default for a whole session.}
 }
 \value{
-A \code{list} of a \code{ggplot} or \code{tmap} object and a \code{SpatRaster} with the new background data.
+A \code{ggplot} object.
 }
 \description{
 Function to create basic histogram with categorical data

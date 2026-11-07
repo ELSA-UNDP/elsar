@@ -148,13 +148,12 @@ Instead of only having a quick look at the data by using the `terra` package's `
 ))
 ```
 
-We can also add background data to the plot and add additional properties to change the appearance of the plot by using the `elsar_plot_optics()` function that allows to specify a specific `ggplot` theme. We can also change the colour palette to be something other than the default "viridis".
+We can also add background data to the plot and add additional properties to change the appearance of the plot by using the `elsar_plot_optics()` function, which adds the elsar map theme, an optional scale bar and north arrow, and the attribution caption. We can also change the colour palette to be something other than the default "viridis", here another member of the viridis family through `scale_fill_elsar_c()`. See `vignette("map-style")` for the full set of style functions and how to get the classic look of earlier versions.
 
 ```{r, fig.width = 8, fig.height = 6}
-custom_p <- ggplot2::scale_fill_distiller(
+custom_p <- scale_fill_elsar_c(
   name = "WAD",
-  palette = "YlGnBu",
-  aesthetics = c("fill"),
+  option = "mako",
   oob = scales::squish
 )
 

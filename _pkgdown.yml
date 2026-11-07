@@ -139,6 +139,25 @@ reference:
   - elsar_plot_feature
   - elsar_plot_static_raster
 
+- title: Map style
+  desc: >
+    Themes, colour scales and map furniture shared by every elsar map. They
+    return ordinary ggplot2 components, so they can be added with `+` to any
+    plot.
+- contents:
+  - elsar_theme_map
+  - elsar_inks
+  - elsar_palette
+  - scale_fill_elsar_c
+  - guide_elsar_colourbar
+  - guide_elsar_legend
+  - guide_elsar_steps
+  - elsar_map_context
+  - elsar_map_furniture
+  - elsar_map_caption
+  - elsar_attribution
+  - elsar_map_locator
+
 - title: Plotting utilities
   desc: Helper functions for plotting
 - contents:

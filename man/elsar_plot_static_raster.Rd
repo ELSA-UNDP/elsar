@@ -18,7 +18,12 @@ elsar_plot_static_raster(
   legend_title = NULL,
   color_map = "viridis",
   expand_plot = FALSE,
-  raster_df_out = FALSE
+  raster_df_out = FALSE,
+  boundary = NULL,
+  binary_labels = c("Outside", "Inside"),
+  legend_position = "auto",
+  graticule = TRUE,
+  style = getOption("elsar.plot_style", "modern")
 )
 }
 \arguments{
@@ -32,7 +37,8 @@ elsar_plot_static_raster(
 
 \item{number_categories}{Integer. Only used when \code{data_type = "discrete"}. Number of categories to split continuous data into. Default is 10.}
 
-\item{data_layer}{Character. Only used when \code{data_type = "discrete"}. The data layer name for categorization.}
+\item{data_layer}{Character. Only used when \code{data_type = "discrete"}. The data layer name for categorization.
+Defaults to the first layer of \code{raster_in}.}
 
 \item{background}{Requires a \code{SpatRaster} input (preferably with the same data as \code{raster_in}) to plot the background data.}
 
@@ -40,18 +46,43 @@ elsar_plot_static_raster(
 If extend_background <= 1, the lat and lon extend will be extended by the ratio provided (e.g. 0.05 will extend it by 5\%).
 If extend_background > 1 all sides will be extended by the absolute value provided.}
 
-\item{custom_palette}{An optional custom palette for plotting. Default uses the \code{viridis} package.}
+\item{custom_palette}{An optional ggplot2 scale (or list of scales) that replaces the default colour scale,
+e.g. \code{\link[=scale_fill_elsar_c]{scale_fill_elsar_c()}} or \code{\link[ggplot2:scale_fill_distiller]{ggplot2::scale_fill_distiller()}}.}
 
-\item{plot_title}{An optional plot title.}
+\item{plot_title}{An optional plot title (modern style).}
 
 \item{legend_title}{An optional legend title.}
 
-\item{color_map}{The name of the \code{viridis} palette to be used. Default is "viridis".}
+\item{color_map}{The name of the viridis palette to be used, e.g. "viridis" (default), "mako" or "rocket".}
 
 \item{expand_plot}{Logical. Whether to expand the plot, so there is no space between border and plot.}
 
 \item{raster_df_out}{Logical. Whether to return only the plot (FALSE) or also the data frame behind the plot (TRUE).
 Needed for \code{elsar_plot_distribution()}.}
+
+\item{boundary}{Optional study-area outline (\code{sf}, \code{SpatVector} or
+\code{SpatRaster}), drawn as a context layer under the data and a thin outline
+on top. Modern style only.}
+
+\item{binary_labels}{Character, length 2. Legend labels for the 0 and 1
+classes of a 0/1 layer (zones, lock-ins, presence layers) drawn with
+\code{data_type = "discrete"}. Default \code{c("Outside", "Inside")}; the legend
+title names the layer.}
+
+\item{legend_position}{Character. Modern style: \code{"auto"} (default) puts the
+legend on the right for maps clearly taller than wide (a legend on top
+would leave the width empty) and on top otherwise. Or any
+\code{legend_position} of \code{\link[=elsar_theme_map]{elsar_theme_map()}}.}
+
+\item{graticule}{Logical. Modern style: frame the map with a box and a
+latitude/longitude graticule labelled in degrees (default \code{TRUE}), also
+for projected maps such as elsar's custom Mollweide projections.}
+
+\item{style}{Character. \code{"modern"} (default) draws the map in the
+current elsar style (\code{\link[=elsar_theme_map]{elsar_theme_map()}}, \code{\link[=elsar_palette]{elsar_palette()}} scales,
+neutral context); \code{"classic"} reproduces the look of elsar 0.4 and
+earlier. Set \code{options(elsar.plot_style = "classic")} to change the
+default for a whole session.}
 }
 \value{
 A \code{ggplot} or \code{tmap} object, or a list with the plot and the data frame if \code{raster_df_out = TRUE}.
@@ -60,6 +91,17 @@ A \code{ggplot} or \code{tmap} object, or a list with the plot and the data fram
 \code{elsar_plot_static_raster()} allows plotting both continuous and discrete data from a \code{SpatRaster}
 in \code{ggplot} or \code{tmap}. It can be combined with \code{\link[=elsar_plot_optics]{elsar_plot_optics()}} and \code{\link[=elsar_plot_extra_data]{elsar_plot_extra_data()}}
 to create reproducible plots.
+}
+\details{
+In the default \code{"modern"} style the data are drawn over a neutral
+context: the \code{background} raster in light greys and, if given, the
+\code{boundary} with a soft halo and a thin outline. Continuous data get a long,
+thin colourbar; binned data a stepped legend. Add a scale bar and north
+arrow with \code{\link[=elsar_map_furniture]{elsar_map_furniture()}} and the attribution with
+\code{\link[=elsar_map_caption]{elsar_map_caption()}} (or use \code{\link[=elsar_plot_optics]{elsar_plot_optics()}}).
+
+In the modern style \code{type = "ggplot_vector"} and \code{"ggplot_raster"} give the
+same map: cells are always drawn as a raster, which is faster and sharper.
 }
 \examples{
 \dontrun{
@@ -89,8 +131,15 @@ wadOut <- make_normalised_raster(
   raster_in = wadOut,
   type = "ggplot_raster",
   background = wad_dat,
-  legend_title = "wad"
-))
+  boundary = boundary_proj,
+  legend_title = "wad",
+  plot_title = "Land under pressure"
+) +
+  elsar_map_furniture() +
+  elsar_map_caption())
+
+# The look of elsar 0.4 and earlier
+elsar_plot_static_raster(wadOut, background = wad_dat, style = "classic")
 
 # Discrete data plot
 (wad_plot_d <- elsar_plot_static_raster(
