@@ -249,7 +249,14 @@ elsar_plot_optics <- function(type = "ggplot",
   ggList <- list()
 
   if (identical(theme, "default")) {
-    ggList <- c(ggList, list(elsar_theme_map(dark = dark)))
+    # The map's own legend placement (e.g. on the right for a tall map) is
+    # kept: the theme is added without its legend position.
+    th <- elsar_theme_map(dark = dark)
+    th$legend.position <- NULL
+    th$legend.direction <- NULL
+    th$legend.justification <- NULL
+    attr(th, "complete") <- FALSE # merge into the map's theme, don't replace it
+    ggList <- c(ggList, list(th))
   } else if (inherits(theme, "list")) {
     ggList <- c(ggList, theme)
   }

@@ -20,6 +20,9 @@ elsar_plot_static_raster(
   expand_plot = FALSE,
   raster_df_out = FALSE,
   boundary = NULL,
+  binary_labels = c("Outside", "Inside"),
+  legend_position = "auto",
+  graticule = TRUE,
   style = getOption("elsar.plot_style", "modern")
 )
 }
@@ -60,6 +63,20 @@ Needed for \code{elsar_plot_distribution()}.}
 \item{boundary}{Optional study-area outline (\code{sf}, \code{SpatVector} or
 \code{SpatRaster}), drawn as a context layer under the data and a thin outline
 on top. Modern style only.}
+
+\item{binary_labels}{Character, length 2. Legend labels for the 0 and 1
+classes of a 0/1 layer (zones, lock-ins, presence layers) drawn with
+\code{data_type = "discrete"}. Default \code{c("Outside", "Inside")}; the legend
+title names the layer.}
+
+\item{legend_position}{Character. Modern style: \code{"auto"} (default) puts the
+legend on the right for maps clearly taller than wide (a legend on top
+would leave the width empty) and on top otherwise. Or any
+\code{legend_position} of \code{\link[=elsar_theme_map]{elsar_theme_map()}}.}
+
+\item{graticule}{Logical. Modern style: frame the map with a box and a
+latitude/longitude graticule labelled in degrees (default \code{TRUE}), also
+for projected maps such as elsar's custom Mollweide projections.}
 
 \item{style}{Character. \code{"modern"} (default) draws the map in the
 current elsar style (\code{\link[=elsar_theme_map]{elsar_theme_map()}}, \code{\link[=elsar_palette]{elsar_palette()}} scales,

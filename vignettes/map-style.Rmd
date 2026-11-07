@@ -73,9 +73,13 @@ elsar_plot_static_raster(
 ```
 
 The same call in the modern style. The background data recede into light
-greys so the country's data carry the page, axes and graticule are gone, the
-legend becomes a long, thin colourbar under the title, and the attribution
-moves from a boxed label on top of the data into a quiet caption.
+greys so the country's data carry the page, the box and graticule are kept
+but light and labelled in degrees of latitude and longitude (also in elsar's
+custom Mollweide projections, where the meridians curve), the legend becomes
+a long, thin colourbar (under the title, or on the right of a map that is
+taller than wide), and the attribution moves from a boxed label on top of the
+data into a quiet caption. `graticule = FALSE` draws the map without the box
+and graticule.
 
 ```{r modern}
 elsar_plot_static_raster(

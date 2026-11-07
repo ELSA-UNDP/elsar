@@ -9,7 +9,8 @@ elsar_theme_map(
   base_size = 10,
   base_family = "",
   legend_position = "top",
-  dark = FALSE
+  dark = FALSE,
+  graticule = TRUE
 )
 
 elsar_theme(
@@ -34,6 +35,12 @@ maps; the legend sits under the title, left-aligned), \code{"bottom"},
 
 \item{dark}{Logical. If \code{TRUE}, uses light inks on a dark surface.}
 
+\item{graticule}{Logical. For \code{elsar_theme_map()}: draw the box, graticule
+and axis labels (default \code{TRUE}). The graticule is drawn by
+\code{\link[ggplot2:coord_sf]{ggplot2::coord_sf()}} in the map's own projection (curved lines for
+Mollweide) and labelled in degrees, as long as its \code{datum} is not \code{NA};
+elsar's map functions set it to WGS84 when \code{graticule = TRUE}.}
+
 \item{grid}{Character. For \code{elsar_theme()}: which major grid lines to
 draw, \code{"y"} (default), \code{"x"}, \code{"xy"} or \code{"none"}.}
 }
@@ -41,9 +48,10 @@ draw, \code{"y"} (default), \code{"x"}, \code{"xy"} or \code{"none"}.}
 A \code{\link[ggplot2:theme]{ggplot2::theme()}} object.
 }
 \description{
-\code{elsar_theme_map()} is the default theme of every elsar map. It removes
-the panel border, axes and graticule so the data carry the page, sets a
-clear type hierarchy (bold left-aligned title, secondary-ink subtitle,
+\code{elsar_theme_map()} is the default theme of every elsar map. It frames the
+map in a thin box with a light latitude/longitude graticule and degree
+labels (\code{graticule = TRUE}, the default; \code{FALSE} removes the box, graticule
+and axes so the data carry the page), sets a clear type hierarchy (bold left-aligned title, secondary-ink subtitle,
 small muted caption for attribution), and lays legends out tidily: a long
 thin colourbar with the title above it for continuous data, small square
 keys for categories.

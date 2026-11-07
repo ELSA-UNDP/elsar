@@ -62,7 +62,36 @@ test_that("themes build and validate their arguments", {
   expect_error(elsar_theme_map(legend_position = "middle"), "legend_position")
   expect_error(elsar_theme_map(base_size = -1), "base_size")
   expect_equal(elsar_theme_map()$plot.title.position, "plot")
-  expect_s3_class(elsar_theme_map()$panel.border, "element_blank")
+  expect_s3_class(elsar_theme_map()$panel.border, "element_rect")
+  expect_s3_class(elsar_theme_map(graticule = FALSE)$panel.border, "element_blank")
+  expect_error(elsar_theme_map(graticule = NA), "graticule")
+})
+
+test_that("maps get a degree graticule, 0/1 legends and an auto legend position", {
+  moll <- "+proj=moll +lon_0=0 +datum=WGS84 +units=m"
+  tall <- terra::rast(nrows = 40, ncols = 20, xmin = 0, xmax = 2e5, ymin = 0, ymax = 4e5, crs = moll)
+  wide <- terra::rast(nrows = 20, ncols = 40, xmin = 0, xmax = 4e5, ymin = 0, ymax = 2e5, crs = moll)
+  terra::values(tall) <- rep(c(0, 1), length.out = terra::ncell(tall))
+  terra::values(wide) <- stats::runif(terra::ncell(wide))
+  expect_equal(.map_legend_position(tall), "right")
+  expect_equal(.map_legend_position(wide), "top")
+  expect_equal(.map_legend_position(tall, "bottom"), "bottom")
+  expect_true(.is_binary_raster(tall))
+  expect_false(.is_binary_raster(wide))
+
+  p <- suppressMessages(elsar_plot_static_raster(tall, data_type = "discrete", legend_title = "Zone"))
+  b <- ggplot2::ggplot_build(p)
+  expect_equal(b$plot$coordinates$datum, sf::st_crs(4326))
+  expect_equal(b$plot$theme$legend.position, "right")
+  fill <- b$plot$scales$get_scales("fill")
+  expect_equal(fill$get_labels(), c("Outside", "Inside"))
+
+  p2 <- suppressMessages(elsar_plot_static_raster(wide, graticule = FALSE))
+  expect_true(is.na(ggplot2::ggplot_build(p2)$plot$coordinates$datum))
+
+  classic <- suppressMessages(elsar_plot_static_raster(tall, data_type = "discrete", style = "classic"))
+  expect_setequal(levels(classic$data$interval %||% ggplot2::ggplot_build(classic)$plot$layers[[1]]$data$interval),
+                  c("Outside", "Inside"))
 })
 
 test_that("unknown font families fall back to the default", {

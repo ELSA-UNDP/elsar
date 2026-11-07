@@ -30,10 +30,17 @@
 * A new, modern map style for every map elsar draws, exposed as small
   functions that return ordinary ggplot2 components (see
   `vignette("map-style")`):
-  - `elsar_theme_map()` (maps) and `elsar_theme()` (other charts): no panel
-    border, axes or graticule on maps, a clear title / subtitle / caption
-    hierarchy, legends under the title with long thin colourbars or stepped
-    keys, and a `dark = TRUE` mode.
+  - `elsar_theme_map()` (maps) and `elsar_theme()` (other charts): maps in a
+    thin box with a light latitude/longitude graticule labelled in degrees,
+    also for elsar's custom Mollweide projections (`graticule = FALSE` for a
+    frameless map), a clear title / subtitle / caption hierarchy, legends
+    with long thin colourbars or stepped keys, and a `dark = TRUE` mode.
+  - Legends go on the right of maps that are clearly taller than wide, and
+    under the title otherwise (`legend_position = "auto"` in
+    `elsar_plot_static_raster()` and `elsar_plot_feature()`).
+  - 0/1 layers (zones, lock-ins, presence layers) get a two-class legend,
+    "Outside" / "Inside" (`binary_labels`), instead of value ranges such as
+    "0-0.1" / "0.9-1", in both styles.
   - `elsar_palette()`, `elsar_inks()`, `scale_fill_elsar_c()`,
     `scale_fill_elsar_d()` and their `scale_colour_*` versions: viridis
     sequential ramps, a two-hue diverging palette with a neutral midpoint,

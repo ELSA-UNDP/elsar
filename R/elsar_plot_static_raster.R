@@ -36,6 +36,17 @@
 #' @param boundary Optional study-area outline (`sf`, `SpatVector` or
 #'   `SpatRaster`), drawn as a context layer under the data and a thin outline
 #'   on top. Modern style only.
+#' @param binary_labels Character, length 2. Legend labels for the 0 and 1
+#'   classes of a 0/1 layer (zones, lock-ins, presence layers) drawn with
+#'   `data_type = "discrete"`. Default `c("Outside", "Inside")`; the legend
+#'   title names the layer.
+#' @param legend_position Character. Modern style: `"auto"` (default) puts the
+#'   legend on the right for maps clearly taller than wide (a legend on top
+#'   would leave the width empty) and on top otherwise. Or any
+#'   `legend_position` of [elsar_theme_map()].
+#' @param graticule Logical. Modern style: frame the map with a box and a
+#'   latitude/longitude graticule labelled in degrees (default `TRUE`), also
+#'   for projected maps such as elsar's custom Mollweide projections.
 #' @param style Character. `"modern"` (default) draws the map in the
 #'   current elsar style ([elsar_theme_map()], [elsar_palette()] scales,
 #'   neutral context); `"classic"` reproduces the look of elsar 0.4 and
@@ -108,8 +119,15 @@ elsar_plot_static_raster <- function(raster_in,
                                      expand_plot = FALSE,
                                      raster_df_out = FALSE,
                                      boundary = NULL,
+                                     binary_labels = c("Outside", "Inside"),
+                                     legend_position = "auto",
+                                     graticule = TRUE,
                                      style = getOption("elsar.plot_style", "modern")) {
   data_type <- match.arg(data_type)
+  assertthat::assert_that(
+    is.character(binary_labels), length(binary_labels) == 2,
+    msg = "'binary_labels' must be two labels, for the 0 and 1 classes."
+  )
   style <- .resolve_style(style)
 
   # Input validation
@@ -162,7 +180,9 @@ elsar_plot_static_raster <- function(raster_in,
       extend_background = extend_background, custom_palette = custom_palette,
       plot_title = plot_title, legend_title = legend_title,
       color_map = color_map, expand_plot = expand_plot,
-      raster_df_out = raster_df_out, boundary = boundary
+      raster_df_out = raster_df_out, boundary = boundary,
+      binary_labels = binary_labels, legend_position = legend_position,
+      graticule = graticule
     ))
   }
 
@@ -201,6 +221,13 @@ elsar_plot_static_raster <- function(raster_in,
           category = as.factor(.data$category),
           interval = as.factor(.data$interval)
         )
+      # A 0/1 layer: name the two classes instead of showing value ranges
+      if (.is_binary_raster(raster_in[[data_layer]])) {
+        raster_df$interval <- factor(
+          binary_labels[raster_df[[data_layer]] + 1],
+          levels = binary_labels
+        )
+      }
     }
   }
 
@@ -385,7 +412,10 @@ elsar_plot_static_raster <- function(raster_in,
                                        background, extend_background,
                                        custom_palette, plot_title,
                                        legend_title, color_map, expand_plot,
-                                       raster_df_out, boundary) {
+                                       raster_df_out, boundary,
+                                       binary_labels = c("Outside", "Inside"),
+                                       legend_position = "auto",
+                                       graticule = TRUE) {
   if (type == "tmap") {
     log_message("tmap support not yet implemented.")
     return(NULL)
@@ -394,6 +424,7 @@ elsar_plot_static_raster <- function(raster_in,
   layer <- if (data_layer %in% terra::names(raster_in)) data_layer else 1
   r <- raster_in[[layer]]
   raster_df <- NULL
+  binary <- data_type == "discrete" && !categorical && .is_binary_raster(r)
 
   if (data_type == "continuous") {
     plot_r <- r
@@ -410,6 +441,14 @@ elsar_plot_static_raster <- function(raster_in,
       stats::na.omit() %>%
       dplyr::rename(interval = .data[[data_layer]]) %>%
       dplyr::mutate(interval = as.factor(.data$interval))
+  } else if (binary) {
+    # A 0/1 layer (zone, lock-in, presence): two named classes, not value ranges
+    plot_r <- terra::as.factor(r)
+    levels(plot_r) <- data.frame(id = c(0, 1), interval = binary_labels)
+    if (raster_df_out) {
+      raster_df <- stats::na.omit(as.data.frame(r, xy = TRUE))
+      raster_df$interval <- factor(binary_labels[raster_df[[3]] + 1], levels = binary_labels)
+    }
   } else {
     raster_cat <- elsar_continuous_to_categorical(
       raster_in = raster_in,
@@ -459,6 +498,8 @@ elsar_plot_static_raster <- function(raster_in,
 
   if (!is.null(custom_palette)) {
     plot_out <- plot_out + custom_palette
+  } else if (binary) {
+    plot_out <- plot_out + .scale_fill_binary(binary_labels, legend_title, color_map)
   } else if (data_type == "continuous") {
     plot_out <- plot_out +
       scale_fill_elsar_c(option = color_map, name = legend_title)
@@ -475,10 +516,10 @@ elsar_plot_static_raster <- function(raster_in,
   crs <- sf::st_crs(terra::crs(raster_in))
   plot_out <- plot_out +
     if (is.null(lims)) {
-      ggplot2::coord_sf(crs = crs, datum = NA, expand = !expand_plot)
+      ggplot2::coord_sf(crs = crs, datum = .map_datum(graticule), expand = !expand_plot)
     } else {
       ggplot2::coord_sf(
-        crs = crs, datum = NA, expand = FALSE,
+        crs = crs, datum = .map_datum(graticule), expand = FALSE,
         xlim = lims[1:2], ylim = lims[3:4]
       )
     }
@@ -486,7 +527,10 @@ elsar_plot_static_raster <- function(raster_in,
   if (!is.null(plot_title) && any(nzchar(plot_title))) {
     plot_out <- plot_out + ggplot2::labs(title = plot_title)
   }
-  plot_out <- plot_out + elsar_theme_map()
+  plot_out <- plot_out + elsar_theme_map(
+    legend_position = .map_legend_position(raster_in, legend_position),
+    graticule = graticule
+  )
 
   if (raster_df_out) {
     return(list(plot_out, raster_df))

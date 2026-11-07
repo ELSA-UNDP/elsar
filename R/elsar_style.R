@@ -213,9 +213,10 @@ elsar_palette <- function(name = c("actions", "categorical", "sequential", "dive
 #' The elsar map and chart themes
 #'
 #' @description
-#' `elsar_theme_map()` is the default theme of every elsar map. It removes
-#' the panel border, axes and graticule so the data carry the page, sets a
-#' clear type hierarchy (bold left-aligned title, secondary-ink subtitle,
+#' `elsar_theme_map()` is the default theme of every elsar map. It frames the
+#' map in a thin box with a light latitude/longitude graticule and degree
+#' labels (`graticule = TRUE`, the default; `FALSE` removes the box, graticule
+#' and axes so the data carry the page), sets a clear type hierarchy (bold left-aligned title, secondary-ink subtitle,
 #' small muted caption for attribution), and lays legends out tidily: a long
 #' thin colourbar with the title above it for continuous data, small square
 #' keys for categories.
@@ -236,6 +237,11 @@ elsar_palette <- function(name = c("actions", "categorical", "sequential", "dive
 #'   maps; the legend sits under the title, left-aligned), `"bottom"`,
 #'   `"right"`, `"left"`, `"inside"` or `"none"`.
 #' @param dark Logical. If `TRUE`, uses light inks on a dark surface.
+#' @param graticule Logical. For `elsar_theme_map()`: draw the box, graticule
+#'   and axis labels (default `TRUE`). The graticule is drawn by
+#'   [ggplot2::coord_sf()] in the map's own projection (curved lines for
+#'   Mollweide) and labelled in degrees, as long as its `datum` is not `NA`;
+#'   elsar's map functions set it to WGS84 when `graticule = TRUE`.
 #' @param grid Character. For `elsar_theme()`: which major grid lines to
 #'   draw, `"y"` (default), `"x"`, `"xy"` or `"none"`.
 #'
@@ -260,13 +266,17 @@ elsar_palette <- function(name = c("actions", "categorical", "sequential", "dive
 elsar_theme_map <- function(base_size = 10,
                             base_family = "",
                             legend_position = "top",
-                            dark = FALSE) {
+                            dark = FALSE,
+                            graticule = TRUE) {
   .check_theme_args(base_size, legend_position)
+  assertthat::assert_that(assertthat::is.flag(graticule), !is.na(graticule),
+    msg = "'graticule' must be TRUE or FALSE."
+  )
   ink <- elsar_inks(dark)
   family <- .elsar_font(base_family)
   horizontal <- legend_position %in% c("top", "bottom")
 
-  ggplot2::theme_void(base_size = base_size, base_family = family) +
+  base <- ggplot2::theme_void(base_size = base_size, base_family = family) +
     .elsar_theme_core(base_size, family, ink, legend_position) +
     ggplot2::theme(
       panel.grid = ggplot2::element_blank(),
@@ -277,6 +287,57 @@ elsar_theme_map <- function(base_size = 10,
       axis.line = ggplot2::element_blank(),
       legend.justification = if (horizontal) "left" else "top"
     )
+  if (!graticule) {
+    return(base)
+  }
+  base + ggplot2::theme(
+    panel.border = ggplot2::element_rect(colour = ink[["ink_muted"]], fill = NA, linewidth = 0.4),
+    panel.grid.major = ggplot2::element_line(colour = ink[["rule"]], linewidth = 0.3),
+    axis.text = ggplot2::element_text(colour = ink[["ink_secondary"]], size = ggplot2::rel(0.75)),
+    axis.text.x = ggplot2::element_text(margin = ggplot2::margin(t = base_size * 0.25)),
+    axis.text.y = ggplot2::element_text(margin = ggplot2::margin(r = base_size * 0.25), hjust = 1),
+    axis.ticks = ggplot2::element_line(colour = ink[["ink_muted"]], linewidth = 0.3),
+    axis.ticks.length = grid::unit(base_size * 0.25, "pt")
+  )
+}
+
+# The datum for a map's coord_sf(): WGS84, so the graticule is drawn in the
+# map's projection and labelled in degrees, or NA for no graticule
+.map_datum <- function(graticule) {
+  if (isTRUE(graticule)) sf::st_crs(4326) else NA
+}
+
+# Where the legend goes on a map of this extent: on the right when the map is
+# clearly taller than wide (a legend on top would leave the width empty),
+# otherwise on top
+.map_legend_position <- function(x, legend_position = "auto") {
+  if (!identical(legend_position, "auto")) {
+    return(legend_position)
+  }
+  e <- as.vector(terra::ext(x))
+  if (any(!is.finite(e))) {
+    return("top")
+  }
+  if ((e[4] - e[3]) / (e[2] - e[1]) > 1.15) "right" else "top"
+}
+
+# Fill scale for a 0/1 layer drawn as a factor with levels `labels`: the 0
+# class in the neutral land colour, the 1 class in a strong colour of the
+# sequential palette
+.scale_fill_binary <- function(labels, name = NULL, option = "viridis", dark = FALSE) {
+  ink <- elsar_inks(dark)
+  inside <- elsar_palette("sequential", n = 5, option = option)[2]
+  ggplot2::scale_fill_manual(
+    values = stats::setNames(c(ink[["land_line"]], inside), labels),
+    breaks = labels, name = name, na.translate = FALSE, drop = FALSE,
+    guide = guide_elsar_legend()
+  )
+}
+
+# Binary layers (only 0 and 1)
+.is_binary_raster <- function(r) {
+  v <- terra::unique(r[[1]], na.rm = TRUE)[[1]]
+  length(v) > 0 && all(v %in% c(0, 1))
 }
 
 #' @rdname elsar_theme_map

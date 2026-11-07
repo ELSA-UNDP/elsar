@@ -15,6 +15,15 @@
 #' @param custom_resolution A value that is used in ggsave() for dpi. Default is 200.
 #' @param iso3 iso3 code of the country of interest.
 #' @param plot_title Character, optional. Plot title (modern style).
+#' @param binary_labels Character, length 2. Modern style: legend labels for
+#'   the 0 and 1 classes when the layer only holds 0 and 1 (zones, lock-ins,
+#'   presence layers), which get a two-class legend instead of a colour bar.
+#'   Default `c("Outside", "Inside")`.
+#' @param legend_position Character. Modern style: `"auto"` (default) puts the
+#'   legend on the right for maps clearly taller than wide and on top
+#'   otherwise. Or any `legend_position` of [elsar_theme_map()].
+#' @param graticule Logical. Modern style: frame the map with a box and a
+#'   latitude/longitude graticule labelled in degrees (default `TRUE`).
 #' @param style Character. `"modern"` (default) draws the map in the
 #'   current elsar style ([elsar_theme_map()], [elsar_palette()] scales,
 #'   neutral context); `"classic"` reproduces the look of elsar 0.4 and
@@ -71,6 +80,9 @@ elsar_plot_feature <- function(raster_in,
                                no_legend = FALSE,
                                custom_resolution = 200,
                                plot_title = NULL,
+                               binary_labels = c("Outside", "Inside"),
+                               legend_position = "auto",
+                               graticule = TRUE,
                                style = getOption("elsar.plot_style", "modern")) {
   style <- .resolve_style(style)
   # Input validation
@@ -127,7 +139,9 @@ elsar_plot_feature <- function(raster_in,
     gg_feature <- .plot_feature_modern(
       raster_in = raster_in, pus = pus, outlines = outlines, legend_title = legend_title,
       color_map = color_map, palette_direction = palette_direction,
-      no_legend = no_legend, plot_title = plot_title
+      no_legend = no_legend, plot_title = plot_title,
+      binary_labels = binary_labels, legend_position = legend_position,
+      graticule = graticule
     )
   } else {
   gg_feature <- ggplot2::ggplot() +
@@ -205,25 +219,40 @@ elsar_plot_feature <- function(raster_in,
 # Modern style ------------------------------------------------------------------
 
 .plot_feature_modern <- function(raster_in, pus, outlines, legend_title, color_map,
-                                 palette_direction, no_legend, plot_title) {
+                                 palette_direction, no_legend, plot_title,
+                                 binary_labels = c("Outside", "Inside"),
+                                 legend_position = "auto", graticule = TRUE) {
   ink <- elsar_inks()
-  p <- ggplot2::ggplot() +
-    elsar_map_context(pus) +
-    tidyterra::geom_spatraster(data = raster_in[[1]], maxcell = 1e6) +
-    scale_fill_elsar_c(
+  r <- raster_in[[1]]
+  if (.is_binary_raster(r)) {
+    # A 0/1 layer (zone, lock-in, presence): two named classes, not a colour bar
+    r <- terra::as.factor(r)
+    levels(r) <- data.frame(id = c(0, 1), class = binary_labels)
+    fill <- .scale_fill_binary(binary_labels, legend_title, color_map)
+    if (no_legend) fill$guide <- "none"
+  } else {
+    fill <- scale_fill_elsar_c(
       option = color_map,
       direction = palette_direction,
       name = legend_title,
       guide = if (no_legend) "none" else guide_elsar_colourbar()
-    ) +
+    )
+  }
+  p <- ggplot2::ggplot() +
+    elsar_map_context(pus) +
+    tidyterra::geom_spatraster(data = r, maxcell = 1e6) +
+    fill +
     tidyterra::geom_spatvector(
       data = outlines,
       colour = ink[["ink_secondary"]],
       linewidth = 0.25
     ) +
     elsar_map_furniture(north_arrow = FALSE) +
-    ggplot2::coord_sf(crs = sf::st_crs(terra::crs(raster_in)), datum = NA) +
-    elsar_theme_map()
+    ggplot2::coord_sf(crs = sf::st_crs(terra::crs(raster_in)), datum = .map_datum(graticule)) +
+    elsar_theme_map(
+      legend_position = .map_legend_position(raster_in, legend_position),
+      graticule = graticule
+    )
   if (!is.null(plot_title) && any(nzchar(plot_title))) {
     p <- p + ggplot2::labs(title = plot_title)
   }
