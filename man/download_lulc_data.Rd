@@ -35,8 +35,8 @@ Required for GEE-sourced products (esri_10m, dynamic_world, esa_worldcover).}
 Required when \code{product = "local"}.}
 
 \item{year}{Numeric or NULL. Specific year to download. If NULL, uses most recent.
-For Dynamic World, this creates an annual mode composite. Ignored for ESA WorldCover
-(fixed at 2021).}
+For Dynamic World, this creates an annual mode composite. ESA WorldCover is
+fixed at 2021 (another year is ignored with a warning).}
 
 \item{pus}{SpatRaster or NULL. Planning units raster for GEE-side aggregation.}
 

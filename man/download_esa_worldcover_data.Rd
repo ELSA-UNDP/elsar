@@ -31,11 +31,14 @@ When provided with \code{aggregate_to_pus = TRUE}, the export will be resampled
 to match the PU resolution and projection in GEE before download.}
 
 \item{aggregate_to_pus}{Logical. If TRUE and \code{pus} is provided, aggregate the
-data to planning unit resolution in GEE before export. This significantly
-speeds up processing by eliminating local resampling. Default is FALSE.}
+native pixels to planning unit size in GEE (\code{reduceResolution()} with
+\code{aggregation_reducer}) before export, then reproject the result to the
+planning units locally. Default is FALSE.}
 
 \item{wait_time}{Numeric. Maximum time in minutes to wait for the GEE export
-to appear in Google Drive. Default is 5. Increase for large exports.}
+task to finish (fractions allowed). Default is 5. Increase for large
+exports. On a timeout the task keeps running; a rerun waits for it rather
+than exporting again.}
 
 \item{...}{Additional arguments passed to \code{\link[=download_gee_layer]{download_gee_layer()}}.}
 }

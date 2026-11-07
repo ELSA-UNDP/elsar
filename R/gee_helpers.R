@@ -377,7 +377,7 @@ safe_gee_getinfo <- function(gee_obj) {
 #' Task status contains timestamps that can exceed 32-bit integer range.
 #'
 #' @param task A GEE task object
-#' @return List with state and description fields, or NULL on error
+#' @return List with state, description and error_message fields, or NULL on error
 #' @keywords internal
 safe_task_status <- function(task) {
   tryCatch({
@@ -385,7 +385,11 @@ safe_task_status <- function(task) {
     # Access only the fields we need to avoid triggering overflow on timestamps
     list(
       state = tryCatch(as.character(status$state), error = function(e) NA_character_),
-      description = tryCatch(as.character(status$description), error = function(e) NA_character_)
+      description = tryCatch(as.character(status$description), error = function(e) NA_character_),
+      error_message = tryCatch(
+        if (is.null(status$error_message)) NA_character_ else as.character(status$error_message),
+        error = function(e) NA_character_
+      )
     )
   }, error = function(e) {
     if (grepl("too large to convert to C long", e$message, fixed = TRUE)) {
@@ -457,7 +461,15 @@ initialize_earthengine <- function(gee_project) {
     if (reticulate::py_module_available("ee")) {
       ee_env_found <- TRUE
     } else {
-      log_message("Python initialized but missing 'ee' module. Restart R with RETICULATE_PYTHON set to ee environment.")
+      # reticulate cannot switch to another Python once one is running, so
+      # nothing below could work (before 0.4.3 it went on to build a conda
+      # environment it could not use)
+      stop(paste0(
+        "Python is already running in this R session without the 'ee' module (",
+        reticulate::py_config()$python, "), and reticulate cannot switch to another ",
+        "Python. Restart R, then set RETICULATE_PYTHON to an Earth Engine environment ",
+        "or run elsar_setup_gee() before anything else uses Python."
+      ), call. = FALSE)
     }
   }
 
@@ -655,23 +667,29 @@ download_from_drive <- function(drive_folder, file_prefix, local_path) {
 
 #' Merge downloaded GEE tiles into a single Cloud-Optimized GeoTIFF
 #'
-#' Takes multiple downloaded GeoTIFF tiles and merges them into a single
+#' Takes the GeoTIFF tiles of one export and merges them into a single
 #' Cloud-Optimized GeoTIFF (COG) with appropriate compression and optimization.
 #'
-#' @param local_path Character. Path to directory containing downloaded tile files
+#' @param local_path Character. The tile files to merge, or a directory, in
+#'   which case every `.tif` in it is merged. Pass the files: a directory can
+#'   hold tiles from another export.
 #' @param output_file Character. Full path for the output merged COG file
 #' @param datatype Character. GDAL datatype for output raster (e.g., "INT1U", "FLT4S")
 #' @return A `SpatRaster` object of the merged and written COG
+#' @details Tiles must share a CRS and resolution: a tile that differs is an
+#'   error (before 0.4.3 GDAL silently left it out of the merge). The output
+#'   is written to a temporary file first and then renamed, so an interrupted
+#'   write never leaves a truncated file under the final name.
 #' @keywords internal
 #' @examples
 #' \dontrun{
-#' merged_raster <- merge_tiles("/tmp/tiles", "/output/merged.tif", "INT1U")
+#' merged_raster <- merge_tiles(c("tile_a.tif", "tile_b.tif"), "/output/merged.tif", "INT1U")
 #' }
 merge_tiles <- function(local_path, output_file, datatype) {
   # Input validation
   assertthat::assert_that(
-    is.character(local_path) && dir.exists(local_path),
-    msg = "'local_path' must be an existing directory path."
+    is.character(local_path) && length(local_path) > 0,
+    msg = "'local_path' must be tile file paths or an existing directory."
   )
 
   assertthat::assert_that(
@@ -684,14 +702,21 @@ merge_tiles <- function(local_path, output_file, datatype) {
     msg = "'datatype' must be a valid GDAL datatype (e.g., 'INT1U', 'FLT4S')."
   )
 
-  # Find all .tif files in the local directory
-  tile_files <- list.files(local_path, pattern = "\\.tif$", full.names = TRUE)
+  tile_files <- if (length(local_path) == 1 && dir.exists(local_path)) {
+    list.files(local_path, pattern = "\\.tif$", full.names = TRUE)
+  } else {
+    local_path
+  }
 
   if (length(tile_files) == 0) {
     stop(
       glue::glue("No downloaded tiles found in '{local_path}'. Check that GEE export completed successfully."),
       call. = FALSE
     )
+  }
+  missing <- tile_files[!file.exists(tile_files)]
+  if (length(missing) > 0) {
+    stop(glue::glue("Tile file(s) not found: {paste(missing, collapse = ', ')}"), call. = FALSE)
   }
 
   log_message("Merging {length(tile_files)} tile(s) into final output: {output_file}")
@@ -700,6 +725,17 @@ merge_tiles <- function(local_path, output_file, datatype) {
   if (length(tile_files) == 1) {
     r <- terra::rast(tile_files)
   } else {
+    tiles <- lapply(tile_files, terra::rast)
+    same_grid <- vapply(tiles[-1], function(t) {
+      terra::same.crs(t, tiles[[1]]) && isTRUE(all.equal(terra::res(t), terra::res(tiles[[1]])))
+    }, logical(1))
+    if (!all(same_grid)) {
+      stop(glue::glue(
+        "Tiles do not share one CRS and resolution, so they cannot be merged: ",
+        "{paste(basename(tile_files[-1][!same_grid]), collapse = ', ')} differ from ",
+        "{basename(tile_files[1])}."
+      ), call. = FALSE)
+    }
     # Use virtual raster for efficient merging of multiple tiles
     r <- terra::vrt(tile_files)
   }
@@ -707,10 +743,15 @@ merge_tiles <- function(local_path, output_file, datatype) {
   # Set predictor based on datatype for optimal compression
   predictor <- if (grepl("^INT", datatype)) "2" else "3"
 
-  # Write as Cloud-Optimized GeoTIFF with compression
-  terra::writeRaster(
+  # Write to a temporary name, then rename: an interrupted write never leaves
+  # a truncated file under the final name (which later runs would reuse)
+  partial_file <- paste0(output_file, ".part.tif")
+  on.exit(unlink(partial_file), add = TRUE)
+  # terra builds a COG through GDAL's in-memory driver, which warns that it
+  # ignores the creation options; those warnings are noise
+  withCallingHandlers(terra::writeRaster(
     r,
-    output_file,
+    partial_file,
     filetype = "COG",
     datatype = datatype,
     gdal = c(
@@ -721,7 +762,15 @@ merge_tiles <- function(local_path, output_file, datatype) {
       "OVERVIEWS=NONE"              # Let terra handle overviews
     ),
     overwrite = TRUE
-  )
+  ), warning = function(w) {
+    if (grepl("driver MEM does not support creation option", conditionMessage(w), fixed = TRUE)) {
+      invokeRestart("muffleWarning")
+    }
+  })
+  if (file.exists(output_file)) unlink(output_file)
+  if (!file.rename(partial_file, output_file)) {
+    stop(glue::glue("Could not move the merged raster to '{output_file}'."), call. = FALSE)
+  }
 
   log_message("COG written to disk.")
   return(terra::rast(output_file))
@@ -755,7 +804,9 @@ merge_tiles <- function(local_path, output_file, datatype) {
 #' @param googledrive_folder Character or NULL. Google Drive folder name for exports.
 #'   Currently defaults to NULL (Drive root) to avoid a GEE folder duplication bug.
 #' @param wait_time Numeric. Maximum time in minutes to wait for the GEE export
-#'   to appear in Google Drive. Default is 5. Increase for large exports.
+#'   task to finish (fractions allowed). Default is 5. Increase for large
+#'   exports. On a timeout the task keeps running; a rerun waits for it rather
+#'   than exporting again.
 #' @param band Character or NULL. Specific band to select from the image. If NULL,
 #'   uses all bands. Useful for datasets like Dynamic World ("label") or
 #'   ESA WorldCover ("Map").
@@ -768,13 +819,17 @@ merge_tiles <- function(local_path, output_file, datatype) {
 #'   When provided with `aggregate_to_pus = TRUE`, the export will be resampled
 #'   to match the PU resolution and projection in GEE before download.
 #' @param aggregate_to_pus Logical. If TRUE and `pus` is provided, aggregate the
-#'   data to planning unit resolution in GEE before export. This significantly
-#'   speeds up processing by eliminating local resampling. Default is FALSE.
+#'   native pixels to planning unit size in GEE (`reduceResolution()` with
+#'   `aggregation_reducer`) before export, then reproject the result to the
+#'   planning units locally. Default is FALSE.
 #' @param aggregation_reducer Character. Reducer to use for GEE-side aggregation:
 #'   "mode" (default, for categorical data), "mean", or "sum".
 #'
-#' @return A `SpatRaster` object written to disk, or NULL if export timed out.
-#'   When `aggregate_to_pus = TRUE`, the result has attribute `pre_aggregated = TRUE`.
+#' @return A `SpatRaster` object written to disk. If the export does not finish
+#'   within `wait_time` minutes, or fails, the function stops with an error.
+#'   When `aggregate_to_pus = TRUE`, the result has attribute
+#'   `pre_aggregated = TRUE`, whether it was downloaded or read from an
+#'   existing file.
 #'
 #' @seealso [download_esri_lulc_data()], [download_global_pasture_data()],
 #'   [download_lulc_data()]
@@ -834,10 +889,7 @@ download_gee_layer <- function(
     stop("Package 'reticulate' is required but not installed.", call. = FALSE)
   }
   assertthat::assert_that(inherits(boundary_layer, "sf"), msg = "boundary_layer must be an sf object")
-  assertthat::assert_that(
-    is.numeric(wait_time) && length(wait_time) == 1 && wait_time %% 1 == 0,
-    msg = "wait_time must be a single whole number (integer or numeric)"
-  )
+  .check_wait_time(wait_time)
 
   # Validate aggregation parameters
   if (aggregate_to_pus) {
@@ -847,18 +899,24 @@ download_gee_layer <- function(
     )
   }
 
+  # Tag a result the way make_normalised_raster() expects. A cached file gets
+  # the same tags as a fresh download (before 0.4.3 it got none, so the first
+  # run and later runs took different resampling paths).
+  tag_result <- function(r) {
+    if (aggregate_to_pus) {
+      attr(r, "pre_aggregated") <- TRUE
+      attr(r, "aggregation_reducer") <- aggregation_reducer
+    }
+    r
+  }
+
   # Set up folder structure (export to Drive root to avoid GEE folder duplication bug)
   export_folder <- if (is.null(googledrive_folder)) NULL else paste0(googledrive_folder, "_", iso3)
-
-  # Create temporary local directory for downloads
-  temp_dir <- file.path(Sys.getenv("HOME"), glue::glue("gee_download_{iso3}_{Sys.getpid()}"))
-  dir.create(temp_dir, showWarnings = FALSE)
 
   # Initialize Earth Engine
   env_info <- tryCatch({
     initialize_earthengine(gee_project)
   }, error = function(e) {
-    unlink(temp_dir, recursive = TRUE)
     stop(glue::glue("Earth Engine initialization failed: {e$message}"), call. = FALSE)
   })
   ee <- env_info$ee
@@ -873,36 +931,64 @@ download_gee_layer <- function(
   ic <- tryCatch({
     ee$ImageCollection(asset_id)
   }, error = function(e) {
-    cleanup_earthengine(env_info)
-    unlink(temp_dir, recursive = TRUE)
     stop(glue::glue("Failed to load GEE asset '{asset_id}': {e$message}"), call. = FALSE)
   })
 
-  # Determine year to use
+  # Region to export, in WGS84: the planning-unit extent when aggregating to
+  # PUs, otherwise the boundary's bounding box
+  if (aggregate_to_pus) {
+    pu_ext <- terra::ext(pus)
+    corners <- sf::st_sfc(
+      sf::st_point(c(pu_ext$xmin, pu_ext$ymin)),
+      sf::st_point(c(pu_ext$xmax, pu_ext$ymax)),
+      crs = terra::crs(pus, proj = TRUE)
+    )
+    coords <- sf::st_coordinates(sf::st_transform(corners, crs = 4326))
+    ee_bounding_box <- ee$Geometry$Rectangle(
+      c(coords[1, "X"], coords[1, "Y"], coords[2, "X"], coords[2, "Y"]),
+      proj = "EPSG:4326", geodesic = FALSE
+    )
+  } else {
+    bounding_box <- sf::st_bbox(sf::st_transform(boundary_layer, crs = 4326))
+    ee_bounding_box <- ee$Geometry$Rectangle(
+      c(bounding_box$xmin, bounding_box$ymin, bounding_box$xmax, bounding_box$ymax),
+      proj = "EPSG:4326", geodesic = FALSE
+    )
+  }
+
+  # Determine year to use: the latest year with data in this region (before
+  # 0.4.3 the search ignored the region, so a year with data elsewhere could
+  # be picked and export an empty layer)
   if (!is.null(year_override)) {
     year <- year_override
   } else {
     year <- as.numeric(format(Sys.Date(), "%Y")) - 1
-    # Search backwards for a year with data
-    while (ic$filterDate(ee$Date(glue::glue("{year}-01-01")), ee$Date(glue::glue("{year}-12-31")))$size()$getInfo() == 0) {
+    year_count <- function(y) {
+      ic$filterDate(ee$Date(glue::glue("{y}-01-01")), ee$Date(glue::glue("{y}-12-31")))$
+        filterBounds(ee_bounding_box)$size()$getInfo()
+    }
+    while (year_count(year) == 0) {
       year <- year - 1
       if (year < 2000) {
-        cleanup_earthengine(env_info)
-        unlink(temp_dir, recursive = TRUE)
-        stop("No data found for any recent year (back to 2000) in the collection.", call. = FALSE)
+        stop("No data found for any recent year (back to 2000) in the collection for this region.", call. = FALSE)
       }
     }
   }
 
   # Build export filename and check if local file already exists
-  file_name <- glue::glue("{file_prefix}_{year}_{iso3}")
+  # Aggregated outputs get their own name, so a cached native-resolution file
+  # (or one aggregated before 0.4.3, without reduceResolution) is never taken
+  # for an aggregated one
+  file_name <- if (aggregate_to_pus) {
+    glue::glue("{file_prefix}_{year}_{iso3}_pus_{aggregation_reducer}")
+  } else {
+    glue::glue("{file_prefix}_{year}_{iso3}")
+  }
   output_file <- file.path(output_dir, glue::glue("{file_name}.tif"))
 
   if (file.exists(output_file)) {
     log_message("Using existing file: {basename(output_file)}")
-    cleanup_earthengine(env_info)
-    unlink(temp_dir, recursive = TRUE)
-    return(terra::rast(output_file))
+    return(tag_result(terra::rast(output_file)))
   }
 
   # Ensure export folder exists (if not exporting to root)
@@ -913,65 +999,20 @@ download_gee_layer <- function(
     }
   }
 
-  # Check for existing exported files in Drive
-  exact_file <- paste0(file_name, ".tif")
-  existing_files <- tryCatch({
-    # Suppress googledrive messages about files not found
-    suppressMessages(googledrive::drive_get(exact_file))
-  }, error = function(e) {
-    data.frame(name = character(0))
-  })
+  # A running task first (its tiles may be partly in Drive), then Drive,
+  # then a new export
+  resolved <- .resolve_export(ee, file_name)
+  matching_files <- resolved$files
 
-  # If not found, try drive_find as fallback
-  if (nrow(existing_files) == 0) {
-    all_files <- suppressMessages(googledrive::drive_find(q = paste0("name contains '", file_name, "'")))
-    existing_files <- all_files[grepl(paste0("^", file_name, ".*\\.tif$"), all_files$name), ]
-  }
+  if (resolved$status != "in_drive") {
+    task <- resolved$task
 
-  if (nrow(existing_files) > 0) {
-    matching_files <- existing_files
-    log_message("Found in Drive: {file_name}")
-  } else {
-    log_message("Not found in Drive, will export from GEE: {file_name}")
-    log_message("Preparing export task...")
-
-    # Check for running export tasks with the same description
-    tasks <- ee$batch$Task$list()
-    existing_task <- purrr::detect(tasks, function(t) {
-      status <- safe_task_status(t)
-      if (is.null(status)) return(FALSE)
-      status$state %in% c("READY", "RUNNING") && status$description == file_name
-    })
-
-    if (is.null(existing_task)) {
-      # Prepare geometry for export in WGS84
-      if (aggregate_to_pus && !is.null(pus)) {
-        pu_ext <- terra::ext(pus)
-        corners <- sf::st_sfc(
-          sf::st_point(c(pu_ext$xmin, pu_ext$ymin)),
-          sf::st_point(c(pu_ext$xmax, pu_ext$ymax)),
-          crs = terra::crs(pus, proj = TRUE)
-        )
-        corners_wgs84 <- sf::st_transform(corners, crs = 4326)
-        coords <- sf::st_coordinates(corners_wgs84)
-        ee_bounding_box <- ee$Geometry$Rectangle(
-          c(coords[1, "X"], coords[1, "Y"], coords[2, "X"], coords[2, "Y"]),
-          proj = "EPSG:4326", geodesic = FALSE
-        )
-      } else {
-        boundary_layer <- sf::st_transform(boundary_layer, crs = 4326)
-        bounding_box <- sf::st_bbox(boundary_layer)
-        ee_bounding_box <- ee$Geometry$Rectangle(
-          c(bounding_box$xmin, bounding_box$ymin, bounding_box$xmax, bounding_box$ymax),
-          proj = "EPSG:4326", geodesic = FALSE
-        )
-      }
-
+    if (resolved$status == "export") {
+      log_message("Preparing export task...")
       # Filter collection and create composite
       start_date <- ee$Date(glue::glue("{year}-01-01"))
       end_date <- ee$Date(glue::glue("{year}-12-31"))
       filtered_data <- ic$filterDate(start_date, end_date)$filterBounds(ee_bounding_box)
-      source_projection <- filtered_data$first()$projection()
 
       composite <- switch(
         composite_method,
@@ -984,24 +1025,33 @@ download_gee_layer <- function(
 
       if (!is.null(band)) composite <- composite$select(band)
 
-      # Prepare export parameters
-      log_message("Building export parameters...")
-      region_coords <- ee_bounding_box$getInfo()[["coordinates"]]
       export_params <- list(
         image = composite,
         description = file_name,
         folder = export_folder,
         fileNamePrefix = file_name,
-        region = region_coords,
+        region = ee_bounding_box$getInfo()[["coordinates"]],
         maxPixels = reticulate::r_to_py(1e13),
         fileFormat = "GeoTIFF"
       )
 
-      # Handle GEE-side aggregation to planning units
-      if (aggregate_to_pus && !is.null(pus)) {
-        pu_crs <- get_crs_wkt(pus)
-        pu_ext <- terra::ext(pus)
+      if (aggregate_to_pus) {
+        # Aggregate the native pixels to PU size in Earth Engine with the
+        # chosen reducer. Before 0.4.3 the composite was exported at PU scale
+        # without reduceResolution(), so Earth Engine resampled it with its
+        # default pyramid policy (for categorical data, a mean of class codes).
         pu_res <- terra::res(pus)
+        reducer <- switch(
+          aggregation_reducer,
+          mode = ee$Reducer$mode(),
+          mean = ee$Reducer$mean(),
+          sum = ee$Reducer$sum()
+        )
+        export_params$image <- composite$
+          setDefaultProjection(filtered_data$first()$projection())$
+          reduceResolution(reducer = reducer, bestEffort = TRUE,
+                           maxPixels = reticulate::r_to_py(65536L))$
+          reproject(crs = ee$Projection("EPSG:4326")$atScale(pu_res[1]))
         export_params$crs <- "EPSG:4326"
         export_params$scale <- pu_res[1]
       } else {
@@ -1014,83 +1064,19 @@ download_gee_layer <- function(
       log_message("Export task submitted")
     }
 
-    # Wait for files to appear in Drive
     log_message("Waiting for export to complete (this may take several minutes)...")
-    start_time <- Sys.time()
-    prev_file_count <- 0
-    stable_count <- 0
-
-    repeat {
-      all_tifs <- suppressMessages(googledrive::drive_find(
-        q = paste0("name contains '", file_name, "'"),
-        n_max = 500  # Ensure we get all tiles for large exports
-      ))
-      matching_files <- all_tifs[grepl(paste0("^", file_name, ".*\\.tif$"), all_tifs$name), ]
-      current_count <- nrow(matching_files)
-
-      elapsed <- difftime(Sys.time(), start_time, units = "mins")
-
-      # Check if file count has stabilized (same count for 2 consecutive checks)
-      # This handles multi-tile exports where tiles appear gradually
-      if (current_count > 0) {
-        if (current_count == prev_file_count) {
-          stable_count <- stable_count + 1
-          if (stable_count >= 2) {
-            log_message("Found {current_count} tile(s) ready for download")
-            break
-          }
-        } else {
-          stable_count <- 0
-          log_message("Export in progress: {current_count} tile(s) found so far...")
-        }
-        prev_file_count <- current_count
-      }
-
-      if (elapsed > wait_time) {
-        # If we have some files but timed out waiting for more, use what we have
-        if (current_count > 0) {
-          log_message("Timeout reached with {current_count} tile(s) - proceeding with available files")
-          warning(
-            "GEE export may be incomplete. Found ", current_count, " tiles but more may exist.\n",
-            "Check https://code.earthengine.google.com/tasks for task status.",
-            call. = FALSE
-          )
-          break
-        }
-        cleanup_earthengine(env_info)
-        unlink(temp_dir, recursive = TRUE)
-        stop(glue::glue(
-          "GEE export timeout after {as.integer(wait_time)} min.\n",
-          "The export is still running in GEE. Please:\n",
-          "  1. Check status at: https://code.earthengine.google.com/tasks\n",
-          "  2. Wait for the export to complete\n",
-          "  3. Run the pipeline again - it will download the completed file"
-        ), call. = FALSE)
-      }
-
-      if (elapsed >= 0.5 && current_count == 0) {  # Only show after 30 seconds if no files yet
-        log_message("Still waiting... ({round(elapsed, 1)} min elapsed)")
-      }
-      Sys.sleep(30)
-    }
+    matching_files <- .wait_for_export(file_name, task = task, wait_time = wait_time)
   }
 
-  # Download files
-  for (i in seq_len(nrow(matching_files))) {
-    local_path <- file.path(temp_dir, matching_files$name[i])
-    googledrive::drive_download(matching_files[i, ], path = local_path, overwrite = TRUE)
-    log_message("Downloaded: {matching_files$name[i]}")
-  }
-
-  output_raster <- merge_tiles(temp_dir, output_file, datatype)
-
-  # Cleanup temporary files and environments
-  unlink(temp_dir, recursive = TRUE)
-  cleanup_earthengine(env_info)
+  # Download every tile and merge them
+  temp_dir <- .gee_scratch_dir(glue::glue("gee_download_{iso3}"))
+  on.exit(unlink(temp_dir, recursive = TRUE), add = TRUE)
+  tile_paths <- .download_drive_export(matching_files, temp_dir)
+  output_raster <- merge_tiles(tile_paths, output_file, datatype)
 
   # Reproject to PU CRS locally if GEE-side aggregation was used
   # GEE exports in WGS84, so we reproject to PU CRS here
-  if (aggregate_to_pus && !is.null(pus)) {
+  if (aggregate_to_pus) {
     resample_method <- switch(
       aggregation_reducer,
       mode = "mode",
@@ -1099,14 +1085,18 @@ download_gee_layer <- function(
       "near"  # Default fallback
     )
     output_raster <- terra::project(output_raster, pus, method = resample_method)
-    # Overwrite the file with reprojected version
-    terra::writeRaster(output_raster, output_file, overwrite = TRUE,
+    # Replace the file with the reprojected version, atomically: an
+    # interrupted write must not leave the unprojected file under this name
+    partial_file <- paste0(output_file, ".part.tif")
+    on.exit(unlink(partial_file), add = TRUE)
+    terra::writeRaster(output_raster, partial_file, overwrite = TRUE,
                        filetype = "COG", gdal = c("COMPRESS=DEFLATE"))
-    attr(output_raster, "pre_aggregated") <- TRUE
-    attr(output_raster, "aggregation_reducer") <- aggregation_reducer
+    unlink(output_file)
+    file.rename(partial_file, output_file)
+    output_raster <- terra::rast(output_file)
   }
 
-  return(output_raster)
+  return(tag_result(output_raster))
 }
 
 #' Download the ESRI 10m Land Use/Land Cover Time Series (LULC) Layer
@@ -1612,7 +1602,7 @@ load_local_lulc_data <- function(
 #'   If NULL, automatically determined from `lulc_product` and `class_name`.
 #' @param year Numeric or NULL. Year for LULC data. If NULL, uses most recent.
 #' @param pus SpatRaster. Planning units raster (required for aggregation).
-#' @param ... Additional arguments passed to [download_gee_layer()].
+#' @param ... Not used; anything passed here is ignored with a warning.
 #'
 #' @return A `SpatRaster` with class proportion values (0-1) at PU resolution,
 #'   with attribute `pre_aggregated = TRUE`.
@@ -1692,6 +1682,12 @@ download_lulc_class_proportion <- function(
     inherits(pus, "SpatRaster"),
     msg = "'pus' must be a SpatRaster object."
   )
+
+  .check_wait_time(wait_time)
+  if (...length() > 0) {
+    warning("Arguments in '...' are not used by download_lulc_class_proportion() and were ignored.",
+            call. = FALSE)
+  }
 
   # Resolve class values if not provided
   if (is.null(class_values)) {
@@ -1888,54 +1884,26 @@ download_lulc_class_proportion <- function(
       fileFormat = "GeoTIFF"
     )
 
-    # Submit export task
-    task <- do.call(ee$batch$Export$image$toDrive, export_params)
-    task$start()
-    log_message("Export task started. Waiting for files to appear in Google Drive...")
-    log_message("Monitor task progress at: https://code.earthengine.google.com/tasks")
-
-    # Wait for files to appear in Drive
-    start_time <- Sys.time()
-    repeat {
-      Sys.sleep(30)  # Check every 30 seconds
-
-      # Search for files in Drive
-      drive_files <- googledrive::drive_find(
-        pattern = file_name,
-        type = "tif"
-      )
-
-      if (nrow(drive_files) > 0) {
-        log_message("Found {nrow(drive_files)} file(s) in Google Drive.")
-        break
+    # Submit the export, unless the same export is still running from an
+    # earlier attempt, and wait for the task to finish
+    resolved <- .resolve_export(ee, file_name)
+    drive_files <- resolved$files
+    if (resolved$status != "in_drive") {
+      task <- resolved$task
+      if (resolved$status == "export") {
+        task <- do.call(ee$batch$Export$image$toDrive, export_params)
+        task$start()
+        log_message("Export task started. Monitor it at: https://code.earthengine.google.com/tasks")
       }
-
-      # Check timeout
-      elapsed <- difftime(Sys.time(), start_time, units = "mins")
-      if (elapsed > wait_time) {
-        cleanup_earthengine(env_info)
-        unlink(temp_dir, recursive = TRUE)
-        stop(
-          glue::glue(
-            "Timed out waiting for GEE export after {wait_time} minutes.\n",
-            "Check task status at: https://code.earthengine.google.com/tasks"
-          ),
-          call. = FALSE
-        )
-      }
-
-      log_message("Still waiting for export... ({round(elapsed, 1)} min) - check: https://code.earthengine.google.com/tasks")
+      drive_files <- .wait_for_export(file_name, task = task, wait_time = wait_time)
     }
 
-    # Download files from Drive
-    for (i in seq_len(nrow(drive_files))) {
-      local_path <- file.path(temp_dir, drive_files$name[i])
-      googledrive::drive_download(drive_files$id[i], path = local_path, overwrite = TRUE)
-      googledrive::drive_trash(drive_files$id[i])
-    }
+    # Download every tile, then remove them from Drive
+    tile_paths <- .download_drive_export(drive_files, temp_dir)
+    .drive_trash(drive_files)
 
     # Merge tiles if multiple
-    output_raster <- merge_tiles(temp_dir, output_file, "FLT4S")
+    output_raster <- merge_tiles(tile_paths, output_file, "FLT4S")
 
     # Cleanup
     unlink(temp_dir, recursive = TRUE)
@@ -1970,10 +1938,15 @@ download_lulc_class_proportion <- function(
 #' @param class_names Character vector. Names of classes to extract proportions for.
 #'   Default is c("agriculture", "built_area"). Must be valid class names for
 #'   the chosen `lulc_product` (see [get_lulc_classes()]).
-#' @param year Numeric or NULL. Year for LULC data. If NULL, uses most recent.
+#' @param year Numeric or NULL. Year for LULC data. If NULL, uses the most
+#'   recent year: the newest year whose files are already in `output_dir`, or
+#'   else the newest year with data in Earth Engine.
 #' @param pus SpatRaster. Planning units raster (required for resolution).
-#' @param force_download Logical. If TRUE, skip local and Drive cache checks and
-#'   force a new export from GEE. Default is FALSE.
+#' @param force_download Logical. If TRUE, ignore local files, move the previous
+#'   export's files in Drive to the bin, and export again. Default is FALSE.
+#' @param wait_time Numeric. Maximum time in minutes to wait for the exports to
+#'   finish (fractions allowed). Default is 30. On a timeout the tasks keep
+#'   running; a rerun waits for them instead of exporting again.
 #'
 #' @return A named list of `SpatRaster` objects, one per class. Each raster contains
 #'   proportion values (0-1) at PU resolution. Files are also saved to `output_dir`
@@ -2051,6 +2024,8 @@ download_lulc_proportions <- function(
     msg = "'class_names' must be a non-empty character vector."
   )
 
+  .check_wait_time(wait_time)
+
   # Validate all class names exist for this product
   available_classes <- names(get_lulc_classes(lulc_product))
   invalid_classes <- setdiff(class_names, available_classes)
@@ -2081,40 +2056,49 @@ download_lulc_proportions <- function(
     esa_worldcover = "Map"
   )
 
-  # Default to previous year if not specified
+  # Years to look for: the given one, or (year = NULL) the latest years first.
+  # Files are named after the year actually exported, which is often a
+  # fallback year (ESRI lags about a year), so the cache check must look at
+  # those years too; before 0.4.3 it looked only at last year, so every rerun
+  # started Earth Engine before finding the files.
+  requested_year <- year
   if (is.null(year)) {
     year <- as.numeric(format(Sys.Date(), "%Y")) - 1
     if (lulc_product == "esa_worldcover") {
       year <- 2021
     }
+    cache_years <- if (lulc_product == "esa_worldcover") 2021 else seq(year, 2017)
+  } else {
+    cache_years <- year
   }
 
-  # Build file prefix for individual class files
-  file_prefix <- glue::glue("{lulc_product}_proportion_{year}_{iso3}")
-
-  # Check if all class files already exist locally
-  existing_rasters <- list()
-  all_exist <- TRUE
-  for (cn in class_names) {
-    class_file <- file.path(output_dir, glue::glue("{file_prefix}_{cn}.tif"))
-    if (file.exists(class_file) && !force_download) {
-      existing_rasters[[cn]] <- class_file
-    } else {
-      all_exist <- FALSE
-    }
-  }
-
-  if (all_exist && !force_download) {
-    log_message("All {length(class_names)} class proportion files already exist locally")
-    result <- lapply(existing_rasters, function(f) {
+  read_cached <- function(files) {
+    result <- lapply(files, function(f) {
       r <- terra::rast(f)
       attr(r, "pre_aggregated") <- TRUE
       attr(r, "lulc_product") <- lulc_product
       r
     })
     names(result) <- class_names
-    return(result)
+    result
   }
+
+  # Newest year for which every class file already exists locally
+  if (!force_download) {
+    for (y in cache_years) {
+      files <- file.path(output_dir, glue::glue("{lulc_product}_proportion_{y}_{iso3}_{class_names}.tif"))
+      if (all(file.exists(files))) {
+        log_message("All {length(class_names)} class proportion files exist locally ({y})")
+        if (is.null(requested_year) && y != cache_years[1]) {
+          log_message("Using {y}, the latest year downloaded; set 'year' or force_download = TRUE to fetch a newer year.")
+        }
+        return(read_cached(files))
+      }
+    }
+  }
+
+  # Build file prefix for individual class files
+  file_prefix <- glue::glue("{lulc_product}_proportion_{year}_{iso3}")
 
   # Initialize GEE
   if (!requireNamespace("reticulate", quietly = TRUE)) {
@@ -2134,9 +2118,9 @@ download_lulc_proportions <- function(
     googledrive::drive_auth()
   }
 
-  # Create temporary directory for downloads
-  temp_dir <- file.path(Sys.getenv("HOME"), glue::glue("gee_props_{iso3}_{Sys.getpid()}"))
-  dir.create(temp_dir, showWarnings = FALSE)
+  # Scratch directory for downloaded tiles, removed on exit
+  temp_dir <- .gee_scratch_dir(glue::glue("gee_props_{iso3}"))
+  on.exit(unlink(temp_dir, recursive = TRUE), add = TRUE)
 
   tryCatch({
     # Load the ImageCollection
@@ -2257,28 +2241,29 @@ download_lulc_proportions <- function(
       # Aggregate to PU resolution using mean reducer to get true proportions
       # This computes the fraction of source pixels that are this class
       target_proj <- ee$Projection("EPSG:4326")$atScale(pu_res[1])
+      # maxPixels: Earth Engine's default (64) made bestEffort read coarse
+      # pyramid levels instead of the 10 m pixels for planning units over
+      # about 80 m (before 0.4.3)
       class_mask <- class_mask$reduceResolution(
         reducer = ee$Reducer$mean(),
-        bestEffort = TRUE
+        bestEffort = TRUE,
+        maxPixels = reticulate::r_to_py(65536L)
       )$reproject(crs = target_proj)
 
       # File name for GEE export (without path)
       gee_file_name <- glue::glue("{file_prefix}_{cn}")
 
-      # Check for existing file in Drive (unless force_download)
-      existing_in_drive <- data.frame(name = character(0))
-      if (!force_download) {
-        existing_in_drive <- tryCatch({
-          # Suppress googledrive messages about files not found
-          suppressMessages(googledrive::drive_get(paste0(gee_file_name, ".tif")))
-        }, error = function(e) {
-          data.frame(name = character(0))
-        })
-      }
+      # A running task first (its tiles may be partly in Drive), then Drive,
+      # then a new export. A forced refresh trashes the previous export's
+      # Drive files, so the wait cannot pick up the old file (before 0.4.3 it
+      # did).
+      resolved <- .resolve_export(ee, gee_file_name, force_download = force_download)
 
-      if (nrow(existing_in_drive) > 0 && !force_download) {
-        log_message("Found '{cn}' in Drive, will download")
-        export_tasks[[cn]] <- list(status = "exists_drive", drive_file = existing_in_drive,
+      if (resolved$status == "in_drive") {
+        export_tasks[[cn]] <- list(status = "exists_drive", drive_file = resolved$files,
+                                   output_file = output_file, gee_file_name = gee_file_name)
+      } else if (resolved$status == "running") {
+        export_tasks[[cn]] <- list(status = "exporting", task = resolved$task,
                                    output_file = output_file, gee_file_name = gee_file_name)
       } else {
         log_message("'{cn}' not found locally or in Drive, will export from GEE")
@@ -2324,41 +2309,18 @@ download_lulc_proportions <- function(
 
       output_file <- task_info$output_file
       gee_file_name <- task_info$gee_file_name
-      temp_file <- file.path(temp_dir, paste0(gee_file_name, ".tif"))
 
-      # If exists in Drive, download it
-      if (task_info$status == "exists_drive") {
-        googledrive::drive_download(task_info$drive_file[1, ], path = temp_file, overwrite = TRUE)
+      # Every file of the export: a large export is split into tiles, and
+      # before 0.4.3 only the first one was downloaded
+      drive_files <- if (task_info$status == "exists_drive") {
+        task_info$drive_file
       } else {
-        # Wait for export to complete
-        repeat {
-          all_files <- googledrive::drive_find(
-            q = paste0("name contains '", gee_file_name, "'")
-          )
-          matching <- all_files[grepl(paste0("^", gee_file_name, ".*\\.tif$"), all_files$name), ]
-
-          if (nrow(matching) > 0) {
-            googledrive::drive_download(matching[1, ], path = temp_file, overwrite = TRUE)
-            break
-          }
-
-          elapsed <- difftime(Sys.time(), start_time, units = "mins")
-          if (elapsed > wait_time) {
-            cleanup_earthengine(env_info)
-            unlink(temp_dir, recursive = TRUE)
-            stop(glue::glue(
-              "GEE export timeout: '{cn}' not available after {as.integer(wait_time)} min.\n",
-              "The export is still running in GEE. Please:\n",
-              "  1. Check status at: https://code.earthengine.google.com/tasks\n",
-              "  2. Wait for the export to complete\n",
-              "  3. Run the pipeline again - it will download the completed file"
-            ), call. = FALSE)
-          }
-
-          log_message("Waiting for export... ({round(elapsed, 1)} min)")
-          Sys.sleep(30)
-        }
+        .wait_for_export(gee_file_name, task = task_info$task,
+                         wait_time = wait_time, start_time = start_time)
       }
+      tile_paths <- .download_drive_export(drive_files, file.path(temp_dir, cn))
+      temp_file <- file.path(temp_dir, paste0(gee_file_name, ".tif"))
+      merge_tiles(tile_paths, temp_file, "FLT4S")
 
       # Reproject to PU CRS and save
       r <- terra::rast(temp_file)
@@ -2380,7 +2342,6 @@ download_lulc_proportions <- function(
 
   }, error = function(e) {
     cleanup_earthengine(env_info)
-    unlink(temp_dir, recursive = TRUE)
     stop(glue::glue("GEE export failed: {e$message}"), call. = FALSE)
   })
 }
@@ -2402,8 +2363,8 @@ download_lulc_proportions <- function(
 #' @param local_file Character or NULL. Path to local GeoTIFF/COG file.
 #'   Required when `product = "local"`.
 #' @param year Numeric or NULL. Specific year to download. If NULL, uses most recent.
-#'   For Dynamic World, this creates an annual mode composite. Ignored for ESA WorldCover
-#'   (fixed at 2021).
+#'   For Dynamic World, this creates an annual mode composite. ESA WorldCover is
+#'   fixed at 2021 (another year is ignored with a warning).
 #' @param pus SpatRaster or NULL. Planning units raster for GEE-side aggregation.
 #' @param aggregate_to_pus Logical. If TRUE and `pus` is provided, aggregate the
 #'   data to planning unit resolution in GEE before export. Default is FALSE.
@@ -2498,6 +2459,22 @@ download_lulc_data <- function(
   # Validate local_file for local product
   if (product == "local" && is.null(local_file)) {
     stop("'local_file' is required when product = 'local'.", call. = FALSE)
+  }
+
+  if (product == "esa_worldcover" && !is.null(year) && year != 2021) {
+    warning("ESA WorldCover v200 is only available for 2021; 'year' = ", year,
+            " is ignored.", call. = FALSE)
+  }
+
+  # Before 0.4.3 'year' never reached the ESRI download. It goes through
+  # '...' as year_override, unless the caller set year_override there.
+  if (product == "esri_10m" && !is.null(year) && !"year_override" %in% names(list(...))) {
+    return(download_lulc_data(
+      boundary_layer = boundary_layer, iso3 = iso3, product = product,
+      gee_project = gee_project, output_dir = output_dir, year = NULL, pus = pus,
+      aggregate_to_pus = aggregate_to_pus, wait_time = wait_time,
+      year_override = year, ...
+    ))
   }
 
   # Route to appropriate handler

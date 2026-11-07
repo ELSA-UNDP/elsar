@@ -44,9 +44,11 @@ If NULL, automatically determined from \code{lulc_product} and \code{class_name}
 \item{pus}{SpatRaster. Planning units raster (required for aggregation).}
 
 \item{wait_time}{Numeric. Maximum time in minutes to wait for the GEE export
-to appear in Google Drive. Default is 5. Increase for large exports.}
+task to finish (fractions allowed). Default is 5. Increase for large
+exports. On a timeout the task keeps running; a rerun waits for it rather
+than exporting again.}
 
-\item{...}{Additional arguments passed to \code{\link[=download_gee_layer]{download_gee_layer()}}.}
+\item{...}{Not used; anything passed here is ignored with a warning.}
 }
 \value{
 A \code{SpatRaster} with class proportion values (0-1) at PU resolution,
