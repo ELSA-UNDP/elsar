@@ -146,7 +146,7 @@ make_threatened_ecosystems_protection <- function(
         message("Error processing ecosystem ID ", eco[[group_attribute]], ": ", conditionMessage(e))
         return(data.frame(group = eco[[group_attribute]], area_intact = NA))
       })
-    })
+    }, future.seed = TRUE)
   })
 
   # Combine and aggregate intact area results

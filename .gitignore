@@ -10,7 +10,7 @@ inst/doc
 /Meta/
 spat*
 
-# Rendered pkgdown site — built and deployed by CI to the gh-pages branch;
-# GitHub Pages serves from gh-pages (root), so the built site must not be tracked here.
+# Rendered pkgdown site. CI builds it and publishes it with GitHub Pages actions
+# (.github/workflows/pkgdown.yaml), so the built site must not be tracked here.
 docs/
 Rplots.pdf

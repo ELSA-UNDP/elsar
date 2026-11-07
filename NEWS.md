@@ -9,6 +9,22 @@
 * `elsar_plot_static_raster(data_type = "discrete")` now defaults
   `data_layer` to the first layer instead of failing when it is not given.
 
+* `elsar_calibrate_weights()` uses `add_max_wtd_sum_objective()` with
+  prioritizr 9 or later, which renamed `add_max_utility_objective()` and warns
+  on every solve when the old name is used. Earlier prioritizr versions keep
+  the old name.
+
+* `save_raster()` no longer warns "driver GTiff does not support creation
+  option OVERVIEWS" (and `OVERVIEW_RESAMPLING`) for every layer when terra
+  writes to disk in chunks (`terraOptions(todisk = TRUE)`, as the pipeline
+  sets). The files were always valid COGs with overviews; the warning came from
+  terra's intermediate plain GeoTIFF.
+
+* `make_threatened_ecosystems_protection()` and `get_iucn_ecosystems()` no
+  longer warn "UNRELIABLE VALUE: One of the 'future.apply' iterations ...
+  unexpectedly generated random numbers": their parallel loops now declare
+  `future.seed = TRUE`. Results are unchanged.
+
 ## New features
 
 * A new, modern map style for every map elsar draws, exposed as small

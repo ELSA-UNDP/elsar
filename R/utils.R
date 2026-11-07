@@ -765,7 +765,10 @@ save_raster <- function(raster, filename, datatype = "FLT4S", resampling = NULL)
   # (OVERVIEWS=AUTO) so the output is a fully valid COG - required by strict COG
   # readers/servers such as TiTiler/rio-cogeo, which reject COGs without them.
   # GDAL builds COGs through an in-memory copy and warns that the MEM driver
-  # ignores the creation options; those warnings are harmless and muffled.
+  # ignores the creation options. When terra writes to disk in chunks
+  # (terraOptions(todisk = TRUE), as the pipeline sets), it writes a plain
+  # GeoTIFF first, which warns that GTiff has no OVERVIEWS options; the COG
+  # step then builds the overviews. Those warnings are harmless and muffled.
   withCallingHandlers(
     terra::writeRaster(
       raster,
@@ -783,7 +786,9 @@ save_raster <- function(raster, filename, datatype = "FLT4S", resampling = NULL)
       overwrite = TRUE
     ),
     warning = function(w) {
-      if (grepl("driver MEM does not support creation option", conditionMessage(w))) {
+      msg <- conditionMessage(w)
+      if (grepl("driver MEM does not support creation option", msg) ||
+          grepl("driver GTiff does not support creation option OVERVIEW", msg)) {
         invokeRestart("muffleWarning")
       }
     }
