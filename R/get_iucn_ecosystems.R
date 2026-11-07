@@ -202,7 +202,7 @@ get_iucn_ecosystems <- function(
         return(NULL)
 
       return(sf::st_as_sf(v))
-    })
+    }, future.seed = TRUE)
   })
 
   unlink(pus_bbox_file)
