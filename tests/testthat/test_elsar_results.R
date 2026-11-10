@@ -624,3 +624,33 @@ test_that("elsar_plot_actions() fills existing protected areas unless asked not 
   expect_error(elsar_plot_actions(x, pa_fill = NA), "pa_fill")
   expect_error(elsar_plot_actions(x, pa_fill = TRUE, pa_alpha = 2), "pa_alpha")
 })
+
+test_that("narrow maps get fewer longitude lines", {
+  expect_identical(.n_lon_lines(c(0, 600, 0, 1000)), 3)
+  expect_identical(.n_lon_lines(c(0, 1000, 0, 1000)), 4)
+  expect_null(.n_lon_lines(c(0, 2000, 0, 1000)))
+  expect_null(.n_lon_lines(NULL))
+  expect_null(.n_lon_lines(c(0, 1, 5, 5)))
+
+  withr::local_options(elsar.language = NULL, elsar.labels = NULL)
+  # Wide maps in English keep sf's own graticule
+  expect_null(.graticule_scales(TRUE, c(0, 2000, 0, 1000)))
+  expect_null(.graticule_scales(FALSE, c(0, 600, 0, 1000)))
+
+  # A tall region in a regional panel: its longitude labels used to collide
+  ex <- elsar_example_results()
+  x <- elsar_prepare_actions(ex$actions, pas = ex$pas)
+  s <- elsar_summarise_actions(x, ex$regions, region_col = "region_name")
+  p <- elsar_plot_region(x, s, ex$regions, "region_name", "Eastern Delta")
+  g <- ggplot2::ggplot_build(p[[1]])$layout$panel_params[[1]]$graticule
+  lon <- unique(g$degree[g$type == "E"])
+  expect_lte(length(lon), 3)
+})
+
+test_that(".thin_breaks() returns at most n breaks inside the range", {
+  expect_equal(.thin_breaks(c(0.49, 0.77), 3), c(0.5, 0.6, 0.7))
+  expect_equal(.thin_breaks(c(0.49, 0.77), 2), c(0.5, 0.7))
+  b <- .thin_breaks(c(-80.5, -78.3), 3)
+  expect_lte(length(b), 3)
+  expect_true(all(b >= -80.5 & b <= -78.3))
+})

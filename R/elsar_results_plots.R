@@ -109,7 +109,7 @@ elsar_plot_actions <- function(x,
 
   p +
     ggplot2::coord_sf(crs = terra::crs(x), datum = .map_datum(graticule), expand = FALSE) +
-    .degree_scales(graticule) +
+    .graticule_scales(graticule, terra::ext(x)) +
     ggplot2::labs(title = title) +
     .results_theme(base_size) +
     (if (graticule) {

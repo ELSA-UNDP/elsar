@@ -524,7 +524,7 @@ elsar_plot_static_raster <- function(raster_in,
         xlim = lims[1:2], ylim = lims[3:4]
       )
     }
-  plot_out <- plot_out + .degree_scales(graticule)
+  plot_out <- plot_out + .graticule_scales(graticule, lims %||% terra::ext(raster_in))
 
   if (!is.null(plot_title) && any(nzchar(plot_title))) {
     plot_out <- plot_out + ggplot2::labs(title = plot_title)

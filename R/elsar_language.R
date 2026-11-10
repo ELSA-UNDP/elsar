@@ -260,12 +260,29 @@ elsar_labels <- function(language = getOption("elsar.language", "en")) {
   )
 }
 
-# Degree labels of a map graticule in the current language, as x and y scales
-# to add next to coord_sf(datum = .map_datum(TRUE)). English keeps sf's own
-# labels, so NULL is returned for it.
-.degree_scales <- function(graticule = TRUE) {
-  if (!isTRUE(graticule) || (.language() == "en" && is.null(getOption("elsar.labels")))) {
+# Scales for a map graticule drawn with coord_sf(datum = .map_datum(TRUE)):
+# - degree labels in the current language (English keeps sf's own labels);
+# - fewer longitude lines on narrow maps, whose degree labels would otherwise
+#   run into each other (e.g. a tall region in a regional panel). `extent` is
+#   the map's c(xmin, xmax, ymin, ymax) in its own CRS.
+# Returns NULL when sf's defaults already fit.
+.graticule_scales <- function(graticule = TRUE, extent = NULL) {
+  if (!isTRUE(graticule)) {
     return(NULL)
+  }
+  n_lon <- .n_lon_lines(extent)
+  localised <- .language() != "en" || !is.null(getOption("elsar.labels"))
+  # Longer compass labels (e.g. Russian "в. д.") need one line fewer
+  if (!is.null(n_lon) && localised && max(nchar(elsar_labels()[c("west", "east")])) > 2) {
+    n_lon <- max(2, n_lon - 1)
+  }
+  x_breaks <- if (is.null(n_lon)) ggplot2::waiver() else function(lon) .thin_breaks(lon, n_lon)
+  if (!localised && is.null(n_lon)) {
+    return(NULL)
+  }
+
+  if (!localised) {
+    return(list(ggplot2::scale_x_continuous(breaks = x_breaks)))
   }
   text <- elsar_labels()
   decimal <- .number_marks()[["decimal"]]
@@ -277,9 +294,46 @@ elsar_labels <- function(language = getOption("elsar.language", "en")) {
     }
   }
   list(
-    ggplot2::scale_x_continuous(labels = degrees(text[["west"]], text[["east"]])),
+    ggplot2::scale_x_continuous(breaks = x_breaks, labels = degrees(text[["west"]], text[["east"]])),
     ggplot2::scale_y_continuous(labels = degrees(text[["south"]], text[["north"]]))
   )
+}
+
+# At most `n` round breaks inside `range`. pretty() treats n only as a hint,
+# so look at its grids from coarse to fine and take the first with 2 to n
+# breaks inside the range; if none has, keep every second (third, ...) break
+# of the coarsest grid with more than n.
+.thin_breaks <- function(range, n) {
+  grids <- lapply(1:10, function(k) {
+    b <- pretty(range, n = k)
+    b[b >= min(range) & b <= max(range)]
+  })
+  sizes <- lengths(grids)
+  fits <- which(sizes >= 2 & sizes <= n)
+  if (length(fits) > 0) {
+    return(grids[[fits[which.max(sizes[fits])]]])
+  }
+  over <- which(sizes > n)
+  if (length(over) == 0) {
+    return(grids[[which.max(sizes)]])
+  }
+  b <- grids[[over[which.min(sizes[over])]]]
+  b[seq(1, length(b), by = ceiling(length(b) / n))]
+}
+
+# Number of longitude lines to aim for, from the map's width to height ratio:
+# 3 on tall, narrow maps, 4 on roughly square ones, and sf's default (NULL)
+# on wide maps.
+.n_lon_lines <- function(extent) {
+  if (is.null(extent)) {
+    return(NULL)
+  }
+  e <- as.vector(extent)
+  if (length(e) != 4 || any(!is.finite(e)) || e[4] <= e[3]) {
+    return(NULL)
+  }
+  aspect <- (e[2] - e[1]) / (e[4] - e[3])
+  if (aspect < 0.8) 3 else if (aspect < 1.25) 4 else NULL
 }
 
 # Reduce an action label to a language-independent key, so labels written by

@@ -164,7 +164,7 @@ test_that("English output is unchanged", {
   gb <- ggplot2::ggplot_build(elsar_plot_protection_gap(g))
   expect_identical(gb$layout$panel_params[[1]]$y.sec$get_labels(), "Target\n30%")
   # sf labels the graticule; no degree scales are added
-  expect_null(.degree_scales(TRUE))
+  expect_null(.graticule_scales(TRUE))
   expect_match(elsar_attribution(source = "A"), "^Data: A")
 })
 

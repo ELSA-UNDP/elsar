@@ -250,7 +250,7 @@ elsar_plot_feature <- function(raster_in,
     ) +
     elsar_map_furniture(north_arrow = FALSE) +
     ggplot2::coord_sf(crs = sf::st_crs(terra::crs(raster_in)), datum = .map_datum(graticule)) +
-    .degree_scales(graticule) +
+    .graticule_scales(graticule, terra::ext(raster_in)) +
     elsar_theme_map(
       legend_position = .map_legend_position(raster_in, legend_position),
       graticule = graticule
