@@ -30,17 +30,17 @@
     north = "N"
   ),
   es = c(
-    protect = "Protección",
+    protect = "Protecci\u00f3n",
     manage = "Manejo",
-    restore = "Restauración",
+    restore = "Restauraci\u00f3n",
     urban_greening = "Enverdecimiento urbano",
-    do_nothing = "Sin acción",
-    existing_pas = "Áreas protegidas existentes",
-    new_protection = "Nueva protección (ELSA)",
+    do_nothing = "Sin acci\u00f3n",
+    existing_pas = "\u00c1reas protegidas existentes",
+    new_protection = "Nueva protecci\u00f3n (ELSA)",
     national = "Nacional",
-    pct_of_region = "% de la región",
-    pct_of_planning_area = "% del área de planificación",
-    pct_of_layer = "% de la capa en el área de planificación",
+    pct_of_region = "% de la regi\u00f3n",
+    pct_of_planning_area = "% del \u00e1rea de planificaci\u00f3n",
+    pct_of_layer = "% de la capa en el \u00e1rea de planificaci\u00f3n",
     area = "Superficie",
     target = "Meta",
     outside = "Fuera",
@@ -57,35 +57,35 @@
     restore = "Restauration",
     urban_greening = "Verdissement urbain",
     do_nothing = "Aucune action",
-    existing_pas = "Aires protégées existantes",
+    existing_pas = "Aires prot\u00e9g\u00e9es existantes",
     new_protection = "Nouvelle protection (ELSA)",
     national = "National",
-    pct_of_region = "% de la région",
+    pct_of_region = "% de la r\u00e9gion",
     pct_of_planning_area = "% de la zone de planification",
     pct_of_layer = "% de la couche dans la zone de planification",
     area = "Superficie",
     target = "Cible",
-    outside = "Extérieur",
-    inside = "Intérieur",
-    data = "Données",
+    outside = "Ext\u00e9rieur",
+    inside = "Int\u00e9rieur",
+    data = "Donn\u00e9es",
     west = "O",
     east = "E",
     south = "S",
     north = "N"
   ),
   pt = c(
-    protect = "Proteção",
+    protect = "Prote\u00e7\u00e3o",
     manage = "Manejo",
-    restore = "Restauração",
+    restore = "Restaura\u00e7\u00e3o",
     urban_greening = "Esverdeamento urbano",
-    do_nothing = "Sem ação",
-    existing_pas = "Áreas protegidas existentes",
-    new_protection = "Nova proteção (ELSA)",
+    do_nothing = "Sem a\u00e7\u00e3o",
+    existing_pas = "\u00c1reas protegidas existentes",
+    new_protection = "Nova prote\u00e7\u00e3o (ELSA)",
     national = "Nacional",
-    pct_of_region = "% da região",
-    pct_of_planning_area = "% da área de planejamento",
-    pct_of_layer = "% da camada na área de planejamento",
-    area = "Área",
+    pct_of_region = "% da regi\u00e3o",
+    pct_of_planning_area = "% da \u00e1rea de planejamento",
+    pct_of_layer = "% da camada na \u00e1rea de planejamento",
+    area = "\u00c1rea",
     target = "Meta",
     outside = "Fora",
     inside = "Dentro",
@@ -96,26 +96,26 @@
     north = "N"
   ),
   ru = c(
-    protect = "Охрана",
-    manage = "Управление",
-    restore = "Восстановление",
-    urban_greening = "Городское озеленение",
-    do_nothing = "Без действий",
-    existing_pas = "Существующие ООПТ",
-    new_protection = "Новая охрана (ELSA)",
-    national = "Страна в целом",
-    pct_of_region = "% региона",
-    pct_of_planning_area = "% территории планирования",
-    pct_of_layer = "% слоя в пределах территории планирования",
-    area = "Площадь",
-    target = "Цель",
-    outside = "Вне",
-    inside = "Внутри",
-    data = "Данные",
-    west = " з. д.",
-    east = " в. д.",
-    south = " ю. ш.",
-    north = " с. ш."
+    protect = "\u041e\u0445\u0440\u0430\u043d\u0430",
+    manage = "\u0423\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u0435",
+    restore = "\u0412\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u0435",
+    urban_greening = "\u0413\u043e\u0440\u043e\u0434\u0441\u043a\u043e\u0435 \u043e\u0437\u0435\u043b\u0435\u043d\u0435\u043d\u0438\u0435",
+    do_nothing = "\u0411\u0435\u0437 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0439",
+    existing_pas = "\u0421\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0438\u0435 \u041e\u041e\u041f\u0422",
+    new_protection = "\u041d\u043e\u0432\u0430\u044f \u043e\u0445\u0440\u0430\u043d\u0430 (ELSA)",
+    national = "\u0421\u0442\u0440\u0430\u043d\u0430 \u0432 \u0446\u0435\u043b\u043e\u043c",
+    pct_of_region = "% \u0440\u0435\u0433\u0438\u043e\u043d\u0430",
+    pct_of_planning_area = "% \u0442\u0435\u0440\u0440\u0438\u0442\u043e\u0440\u0438\u0438 \u043f\u043b\u0430\u043d\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u044f",
+    pct_of_layer = "% \u0441\u043b\u043e\u044f \u0432 \u043f\u0440\u0435\u0434\u0435\u043b\u0430\u0445 \u0442\u0435\u0440\u0440\u0438\u0442\u043e\u0440\u0438\u0438 \u043f\u043b\u0430\u043d\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u044f",
+    area = "\u041f\u043b\u043e\u0449\u0430\u0434\u044c",
+    target = "\u0426\u0435\u043b\u044c",
+    outside = "\u0412\u043d\u0435",
+    inside = "\u0412\u043d\u0443\u0442\u0440\u0438",
+    data = "\u0414\u0430\u043d\u043d\u044b\u0435",
+    west = "\u00a0\u0437.\u00a0\u0434.",
+    east = "\u00a0\u0432.\u00a0\u0434.",
+    south = "\u00a0\u044e.\u00a0\u0448.",
+    north = "\u00a0\u0441.\u00a0\u0448."
   )
 )
 
@@ -123,9 +123,9 @@
 .elsar_number_marks <- list(
   en = c(decimal = ".", big = ","),
   es = c(decimal = ",", big = "."),
-  fr = c(decimal = ",", big = " "),
+  fr = c(decimal = ",", big = "\u202f"),
   pt = c(decimal = ",", big = "."),
-  ru = c(decimal = ",", big = " ")
+  ru = c(decimal = ",", big = "\u00a0")
 )
 
 # Keys of the standard actions, in the ELSA tool's raster value order
@@ -273,7 +273,7 @@ elsar_labels <- function(language = getOption("elsar.language", "en")) {
     function(x) {
       num <- format(abs(x), decimal.mark = decimal, trim = TRUE, drop0trailing = TRUE)
       hemi <- ifelse(x < 0, negative, ifelse(x > 0, positive, ""))
-      ifelse(is.na(x), NA_character_, paste0(num, "°", hemi))
+      ifelse(is.na(x), NA_character_, paste0(num, "\u00b0", hemi))
     }
   }
   list(
@@ -299,7 +299,7 @@ elsar_labels <- function(language = getOption("elsar.language", "en")) {
 .normalise_label <- function(x) {
   x <- tolower(as.character(x))
   x <- chartr(
-    "áàâãäéèêëíìîïóòôõöúùûüçñ",
+    "\u00e1\u00e0\u00e2\u00e3\u00e4\u00e9\u00e8\u00ea\u00eb\u00ed\u00ec\u00ee\u00ef\u00f3\u00f2\u00f4\u00f5\u00f6\u00fa\u00f9\u00fb\u00fc\u00e7\u00f1",
     "aaaaaeeeeiiiiooooouuuucn",
     x
   )
