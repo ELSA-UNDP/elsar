@@ -20,7 +20,7 @@ elsar_plot_static_raster(
   expand_plot = FALSE,
   raster_df_out = FALSE,
   boundary = NULL,
-  binary_labels = c("Outside", "Inside"),
+  binary_labels = c(.txt("outside"), .txt("inside")),
   legend_position = "auto",
   graticule = TRUE,
   style = getOption("elsar.plot_style", "modern")
@@ -66,8 +66,9 @@ on top. Modern style only.}
 
 \item{binary_labels}{Character, length 2. Legend labels for the 0 and 1
 classes of a 0/1 layer (zones, lock-ins, presence layers) drawn with
-\code{data_type = "discrete"}. Default \code{c("Outside", "Inside")}; the legend
-title names the layer.}
+\code{data_type = "discrete"}. Default \code{c("Outside", "Inside")}, in the
+language set with the \code{elsar.language} option (see \code{\link[=elsar_labels]{elsar_labels()}});
+the legend title names the layer.}
 
 \item{legend_position}{Character. Modern style: \code{"auto"} (default) puts the
 legend on the right for maps clearly taller than wide (a legend on top

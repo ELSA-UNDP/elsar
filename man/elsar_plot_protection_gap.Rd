@@ -9,9 +9,9 @@ elsar_plot_protection_gap(
   metric = c("percent", "area"),
   sort = c("total", "none"),
   orientation = c("vertical", "horizontal"),
-  national_label = attr(gap, "national_label") \%||\% "National",
+  national_label = attr(gap, "national_label") \%||\% .txt("national"),
   colours = c(current = "#005000", new = "#06C723"),
-  labels = c(current = "Existing PAs", new = "New protection (ELSA)"),
+  labels = c(current = .txt("existing_pas"), new = .txt("new_protection")),
   title = NULL,
   base_size = 10
 )

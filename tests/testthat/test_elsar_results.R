@@ -598,3 +598,29 @@ test_that("the report handles no target, a non-English scheme and a Word file na
   ))
   expect_match(docx, "\\.docx$")
 })
+
+test_that("elsar_plot_actions() fills existing protected areas unless asked not to", {
+  x <- elsar_prepare_actions(toy_actions(), pas = toy_pas())
+  pa_layer <- function(p) {
+    b <- ggplot2::ggplot_build(p)
+    # The protected-area layer is the sf layer that maps colour to its label
+    i <- which(vapply(p$layers, function(l) {
+      inherits(l$geom, "GeomSf") && "colour" %in% names(l$mapping)
+    }, logical(1)))[1]
+    b$data[[i]]$fill[1]
+  }
+  # Filled by default; outline only on request
+  expect_identical(toupper(pa_layer(elsar_plot_actions(x))), "#005000FF")
+  expect_true(is.na(pa_layer(elsar_plot_actions(x, pa_fill = FALSE))))
+  filled <- elsar_plot_actions(x, pa_fill = TRUE, pa_colour = "#005000")
+  expect_identical(toupper(pa_layer(filled)), "#005000FF")
+  half <- elsar_plot_actions(x, pa_fill = TRUE, pa_alpha = 0.5)
+  expect_identical(toupper(pa_layer(half)), "#00500080")
+  expect_no_error(suppressMessages(ggplot2::ggplotGrob(filled)))
+  # Passed through to the regional panels
+  s <- elsar_summarise_actions(x, toy_regions(), region_col = "name")
+  p <- elsar_plot_region(x, s, toy_regions(), "name", "West", pa_fill = TRUE)
+  expect_identical(toupper(pa_layer(p[[1]])), "#005000FF")
+  expect_error(elsar_plot_actions(x, pa_fill = NA), "pa_fill")
+  expect_error(elsar_plot_actions(x, pa_fill = TRUE, pa_alpha = 2), "pa_alpha")
+})

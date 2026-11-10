@@ -38,8 +38,9 @@
 #'   on top. Modern style only.
 #' @param binary_labels Character, length 2. Legend labels for the 0 and 1
 #'   classes of a 0/1 layer (zones, lock-ins, presence layers) drawn with
-#'   `data_type = "discrete"`. Default `c("Outside", "Inside")`; the legend
-#'   title names the layer.
+#'   `data_type = "discrete"`. Default `c("Outside", "Inside")`, in the
+#'   language set with the `elsar.language` option (see [elsar_labels()]);
+#'   the legend title names the layer.
 #' @param legend_position Character. Modern style: `"auto"` (default) puts the
 #'   legend on the right for maps clearly taller than wide (a legend on top
 #'   would leave the width empty) and on top otherwise. Or any
@@ -119,7 +120,7 @@ elsar_plot_static_raster <- function(raster_in,
                                      expand_plot = FALSE,
                                      raster_df_out = FALSE,
                                      boundary = NULL,
-                                     binary_labels = c("Outside", "Inside"),
+                                     binary_labels = c(.txt("outside"), .txt("inside")),
                                      legend_position = "auto",
                                      graticule = TRUE,
                                      style = getOption("elsar.plot_style", "modern")) {
@@ -413,7 +414,7 @@ elsar_plot_static_raster <- function(raster_in,
                                        custom_palette, plot_title,
                                        legend_title, color_map, expand_plot,
                                        raster_df_out, boundary,
-                                       binary_labels = c("Outside", "Inside"),
+                                       binary_labels = c(.txt("outside"), .txt("inside")),
                                        legend_position = "auto",
                                        graticule = TRUE) {
   if (type == "tmap") {
@@ -523,6 +524,7 @@ elsar_plot_static_raster <- function(raster_in,
         xlim = lims[1:2], ylim = lims[3:4]
       )
     }
+  plot_out <- plot_out + .degree_scales(graticule)
 
   if (!is.null(plot_title) && any(nzchar(plot_title))) {
     plot_out <- plot_out + ggplot2::labs(title = plot_title)

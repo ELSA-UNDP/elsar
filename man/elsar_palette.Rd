@@ -33,7 +33,8 @@ A character vector of hex colours (named for \code{"actions"}).
 \item \code{"actions"}: the established ELSA action colours, named by action
 (Protect \verb{#06C723}, Restore \verb{#8803FC}, Manage \verb{#FFEA00}, Urban Greening
 \verb{#FF0000}) plus the neutral "Do Nothing" grey. They match the defaults of
-\code{\link[=elsar_action_scheme]{elsar_action_scheme()}}.
+\code{\link[=elsar_action_scheme]{elsar_action_scheme()}}, and their names follow the language set with
+the \code{elsar.language} option (see \code{\link[=elsar_labels]{elsar_labels()}}).
 \item \code{"categorical"}: six colour-blind-safe hues for unordered categories
 (Okabe-Ito, reordered, without yellow and black). On a map every
 category sits next to every other, so prefer four or fewer: the first
@@ -59,6 +60,7 @@ elsar_palette("diverging", n = 7)
 Other elsar style:
 \code{\link[=elsar_attribution]{elsar_attribution()}},
 \code{\link[=elsar_inks]{elsar_inks()}},
+\code{\link[=elsar_labels]{elsar_labels()}},
 \code{\link[=elsar_map_caption]{elsar_map_caption()}},
 \code{\link[=elsar_map_context]{elsar_map_context()}},
 \code{\link[=elsar_map_furniture]{elsar_map_furniture()}},

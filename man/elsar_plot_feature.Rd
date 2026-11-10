@@ -15,7 +15,7 @@ elsar_plot_feature(
   no_legend = FALSE,
   custom_resolution = 200,
   plot_title = NULL,
-  binary_labels = c("Outside", "Inside"),
+  binary_labels = c(.txt("outside"), .txt("inside")),
   legend_position = "auto",
   graticule = TRUE,
   style = getOption("elsar.plot_style", "modern")
@@ -46,7 +46,8 @@ from \code{legend_title} (or the layer name) and \code{iso3}.}
 \item{binary_labels}{Character, length 2. Modern style: legend labels for
 the 0 and 1 classes when the layer only holds 0 and 1 (zones, lock-ins,
 presence layers), which get a two-class legend instead of a colour bar.
-Default \code{c("Outside", "Inside")}.}
+Default \code{c("Outside", "Inside")}, in the language set with the
+\code{elsar.language} option (see \code{\link[=elsar_labels]{elsar_labels()}}).}
 
 \item{legend_position}{Character. Modern style: \code{"auto"} (default) puts the
 legend on the right for maps clearly taller than wide and on top

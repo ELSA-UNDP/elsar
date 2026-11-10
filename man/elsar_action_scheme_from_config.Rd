@@ -7,7 +7,7 @@
 elsar_action_scheme_from_config(
   config,
   labels = c("elsar", "config"),
-  no_action_label = "Do Nothing",
+  no_action_label = .txt("do_nothing"),
   no_action_colour = "#E5E5E5"
 )
 }
@@ -15,7 +15,8 @@ elsar_action_scheme_from_config(
 \item{config}{Path to the run's \code{config.json}, or the parsed list.}
 
 \item{labels}{\code{"elsar"} (default) renames the standard actions to elsar's
-zone names (Protect, Manage, Restore, Urban Greening) and keeps the
+zone names (Protect, Manage, Restore, Urban Greening, in the language set
+with the \code{elsar.language} option, see \code{\link[=elsar_labels]{elsar_labels()}}) and keeps the
 configured name for any other action; \code{"config"} keeps every name as
 configured (e.g. in the run's language).}
 

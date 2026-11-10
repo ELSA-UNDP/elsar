@@ -12,7 +12,8 @@ elsar_map_caption(
 }
 \arguments{
 \item{source}{Character, optional. The data source(s), shown before the
-attribution as "Data: ...".}
+attribution as "Data: ..." (in the language set with the
+\code{elsar.language} option, see \code{\link[=elsar_labels]{elsar_labels()}}).}
 
 \item{text}{Character. The attribution text. Default
 \code{"UNBL | www.unbiodiversitylab.org"}.}
@@ -37,6 +38,7 @@ ggplot2::ggplot() +
 Other elsar style:
 \code{\link[=elsar_attribution]{elsar_attribution()}},
 \code{\link[=elsar_inks]{elsar_inks()}},
+\code{\link[=elsar_labels]{elsar_labels()}},
 \code{\link[=elsar_map_context]{elsar_map_context()}},
 \code{\link[=elsar_map_furniture]{elsar_map_furniture()}},
 \code{\link[=elsar_map_locator]{elsar_map_locator()}},

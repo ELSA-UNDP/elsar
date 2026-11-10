@@ -23,12 +23,14 @@
 #'
 #' @param values Numeric vector. The cell values used in the action raster.
 #' @param labels Character vector. A label for each value. Must be unique.
+#'   The default names are in the language set with the `elsar.language`
+#'   option (see [elsar_labels()]).
 #' @param colours Character vector. A colour (name or hex code) for each value.
 #' @param groups Character vector. A reporting group for each value, used to
 #'   combine actions in bar charts (e.g. two restoration actions reported as
 #'   one "Restore" group). Defaults to `labels`.
 #' @param no_action Character vector. Labels of the values that mean no action
-#'   was assigned. They count towards a region's area but are not reported or
+#'   was assigned. Defaults to the "Do Nothing" label of the current language. They count towards a region's area but are not reported or
 #'   drawn as actions. Use `character(0)` if every value is an action.
 #'
 #' @return A tibble with one row per value and columns `value`, `label`,
@@ -58,10 +60,10 @@
 #' )
 elsar_action_scheme <- function(
     values = 1:5,
-    labels = c("Protect", "Manage", "Restore", "Urban Greening", "Do Nothing"),
+    labels = .action_names(),
     colours = c("#06C723", "#FFEA00", "#8803FC", "#FF0000", "#E5E5E5"),
     groups = labels,
-    no_action = "Do Nothing") {
+    no_action = .txt("do_nothing")) {
   n <- length(values)
   assertthat::assert_that(
     is.numeric(values), n > 0,
@@ -105,7 +107,8 @@ elsar_action_scheme <- function(
 #'
 #' @param config Path to the run's `config.json`, or the parsed list.
 #' @param labels `"elsar"` (default) renames the standard actions to elsar's
-#'   zone names (Protect, Manage, Restore, Urban Greening) and keeps the
+#'   zone names (Protect, Manage, Restore, Urban Greening, in the language set
+#'   with the `elsar.language` option, see [elsar_labels()]) and keeps the
 #'   configured name for any other action; `"config"` keeps every name as
 #'   configured (e.g. in the run's language).
 #' @param no_action_label,no_action_colour Label and colour of the Do Nothing
@@ -121,7 +124,7 @@ elsar_action_scheme <- function(
 #' }
 elsar_action_scheme_from_config <- function(config,
                                             labels = c("elsar", "config"),
-                                            no_action_label = "Do Nothing",
+                                            no_action_label = .txt("do_nothing"),
                                             no_action_colour = "#E5E5E5") {
   labels <- match.arg(labels)
   if (is.character(config)) {
@@ -149,9 +152,11 @@ elsar_action_scheme_from_config <- function(config,
   rows <- rows[order(rows$value), ]
 
   if (labels == "elsar") {
+    text <- elsar_labels()
     elsar_names <- c(
-      "protect" = "Protect", "reduce-pressures" = "Manage", "manage" = "Manage",
-      "restore" = "Restore", "urban-adapt" = "Urban Greening", "urban-greening" = "Urban Greening"
+      "protect" = text[["protect"]], "reduce-pressures" = text[["manage"]],
+      "manage" = text[["manage"]], "restore" = text[["restore"]],
+      "urban-adapt" = text[["urban_greening"]], "urban-greening" = text[["urban_greening"]]
     )
     known <- rows$slug %in% names(elsar_names)
     rows$name[known] <- elsar_names[rows$slug[known]]
@@ -290,6 +295,7 @@ elsar_prepare_actions <- function(actions,
 #'   region stored as several rows), with a message.
 #' @param units Character. Area units: `"ha"` (default), `"km2"` or `"m2"`.
 #' @param national_label Character. Region name used for the national summary.
+#'   Defaults to "National" in the current language (see [elsar_labels()]).
 #'
 #' @return A tibble with one row per region and action (including no-action
 #'   values), and columns:
@@ -326,7 +332,7 @@ elsar_summarise_actions <- function(x,
                                     regions = NULL,
                                     region_col = NULL,
                                     units = c("ha", "km2", "m2"),
-                                    national_label = "National") {
+                                    national_label = .txt("national")) {
   scheme <- .scheme_from_actions(x)
   units <- match.arg(units)
   unit_factor <- c(m2 = 1, ha = 1e-4, km2 = 1e-6)[[units]]
@@ -409,7 +415,8 @@ elsar_summarise_actions <- function(x,
 #'   `regions`) for the national row. Recommended: regions can miss planning
 #'   cells along borders and coasts, so adding them up can understate the
 #'   national figure. If `NULL` (default), the regions are added up.
-#' @param national_label Character. Name of the national row.
+#' @param national_label Character. Name of the national row. Defaults to
+#'   "National" in the current language (see [elsar_labels()]).
 #' @param tolerance Numeric. Shortfall, in percentage points of the planning
 #'   area, still counted as meeting the target. Default `0.01`, so that
 #'   rounding (e.g. 29.99997% against 30%) does not decide the result.
@@ -433,7 +440,7 @@ elsar_protection_gap <- function(summary,
                                  protect_actions = NULL,
                                  include_national = TRUE,
                                  national = NULL,
-                                 national_label = "National",
+                                 national_label = .txt("national"),
                                  tolerance = 0.01) {
   .check_summary(summary)
   assertthat::assert_that(
@@ -617,21 +624,14 @@ elsar_example_results <- function() {
   invisible(TRUE)
 }
 
-# Compare labels across naming conventions (ELSA tool vs elsar zone names)
-.label_key <- function(x) {
-  key <- tolower(gsub("[^[:alnum:]]", "", x))
-  synonyms <- c(reducepressures = "manage", urbanadapt = "urbangreening",
-                donothing = "donothing", nothing = "donothing", noaction = "donothing")
-  ifelse(key %in% names(synonyms), synonyms[key], key)
-}
-
 # The action(s) that count as protection: labels or groups that mean
 # "protect" in common languages, else the first action (ELSA's first zone)
 .default_protect_actions <- function(summary) {
   acts <- unique(summary[summary$is_action, c("action", "group")])
-  is_protect <- grepl("^(protect|proteg|prot\u00e9g|protec)",
-                      tolower(c(as.character(acts$action))), perl = TRUE) |
-    grepl("^(protect|proteg|prot\u00e9g|protec)", tolower(acts$group), perl = TRUE)
+  pattern <- "^(protect|proteg|protec|\u043e\u0445\u0440\u0430\u043d)"
+  is_protect <- .label_key(acts$action) == "protect" | .label_key(acts$group) == "protect" |
+    grepl(pattern, .normalise_label(acts$action), perl = TRUE) |
+    grepl(pattern, .normalise_label(acts$group), perl = TRUE)
   if (any(is_protect)) return(as.character(acts$action[is_protect]))
   as.character(acts$action[order(as.integer(acts$action))][1])
 }
