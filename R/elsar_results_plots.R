@@ -14,12 +14,18 @@
 #' @param show_no_action Logical. Draw no-action cells (in their scheme colour,
 #'   light grey by default) so the planning area is visible. If `FALSE`, they
 #'   are left blank. Default `TRUE`.
-#' @param show_pas Logical. Outline existing protected areas, if `x` has a
+#' @param show_pas Logical. Draw existing protected areas, if `x` has a
 #'   protected-area layer. Default `TRUE`.
 #' @param pa_threshold Numeric. Cells with at least this protected-area cover
-#'   are outlined as protected. Default `0.5`.
-#' @param pa_colour Colour of the protected-area outline.
-#' @param pa_label Legend label of the protected-area outline.
+#'   are drawn as protected. Default `0.5`.
+#' @param pa_colour Colour of the protected-area outline (and fill).
+#' @param pa_label Legend label of the protected areas.
+#' @param pa_fill Logical. Fill existing protected areas with `pa_colour`
+#'   (default `TRUE`), matching their segment in the bar charts. The fill
+#'   covers the actions inside them; lower `pa_alpha` to keep those visible,
+#'   or use `FALSE` to only outline them.
+#' @param pa_alpha Numeric between 0 and 1. Opacity of the fill when
+#'   `pa_fill = TRUE`. Default `1`.
 #' @param title Optional plot title.
 #' @param legend Logical. Show the legend. Default `TRUE`.
 #' @param maxcell Integer. Maximum number of cells drawn; larger rasters are
@@ -45,6 +51,8 @@ elsar_plot_actions <- function(x,
                                pa_threshold = 0.5,
                                pa_colour = "#005000",
                                pa_label = .txt("existing_pas"),
+                               pa_fill = TRUE,
+                               pa_alpha = 1,
                                title = NULL,
                                legend = TRUE,
                                maxcell = 5e5,
@@ -53,7 +61,15 @@ elsar_plot_actions <- function(x,
   assertthat::assert_that(assertthat::is.flag(graticule), !is.na(graticule),
     msg = "'graticule' must be TRUE or FALSE."
   )
+  assertthat::assert_that(assertthat::is.flag(pa_fill), !is.na(pa_fill),
+    msg = "'pa_fill' must be TRUE or FALSE."
+  )
+  assertthat::assert_that(
+    is.numeric(pa_alpha), length(pa_alpha) == 1, pa_alpha >= 0, pa_alpha <= 1,
+    msg = "'pa_alpha' must be a number between 0 and 1."
+  )
   scheme <- .scheme_from_actions(x)
+  pa_key_fill <- if (pa_fill) grDevices::adjustcolor(pa_colour, alpha.f = pa_alpha) else NA
   shown <- if (show_no_action) scheme else scheme[scheme$is_action, ]
   fill_values <- stats::setNames(scheme$colour, scheme$label)
   if (!show_no_action) fill_values[!scheme$is_action] <- "transparent"
@@ -77,7 +93,7 @@ elsar_plot_actions <- function(x,
       p <- p +
         ggplot2::geom_sf(
           data = pa_sf, ggplot2::aes(colour = pa_label),
-          fill = NA, linewidth = 0.4, inherit.aes = FALSE
+          fill = pa_key_fill, linewidth = 0.4, inherit.aes = FALSE
         ) +
         ggplot2::scale_colour_manual(values = stats::setNames(pa_colour, pa_label), name = NULL)
     }
@@ -108,7 +124,7 @@ elsar_plot_actions <- function(x,
     if (legend) {
       ggplot2::guides(
         fill = ggplot2::guide_legend(order = 1, nrow = 1),
-        colour = ggplot2::guide_legend(order = 2, override.aes = list(fill = NA))
+        colour = ggplot2::guide_legend(order = 2, override.aes = list(fill = pa_key_fill))
       )
     } else {
       ggplot2::guides(fill = "none", colour = "none")
@@ -344,7 +360,7 @@ elsar_plot_protection_gap <- function(gap,
 #' @param map_width Numeric between 0 and 1. Share of the figure width taken by
 #'   the map. Default `0.45`.
 #' @param title Plot title. Defaults to the region name.
-#' @param ... Passed to [elsar_plot_actions()] (e.g. `show_pas`,
+#' @param ... Passed to [elsar_plot_actions()] (e.g. `show_pas`, `pa_fill`,
 #'   `pa_threshold`, `maxcell`, `graticule = FALSE` for a frameless map).
 #' @param pa_colour,pa_label Colour and label of existing protected areas, used
 #'   by both the map and the bars.

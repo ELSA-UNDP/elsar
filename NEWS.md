@@ -39,6 +39,11 @@
   fits a Spanish scheme without a warning. Bar charts now tilt category
   labels holding a word too long to wrap, common in translations.
 
+* `elsar_plot_actions()` and the regional panels now fill existing protected
+  areas with `pa_colour`, matching their segment in the bar charts, which
+  makes them easier to see. Use `pa_fill = FALSE` for the outline only, or
+  `pa_alpha` to keep the actions inside them visible.
+
 * A new, modern map style for every map elsar draws, exposed as small
   functions that return ordinary ggplot2 components (see
   `vignette("map-style")`):
