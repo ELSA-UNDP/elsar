@@ -2,6 +2,10 @@
 
 ## Bug fixes
 
+* Maps narrower than they are tall, such as a region in `elsar_plot_region()`,
+  draw fewer longitude lines, so their degree labels no longer run into each
+  other. Wide maps keep sf's own graticule.
+
 * `elsar_plot_distribution(categorical = TRUE, col_interest = ...)` failed
   because of a missing pipe; it now uses the given column. With
   `categorical = FALSE` and no `col_interest`, it uses the first data column.
