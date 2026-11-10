@@ -11,7 +11,7 @@ elsar_plot_actions(
   show_pas = TRUE,
   pa_threshold = 0.5,
   pa_colour = "#005000",
-  pa_label = "Existing PAs",
+  pa_label = .txt("existing_pas"),
   title = NULL,
   legend = TRUE,
   maxcell = 5e+05,

@@ -17,7 +17,7 @@ elsar_plot_region(
   title = region,
   ...,
   pa_colour = "#005000",
-  pa_label = "Existing PAs",
+  pa_label = .txt("existing_pas"),
   base_size = 10
 )
 

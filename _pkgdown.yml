@@ -156,6 +156,7 @@ reference:
   - elsar_map_furniture
   - elsar_map_caption
   - elsar_attribution
+  - elsar_labels
   - elsar_map_locator
 
 - title: Plotting utilities

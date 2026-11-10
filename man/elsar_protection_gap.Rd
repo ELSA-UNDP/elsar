@@ -10,7 +10,7 @@ elsar_protection_gap(
   protect_actions = NULL,
   include_national = TRUE,
   national = NULL,
-  national_label = "National",
+  national_label = .txt("national"),
   tolerance = 0.01
 )
 }
@@ -34,7 +34,8 @@ several regions, adds a national row named \code{national_label}.}
 cells along borders and coasts, so adding them up can understate the
 national figure. If \code{NULL} (default), the regions are added up.}
 
-\item{national_label}{Character. Name of the national row.}
+\item{national_label}{Character. Name of the national row. Defaults to
+"National" in the current language (see \code{\link[=elsar_labels]{elsar_labels()}}).}
 
 \item{tolerance}{Numeric. Shortfall, in percentage points of the planning
 area, still counted as meeting the target. Default \code{0.01}, so that

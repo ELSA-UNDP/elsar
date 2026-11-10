@@ -10,7 +10,7 @@ elsar_plot_action_bars(
   by = c("region", "action"),
   split_pa = isTRUE(attr(summary, "has_pa")),
   pa_colour = "#005000",
-  pa_label = "Existing PAs",
+  pa_label = .txt("existing_pas"),
   orientation = c("vertical", "horizontal"),
   title = NULL,
   base_size = 10

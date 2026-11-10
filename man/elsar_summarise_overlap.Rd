@@ -11,7 +11,7 @@ elsar_summarise_overlap(
   region_col = NULL,
   measure = c("area", "sum"),
   units = c("ha", "km2", "m2"),
-  national_label = "National"
+  national_label = .txt("national")
 )
 }
 \arguments{
@@ -46,7 +46,8 @@ area-weighted amount. Reported in \code{units}.
 
 \item{units}{Character. Area units: \code{"ha"} (default), \code{"km2"} or \code{"m2"}.}
 
-\item{national_label}{Character. Region name used for the national summary.}
+\item{national_label}{Character. Region name used for the national summary.
+Defaults to "National" in the current language (see \code{\link[=elsar_labels]{elsar_labels()}}).}
 }
 \value{
 A tibble with one row per region, layer and action, and columns

@@ -18,7 +18,8 @@
 #' @param binary_labels Character, length 2. Modern style: legend labels for
 #'   the 0 and 1 classes when the layer only holds 0 and 1 (zones, lock-ins,
 #'   presence layers), which get a two-class legend instead of a colour bar.
-#'   Default `c("Outside", "Inside")`.
+#'   Default `c("Outside", "Inside")`, in the language set with the
+#'   `elsar.language` option (see [elsar_labels()]).
 #' @param legend_position Character. Modern style: `"auto"` (default) puts the
 #'   legend on the right for maps clearly taller than wide and on top
 #'   otherwise. Or any `legend_position` of [elsar_theme_map()].
@@ -80,7 +81,7 @@ elsar_plot_feature <- function(raster_in,
                                no_legend = FALSE,
                                custom_resolution = 200,
                                plot_title = NULL,
-                               binary_labels = c("Outside", "Inside"),
+                               binary_labels = c(.txt("outside"), .txt("inside")),
                                legend_position = "auto",
                                graticule = TRUE,
                                style = getOption("elsar.plot_style", "modern")) {
@@ -220,7 +221,7 @@ elsar_plot_feature <- function(raster_in,
 
 .plot_feature_modern <- function(raster_in, pus, outlines, legend_title, color_map,
                                  palette_direction, no_legend, plot_title,
-                                 binary_labels = c("Outside", "Inside"),
+                                 binary_labels = c(.txt("outside"), .txt("inside")),
                                  legend_position = "auto", graticule = TRUE) {
   ink <- elsar_inks()
   r <- raster_in[[1]]
@@ -249,6 +250,7 @@ elsar_plot_feature <- function(raster_in,
     ) +
     elsar_map_furniture(north_arrow = FALSE) +
     ggplot2::coord_sf(crs = sf::st_crs(terra::crs(raster_in)), datum = .map_datum(graticule)) +
+    .degree_scales(graticule) +
     elsar_theme_map(
       legend_position = .map_legend_position(raster_in, legend_position),
       graticule = graticule
