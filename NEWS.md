@@ -1,80 +1,20 @@
-# elsar (development version)
+# elsar 0.5.0
 
-## Earth Engine downloads
+## Values change: rebuild these layers
 
-Tested with mocked Drive and Earth Engine calls, and live on Earth Engine
-(a fresh export, a cache hit, `force_download`, a rerun while the export was
-still running, a four-tile export and `aggregate_to_pus`).
+0.5.0 changes the values of two Earth Engine layers, without any error.
+Rebuild them for countries built with 0.4.2 or earlier:
 
-* **Exports are matched exactly in Drive.** A file now counts only if it is
-  `<export>.tif` or one of its tiles (`<export>-0000000000-0000000000.tif`).
-  Before, any name starting with the export's name matched, so the `ECU`
-  export could pick up `ECU_REG` files, or an old copy.
-* **The wait follows the export task.** Downloads start when Earth Engine
-  reports the task COMPLETED and Drive lists the same files twice in a row (its
-  listing can lag). A FAILED or CANCELLED task is an error with Earth Engine's
-  message. Before, the wait only watched for files to appear in Drive.
-* **Every tile is downloaded.** `download_lulc_proportions()` took only the
-  first tile of a split export, and `download_lulc_class_proportion()`
-  stopped at the first file to appear. Running out of `wait_time` is now
-  always an error: `download_gee_layer()` used to merge whatever tiles had
-  arrived, with a warning.
-* **A rerun waits for a task that is still running** instead of exporting the
-  same layer again. That applies to all three export functions; before, only
-  `download_gee_layer()` checked. The running task is looked for *before*
-  Drive, because a running export's first tiles can already be there.
-  `download_lulc_class_proportion()` also downloads a finished export from
-  Drive instead of exporting it again.
-* **`force_download = TRUE` refreshes.** `download_lulc_proportions()` now
-  moves the previous export's Drive files to the bin before exporting again.
-  Before, the wait picked up the old file straight away.
-* **Cached proportions are found without Earth Engine.**
-  `download_lulc_proportions(year = NULL)` uses the newest year already
-  downloaded in `output_dir`, without starting Python or Earth Engine. Before,
-  it looked only for last year's files, which miss whenever the data lag a
-  year.
-* **`download_gee_layer(aggregate_to_pus = TRUE)` now aggregates in Earth
-  Engine** (`reduceResolution()` with `aggregation_reducer`). Before, it
-  exported at planning-unit scale without aggregating, so Earth Engine
-  resampled categorical data by averaging class codes. Aggregated outputs are
-  now named `<prefix>_<year>_<iso3>_pus_<reducer>.tif`, so neither a
-  native-resolution file nor one aggregated the old way is reused as one. They
-  get the same `pre_aggregated` tag whether downloaded or read from the cache.
-* **LULC proportions use the 10 m pixels** (values change: rebuild the
-  `*_proportion_*` files). `download_lulc_proportions()` called
-  `reduceResolution()` with Earth Engine's default `maxPixels` (64), so for
-  planning units over about 80 m it read coarser pyramid levels of the land
-  cover instead of the 10 m pixels.
-* **`download_gee_layer()` looks for the latest year with data in the region**,
-  not anywhere in the world.
-* **`wait_time` is the maximum wait in minutes and may be fractional.** It must
-  be positive: 0 was accepted and timed out at once, and 2.5 was rejected.
-* **`year` is passed on for ESRI.** `download_lulc_data(product = "esri_10m",
-  year = )` used the latest year whatever was asked. For ESA WorldCover, a year
-  other than 2021 now gives a warning.
-* **`merge_tiles()` takes the files to merge** (a directory still works).
-  Tiles with another CRS or resolution are an error, where GDAL used to drop
-  them silently. The output is written atomically, so an interrupted write no
-  longer leaves a truncated file that later runs reuse.
-* **`initialize_earthengine()` stops at once if Python is already running
-  without `ee`.** Before, it went on to build a conda environment that
-  reticulate could not switch to.
-* **Network errors no longer stop a download.** Each Google Drive download is
-  tried up to three times (`options(elsar.drive_download_attempts = )`), and a
-  failed Drive listing while waiting for an export is retried at the next
-  check. Before, one dropped connection (e.g. curl's "SSL_read: decryption
-  failed or bad record mac") stopped the run partway through a multi-tile
-  download. A download that keeps failing is an error that leaves no partial
-  file; the export stays in Drive for the next run.
-* **Quieter COG writes.** GDAL's harmless "driver MEM/GTiff does not support
-  creation option" warnings are muffled wherever elsar writes a COG
-  (`merge_tiles()`, `download_gee_layer()`, `download_lulc_proportions()`,
-  `make_normalised_raster()`); before, large merges and the proportions
-  printed them.
-* `download_lulc_class_proportion()` warns about arguments passed in `...`,
-  which it never used.
-* The GEE download test called a function that does not exist
-  (`elsar_download_gee_layer()`). It still needs `GEE_PROJECT` set to run.
+* **LULC proportions** (`*_proportion_*` files from
+  `download_lulc_proportions()`) now read the 10 m land cover pixels. Before,
+  Earth Engine's default `maxPixels` made planning units over about 80 m read
+  coarser pyramid levels.
+* **Layers from `download_gee_layer(aggregate_to_pus = TRUE)`** are now
+  aggregated in Earth Engine with `aggregation_reducer`, where categorical
+  data used to be resampled by averaging class codes. They have a new name
+  (`<prefix>_<year>_<iso3>_pus_<reducer>.tif`), so old files are not reused.
+
+See "Earth Engine downloads" below for the details.
 
 ## New features
 
@@ -92,37 +32,6 @@ still running, a four-tile export and `aggregate_to_pus`).
   existing `wdpar` zips in `wdpa_downloads/` are still read, and a cache older
   than the configured global release is refreshed. Transboundary sites
   (`ISO3 = "DEU;DNK;NLD"`) are kept for each country they list.
-
-## Bug fixes
-
-* Maps narrower than they are tall, such as a region in `elsar_plot_region()`,
-  draw fewer longitude lines, so their degree labels no longer run into each
-  other. Wide maps keep sf's own graticule.
-
-* `elsar_plot_distribution(categorical = TRUE, col_interest = ...)` failed
-  because of a missing pipe; it now uses the given column. With
-  `categorical = FALSE` and no `col_interest`, it uses the first data column.
-
-* `elsar_plot_static_raster(data_type = "discrete")` now defaults
-  `data_layer` to the first layer instead of failing when it is not given.
-
-* `elsar_calibrate_weights()` uses `add_max_wtd_sum_objective()` with
-  prioritizr 9 or later, which renamed `add_max_utility_objective()` and warns
-  on every solve when the old name is used. Earlier prioritizr versions keep
-  the old name.
-
-* `save_raster()` no longer warns "driver GTiff does not support creation
-  option OVERVIEWS" (and `OVERVIEW_RESAMPLING`) for every layer when terra
-  writes to disk in chunks (`terraOptions(todisk = TRUE)`, as the pipeline
-  sets). The files were always valid COGs with overviews; the warning came from
-  terra's intermediate plain GeoTIFF.
-
-* `make_threatened_ecosystems_protection()` and `get_iucn_ecosystems()` no
-  longer warn "UNRELIABLE VALUE: One of the 'future.apply' iterations ...
-  unexpectedly generated random numbers": their parallel loops now declare
-  `future.seed = TRUE`. Results are unchanged.
-
-## New features
 
 * Plots can be made in Spanish, French, Portuguese or Russian, the languages
   of the documentation. Set `options(elsar.language = "es")` once and the
@@ -210,6 +119,111 @@ still running, a four-tile export and `aggregate_to_pus`).
   - `elsar_example_results()` loads a small synthetic ELSA result to try them.
   - New vignette: "Analysing and reporting ELSA results".
   - patchwork moves from Suggests to Imports.
+
+## Earth Engine downloads
+
+Tested with mocked Drive and Earth Engine calls, and live on Earth Engine
+(a fresh export, a cache hit, `force_download`, a rerun while the export was
+still running, a four-tile export and `aggregate_to_pus`).
+
+* **Exports are matched exactly in Drive.** A file now counts only if it is
+  `<export>.tif` or one of its tiles (`<export>-0000000000-0000000000.tif`).
+  Before, any name starting with the export's name matched, so the `ECU`
+  export could pick up `ECU_REG` files, or an old copy.
+* **The wait follows the export task.** Downloads start when Earth Engine
+  reports the task COMPLETED and Drive lists the same files twice in a row (its
+  listing can lag). A FAILED or CANCELLED task is an error with Earth Engine's
+  message. Before, the wait only watched for files to appear in Drive.
+* **Every tile is downloaded.** `download_lulc_proportions()` took only the
+  first tile of a split export, and `download_lulc_class_proportion()`
+  stopped at the first file to appear. Running out of `wait_time` is now
+  always an error: `download_gee_layer()` used to merge whatever tiles had
+  arrived, with a warning.
+* **A rerun waits for a task that is still running** instead of exporting the
+  same layer again. That applies to all three export functions; before, only
+  `download_gee_layer()` checked. The running task is looked for *before*
+  Drive, because a running export's first tiles can already be there.
+  `download_lulc_class_proportion()` also downloads a finished export from
+  Drive instead of exporting it again.
+* **`force_download = TRUE` refreshes.** `download_lulc_proportions()` now
+  moves the previous export's Drive files to the bin before exporting again.
+  Before, the wait picked up the old file straight away.
+* **Cached proportions are found without Earth Engine.**
+  `download_lulc_proportions(year = NULL)` uses the newest year already
+  downloaded in `output_dir`, without starting Python or Earth Engine. Before,
+  it looked only for last year's files, which miss whenever the data lag a
+  year.
+* **`download_gee_layer(aggregate_to_pus = TRUE)` now aggregates in Earth
+  Engine** (`reduceResolution()` with `aggregation_reducer`). Before, it
+  exported at planning-unit scale without aggregating, so Earth Engine
+  resampled categorical data by averaging class codes. Aggregated outputs are
+  now named `<prefix>_<year>_<iso3>_pus_<reducer>.tif`, so neither a
+  native-resolution file nor one aggregated the old way is reused as one. They
+  get the same `pre_aggregated` tag whether downloaded or read from the cache.
+* **LULC proportions use the 10 m pixels** (values change: rebuild the
+  `*_proportion_*` files). `download_lulc_proportions()` called
+  `reduceResolution()` with Earth Engine's default `maxPixels` (64), so for
+  planning units over about 80 m it read coarser pyramid levels of the land
+  cover instead of the 10 m pixels.
+* **`download_gee_layer()` looks for the latest year with data in the region**,
+  not anywhere in the world.
+* **`wait_time` is the maximum wait in minutes and may be fractional.** It must
+  be positive: 0 was accepted and timed out at once, and 2.5 was rejected.
+* **`year` is passed on for ESRI.** `download_lulc_data(product = "esri_10m",
+  year = )` used the latest year whatever was asked. For ESA WorldCover, a year
+  other than 2021 now gives a warning.
+* **`merge_tiles()` takes the files to merge** (a directory still works).
+  Tiles with another CRS or resolution are an error, where GDAL used to drop
+  them silently. The output is written atomically, so an interrupted write no
+  longer leaves a truncated file that later runs reuse.
+* **`initialize_earthengine()` stops at once if Python is already running
+  without `ee`.** Before, it went on to build a conda environment that
+  reticulate could not switch to.
+* **Network errors no longer stop a download.** Each Google Drive download is
+  tried up to three times (`options(elsar.drive_download_attempts = )`), and a
+  failed Drive listing while waiting for an export is retried at the next
+  check. Before, one dropped connection (e.g. curl's "SSL_read: decryption
+  failed or bad record mac") stopped the run partway through a multi-tile
+  download. A download that keeps failing is an error that leaves no partial
+  file; the export stays in Drive for the next run.
+* **Quieter COG writes.** GDAL's harmless "driver MEM/GTiff does not support
+  creation option" warnings are muffled wherever elsar writes a COG
+  (`merge_tiles()`, `download_gee_layer()`, `download_lulc_proportions()`,
+  `make_normalised_raster()`); before, large merges and the proportions
+  printed them.
+* `download_lulc_class_proportion()` warns about arguments passed in `...`,
+  which it never used.
+* The GEE download test called a function that does not exist
+  (`elsar_download_gee_layer()`). It still needs `GEE_PROJECT` set to run.
+
+## Bug fixes
+
+* Maps narrower than they are tall, such as a region in `elsar_plot_region()`,
+  draw fewer longitude lines, so their degree labels no longer run into each
+  other. Wide maps keep sf's own graticule.
+
+* `elsar_plot_distribution(categorical = TRUE, col_interest = ...)` failed
+  because of a missing pipe; it now uses the given column. With
+  `categorical = FALSE` and no `col_interest`, it uses the first data column.
+
+* `elsar_plot_static_raster(data_type = "discrete")` now defaults
+  `data_layer` to the first layer instead of failing when it is not given.
+
+* `elsar_calibrate_weights()` uses `add_max_wtd_sum_objective()` with
+  prioritizr 9 or later, which renamed `add_max_utility_objective()` and warns
+  on every solve when the old name is used. Earlier prioritizr versions keep
+  the old name.
+
+* `save_raster()` no longer warns "driver GTiff does not support creation
+  option OVERVIEWS" (and `OVERVIEW_RESAMPLING`) for every layer when terra
+  writes to disk in chunks (`terraOptions(todisk = TRUE)`, as the pipeline
+  sets). The files were always valid COGs with overviews; the warning came from
+  terra's intermediate plain GeoTIFF.
+
+* `make_threatened_ecosystems_protection()` and `get_iucn_ecosystems()` no
+  longer warn "UNRELIABLE VALUE: One of the 'future.apply' iterations ...
+  unexpectedly generated random numbers": their parallel loops now declare
+  `future.seed = TRUE`. Results are unchanged.
 
 ## Installation / Dependencies
 
