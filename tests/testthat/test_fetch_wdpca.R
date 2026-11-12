@@ -108,6 +108,29 @@ test_that("a cache older than the configured global release is not used", {
   expect_s3_class(read_wdpca_cache("DNK", dir, newer_than = "Oct2026"), "sf")
 })
 
+test_that("a renamed global zip still gives its release, from the .gdb inside", {
+  dir <- withr::local_tempdir()
+  withr::with_dir(dir, {
+    dir.create("WDPA_WDOECM_Dec2026_Public.gdb")
+    writeLines("x", "WDPA_WDOECM_Dec2026_Public.gdb/gdb")
+    utils::zip("WDPCA_download_20261202_101500.zip",
+               "WDPA_WDOECM_Dec2026_Public.gdb/gdb", flags = "-q")
+  })
+  zip <- file.path(dir, "WDPCA_download_20261202_101500.zip")
+  expect_equal(wdpca_global_release(zip), "Dec2026")
+  expect_equal(wdpca_global_release("x/WDPA_WDOECM_Nov2026_Public.zip"), "Nov2026")
+  expect_true(is.na(wdpca_global_release(file.path(dir, "missing.gdb"))))
+
+  # ...so a November cache is refreshed when the December zip is configured
+  x <- fake_wdpca()
+  attr(x, "wdpca_release") <- "Nov2026"
+  write_wdpca_cache(x, "DNK", dir)
+  expect_error(
+    suppressMessages(fetch_wdpca("DNK", dir, global_path = zip, sources = "cache")),
+    "older than the global release Dec2026"
+  )
+})
+
 test_that("the global release is read for one country and then cached", {
   dir <- withr::local_tempdir()
   # A stand-in for the global release: polygon + point layers named like it
