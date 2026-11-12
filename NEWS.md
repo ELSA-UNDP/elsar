@@ -1,4 +1,4 @@
-# elsar (development version)
+# elsar 0.4.3
 
 ## New features
 
@@ -16,37 +16,6 @@
   existing `wdpar` zips in `wdpa_downloads/` are still read, and a cache older
   than the configured global release is refreshed. Transboundary sites
   (`ISO3 = "DEU;DNK;NLD"`) are kept for each country they list.
-
-## Bug fixes
-
-* Maps narrower than they are tall, such as a region in `elsar_plot_region()`,
-  draw fewer longitude lines, so their degree labels no longer run into each
-  other. Wide maps keep sf's own graticule.
-
-* `elsar_plot_distribution(categorical = TRUE, col_interest = ...)` failed
-  because of a missing pipe; it now uses the given column. With
-  `categorical = FALSE` and no `col_interest`, it uses the first data column.
-
-* `elsar_plot_static_raster(data_type = "discrete")` now defaults
-  `data_layer` to the first layer instead of failing when it is not given.
-
-* `elsar_calibrate_weights()` uses `add_max_wtd_sum_objective()` with
-  prioritizr 9 or later, which renamed `add_max_utility_objective()` and warns
-  on every solve when the old name is used. Earlier prioritizr versions keep
-  the old name.
-
-* `save_raster()` no longer warns "driver GTiff does not support creation
-  option OVERVIEWS" (and `OVERVIEW_RESAMPLING`) for every layer when terra
-  writes to disk in chunks (`terraOptions(todisk = TRUE)`, as the pipeline
-  sets). The files were always valid COGs with overviews; the warning came from
-  terra's intermediate plain GeoTIFF.
-
-* `make_threatened_ecosystems_protection()` and `get_iucn_ecosystems()` no
-  longer warn "UNRELIABLE VALUE: One of the 'future.apply' iterations ...
-  unexpectedly generated random numbers": their parallel loops now declare
-  `future.seed = TRUE`. Results are unchanged.
-
-## New features
 
 * Plots can be made in Spanish, French, Portuguese or Russian, the languages
   of the documentation. Set `options(elsar.language = "es")` once and the
@@ -134,6 +103,35 @@
   - `elsar_example_results()` loads a small synthetic ELSA result to try them.
   - New vignette: "Analysing and reporting ELSA results".
   - patchwork moves from Suggests to Imports.
+
+## Bug fixes
+
+* Maps narrower than they are tall, such as a region in `elsar_plot_region()`,
+  draw fewer longitude lines, so their degree labels no longer run into each
+  other. Wide maps keep sf's own graticule.
+
+* `elsar_plot_distribution(categorical = TRUE, col_interest = ...)` failed
+  because of a missing pipe; it now uses the given column. With
+  `categorical = FALSE` and no `col_interest`, it uses the first data column.
+
+* `elsar_plot_static_raster(data_type = "discrete")` now defaults
+  `data_layer` to the first layer instead of failing when it is not given.
+
+* `elsar_calibrate_weights()` uses `add_max_wtd_sum_objective()` with
+  prioritizr 9 or later, which renamed `add_max_utility_objective()` and warns
+  on every solve when the old name is used. Earlier prioritizr versions keep
+  the old name.
+
+* `save_raster()` no longer warns "driver GTiff does not support creation
+  option OVERVIEWS" (and `OVERVIEW_RESAMPLING`) for every layer when terra
+  writes to disk in chunks (`terraOptions(todisk = TRUE)`, as the pipeline
+  sets). The files were always valid COGs with overviews; the warning came from
+  terra's intermediate plain GeoTIFF.
+
+* `make_threatened_ecosystems_protection()` and `get_iucn_ecosystems()` no
+  longer warn "UNRELIABLE VALUE: One of the 'future.apply' iterations ...
+  unexpectedly generated random numbers": their parallel loops now declare
+  `future.seed = TRUE`. Results are unchanged.
 
 ## Installation / Dependencies
 
