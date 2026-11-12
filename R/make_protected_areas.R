@@ -1,8 +1,9 @@
 #' Create a Binary or Fractional Raster of Protected Areas Aligned to Planning Units
 #'
 #' Generates a raster of protected areas for a given country, aligned to the planning
-#' units. Data can be downloaded from the [Protected Planet](https://www.protectedplanet.net/)
-#' database via the \pkg{wdpar} package, or provided as an `sf` object.
+#' units. Data come from the [Protected Planet](https://www.protectedplanet.net/)
+#' WDPCA via [fetch_wdpca()] (cache, global release, UNEP-WCMC services or
+#' \pkg{wdpar}), or are provided as an `sf` object.
 #'
 #' All geometries are reprojected, dissolved to avoid double-counting overlaps, and
 #' rasterized. The output can be binary (presence/absence based on a coverage threshold)
@@ -10,8 +11,8 @@
 #'
 #' @param pus SpatRaster. Planning units raster defining the output resolution and extent.
 #' @param iso3 Character. ISO3 country code (e.g., "CHL").
-#' @param from_wdpca Logical. If `TRUE`, downloads protected area data using the
-#'   \pkg{wdpar} package. If `FALSE`, uses `sf_in`. Default is `TRUE`.
+#' @param from_wdpca Logical. If `TRUE`, gets WDPCA data with [fetch_wdpca()].
+#'   If `FALSE`, uses `sf_in`. Default is `TRUE`.
 #' @param sf_in sf object or NULL. Protected area geometries to use when
 #'
 #'   `from_wdpca = FALSE`. Required if `from_wdpca = FALSE`.
@@ -46,6 +47,11 @@
 #'   if cached. Default is `FALSE`.
 #' @param output_path Character or NULL. Directory to save the output raster.
 #'   If NULL, the raster is returned but not saved.
+#' @param wdpca_global Character or NULL. Path to the global WDPCA release
+#'   (zip or `.gdb`), used when `from_wdpca = TRUE` and there is no cached
+#'   copy. See [fetch_wdpca()] for the defaults it falls back to.
+#' @param wdpca_sources Character vector. WDPCA sources to try, in order; see
+#'   [fetch_wdpca()].
 #' @param return_sf Logical. If `TRUE`, returns the dissolved polygons alongside
 #'   the raster (see Value). Defaults to `from_wdpca`, which keeps the original
 #'   return types.
@@ -84,7 +90,9 @@ make_protected_areas <- function(
     threshold = 0.10,
     force_update = FALSE,
     output_path = NULL,
-    return_sf = from_wdpca
+    return_sf = from_wdpca,
+    wdpca_global = NULL,
+    wdpca_sources = c("cache", "global", "api", "wdpar")
 ) {
   # Handle deprecated pa_def parameter
   if (lifecycle::is_present(pa_def)) {
@@ -137,29 +145,19 @@ make_protected_areas <- function(
 
   # Load data
   if (from_wdpca) {
-    # wdpar is Suggests: it pulls in a headless browser (chromote) and
-    # libarchive, which the core package should not force on every user.
-    if (!requireNamespace("wdpar", quietly = TRUE)) {
-      stop(
-        paste0("Fetching protected areas from Protected Planet needs the ",
-               "'wdpar' package (install.packages(\"wdpar\")), which also ",
-               "requires a Chromium browser and libarchive. Alternatively, ",
-               "supply your own protected-area layer via from_wdpca = FALSE."),
-        call. = FALSE
-      )
-    }
     wdpa_dir <- file.path(download_path, "wdpa_downloads")
-    if (!dir.exists(wdpa_dir)) dir.create(wdpa_dir, recursive = TRUE)
-
-    log_message("Downloading protected areas using the wdpar package")
     # WDPCA is published per country: a sub-national code ("USA_CA") fetches
     # the national dataset ("USA"), which is cropped to the PUs below.
-    protected_areas <- wdpar::wdpa_fetch(
+    # fetch_wdpca() tries the cache, the global release, the UNEP-WCMC
+    # services and then wdpar, so a Protected Planet website change does not
+    # stop the run.
+    protected_areas <- fetch_wdpca(
       iso3_base(iso3),
-      wait = TRUE,
-      check_version = TRUE,
-      force_download = force_update,
-      download_dir = wdpa_dir
+      download_dir = wdpa_dir,
+      global_path = wdpca_global,
+      sources = wdpca_sources,
+      site_type = site_type,
+      force_update = force_update
     )
   } else {
     protected_areas <- sf_in

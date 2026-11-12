@@ -1,3 +1,239 @@
+# elsar 0.5.0
+
+## Values change: rebuild these layers
+
+0.5.0 changes the values of two Earth Engine layers, without any error.
+Rebuild them for countries built with 0.4.2 or earlier:
+
+* **LULC proportions** (`*_proportion_*` files from
+  `download_lulc_proportions()`) now read the 10 m land cover pixels. Before,
+  Earth Engine's default `maxPixels` made planning units over about 80 m read
+  coarser pyramid levels.
+* **Layers from `download_gee_layer(aggregate_to_pus = TRUE)`** are now
+  aggregated in Earth Engine with `aggregation_reducer`, where categorical
+  data used to be resampled by averaging class codes. They have a new name
+  (`<prefix>_<year>_<iso3>_pus_<reducer>.tif`), so old files are not reused.
+
+See "Earth Engine downloads" below for the details.
+
+## New features
+
+* New `fetch_wdpca()` gets a country's WDPCA records from the first source
+  that works: a per-country cache, the monthly global release (zip or `.gdb`,
+  read without unzipping), the UNEP-WCMC ArcGIS services behind the Protected
+  Planet map, and finally `wdpar::wdpa_fetch()`. `make_protected_areas()` now
+  uses it, so a change to the Protected Planet website (which `wdpar` scrapes;
+  in November 2026 the download button's class changed and every new download
+  failed with "couldn't find element using query '.download__trigger'") no
+  longer stops a run. Pass the global release with the new
+  `make_protected_areas(wdpca_global = )` argument, the `elsar.wdpca_global`
+  option or the `ELSAR_WDPCA_GLOBAL` environment variable, and choose sources
+  with `wdpca_sources`. Results are cached as `WDPCA_<ISO3>_<MonYYYY>.gpkg`;
+  existing `wdpar` zips in `wdpa_downloads/` are still read, and a cache older
+  than the configured global release is refreshed. Transboundary sites
+  (`ISO3 = "DEU;DNK;NLD"`) are kept for each country they list.
+
+* Plots can be made in Spanish, French, Portuguese or Russian, the languages
+  of the documentation. Set `options(elsar.language = "es")` once and the
+  default action names, legend labels, axis titles, the national row of
+  summaries, 0/1 legends, map captions, graticule degree labels (`79,5°O`)
+  and number formats (`12.345`) follow it. English stays the default and its
+  output is unchanged. Change single pieces of text with
+  `options(elsar.labels = c(pct_of_region = "% de la provincia"))`;
+  `elsar_labels()` lists the keys. Action labels written by the ELSA tool in
+  any of these languages match the scheme, so an English-labelled raster
+  fits a Spanish scheme without a warning. Bar charts now tilt category
+  labels holding a word too long to wrap, common in translations.
+
+* `elsar_plot_actions()` and the regional panels now fill existing protected
+  areas with `pa_colour`, matching their segment in the bar charts, which
+  makes them easier to see. Use `pa_fill = FALSE` for the outline only, or
+  `pa_alpha` to keep the actions inside them visible.
+
+* A new, modern map style for every map elsar draws, exposed as small
+  functions that return ordinary ggplot2 components (see
+  `vignette("map-style")`):
+  - `elsar_theme_map()` (maps) and `elsar_theme()` (other charts): maps in a
+    thin box with a light latitude/longitude graticule labelled in degrees,
+    also for elsar's custom Mollweide projections (`graticule = FALSE` for a
+    frameless map; the ELSA results maps of `elsar_plot_actions()` and
+    `elsar_plot_region()` get the same box and graticule, inset locator maps
+    stay frameless), a clear title / subtitle / caption hierarchy, legends
+    with long thin colourbars or stepped keys, and a `dark = TRUE` mode.
+  - Legends go on the right of maps that are clearly taller than wide, and
+    under the title otherwise (`legend_position = "auto"` in
+    `elsar_plot_static_raster()` and `elsar_plot_feature()`).
+  - 0/1 layers (zones, lock-ins, presence layers) get a two-class legend,
+    "Outside" / "Inside" (`binary_labels`), instead of value ranges such as
+    "0-0.1" / "0.9-1", in both styles.
+  - `elsar_palette()`, `elsar_inks()`, `scale_fill_elsar_c()`,
+    `scale_fill_elsar_d()` and their `scale_colour_*` versions: viridis
+    sequential ramps, a two-hue diverging palette with a neutral midpoint,
+    colour-blind-safe categorical hues, and the established ELSA action
+    colours (Protect `#06C723`, Restore `#8803FC`, Manage `#FFEA00`, Urban
+    Greening `#FF0000`). Guides: `guide_elsar_colourbar()`,
+    `guide_elsar_legend()`, `guide_elsar_steps()`.
+  - Map furniture: `elsar_map_context()` / `elsar_map_outline()` (study area
+    with optional neighbours, soft halo and drop shadow),
+    `elsar_map_furniture()` (compact scale bar and north arrow),
+    `elsar_map_caption()` / `elsar_attribution()` (attribution as a caption),
+    and `elsar_map_locator()` / `elsar_add_locator()` (inset locator map).
+
+* `elsar_plot_static_raster()`, `elsar_plot_feature()`,
+  `elsar_plot_distribution()`, `elsar_plot_background()` and
+  `elsar_plot_optics()` use the modern style by default. All existing
+  arguments keep working. New argument `style = "classic"` (or
+  `options(elsar.plot_style = "classic")` for a whole session) restores the
+  previous look. Also new: `boundary` in `elsar_plot_static_raster()` (study
+  area context and outline), `plot_title` in `elsar_plot_feature()` (and
+  `plot_title` is now used by `elsar_plot_static_raster()` in the modern
+  style), and `dark` in `elsar_plot_optics()`. In the modern style
+  `elsar_plot_optics()` puts the attribution in a caption instead of a boxed
+  label over the data.
+
+* New tools to analyse ELSA results after a run. Areas are planar in the
+  equal-area projections ELSA uses and geodesic for lon/lat rasters:
+  - `elsar_action_scheme()` defines the action values, labels, colours and
+    reporting groups, so custom ELSA runs carry their own legend through every
+    table and plot.
+  - `elsar_prepare_actions()` applies the scheme to an ELSA action raster and
+    aligns existing protected areas (fractional raster or polygons).
+  - `elsar_summarise_actions()` reports the area of each action nationally or
+    by region, split into inside and outside existing protected areas.
+  - `elsar_protection_gap()` compares current and ELSA-proposed new protection
+    against an area-based target (30% by default, as in KMGBF Target 3).
+  - `elsar_plot_actions()`, `elsar_plot_action_bars()`,
+    `elsar_plot_protection_gap()` and `elsar_plot_region()` /
+    `elsar_plot_regions()` draw maps, stacked bars, the protection gap and
+    regional map-and-bars panels, all coloured by the action scheme.
+  - `elsar_export_results()` runs the whole workflow in one call and writes
+    CSV tables and figures; `elsar_save_plots()` saves plot lists with safe
+    file names.
+  - `elsar_summarise_overlap()` and `elsar_plot_overlap()` show how much of
+    any layer (KBAs, IPLC lands, ELSA features, policy overlays) falls under
+    each action, nationally or by region, and inside existing protected
+    areas. They complement the national representation reported by the run.
+  - `elsar_results_report()` renders an HTML or Word report (key figures,
+    maps, tables, protection gap, overlap and regional profiles) from a new
+    R Markdown template, also available in RStudio's template list.
+  - `elsar_example_results()` loads a small synthetic ELSA result to try them.
+  - New vignette: "Analysing and reporting ELSA results".
+  - patchwork moves from Suggests to Imports.
+
+## Earth Engine downloads
+
+Tested with mocked Drive and Earth Engine calls, and live on Earth Engine
+(a fresh export, a cache hit, `force_download`, a rerun while the export was
+still running, a four-tile export and `aggregate_to_pus`).
+
+* **Exports are matched exactly in Drive.** A file now counts only if it is
+  `<export>.tif` or one of its tiles (`<export>-0000000000-0000000000.tif`).
+  Before, any name starting with the export's name matched, so the `ECU`
+  export could pick up `ECU_REG` files, or an old copy.
+* **The wait follows the export task.** Downloads start when Earth Engine
+  reports the task COMPLETED and Drive lists the same files twice in a row (its
+  listing can lag). A FAILED or CANCELLED task is an error with Earth Engine's
+  message. Before, the wait only watched for files to appear in Drive.
+* **Every tile is downloaded.** `download_lulc_proportions()` took only the
+  first tile of a split export, and `download_lulc_class_proportion()`
+  stopped at the first file to appear. Running out of `wait_time` is now
+  always an error: `download_gee_layer()` used to merge whatever tiles had
+  arrived, with a warning.
+* **A rerun waits for a task that is still running** instead of exporting the
+  same layer again. That applies to all three export functions; before, only
+  `download_gee_layer()` checked. The running task is looked for *before*
+  Drive, because a running export's first tiles can already be there.
+  `download_lulc_class_proportion()` also downloads a finished export from
+  Drive instead of exporting it again.
+* **`force_download = TRUE` refreshes.** `download_lulc_proportions()` now
+  moves the previous export's Drive files to the bin before exporting again.
+  Before, the wait picked up the old file straight away.
+* **Cached proportions are found without Earth Engine.**
+  `download_lulc_proportions(year = NULL)` uses the newest year already
+  downloaded in `output_dir`, without starting Python or Earth Engine. Before,
+  it looked only for last year's files, which miss whenever the data lag a
+  year.
+* **`download_gee_layer(aggregate_to_pus = TRUE)` now aggregates in Earth
+  Engine** (`reduceResolution()` with `aggregation_reducer`). Before, it
+  exported at planning-unit scale without aggregating, so Earth Engine
+  resampled categorical data by averaging class codes. Aggregated outputs are
+  now named `<prefix>_<year>_<iso3>_pus_<reducer>.tif`, so neither a
+  native-resolution file nor one aggregated the old way is reused as one. They
+  get the same `pre_aggregated` tag whether downloaded or read from the cache.
+* **LULC proportions use the 10 m pixels** (values change: rebuild the
+  `*_proportion_*` files). `download_lulc_proportions()` called
+  `reduceResolution()` with Earth Engine's default `maxPixels` (64), so for
+  planning units over about 80 m it read coarser pyramid levels of the land
+  cover instead of the 10 m pixels.
+* **`download_gee_layer()` looks for the latest year with data in the region**,
+  not anywhere in the world.
+* **`wait_time` is the maximum wait in minutes and may be fractional.** It must
+  be positive: 0 was accepted and timed out at once, and 2.5 was rejected.
+* **`year` is passed on for ESRI.** `download_lulc_data(product = "esri_10m",
+  year = )` used the latest year whatever was asked. For ESA WorldCover, a year
+  other than 2021 now gives a warning.
+* **`merge_tiles()` takes the files to merge** (a directory still works).
+  Tiles with another CRS or resolution are an error, where GDAL used to drop
+  them silently. The output is written atomically, so an interrupted write no
+  longer leaves a truncated file that later runs reuse.
+* **`initialize_earthengine()` stops at once if Python is already running
+  without `ee`.** Before, it went on to build a conda environment that
+  reticulate could not switch to.
+* **Network errors no longer stop a download.** Each Google Drive download is
+  tried up to three times (`options(elsar.drive_download_attempts = )`), and a
+  failed Drive listing while waiting for an export is retried at the next
+  check. Before, one dropped connection (e.g. curl's "SSL_read: decryption
+  failed or bad record mac") stopped the run partway through a multi-tile
+  download. A download that keeps failing is an error that leaves no partial
+  file; the export stays in Drive for the next run.
+* **Quieter COG writes.** GDAL's harmless "driver MEM/GTiff does not support
+  creation option" warnings are muffled wherever elsar writes a COG
+  (`merge_tiles()`, `download_gee_layer()`, `download_lulc_proportions()`,
+  `make_normalised_raster()`); before, large merges and the proportions
+  printed them.
+* `download_lulc_class_proportion()` warns about arguments passed in `...`,
+  which it never used.
+* The GEE download test called a function that does not exist
+  (`elsar_download_gee_layer()`). It still needs `GEE_PROJECT` set to run.
+
+## Bug fixes
+
+* Maps narrower than they are tall, such as a region in `elsar_plot_region()`,
+  draw fewer longitude lines, so their degree labels no longer run into each
+  other. Wide maps keep sf's own graticule.
+
+* `elsar_plot_distribution(categorical = TRUE, col_interest = ...)` failed
+  because of a missing pipe; it now uses the given column. With
+  `categorical = FALSE` and no `col_interest`, it uses the first data column.
+
+* `elsar_plot_static_raster(data_type = "discrete")` now defaults
+  `data_layer` to the first layer instead of failing when it is not given.
+
+* `elsar_calibrate_weights()` uses `add_max_wtd_sum_objective()` with
+  prioritizr 9 or later, which renamed `add_max_utility_objective()` and warns
+  on every solve when the old name is used. Earlier prioritizr versions keep
+  the old name.
+
+* `save_raster()` no longer warns "driver GTiff does not support creation
+  option OVERVIEWS" (and `OVERVIEW_RESAMPLING`) for every layer when terra
+  writes to disk in chunks (`terraOptions(todisk = TRUE)`, as the pipeline
+  sets). The files were always valid COGs with overviews; the warning came from
+  terra's intermediate plain GeoTIFF.
+
+* `make_threatened_ecosystems_protection()` and `get_iucn_ecosystems()` no
+  longer warn "UNRELIABLE VALUE: One of the 'future.apply' iterations ...
+  unexpectedly generated random numbers": their parallel loops now declare
+  `future.seed = TRUE`. Results are unchanged.
+
+## Installation / Dependencies
+
+* `ggplot2 (>= 3.5.0)` is now required (for the legend layout of the new map
+  style). `systemfonts` (font fallback) is a new `Suggests`.
+
+* The deprecated `elsar_plot_static_raster_c()`, `elsar_plot_static_raster_d()`,
+  `elsar_plot_background_c()` and `elsar_plot_background_d()` now signal
+  deprecation through lifecycle (once per session) instead of `.Deprecated()`.
+
 # elsar 0.4.2
 
 ## Values change: rebuild these layers

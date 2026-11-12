@@ -1,30 +1,39 @@
-# Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
-# Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
+# Build the multilingual pkgdown site and publish it with GitHub's official
+# Pages actions. Requires Settings > Pages > Source = "GitHub Actions".
+#
+# Before Nov 2026 every build was committed to the gh-pages branch, which kept
+# growing the repository (41 deploys = 42 MiB of history in every clone) and,
+# with `clean: false`, left stale files on the site. Each deploy now replaces
+# the whole site and leaves no history in the repository.
+#
+# - Push to main (including merged release PRs) or a manual run: build and deploy.
+# - Pull request: build only, and upload the site as a downloadable preview.
+
 on:
   push:
     branches: [main, master]
   pull_request:
-    branches: [main, master]
-  release:
-    types: [published]
+    branches: [main, master, develop]
   workflow_dispatch:
 
 name: pkgdown.yaml
 
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
-  pkgdown:
+  build:
     runs-on: ubuntu-latest
-    # Only restrict concurrency for non-PR jobs
+    # One build per branch at a time, so an older build can never finish (and
+    # deploy) after a newer one. On PRs a new push cancels the running build;
+    # on main a new push waits for the running build to finish.
     concurrency:
-      group: pkgdown-${{ github.event_name != 'pull_request' || github.run_id }}
+      group: pkgdown-build-${{ github.ref }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-    permissions:
-      contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: r-lib/actions/setup-pandoc@v2
 
@@ -41,10 +50,46 @@ jobs:
         run: source("build-multilingual.R")
         shell: Rscript {0}
 
-      - name: Deploy to GitHub pages 🚀
-        if: github.event_name != 'pull_request'
-        uses: JamesIves/github-pages-deploy-action@v4.5.0
+      - name: Upload Pages artifact
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v5
         with:
-          clean: false
-          branch: gh-pages
-          folder: docs
+          path: docs
+
+      - name: Upload site preview
+        if: github.event_name == 'pull_request' || github.ref != 'refs/heads/main'
+        uses: actions/upload-artifact@v7
+        with:
+          name: site-preview
+          path: docs
+          retention-days: 14
+
+      - name: Preview instructions
+        if: github.event_name == 'pull_request'
+        run: |
+          {
+            echo "## Preview this PR's site"
+            echo "Download **site-preview** under *Artifacts* at the bottom of this page and unzip it."
+            echo "In the unzipped folder run \`python -m http.server\`, then open http://localhost:8000/"
+            echo "(opening the HTML files directly won't follow links between pages; the language menu always links to the live site)."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    # Only main is published (a manual run on another branch builds but does not deploy)
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    # Deploys run one at a time and are never cancelled midway
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

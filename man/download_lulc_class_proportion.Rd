@@ -44,9 +44,11 @@ If NULL, automatically determined from \code{lulc_product} and \code{class_name}
 \item{pus}{SpatRaster. Planning units raster (required for aggregation).}
 
 \item{wait_time}{Numeric. Maximum time in minutes to wait for the GEE export
-to appear in Google Drive. Default is 5. Increase for large exports.}
+task to finish (fractions allowed). Default is 5. Increase for large
+exports. On a timeout the task keeps running; a rerun waits for it rather
+than exporting again.}
 
-\item{...}{Additional arguments passed to \code{\link[=download_gee_layer]{download_gee_layer()}}.}
+\item{...}{Not used; anything passed here is ignored with a warning.}
 }
 \value{
 A \code{SpatRaster} with class proportion values (0-1) at PU resolution,
@@ -71,6 +73,21 @@ The resulting raster can be used directly in consumer functions via the
 \code{agricultural_areas_input}, \code{built_areas_input}, etc. parameters without
 additional local processing.
 }
+\section{Options}{
+
+The Earth Engine export functions read these \code{\link[=options]{options()}}:
+\itemize{
+\item \code{elsar.gee_tmpdir}: the folder where an export's tiles are downloaded
+and merged before the result is written to \code{output_dir}. Default is
+\verb{$HOME}, because a 10 m national export can be several GB, more than a
+small \verb{/tmp} holds. Each export gets its own subfolder, removed at the end.
+\item \code{elsar.drive_download_attempts}: how many times to try each Google Drive
+download before giving up (default 3, waiting 10 s, then 20 s, ...).
+Network errors such as a dropped connection are retried; a failed Drive
+listing while waiting for an export is retried at the next check.
+}
+}
+
 \examples{
 \dontrun{
 # Download agriculture proportion at PU resolution

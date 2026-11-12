@@ -50,7 +50,9 @@ Default is "INT1U".}
 Currently defaults to NULL (Drive root) to avoid a GEE folder duplication bug.}
 
 \item{wait_time}{Numeric. Maximum time in minutes to wait for the GEE export
-to appear in Google Drive. Default is 5. Increase for large exports.}
+task to finish (fractions allowed). Default is 5. Increase for large
+exports. On a timeout the task keeps running; a rerun waits for it rather
+than exporting again.}
 
 \item{band}{Character or NULL. Specific band to select from the image. If NULL,
 uses all bands. Useful for datasets like Dynamic World ("label") or
@@ -68,15 +70,19 @@ When provided with \code{aggregate_to_pus = TRUE}, the export will be resampled
 to match the PU resolution and projection in GEE before download.}
 
 \item{aggregate_to_pus}{Logical. If TRUE and \code{pus} is provided, aggregate the
-data to planning unit resolution in GEE before export. This significantly
-speeds up processing by eliminating local resampling. Default is FALSE.}
+native pixels to planning unit size in GEE (\code{reduceResolution()} with
+\code{aggregation_reducer}) before export, then reproject the result to the
+planning units locally. Default is FALSE.}
 
 \item{aggregation_reducer}{Character. Reducer to use for GEE-side aggregation:
 "mode" (default, for categorical data), "mean", or "sum".}
 }
 \value{
-A \code{SpatRaster} object written to disk, or NULL if export timed out.
-When \code{aggregate_to_pus = TRUE}, the result has attribute \code{pre_aggregated = TRUE}.
+A \code{SpatRaster} object written to disk. If the export does not finish
+within \code{wait_time} minutes, or fails, the function stops with an error.
+When \code{aggregate_to_pus = TRUE}, the result has attribute
+\code{pre_aggregated = TRUE}, whether it was downloaded or read from an
+existing file.
 }
 \description{
 Generic function for downloading any raster data from Google Earth Engine.
@@ -89,6 +95,21 @@ For most use cases, prefer the higher-level wrapper functions like
 \code{\link[=download_esri_lulc_data]{download_esri_lulc_data()}} or \code{\link[=download_global_pasture_data]{download_global_pasture_data()}} which
 have sensible defaults for common datasets.
 }
+\section{Options}{
+
+The Earth Engine export functions read these \code{\link[=options]{options()}}:
+\itemize{
+\item \code{elsar.gee_tmpdir}: the folder where an export's tiles are downloaded
+and merged before the result is written to \code{output_dir}. Default is
+\verb{$HOME}, because a 10 m national export can be several GB, more than a
+small \verb{/tmp} holds. Each export gets its own subfolder, removed at the end.
+\item \code{elsar.drive_download_attempts}: how many times to try each Google Drive
+download before giving up (default 3, waiting 10 s, then 20 s, ...).
+Network errors such as a dropped connection are retried; a failed Drive
+listing while waiting for an export is retried at the next check.
+}
+}
+
 \examples{
 \dontrun{
 # Download ESRI LULC data for Ghana

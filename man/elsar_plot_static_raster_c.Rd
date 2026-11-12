@@ -28,13 +28,14 @@ elsar_plot_static_raster_c(
 If extend_background <= 1, the lat and lon extend will be extended by the ratio provided (e.g. 0.05 will extend it by 5\%).
 If extend_background > 1 all sides will be extended by the absolute value provided.}
 
-\item{custom_palette}{An optional custom palette for plotting. Default uses the \code{viridis} package.}
+\item{custom_palette}{An optional ggplot2 scale (or list of scales) that replaces the default colour scale,
+e.g. \code{\link[=scale_fill_elsar_c]{scale_fill_elsar_c()}} or \code{\link[ggplot2:scale_fill_distiller]{ggplot2::scale_fill_distiller()}}.}
 
-\item{plot_title}{An optional plot title.}
+\item{plot_title}{An optional plot title (modern style).}
 
 \item{legend_title}{An optional legend title.}
 
-\item{color_map}{The name of the \code{viridis} palette to be used. Default is "viridis".}
+\item{color_map}{The name of the viridis palette to be used, e.g. "viridis" (default), "mako" or "rocket".}
 
 \item{expand_plot}{Logical. Whether to expand the plot, so there is no space between border and plot.}
 

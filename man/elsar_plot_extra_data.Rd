@@ -30,7 +30,7 @@ elsar_plot_extra_data(
 \item{label_pa}{The legend label of the locked in area (e.g. MPAs)}
 }
 \value{
-For \code{ggplot} returns a list that can simply be added to a \code{ggplot}, e.g. \code{\link[=elsar_plot_static_raster_c]{elsar_plot_static_raster_c()}}.
+For \code{ggplot} returns a list that can simply be added to a \code{ggplot}, e.g. \code{\link[=elsar_plot_static_raster]{elsar_plot_static_raster()}}.
 }
 \description{
 \code{elsar_plot_extra_data()} allows to add extra data to an existing \code{ggplot} or \code{tmap} plot, e.g. protected areas generated with \code{\link[=make_protected_areas]{make_protected_areas()}}. Function idea taken from \href{https://mathmarecol.github.io/spatialplanr/}{spatialplanr} package.

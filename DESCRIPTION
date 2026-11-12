@@ -1,6 +1,6 @@
 Package: elsar
 Title: Functions and Tools For Creating ELSA Data Stacks
-Version: 0.4.2
+Version: 0.5.0
 Authors@R: 
     c(
     person(
@@ -34,13 +34,13 @@ Suggests:
     highs,
     kableExtra,
     knitr,
-    patchwork,
     prioritizr,
     progressr,
     rappdirs,
     readr,
     reticulate,
     rmarkdown,
+    systemfonts,
     RPostgres,
     testthat (>= 3.0.0),
     wdpar,
@@ -54,15 +54,17 @@ Imports:
     exactextractr,
     future,
     ggnewscale,
-    ggplot2,
+    ggplot2 (>= 3.5.0),
     ggridges,
     ggspatial,
     glue,
+    grDevices,
     here,
     jsonlite,
     lifecycle,
     magrittr,
     methods,
+    patchwork,
     plyr,
     png,
     purrr,
@@ -75,6 +77,7 @@ Imports:
     tibble,
     tidyterra,
     units,
+    utils,
     xml2
 Config/testthat/edition: 3
 LazyData: true

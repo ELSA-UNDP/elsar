@@ -7,7 +7,9 @@
 merge_tiles(local_path, output_file, datatype)
 }
 \arguments{
-\item{local_path}{Character. Path to directory containing downloaded tile files}
+\item{local_path}{Character. The tile files to merge, or a directory, in
+which case every \code{.tif} in it is merged. Pass the files: a directory can
+hold tiles from another export.}
 
 \item{output_file}{Character. Full path for the output merged COG file}
 
@@ -17,12 +19,18 @@ merge_tiles(local_path, output_file, datatype)
 A \code{SpatRaster} object of the merged and written COG
 }
 \description{
-Takes multiple downloaded GeoTIFF tiles and merges them into a single
+Takes the GeoTIFF tiles of one export and merges them into a single
 Cloud-Optimized GeoTIFF (COG) with appropriate compression and optimization.
+}
+\details{
+Tiles must share a CRS and resolution: a tile that differs is an
+error (before 0.4.3 GDAL silently left it out of the merge). The output
+is written to a temporary file first and then renamed, so an interrupted
+write never leaves a truncated file under the final name.
 }
 \examples{
 \dontrun{
-merged_raster <- merge_tiles("/tmp/tiles", "/output/merged.tif", "INT1U")
+merged_raster <- merge_tiles(c("tile_a.tif", "tile_b.tif"), "/output/merged.tif", "INT1U")
 }
 }
 \keyword{internal}

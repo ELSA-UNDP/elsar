@@ -1,4 +1,4 @@
-test_that("elsar_download_gee_layer creates a valid output file", {
+test_that("download_gee_layer creates a valid output file", {
   skip_on_cran()
   skip_if_not_installed("terra")
   skip_if_not_installed("sf")
@@ -26,7 +26,7 @@ test_that("elsar_download_gee_layer creates a valid output file", {
 
   if (test_proj == "") skip("GEE_PROJECT environment variable not set")
 
-  result <- elsar_download_gee_layer(
+  result <- download_gee_layer(
     boundary_layer = test_boundary,
     iso3 = test_iso3,
     output_dir = test_outdir,

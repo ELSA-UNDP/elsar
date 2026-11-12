@@ -2,6 +2,15 @@
 #'
 #' `elsar_plot_optics()` allows to use specific themes for plotting and add north arrows and scales if wanted.
 #'
+#' In the default `"modern"` style it adds [elsar_theme_map()], a compact
+#' scale bar and north arrow ([elsar_map_furniture()]) when
+#' `include_north_scale = TRUE`, and the attribution as a muted caption under
+#' the map (or, for the top corners, as unboxed text inside the map) instead
+#' of a boxed label on top of the data. `move_horizontal` and `move_vertical`
+#' only adjust the top-corner text in this style. For new code, the
+#' individual functions ([elsar_theme_map()], [elsar_map_furniture()],
+#' [elsar_map_caption()]) give finer control.
+#'
 #' @param type A character denoting whether "ggplot" or "tmap" is being used. Needs to match the main plot
 #' @param theme For `ggplot` this allows to use a pre-defined "deafult" plot theme or provide a custom one as a `list`.
 #' @param include_north_scale Logical. Determines whether a north arrow and scale should be added.
@@ -14,8 +23,13 @@
 #' @param text_location The location of the text. Options are "bottom_right" (default), "top_right", "top_left" and "bottom_left".
 #' @param move_horizontal After setting a text location, this attribute allows to move the text block horizontally if needed.
 #' @param move_vertical After setting a text location, this attribute allows to move the text block vertically if needed.
+#' @param style Character. `"modern"` (default) uses the current elsar
+#'   style; `"classic"` reproduces the look of elsar 0.4 and
+#'   earlier. Set `options(elsar.plot_style = "classic")` to change the
+#'   default for a whole session.
+#' @param dark Logical. Modern style only: use the dark-mode theme and inks.
 #'
-#' @return For `ggplot` returns a list that can simply be added to a `ggplot`, e.g. [elsar_plot_static_raster_c()].
+#' @return For `ggplot` returns a list that can simply be added to a `ggplot`, e.g. [elsar_plot_static_raster()].
 #' @export
 #'
 #' @examples
@@ -58,8 +72,11 @@ elsar_plot_optics <- function(type = "ggplot",
                               text_to_display = "UNBL | www.unbiodiversitylab.org",
                               text_location = "bottom_right",
                               move_horizontal = NULL,
-                              move_vertical = NULL
+                              move_vertical = NULL,
+                              style = getOption("elsar.plot_style", "modern"),
+                              dark = FALSE
                               ) {
+  style <- .resolve_style(style)
   # Input validation
   assertthat::assert_that(
     type %in% c("ggplot", "tmap"),
@@ -85,6 +102,17 @@ elsar_plot_optics <- function(type = "ggplot",
     text_location %in% c("bottom_right", "bottom_left", "top_right", "top_left"),
     msg = "'text_location' must be one of: 'bottom_right', 'bottom_left', 'top_right', 'top_left'."
   )
+
+  if (type == "ggplot" && style == "modern") {
+    return(.plot_optics_modern(
+      theme = theme, include_north_scale = include_north_scale,
+      include_logo = include_logo, logo_path = logo_path, logo_dim = logo_dim,
+      logo_pos = if (include_logo) logo_pos else NULL,
+      include_text = include_text, text_to_display = text_to_display,
+      text_location = text_location, move_horizontal = move_horizontal,
+      move_vertical = move_vertical, dark = dark
+    ))
+  }
 
   # ggplot
   if (type == "ggplot") {
@@ -212,6 +240,68 @@ elsar_plot_optics <- function(type = "ggplot",
   }
 }
 
+# Modern style of elsar_plot_optics().
+.plot_optics_modern <- function(theme, include_north_scale, include_logo,
+                                logo_path, logo_dim, logo_pos, include_text,
+                                text_to_display, text_location,
+                                move_horizontal, move_vertical, dark) {
+  ink <- elsar_inks(dark)
+  ggList <- list()
+
+  if (identical(theme, "default")) {
+    # The map's own legend placement (e.g. on the right for a tall map) is
+    # kept: the theme is added without its legend position.
+    th <- elsar_theme_map(dark = dark)
+    th$legend.position <- NULL
+    th$legend.direction <- NULL
+    th$legend.justification <- NULL
+    attr(th, "complete") <- FALSE # merge into the map's theme, don't replace it
+    ggList <- c(ggList, list(th))
+  } else if (inherits(theme, "list")) {
+    ggList <- c(ggList, theme)
+  }
+
+  if (include_north_scale) {
+    ggList <- c(ggList, elsar_map_furniture(dark = dark))
+  }
+
+  if (include_logo) {
+    img <- png::readPNG(logo_path)
+    g <- grid::rasterGrob(img,
+      interpolate = TRUE,
+      width = grid::unit(logo_dim[1], "pt"),
+      height = grid::unit(logo_dim[2], "pt")
+    )
+    ggList <- c(ggList, list(ggplot2::annotation_custom(g,
+      xmin = logo_pos[1], xmax = logo_pos[2],
+      ymin = logo_pos[3], ymax = logo_pos[4]
+    )))
+  }
+
+  if (include_text) {
+    left <- grepl("left$", text_location)
+    if (grepl("^bottom", text_location)) {
+      # Attribution as a muted caption under the map.
+      ggList <- c(ggList, list(
+        ggplot2::labs(caption = text_to_display),
+        ggplot2::theme(plot.caption = ggplot2::element_text(hjust = if (left) 0 else 1))
+      ))
+    } else {
+      # Top corners: unboxed muted text inside the panel.
+      ggList <- c(ggList, list(ggplot2::annotate(
+        "text",
+        x = if (left) -Inf else Inf, y = Inf,
+        label = text_to_display,
+        hjust = move_horizontal %||% if (left) -0.05 else 1.05,
+        vjust = move_vertical %||% 1.6,
+        size = 2.6, colour = ink[["ink_muted"]]
+      )))
+    }
+  }
+
+  ggList
+}
+
 #' Function to add additional data to an existing plot
 #'
 #' `elsar_plot_extra_data()` allows to add extra data to an existing `ggplot` or `tmap` plot, e.g. protected areas generated with [make_protected_areas()]. Function idea taken from [spatialplanr](https://mathmarecol.github.io/spatialplanr/) package.
@@ -224,7 +314,7 @@ elsar_plot_optics <- function(type = "ggplot",
 #' @param legend_pa A character value for the title of the legend of the locked in areas. Can be empty ("").
 #' @param label_pa The legend label of the locked in area (e.g. MPAs)
 #'
-#' @return For `ggplot` returns a list that can simply be added to a `ggplot`, e.g. [elsar_plot_static_raster_c()].
+#' @return For `ggplot` returns a list that can simply be added to a `ggplot`, e.g. [elsar_plot_static_raster()].
 #' @export
 #'
 #' @examples
@@ -388,6 +478,10 @@ elsar_plot_extra_data <- function(plot_type = "ggplot",
 #' @param categorical Logical. Only used when `data_type = "discrete"`. If TRUE, data is already categorical.
 #' @param number_categories Integer. Only used when `data_type = "discrete"`. Number of categories to split continuous data into.
 #' @param data_layer Character. Only used when `data_type = "discrete"`. The data layer name for categorization.
+#' @param style Character. `"modern"` (default) draws the background in
+#'   light neutral greys (`background_alpha` is then ignored for continuous data); `"classic"` reproduces the look of elsar 0.4 and
+#'   earlier. Set `options(elsar.plot_style = "classic")` to change the
+#'   default for a whole session.
 #'
 #' @return A `list` of a `ggplot` or `tmap` object and a data frame with the background data.
 #' @export
@@ -441,8 +535,10 @@ elsar_plot_background <- function(plot_type = "ggplot",
                                   custom_palette = NULL,
                                   categorical = FALSE,
                                   number_categories = 10,
-                                  data_layer = NULL) {
+                                  data_layer = NULL,
+                                  style = getOption("elsar.plot_style", "modern")) {
   data_type <- match.arg(data_type)
+  style <- .resolve_style(style)
 
   # Input validation
   assertthat::assert_that(
@@ -535,7 +631,13 @@ if (data_type == "discrete") {
           fill = .data$interval
         ), show.legend = FALSE)
 
-      if (is.null(custom_palette)) {
+      if (is.null(custom_palette) && style == "modern") {
+        plot_background <- plot_background +
+          ggplot2::scale_fill_manual(
+            values = elsar_palette("context", n = length(levels(bckgrnd_dat$interval))),
+            guide = "none"
+          )
+      } else if (is.null(custom_palette)) {
         plot_background <- plot_background +
           ggplot2::scale_colour_viridis_d(
             option = color_map, alpha = background_alpha,
@@ -559,7 +661,10 @@ if (data_type == "discrete") {
           fill = .data[[col_interest]]
         ), show.legend = FALSE)
 
-      if (is.null(custom_palette)) {
+      if (is.null(custom_palette) && style == "modern") {
+        plot_background <- plot_background +
+          scale_fill_elsar_c(palette = "context", guide = "none")
+      } else if (is.null(custom_palette)) {
         plot_background <- plot_background +
           ggplot2::scale_colour_viridis_c(
             option = color_map, alpha = background_alpha,
@@ -595,7 +700,7 @@ elsar_plot_background_c <- function(plot_type = "ggplot",
                                     background_alpha = 0.2,
                                     color_map = "viridis",
                                     custom_palette = NULL) {
-  .Deprecated("elsar_plot_background")
+  lifecycle::deprecate_warn("0.0.7", "elsar_plot_background_c()", "elsar_plot_background()")
   elsar_plot_background(
     plot_type = plot_type,
     background_dat = background_dat,
@@ -623,7 +728,7 @@ elsar_plot_background_d <- function(plot_type = "ggplot",
                                     categorical = FALSE,
                                     number_categories = 10,
                                     data_layer = NULL) {
-  .Deprecated("elsar_plot_background")
+  lifecycle::deprecate_warn("0.0.7", "elsar_plot_background_d()", "elsar_plot_background()")
   elsar_plot_background(
     plot_type = plot_type,
     background_dat = background_dat,
@@ -643,7 +748,7 @@ elsar_plot_background_d <- function(plot_type = "ggplot",
 
 #' Function to extend the spatial extend around a raster file for plotting
 #'
-#' When plotting (e.g. with [elsar_plot_static_raster_c()], the extent of the main data will be used. `elsar_extend()` allows to extract background data to be plotted with an extent that is a bit greater than the extent of the main data.
+#' When plotting (e.g. with [elsar_plot_static_raster()]), the extent of the main data will be used. `elsar_extend()` allows to extract background data to be plotted with an extent that is a bit greater than the extent of the main data.
 #'
 #' @param raster_main A `SpatRaster` file of the main data of the original plot. The extent of this file will be used as the baseline for the new plot extent.
 #' @param raster_to_crop A `SpatRaster` file of the data that the will be cropped using the new extent.

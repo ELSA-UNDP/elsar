@@ -35,8 +35,11 @@ elsar has three tiers with different setup requirements (see the package's
 \item \strong{Core} - boundaries, planning units, normalisation, zone builders from
 local rasters, and plotting. Needs only the geospatial R stack (GDAL, GEOS,
 PROJ, installed with \code{sf}/\code{terra}). Works offline.
-\item \strong{Protected areas} - \code{make_protected_areas(from_wdpca = TRUE)}, which needs
-\code{wdpar}, a Chromium browser, and the \code{libarchive} system library.
+\item \strong{Protected areas} - \code{make_protected_areas(from_wdpca = TRUE)}. Its
+\code{\link[=fetch_wdpca]{fetch_wdpca()}} reads a cached copy, the global WDPCA release or the
+UNEP-WCMC services first; \code{wdpar}, a Chromium browser and the \code{libarchive}
+system library are only needed for its last fallback, so their absence is
+a warning.
 \item \strong{Earth Engine} - the \verb{download_*} functions, which need \code{reticulate},
 \code{googledrive}, a conda/Python environment with \code{earthengine-api}, and a
 Google Earth Engine account with an approved Cloud project.
