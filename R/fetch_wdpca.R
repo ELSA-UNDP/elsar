@@ -89,7 +89,7 @@ fetch_wdpca <- function(
   }
 
   # A cached copy older than the configured global release is stale
-  global_release <- if (!is.null(global_path)) wdpca_release_from_name(basename(global_path)) else NA
+  global_release <- if (!is.null(global_path)) wdpca_global_release(global_path) else NA
   errors <- character()
 
   for (src in sources) {
@@ -191,9 +191,7 @@ read_wdpca_global <- function(iso3, global_path) {
   }
   log_message("Reading {iso3} from the global WDPCA release (can take a few minutes)")
   x <- read_wdpca_gdb(gdb, iso3 = iso3)
-  release <- wdpca_release_from_name(basename(global_path))
-  if (is.na(release)) release <- wdpca_release_from_name(basename(gdb))
-  attr(x, "wdpca_release") <- release
+  attr(x, "wdpca_release") <- wdpca_global_release(global_path)
   x
 }
 
@@ -406,6 +404,24 @@ write_wdpca_cache <- function(x, iso3, download_dir) {
     FALSE
   })
   invisible(if (ok) path else NULL)
+}
+
+#' Release label of a global WDPCA release
+#'
+#' From the file name when it carries one (`WDPA_WDOECM_Nov2026_Public.zip`),
+#' otherwise from the `.gdb` inside the zip, so a renamed download
+#' (`WDPCA_download_20261102.zip`) still says which release it is. Listing a
+#' zip's entries does not read the data, so this is quick.
+#' @param global_path Path to the global zip or `.gdb`.
+#' @return Label, or NA.
+#' @keywords internal
+wdpca_global_release <- function(global_path) {
+  release <- wdpca_release_from_name(basename(global_path))
+  if (is.na(release) && grepl("\\.zip$", global_path, ignore.case = TRUE)) {
+    gdb <- tryCatch(wdpca_zip_gdb(global_path), error = function(e) NA_character_)
+    if (!is.na(gdb)) release <- wdpca_release_from_name(basename(gdb))
+  }
+  release
 }
 
 #' Release label ("Nov2026") from a WDPCA file or layer name
