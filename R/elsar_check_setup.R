@@ -11,8 +11,11 @@
 #' * **Core** - boundaries, planning units, normalisation, zone builders from
 #'   local rasters, and plotting. Needs only the geospatial R stack (GDAL, GEOS,
 #'   PROJ, installed with `sf`/`terra`). Works offline.
-#' * **Protected areas** - `make_protected_areas(from_wdpca = TRUE)`, which needs
-#'   `wdpar`, a Chromium browser, and the `libarchive` system library.
+#' * **Protected areas** - `make_protected_areas(from_wdpca = TRUE)`. Its
+#'   [fetch_wdpca()] reads a cached copy, the global WDPCA release or the
+#'   UNEP-WCMC services first; `wdpar`, a Chromium browser and the `libarchive`
+#'   system library are only needed for its last fallback, so their absence is
+#'   a warning.
 #' * **Earth Engine** - the `download_*` functions, which need `reticulate`,
 #'   `googledrive`, a conda/Python environment with `earthengine-api`, and a
 #'   Google Earth Engine account with an approved Cloud project.
@@ -165,8 +168,9 @@ check_tier_protected_areas <- function() {
     )))
   } else {
     recs <- c(recs, list(setup_record(
-      tier, "wdpar", "missing",
-      detail = "wdpar is not installed",
+      tier, "wdpar", "warn",
+      detail = paste("wdpar is not installed (only used when the cache,",
+                     "global release and UNEP-WCMC services all fail)"),
       fix = 'install.packages("wdpar")'
     )))
   }
@@ -181,8 +185,8 @@ check_tier_protected_areas <- function() {
       )))
     } else {
       recs <- c(recs, list(setup_record(
-        tier, "Chromium browser", "missing",
-        detail = "no Chrome/Chromium browser found",
+        tier, "Chromium browser", "warn",
+        detail = "no Chrome/Chromium browser found (only needed by wdpar)",
         fix = "install Google Chrome or Chromium (used by wdpar to fetch data)"
       )))
     }
@@ -202,8 +206,8 @@ check_tier_protected_areas <- function() {
     )))
   } else {
     recs <- c(recs, list(setup_record(
-      tier, "libarchive", "missing",
-      detail = "archive package not installed",
+      tier, "libarchive", "warn",
+      detail = "archive package not installed (only needed by wdpar)",
       fix = paste0("install the libarchive system library ",
                    "(libarchive-dev / libarchive-devel), then ",
                    'install.packages("archive")')
