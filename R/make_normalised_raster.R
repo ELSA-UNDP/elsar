@@ -268,7 +268,7 @@ make_normalised_raster <- function(raster_in,
 
     gdal_options <- gdal_options[!is.na(gdal_options)]
 
-    terra::writeRaster(
+    .muffle_cog_warnings(terra::writeRaster(
       dat_aligned,
       glue::glue("{output_path}/{name_out}_{iso3}.tif"),
       gdal = gdal_options,
@@ -276,7 +276,7 @@ make_normalised_raster <- function(raster_in,
       NAflag = na_value,
       overwrite = TRUE,
       filetype = "COG"
-    )
+    ))
   }
 
   return(dat_aligned)
