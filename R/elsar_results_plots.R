@@ -14,12 +14,18 @@
 #' @param show_no_action Logical. Draw no-action cells (in their scheme colour,
 #'   light grey by default) so the planning area is visible. If `FALSE`, they
 #'   are left blank. Default `TRUE`.
-#' @param show_pas Logical. Outline existing protected areas, if `x` has a
+#' @param show_pas Logical. Draw existing protected areas, if `x` has a
 #'   protected-area layer. Default `TRUE`.
 #' @param pa_threshold Numeric. Cells with at least this protected-area cover
-#'   are outlined as protected. Default `0.5`.
-#' @param pa_colour Colour of the protected-area outline.
-#' @param pa_label Legend label of the protected-area outline.
+#'   are drawn as protected. Default `0.5`.
+#' @param pa_colour Colour of the protected-area outline (and fill).
+#' @param pa_label Legend label of the protected areas.
+#' @param pa_fill Logical. Fill existing protected areas with `pa_colour`
+#'   (default `TRUE`), matching their segment in the bar charts. The fill
+#'   covers the actions inside them; lower `pa_alpha` to keep those visible,
+#'   or use `FALSE` to only outline them.
+#' @param pa_alpha Numeric between 0 and 1. Opacity of the fill when
+#'   `pa_fill = TRUE`. Default `1`.
 #' @param title Optional plot title.
 #' @param legend Logical. Show the legend. Default `TRUE`.
 #' @param maxcell Integer. Maximum number of cells drawn; larger rasters are
@@ -44,7 +50,9 @@ elsar_plot_actions <- function(x,
                                show_pas = TRUE,
                                pa_threshold = 0.5,
                                pa_colour = "#005000",
-                               pa_label = "Existing PAs",
+                               pa_label = .txt("existing_pas"),
+                               pa_fill = TRUE,
+                               pa_alpha = 1,
                                title = NULL,
                                legend = TRUE,
                                maxcell = 5e5,
@@ -53,7 +61,15 @@ elsar_plot_actions <- function(x,
   assertthat::assert_that(assertthat::is.flag(graticule), !is.na(graticule),
     msg = "'graticule' must be TRUE or FALSE."
   )
+  assertthat::assert_that(assertthat::is.flag(pa_fill), !is.na(pa_fill),
+    msg = "'pa_fill' must be TRUE or FALSE."
+  )
+  assertthat::assert_that(
+    is.numeric(pa_alpha), length(pa_alpha) == 1, pa_alpha >= 0, pa_alpha <= 1,
+    msg = "'pa_alpha' must be a number between 0 and 1."
+  )
   scheme <- .scheme_from_actions(x)
+  pa_key_fill <- if (pa_fill) grDevices::adjustcolor(pa_colour, alpha.f = pa_alpha) else NA
   shown <- if (show_no_action) scheme else scheme[scheme$is_action, ]
   fill_values <- stats::setNames(scheme$colour, scheme$label)
   if (!show_no_action) fill_values[!scheme$is_action] <- "transparent"
@@ -77,7 +93,7 @@ elsar_plot_actions <- function(x,
       p <- p +
         ggplot2::geom_sf(
           data = pa_sf, ggplot2::aes(colour = pa_label),
-          fill = NA, linewidth = 0.4, inherit.aes = FALSE
+          fill = pa_key_fill, linewidth = 0.4, inherit.aes = FALSE
         ) +
         ggplot2::scale_colour_manual(values = stats::setNames(pa_colour, pa_label), name = NULL)
     }
@@ -93,6 +109,7 @@ elsar_plot_actions <- function(x,
 
   p +
     ggplot2::coord_sf(crs = terra::crs(x), datum = .map_datum(graticule), expand = FALSE) +
+    .graticule_scales(graticule, terra::ext(x)) +
     ggplot2::labs(title = title) +
     .results_theme(base_size) +
     (if (graticule) {
@@ -107,7 +124,7 @@ elsar_plot_actions <- function(x,
     if (legend) {
       ggplot2::guides(
         fill = ggplot2::guide_legend(order = 1, nrow = 1),
-        colour = ggplot2::guide_legend(order = 2, override.aes = list(fill = NA))
+        colour = ggplot2::guide_legend(order = 2, override.aes = list(fill = pa_key_fill))
       )
     } else {
       ggplot2::guides(fill = "none", colour = "none")
@@ -159,7 +176,7 @@ elsar_plot_action_bars <- function(summary,
                                    by = c("region", "action"),
                                    split_pa = isTRUE(attr(summary, "has_pa")),
                                    pa_colour = "#005000",
-                                   pa_label = "Existing PAs",
+                                   pa_label = .txt("existing_pas"),
                                    orientation = c("vertical", "horizontal"),
                                    title = NULL,
                                    base_size = 10) {
@@ -214,9 +231,9 @@ elsar_plot_protection_gap <- function(gap,
                                       metric = c("percent", "area"),
                                       sort = c("total", "none"),
                                       orientation = c("vertical", "horizontal"),
-                                      national_label = attr(gap, "national_label") %||% "National",
+                                      national_label = attr(gap, "national_label") %||% .txt("national"),
                                       colours = c(current = "#005000", new = "#06C723"),
-                                      labels = c(current = "Existing PAs", new = "New protection (ELSA)"),
+                                      labels = c(current = .txt("existing_pas"), new = .txt("new_protection")),
                                       title = NULL,
                                       base_size = 10) {
   needed <- c("region", "current", "new", "pct_current", "pct_new", "pct_total")
@@ -259,9 +276,9 @@ elsar_plot_protection_gap <- function(gap,
   totals <- data.frame(
     region = factor(regions, levels = region_levels), panel = panel, value = v_total,
     label = if (pct) {
-      scales::label_percent(scale = 1, accuracy = 0.1)(v_total)
+      .label_pct(accuracy = 0.1)(v_total)
     } else {
-      scales::label_number(scale_cut = scales::cut_short_scale(), accuracy = 0.1)(v_total)
+      .label_area(accuracy = if (.language() == "en") 0.1 else 1)(v_total)
     }
   )
 
@@ -291,7 +308,7 @@ elsar_plot_protection_gap <- function(gap,
   if (!(pct && "target_pct" %in% names(gap))) {
     p <- p + .value_scale(metric, axis = if (vertical) "y" else "x")
   }
-  value_title <- .metric_title(metric, units, "of planning area")
+  value_title <- .metric_title(metric, units, "pct_of_planning_area")
   p <- p + if (vertical) ggplot2::labs(x = NULL, y = value_title) else ggplot2::labs(x = value_title, y = NULL)
 
   if (pct && "target_pct" %in% names(gap)) {
@@ -343,7 +360,7 @@ elsar_plot_protection_gap <- function(gap,
 #' @param map_width Numeric between 0 and 1. Share of the figure width taken by
 #'   the map. Default `0.45`.
 #' @param title Plot title. Defaults to the region name.
-#' @param ... Passed to [elsar_plot_actions()] (e.g. `show_pas`,
+#' @param ... Passed to [elsar_plot_actions()] (e.g. `show_pas`, `pa_fill`,
 #'   `pa_threshold`, `maxcell`, `graticule = FALSE` for a frameless map).
 #' @param pa_colour,pa_label Colour and label of existing protected areas, used
 #'   by both the map and the bars.
@@ -370,7 +387,7 @@ elsar_plot_region <- function(x,
                               title = region,
                               ...,
                               pa_colour = "#005000",
-                              pa_label = "Existing PAs",
+                              pa_label = .txt("existing_pas"),
                               base_size = 10) {
   .check_summary(summary)
   metrics <- match.arg(metrics, c("percent", "area"), several.ok = TRUE)
@@ -479,27 +496,23 @@ elsar_plot_regions <- function(x, summary, regions, region_col, ...) {
 
 .wrap <- function(x, width = 14) stringr::str_wrap(x, width = width)
 
-.metric_title <- function(metric, units, what = "of region") {
+.metric_title <- function(metric, units, percent_key = "pct_of_region") {
   if (metric == "percent") {
-    paste("%", what)
+    .txt(percent_key)
   } else {
-    paste0("Area (", c(ha = "ha", km2 = "km\u00b2", m2 = "m\u00b2")[[units]], ")")
+    paste0(.txt("area"), " (", c(ha = "ha", km2 = "km\u00b2", m2 = "m\u00b2")[[units]], ")")
   }
 }
 
 .value_scale <- function(metric, axis = c("x", "y"), target = NULL) {
   axis <- match.arg(axis)
-  labels <- if (metric == "percent") {
-    scales::label_percent(scale = 1)
-  } else {
-    scales::label_number(scale_cut = scales::cut_short_scale())
-  }
+  labels <- if (metric == "percent") .label_pct() else .label_area()
   scale <- if (axis == "x") ggplot2::scale_x_continuous else ggplot2::scale_y_continuous
   # A target is labelled on the opposite axis, where it never overlaps a bar
   sec <- if (is.null(target)) {
     ggplot2::waiver()
   } else {
-    ggplot2::dup_axis(breaks = target, labels = paste0("Target\n", target, "%"), name = NULL)
+    ggplot2::dup_axis(breaks = target, labels = paste0(.txt("target"), "\n", .label_pct()(target)), name = NULL)
   }
   scale(labels = labels, expand = ggplot2::expansion(mult = c(0, 0.12)), sec.axis = sec)
 }
@@ -517,7 +530,12 @@ elsar_plot_regions <- function(x, summary, regions, region_col, ...) {
   if (!vertical) {
     return(ggplot2::theme(panel.grid.major.y = ggplot2::element_blank()))
   }
-  crowded <- n > 6 || (n > 4 && max(nchar(as.character(labels)), 0) > 12)
+  labels <- as.character(labels)
+  # Words longer than the wrap width (common in translated labels, e.g.
+  # "Restauración") cannot wrap, so neighbouring labels would overlap
+  words <- unlist(strsplit(labels, "\\s+"))
+  long_word <- n > 2 && max(nchar(words), 0) > 10
+  crowded <- n > 6 || (n > 4 && max(nchar(labels), 0) > 12) || long_word
   ggplot2::theme(
     panel.grid.major.x = ggplot2::element_blank(),
     axis.text.x = if (crowded) {

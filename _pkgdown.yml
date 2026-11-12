@@ -53,6 +53,7 @@ reference:
   - make_mangroves
   - make_normalised_raster
   - make_protected_areas
+  - fetch_wdpca
   - make_threatened_ecosystems_protection
   - make_threatened_ecosystems_restoration
   - make_underrepresented_ecosystems
@@ -156,6 +157,7 @@ reference:
   - elsar_map_furniture
   - elsar_map_caption
   - elsar_attribution
+  - elsar_labels
   - elsar_map_locator
 
 - title: Plotting utilities

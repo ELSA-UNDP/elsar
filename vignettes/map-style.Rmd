@@ -81,6 +81,11 @@ taller than wide), and the attribution moves from a boxed label on top of the
 data into a quiet caption. `graticule = FALSE` draws the map without the box
 and graticule.
 
+Degree labels, 0/1 legends and the caption's "Data:" follow the plot language
+set with `options(elsar.language = "es")` (see `?elsar_labels`), e.g.
+`79,5°O` in Spanish. On maps you build yourself with `elsar_theme_map()`, sf
+labels the graticule in English, since a theme cannot change the axis labels.
+
 ```{r modern}
 elsar_plot_static_raster(
   wad_npl,

@@ -24,6 +24,7 @@ guide_elsar_legend(nrow = 1)
 Other elsar style:
 \code{\link[=elsar_attribution]{elsar_attribution()}},
 \code{\link[=elsar_inks]{elsar_inks()}},
+\code{\link[=elsar_labels]{elsar_labels()}},
 \code{\link[=elsar_map_caption]{elsar_map_caption()}},
 \code{\link[=elsar_map_context]{elsar_map_context()}},
 \code{\link[=elsar_map_furniture]{elsar_map_furniture()}},

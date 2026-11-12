@@ -17,7 +17,7 @@ elsar_plot_region(
   title = region,
   ...,
   pa_colour = "#005000",
-  pa_label = "Existing PAs",
+  pa_label = .txt("existing_pas"),
   base_size = 10
 )
 
@@ -45,7 +45,7 @@ the map. Default \code{0.45}.}
 
 \item{title}{Plot title. Defaults to the region name.}
 
-\item{...}{Passed to \code{\link[=elsar_plot_actions]{elsar_plot_actions()}} (e.g. \code{show_pas},
+\item{...}{Passed to \code{\link[=elsar_plot_actions]{elsar_plot_actions()}} (e.g. \code{show_pas}, \code{pa_fill},
 \code{pa_threshold}, \code{maxcell}, \code{graticule = FALSE} for a frameless map).}
 
 \item{pa_colour, pa_label}{Colour and label of existing protected areas, used

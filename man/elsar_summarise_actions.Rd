@@ -9,7 +9,7 @@ elsar_summarise_actions(
   regions = NULL,
   region_col = NULL,
   units = c("ha", "km2", "m2"),
-  national_label = "National"
+  national_label = .txt("national")
 )
 }
 \arguments{
@@ -24,7 +24,8 @@ region stored as several rows), with a message.}
 
 \item{units}{Character. Area units: \code{"ha"} (default), \code{"km2"} or \code{"m2"}.}
 
-\item{national_label}{Character. Region name used for the national summary.}
+\item{national_label}{Character. Region name used for the national summary.
+Defaults to "National" in the current language (see \code{\link[=elsar_labels]{elsar_labels()}}).}
 }
 \value{
 A tibble with one row per region and action (including no-action

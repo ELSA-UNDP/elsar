@@ -25,8 +25,9 @@ devtools::load_all()                          # load the in-development package
 ```
 
 System libraries (GDAL, GEOS, PROJ, sqlite3, udunits, libxml2) come with `sf`
-and `terra`. The Tier B and Tier C workflows have further requirements — a
-Chromium browser and `libarchive` for protected areas, and a conda/Python
+and `terra`. The Tier B and Tier C workflows have further requirements — internet
+access or a copy of the global WDPCA release for protected areas (plus a
+Chromium browser and `libarchive` for the `wdpar` fallback), and a conda/Python
 environment plus a Google Earth Engine account for the `download_*` functions.
 See [SUPPORT.md](SUPPORT.md#what-we-support). You do **not** need any of those to
 work on the core package.

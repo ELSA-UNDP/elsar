@@ -11,7 +11,9 @@ elsar_plot_actions(
   show_pas = TRUE,
   pa_threshold = 0.5,
   pa_colour = "#005000",
-  pa_label = "Existing PAs",
+  pa_label = .txt("existing_pas"),
+  pa_fill = TRUE,
+  pa_alpha = 1,
   title = NULL,
   legend = TRUE,
   maxcell = 5e+05,
@@ -28,15 +30,23 @@ elsar_plot_actions(
 light grey by default) so the planning area is visible. If \code{FALSE}, they
 are left blank. Default \code{TRUE}.}
 
-\item{show_pas}{Logical. Outline existing protected areas, if \code{x} has a
+\item{show_pas}{Logical. Draw existing protected areas, if \code{x} has a
 protected-area layer. Default \code{TRUE}.}
 
 \item{pa_threshold}{Numeric. Cells with at least this protected-area cover
-are outlined as protected. Default \code{0.5}.}
+are drawn as protected. Default \code{0.5}.}
 
-\item{pa_colour}{Colour of the protected-area outline.}
+\item{pa_colour}{Colour of the protected-area outline (and fill).}
 
-\item{pa_label}{Legend label of the protected-area outline.}
+\item{pa_label}{Legend label of the protected areas.}
+
+\item{pa_fill}{Logical. Fill existing protected areas with \code{pa_colour}
+(default \code{TRUE}), matching their segment in the bar charts. The fill
+covers the actions inside them; lower \code{pa_alpha} to keep those visible,
+or use \code{FALSE} to only outline them.}
+
+\item{pa_alpha}{Numeric between 0 and 1. Opacity of the fill when
+\code{pa_fill = TRUE}. Default \code{1}.}
 
 \item{title}{Optional plot title.}
 

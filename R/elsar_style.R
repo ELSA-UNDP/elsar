@@ -92,7 +92,8 @@ elsar_inks <- function(dark = FALSE) {
 #' * `"actions"`: the established ELSA action colours, named by action
 #'   (Protect `#06C723`, Restore `#8803FC`, Manage `#FFEA00`, Urban Greening
 #'   `#FF0000`) plus the neutral "Do Nothing" grey. They match the defaults of
-#'   [elsar_action_scheme()].
+#'   [elsar_action_scheme()], and their names follow the language set with
+#'   the `elsar.language` option (see [elsar_labels()]).
 #' * `"categorical"`: six colour-blind-safe hues for unordered categories
 #'   (Okabe-Ito, reordered, without yellow and black). On a map every
 #'   category sits next to every other, so prefer four or fewer: the first
@@ -141,7 +142,7 @@ elsar_palette <- function(name = c("actions", "categorical", "sequential", "dive
   }
 
   pal <- switch(name,
-    actions = .elsar_action_colours,
+    actions = stats::setNames(unname(.elsar_action_colours), .action_names()),
     categorical = {
       n <- n %||% length(.elsar_categorical)
       if (n > length(.elsar_categorical)) {
@@ -670,7 +671,9 @@ scale_fill_elsar_d <- function(palette = c("categorical", "actions", "sequential
     guide <- if (palette %in% c("sequential", "diverging")) guide_elsar_steps() else guide_elsar_legend()
   }
   if (is.null(values) && palette == "actions") {
+    # Match the action names of the current language, and English ones
     values <- elsar_palette("actions")
+    values <- c(values, .elsar_action_colours[setdiff(names(.elsar_action_colours), names(values))])
   }
   if (!is.null(values)) {
     return(ggplot2::scale_fill_manual(

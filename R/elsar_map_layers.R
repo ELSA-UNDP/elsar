@@ -8,7 +8,8 @@
 #' use [elsar_map_caption()].
 #'
 #' @param source Character, optional. The data source(s), shown before the
-#'   attribution as "Data: ...".
+#'   attribution as "Data: ..." (in the language set with the
+#'   `elsar.language` option, see [elsar_labels()]).
 #' @param text Character. The attribution text. Default
 #'   `"UNBL | www.unbiodiversitylab.org"`.
 #'
@@ -28,7 +29,7 @@ elsar_attribution <- function(source = NULL, text = "UNBL | www.unbiodiversityla
     msg = "'text' must be a single character string."
   )
   parts <- c(
-    if (!is.null(source) && any(nzchar(source))) paste0("Data: ", paste(source, collapse = "; ")),
+    if (!is.null(source) && any(nzchar(source))) paste0(.txt("data"), ": ", paste(source, collapse = "; ")),
     if (nzchar(text)) text
   )
   paste(parts, collapse = "  \u00b7  ")

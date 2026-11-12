@@ -76,7 +76,28 @@ still running, a four-tile export and `aggregate_to_pus`).
 * The GEE download test called a function that does not exist
   (`elsar_download_gee_layer()`). It still needs `GEE_PROJECT` set to run.
 
+## New features
+
+* New `fetch_wdpca()` gets a country's WDPCA records from the first source
+  that works: a per-country cache, the monthly global release (zip or `.gdb`,
+  read without unzipping), the UNEP-WCMC ArcGIS services behind the Protected
+  Planet map, and finally `wdpar::wdpa_fetch()`. `make_protected_areas()` now
+  uses it, so a change to the Protected Planet website (which `wdpar` scrapes;
+  in November 2026 the download button's class changed and every new download
+  failed with "couldn't find element using query '.download__trigger'") no
+  longer stops a run. Pass the global release with the new
+  `make_protected_areas(wdpca_global = )` argument, the `elsar.wdpca_global`
+  option or the `ELSAR_WDPCA_GLOBAL` environment variable, and choose sources
+  with `wdpca_sources`. Results are cached as `WDPCA_<ISO3>_<MonYYYY>.gpkg`;
+  existing `wdpar` zips in `wdpa_downloads/` are still read, and a cache older
+  than the configured global release is refreshed. Transboundary sites
+  (`ISO3 = "DEU;DNK;NLD"`) are kept for each country they list.
+
 ## Bug fixes
+
+* Maps narrower than they are tall, such as a region in `elsar_plot_region()`,
+  draw fewer longitude lines, so their degree labels no longer run into each
+  other. Wide maps keep sf's own graticule.
 
 * `elsar_plot_distribution(categorical = TRUE, col_interest = ...)` failed
   because of a missing pipe; it now uses the given column. With
@@ -102,6 +123,23 @@ still running, a four-tile export and `aggregate_to_pus`).
   `future.seed = TRUE`. Results are unchanged.
 
 ## New features
+
+* Plots can be made in Spanish, French, Portuguese or Russian, the languages
+  of the documentation. Set `options(elsar.language = "es")` once and the
+  default action names, legend labels, axis titles, the national row of
+  summaries, 0/1 legends, map captions, graticule degree labels (`79,5°O`)
+  and number formats (`12.345`) follow it. English stays the default and its
+  output is unchanged. Change single pieces of text with
+  `options(elsar.labels = c(pct_of_region = "% de la provincia"))`;
+  `elsar_labels()` lists the keys. Action labels written by the ELSA tool in
+  any of these languages match the scheme, so an English-labelled raster
+  fits a Spanish scheme without a warning. Bar charts now tilt category
+  labels holding a word too long to wrap, common in translations.
+
+* `elsar_plot_actions()` and the regional panels now fill existing protected
+  areas with `pa_colour`, matching their segment in the bar charts, which
+  makes them easier to see. Use `pa_fill = FALSE` for the outline only, or
+  `pa_alpha` to keep the actions inside them visible.
 
 * A new, modern map style for every map elsar draws, exposed as small
   functions that return ordinary ggplot2 components (see

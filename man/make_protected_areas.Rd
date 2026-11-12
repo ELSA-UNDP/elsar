@@ -22,7 +22,9 @@ make_protected_areas(
   threshold = 0.1,
   force_update = FALSE,
   output_path = NULL,
-  return_sf = from_wdpca
+  return_sf = from_wdpca,
+  wdpca_global = NULL,
+  wdpca_sources = c("cache", "global", "api", "wdpar")
 )
 }
 \arguments{
@@ -30,8 +32,8 @@ make_protected_areas(
 
 \item{iso3}{Character. ISO3 country code (e.g., "CHL").}
 
-\item{from_wdpca}{Logical. If \code{TRUE}, downloads protected area data using the
-\pkg{wdpar} package. If \code{FALSE}, uses \code{sf_in}. Default is \code{TRUE}.}
+\item{from_wdpca}{Logical. If \code{TRUE}, gets WDPCA data with \code{\link[=fetch_wdpca]{fetch_wdpca()}}.
+If \code{FALSE}, uses \code{sf_in}. Default is \code{TRUE}.}
 
 \item{sf_in}{sf object or NULL. Protected area geometries to use when
 
@@ -84,6 +86,13 @@ If NULL, the raster is returned but not saved.}
 \item{return_sf}{Logical. If \code{TRUE}, returns the dissolved polygons alongside
 the raster (see Value). Defaults to \code{from_wdpca}, which keeps the original
 return types.}
+
+\item{wdpca_global}{Character or NULL. Path to the global WDPCA release
+(zip or \code{.gdb}), used when \code{from_wdpca = TRUE} and there is no cached
+copy. See \code{\link[=fetch_wdpca]{fetch_wdpca()}} for the defaults it falls back to.}
+
+\item{wdpca_sources}{Character vector. WDPCA sources to try, in order; see
+\code{\link[=fetch_wdpca]{fetch_wdpca()}}.}
 }
 \value{
 If \code{return_sf = FALSE} (the default when \code{from_wdpca = FALSE}), returns
@@ -96,8 +105,9 @@ returns a list with:
 }
 \description{
 Generates a raster of protected areas for a given country, aligned to the planning
-units. Data can be downloaded from the \href{https://www.protectedplanet.net/}{Protected Planet}
-database via the \pkg{wdpar} package, or provided as an \code{sf} object.
+units. Data come from the \href{https://www.protectedplanet.net/}{Protected Planet}
+WDPCA via \code{\link[=fetch_wdpca]{fetch_wdpca()}} (cache, global release, UNEP-WCMC services or
+\pkg{wdpar}), or are provided as an \code{sf} object.
 }
 \details{
 All geometries are reprojected, dissolved to avoid double-counting overlaps, and

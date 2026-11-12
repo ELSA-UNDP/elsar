@@ -105,6 +105,19 @@ Protected-area cover is used as a fraction, so a cell that is 30% protected
 contributes 30% of its area. To match a lock-in rule instead (e.g. cells at
 least 50% protected count as protected), set `pa_threshold = 0.5`.
 
+Use the **same layer the run locked in**, with the same threshold. Then no
+action other than Protect falls inside existing protected areas. If the bars
+show protected area under Manage, Restore or Do Nothing, the layer differs
+from the lock-in: another set of areas, or the same areas without the
+threshold. That can be what you want (e.g. to see what ELSA proposes inside
+community conservation areas that were not locked in), but then the split no
+longer reads as current and new protection.
+
+On maps, existing protected areas are filled in `pa_colour`, the colour of
+their segment in the bar charts. The fill covers the actions inside them; use
+`pa_fill = FALSE` to draw only their outline, or `pa_alpha` to make the fill
+see-through.
+
 ## 2. Summarise
 
 ```{r map, fig.height = 5.5}
@@ -224,3 +237,30 @@ titles or elsar's map furniture:
 ```{r optics, eval = FALSE}
 elsar_plot_actions(x) + elsar_plot_optics(include_north_scale = TRUE)
 ```
+
+### Plots in other languages
+
+Plots are in English by default. Set the language once and the default action
+names, legends, axis titles, the national row, numbers (`12.345`) and map
+degree labels (`79,5°O`) follow it. Spanish (`"es"`), French (`"fr"`),
+Portuguese (`"pt"`) and Russian (`"ru"`) are available:
+
+```{r language, fig.width = 10, fig.height = 4.5}
+old <- options(
+  elsar.language = "es",
+  # Change single pieces of text: here regions are provinces
+  elsar.labels = c(pct_of_region = "% de la provincia")
+)
+x_es <- elsar_prepare_actions(ex$actions, pas = ex$pas)
+s_es <- elsar_summarise_actions(x_es, ex$regions, region_col = "region_name")
+elsar_plot_region(x_es, s_es, ex$regions, "region_name", "Eastern Delta")
+options(old)
+```
+
+Prepare and summarise *after* setting the language: the default action names
+and the national row are set then. `elsar_labels()` lists every piece of text
+and its key. Labels you pass yourself, such as a custom scheme's `labels` or
+`pa_label`, are used as given.
+
+The written text of `elsar_results_report()` is in English for now; only its
+plots follow the language.

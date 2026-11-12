@@ -6,16 +6,18 @@
 \usage{
 elsar_action_scheme(
   values = 1:5,
-  labels = c("Protect", "Manage", "Restore", "Urban Greening", "Do Nothing"),
+  labels = .action_names(),
   colours = c("#06C723", "#FFEA00", "#8803FC", "#FF0000", "#E5E5E5"),
   groups = labels,
-  no_action = "Do Nothing"
+  no_action = .txt("do_nothing")
 )
 }
 \arguments{
 \item{values}{Numeric vector. The cell values used in the action raster.}
 
-\item{labels}{Character vector. A label for each value. Must be unique.}
+\item{labels}{Character vector. A label for each value. Must be unique.
+The default names are in the language set with the \code{elsar.language}
+option (see \code{\link[=elsar_labels]{elsar_labels()}}).}
 
 \item{colours}{Character vector. A colour (name or hex code) for each value.}
 
@@ -24,7 +26,7 @@ combine actions in bar charts (e.g. two restoration actions reported as
 one "Restore" group). Defaults to \code{labels}.}
 
 \item{no_action}{Character vector. Labels of the values that mean no action
-was assigned. They count towards a region's area but are not reported or
+was assigned. Defaults to the "Do Nothing" label of the current language. They count towards a region's area but are not reported or
 drawn as actions. Use \code{character(0)} if every value is an action.}
 }
 \value{

@@ -55,7 +55,7 @@ elsar_summarise_overlap <- function(x,
                                     region_col = NULL,
                                     measure = c("area", "sum"),
                                     units = c("ha", "km2", "m2"),
-                                    national_label = "National") {
+                                    national_label = .txt("national")) {
   scheme <- .scheme_from_actions(x)
   measure <- match.arg(measure)
   units <- match.arg(units)
@@ -164,10 +164,10 @@ elsar_plot_overlap <- function(overlap,
     ggplot2::aes(x = .data$pct_of_layer, y = .data$layer, fill = .data$action)
   }
   pct_scale <- (if (vertical) ggplot2::scale_y_continuous else ggplot2::scale_x_continuous)(
-    labels = scales::label_percent(scale = 1), breaks = seq(0, 100, 25),
+    labels = .label_pct(), breaks = seq(0, 100, 25),
     limits = c(0, 100 + 1e-6), expand = ggplot2::expansion(mult = c(0, 0.02))
   )
-  value_title <- "% of layer within planning area"
+  value_title <- .txt("pct_of_layer")
 
   p <- ggplot2::ggplot(d, mapping) +
     ggplot2::geom_col(
