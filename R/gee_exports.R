@@ -12,8 +12,32 @@
 
 .drive_find <- function(...) suppressMessages(googledrive::drive_find(...))
 
-.drive_download <- function(file, path) {
+.drive_download_once <- function(file, path) {
   suppressMessages(googledrive::drive_download(file, path = path, overwrite = TRUE))
+}
+
+# Download one Drive file, retrying network errors. A multi-GB export comes
+# down as several tiles, and one dropped connection (e.g. curl's "SSL_read:
+# decryption failed or bad record mac") used to stop the whole run. Waits
+# 10 s, 20 s, ... between attempts; options(elsar.drive_download_attempts)
+# sets the number of attempts (default 3).
+.drive_download <- function(file, path) {
+  attempts <- max(1L, as.integer(getOption("elsar.drive_download_attempts", 3L)))
+  label <- if (is.data.frame(file) && "name" %in% names(file)) file$name[1] else basename(path)
+  for (i in seq_len(attempts)) {
+    result <- tryCatch(.drive_download_once(file, path), error = function(e) e)
+    if (!inherits(result, "error")) return(invisible(result))
+    unlink(path)  # never leave a truncated file behind
+    if (i == attempts) {
+      stop(glue::glue(
+        "Could not download '{label}' from Google Drive after {attempts} attempt(s): ",
+        "{conditionMessage(result)}\nThe export is still in Drive; run again to retry."
+      ), call. = FALSE)
+    }
+    wait <- 10 * i
+    log_message("Download of '{label}' failed ({conditionMessage(result)}); retrying in {wait} s ({i}/{attempts - 1})")
+    .gee_sleep(wait)
+  }
 }
 
 .drive_trash <- function(file) suppressMessages(googledrive::drive_trash(file))
@@ -136,18 +160,25 @@
       stop(glue::glue("Earth Engine export '{name}' {tolower(state)}{detail}"), call. = FALSE)
     }
 
-    files <- .drive_export_files(name)
-    count <- nrow(files)
+    # A failed Drive listing (a dropped connection during a long wait) is
+    # skipped: the wait goes on and lists again at the next check
+    files <- tryCatch(.drive_export_files(name), error = function(e) {
+      log_message("Could not list '{name}' in Google Drive ({conditionMessage(e)}); checking again in {poll} s")
+      NULL
+    })
 
-    # Drive listings can lag behind the upload, so the files are taken only
-    # once their number has stayed the same between checks: after the task
-    # reports COMPLETED (one repeat), or, without a readable task state, two
-    stable_checks <- if (count > 0 && count == previous_count) stable_checks + 1 else 0
-    previous_count <- count
-    needed <- if (!is.na(state)) 1 else 2
-    if (count > 0 && (is.na(state) || state == "COMPLETED") && stable_checks >= needed) {
-      log_message("Export '{name}' ready: {count} file(s)")
-      return(files)
+    if (!is.null(files)) {
+      count <- nrow(files)
+      # Drive listings can lag behind the upload, so the files are taken only
+      # once their number has stayed the same between checks: after the task
+      # reports COMPLETED (one repeat), or, without a readable task state, two
+      stable_checks <- if (count > 0 && count == previous_count) stable_checks + 1 else 0
+      previous_count <- count
+      needed <- if (!is.na(state)) 1 else 2
+      if (count > 0 && (is.na(state) || state == "COMPLETED") && stable_checks >= needed) {
+        log_message("Export '{name}' ready: {count} file(s)")
+        return(files)
+      }
     }
 
     elapsed <- as.numeric(difftime(Sys.time(), start_time, units = "mins"))

@@ -244,3 +244,84 @@ test_that("download_lulc_data passes the year to ESRI and warns for ESA", {
   expect_warning(download_lulc_data(boundary, "TST", product = "esa_worldcover",
                                     gee_project = "none", year = 2020), "only available for 2021")
 })
+
+test_that("a Drive download retries network errors, then succeeds", {
+  tries <- 0
+  waits <- numeric(0)
+  local_mocked_bindings(
+    .gee_sleep = function(s) waits <<- c(waits, s),
+    .drive_download_once = function(file, path) {
+      tries <<- tries + 1
+      if (tries < 3) stop("OpenSSL SSL_read: error:0A000119:SSL routines::decryption failed or bad record mac")
+      writeLines("ok", path)
+      invisible(path)
+    }
+  )
+  path <- withr::local_tempfile(fileext = ".tif")
+  expect_no_error(.drive_download(dribble("exp.tif"), path))
+  expect_equal(tries, 3)
+  expect_equal(waits, c(10, 20))
+  expect_true(file.exists(path))
+})
+
+test_that("a Drive download that keeps failing is an error and leaves no file", {
+  tries <- 0
+  local_mocked_bindings(
+    .gee_sleep = function(s) NULL,
+    .drive_download_once = function(file, path) {
+      tries <<- tries + 1
+      writeLines("partial", path)
+      stop("Failure when receiving data from the peer")
+    }
+  )
+  withr::local_options(elsar.drive_download_attempts = 2)
+  path <- withr::local_tempfile(fileext = ".tif")
+  expect_error(.drive_download(dribble("exp-0000000000-0000032768.tif"), path),
+               "Could not download 'exp-0000000000-0000032768.tif' .* after 2 attempt")
+  expect_equal(tries, 2)
+  expect_false(file.exists(path))
+})
+
+test_that("one failed tile download is retried inside a full export download", {
+  failed <- FALSE
+  local_mocked_bindings(
+    .gee_sleep = function(s) NULL,
+    .drive_download_once = function(file, path) {
+      if (grepl("0000032768", file$name) && !failed) {
+        failed <<- TRUE
+        stop("SSL_read: decryption failed")
+      }
+      writeLines(file$name, path)
+    }
+  )
+  dir <- withr::local_tempdir()
+  files <- dribble(c("exp-0000000000-0000000000.tif", "exp-0000000000-0000032768.tif"))
+  paths <- .download_drive_export(files, dir)
+  expect_true(failed)
+  expect_true(all(file.exists(paths)))
+})
+
+test_that("GDAL's COG creation-option warnings are muffled, others are not", {
+  expect_no_warning(.muffle_cog_warnings({
+    warning("GDAL Message 6: driver GTiff does not support creation option OVERVIEWS")
+    warning("GDAL Message 6: driver MEM does not support creation option COMPRESS")
+    1
+  }))
+  expect_warning(.muffle_cog_warnings(warning("something else")), "something else")
+  expect_equal(.muffle_cog_warnings(42), 42)
+})
+
+test_that("a failed Drive listing during the wait is retried, not fatal", {
+  calls <- 0
+  local_mocked_bindings(
+    .gee_sleep = function(s) NULL,
+    .drive_find = function(...) {
+      calls <<- calls + 1
+      if (calls == 1) stop("Failure when receiving data from the peer")
+      dribble("exp.tif")
+    }
+  )
+  files <- .wait_for_export("exp", task = fake_task("COMPLETED"), wait_time = 1)
+  expect_equal(files$name, "exp.tif")
+  expect_gte(calls, 3)
+})

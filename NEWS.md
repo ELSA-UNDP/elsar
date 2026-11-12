@@ -2,8 +2,9 @@
 
 ## Earth Engine downloads
 
-These fixes are tested with mocked Drive and Earth Engine calls; they still
-need a live run.
+Tested with mocked Drive and Earth Engine calls, and live on Earth Engine
+(a fresh export, a cache hit, `force_download`, a rerun while the export was
+still running, a four-tile export and `aggregate_to_pus`).
 
 * **Exports are matched exactly in Drive.** A file now counts only if it is
   `<export>.tif` or one of its tiles (`<export>-0000000000-0000000000.tif`).
@@ -58,6 +59,18 @@ need a live run.
 * **`initialize_earthengine()` stops at once if Python is already running
   without `ee`.** Before, it went on to build a conda environment that
   reticulate could not switch to.
+* **Network errors no longer stop a download.** Each Google Drive download is
+  tried up to three times (`options(elsar.drive_download_attempts = )`), and a
+  failed Drive listing while waiting for an export is retried at the next
+  check. Before, one dropped connection (e.g. curl's "SSL_read: decryption
+  failed or bad record mac") stopped the run partway through a multi-tile
+  download. A download that keeps failing is an error that leaves no partial
+  file; the export stays in Drive for the next run.
+* **Quieter COG writes.** GDAL's harmless "driver MEM/GTiff does not support
+  creation option" warnings are muffled wherever elsar writes a COG
+  (`merge_tiles()`, `download_gee_layer()`, `download_lulc_proportions()`,
+  `make_normalised_raster()`); before, large merges and the proportions
+  printed them.
 * `download_lulc_class_proportion()` warns about arguments passed in `...`,
   which it never used.
 * The GEE download test called a function that does not exist

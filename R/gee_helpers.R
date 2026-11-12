@@ -633,11 +633,7 @@ download_from_drive <- function(drive_folder, file_prefix, local_path) {
     file_path <- file.path(local_path, matching_files$name[i])
 
     result <- tryCatch({
-      googledrive::drive_download(
-        googledrive::as_id(matching_files$id[i]),
-        path = file_path,
-        overwrite = TRUE
-      )
+      .drive_download(matching_files[i, ], file_path)
       log_message("Downloaded: {matching_files$name[i]}")
       TRUE
     }, error = function(e) {
@@ -747,9 +743,7 @@ merge_tiles <- function(local_path, output_file, datatype) {
   # a truncated file under the final name (which later runs would reuse)
   partial_file <- paste0(output_file, ".part.tif")
   on.exit(unlink(partial_file), add = TRUE)
-  # terra builds a COG through GDAL's in-memory driver, which warns that it
-  # ignores the creation options; those warnings are noise
-  withCallingHandlers(terra::writeRaster(
+  .muffle_cog_warnings(terra::writeRaster(
     r,
     partial_file,
     filetype = "COG",
@@ -762,11 +756,7 @@ merge_tiles <- function(local_path, output_file, datatype) {
       "OVERVIEWS=NONE"              # Let terra handle overviews
     ),
     overwrite = TRUE
-  ), warning = function(w) {
-    if (grepl("driver MEM does not support creation option", conditionMessage(w), fixed = TRUE)) {
-      invokeRestart("muffleWarning")
-    }
-  })
+  ))
   if (file.exists(output_file)) unlink(output_file)
   if (!file.rename(partial_file, output_file)) {
     stop(glue::glue("Could not move the merged raster to '{output_file}'."), call. = FALSE)
@@ -830,6 +820,17 @@ merge_tiles <- function(local_path, output_file, datatype) {
 #'   When `aggregate_to_pus = TRUE`, the result has attribute
 #'   `pre_aggregated = TRUE`, whether it was downloaded or read from an
 #'   existing file.
+#'
+#' @section Options:
+#' The Earth Engine export functions read these [options()]:
+#' * `elsar.gee_tmpdir`: the folder where an export's tiles are downloaded
+#'   and merged before the result is written to `output_dir`. Default is
+#'   `$HOME`, because a 10 m national export can be several GB, more than a
+#'   small `/tmp` holds. Each export gets its own subfolder, removed at the end.
+#' * `elsar.drive_download_attempts`: how many times to try each Google Drive
+#'   download before giving up (default 3, waiting 10 s, then 20 s, ...).
+#'   Network errors such as a dropped connection are retried; a failed Drive
+#'   listing while waiting for an export is retried at the next check.
 #'
 #' @seealso [download_esri_lulc_data()], [download_global_pasture_data()],
 #'   [download_lulc_data()]
@@ -1089,8 +1090,8 @@ download_gee_layer <- function(
     # interrupted write must not leave the unprojected file under this name
     partial_file <- paste0(output_file, ".part.tif")
     on.exit(unlink(partial_file), add = TRUE)
-    terra::writeRaster(output_raster, partial_file, overwrite = TRUE,
-                       filetype = "COG", gdal = c("COMPRESS=DEFLATE"))
+    .muffle_cog_warnings(terra::writeRaster(output_raster, partial_file, overwrite = TRUE,
+                                            filetype = "COG", gdal = c("COMPRESS=DEFLATE")))
     unlink(output_file)
     file.rename(partial_file, output_file)
     output_raster <- terra::rast(output_file)
@@ -1618,6 +1619,8 @@ load_local_lulc_data <- function(
 #' `agricultural_areas_input`, `built_areas_input`, etc. parameters without
 #' additional local processing.
 #'
+#' @inheritSection download_gee_layer Options
+#'
 #' @seealso [download_lulc_data()], [get_lulc_class_value()]
 #'
 #' @export
@@ -1963,6 +1966,8 @@ download_lulc_class_proportion <- function(
 #' - Use `props$agriculture` for `agricultural_areas_input`
 #' - Use `props$built_area` for `built_areas_input`
 #' - Values are already 0-1 proportions, ready for threshold comparison
+#'
+#' @inheritSection download_gee_layer Options
 #'
 #' @seealso [download_lulc_data()], [get_lulc_classes()], [download_lulc_class_proportion()]
 #'
@@ -2325,8 +2330,8 @@ download_lulc_proportions <- function(
       # Reproject to PU CRS and save
       r <- terra::rast(temp_file)
       r <- terra::project(r, pus, method = "bilinear")
-      terra::writeRaster(r, output_file, overwrite = TRUE,
-                         filetype = "COG", gdal = c("COMPRESS=DEFLATE"))
+      .muffle_cog_warnings(terra::writeRaster(r, output_file, overwrite = TRUE,
+                                              filetype = "COG", gdal = c("COMPRESS=DEFLATE")))
       log_message("Downloaded: {cn}")
 
       attr(r, "pre_aggregated") <- TRUE
