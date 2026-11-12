@@ -71,42 +71,23 @@ make_underrepresented_ecosystems <- function(
     protected_areas_sf <- sf::st_transform(protected_areas_sf, sf::st_crs(ecosystems_sf))
   }
 
-  # Perform intersection (sequential)
-  protected_intersections <- list()
-  for (i in seq_len(nrow(protected_areas_sf))) {
-    pa <- protected_areas_sf[i, ]
-    try({
-      int <- sf::st_intersection(ecosystems_sf, pa)
-      int <- sf::st_make_valid(int)
-      int$area_protected <- units::drop_units(sf::st_area(int))
-      protected_intersections[[i]] <- sf::st_set_geometry(int, NULL)[, c(group_attribute, "area_protected"), drop = FALSE]
-    }, silent = TRUE)
-  }
-
-  # Bind and summarize. With no protected areas (or no overlaps) there is
-  # nothing to bind, so start from an empty table with the expected columns.
-  empty_df <- tibble::tibble(area_protected = numeric(0))
-  empty_df[[group_attribute]] <- ecosystems_sf[[group_attribute]][0]
-  protected_df <- dplyr::bind_rows(
-    empty_df,
-    Filter(Negate(is.null), protected_intersections)
-  ) %>%
-    dplyr::group_by(.data[[group_attribute]]) %>%
-    dplyr::summarise(area_protected = sum(area_protected, na.rm = TRUE), .groups = "drop")
-
-  # Total ecosystem area by group
-  ecosystems_summary <- ecosystems_sf %>%
-    dplyr::group_by(.data[[group_attribute]]) %>%
-    dplyr::summarise(.groups = "drop") %>%
-    dplyr::mutate(area = units::drop_units(sf::st_area(.))) %>%
-    dplyr::left_join(protected_df, by = group_attribute) %>%
+  # Ecosystem and protected area per group, intersected tile by tile. A loop
+  # over every protected-area polygon took 85 min for Denmark (150,000
+  # polygons); by tile it takes about a minute. Both layers are dissolved
+  # first (by tile), so overlapping protected areas, or overlapping polygons
+  # of one ecosystem, are not counted twice.
+  tiles <- overlay_tiles(list(ecosystems_sf, protected_areas_sf), pus)
+  ov <- group_overlap_tiled(ecosystems_sf, group_attribute, protected_areas_sf, tiles)
+  gaps <- ov$areas %>%
     dplyr::mutate(
-      # An ecosystem no protected area overlaps has no row in protected_df:
-      # it is 0% protected (the full gap), not NA.
-      area_protected = dplyr::coalesce(area_protected, 0),
-      percent_protected = area_protected / area * 100,
-      target_gap = dplyr::if_else(percent_protected < target_percent, target_percent - percent_protected, 0)
+      # An ecosystem no protected area overlaps is 0% protected (the full gap)
+      area_protected = .data$area_overlap,
+      percent_protected = .data$area_protected / .data$area * 100,
+      target_gap = dplyr::if_else(.data$percent_protected < target_percent,
+                                  target_percent - .data$percent_protected, 0)
     )
+  ecosystems_summary <- ov$pieces %>%
+    dplyr::left_join(gaps, by = group_attribute)
 
   # Rasterize the gap as a share of the target: 0 where the target is met, 1
   # for an ecosystem with no protection. (Before 0.4.2 the gaps were rescaled

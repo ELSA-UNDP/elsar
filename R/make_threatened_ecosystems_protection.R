@@ -99,73 +99,28 @@ make_threatened_ecosystems_protection <- function(
     terra::as.polygons(na.rm = TRUE) %>%
     sf::st_as_sf() %>%
     dplyr::filter(.[[1]] == 1) %>%
-    sf::st_make_valid() %>%
     # The mask is on the planning-unit grid: transform it to the ecosystems'
     # CRS (before 0.4.2 it was relabelled, giving an all-NA layer whenever the
     # ecosystems were in another CRS)
+    sf::st_make_valid() %>%
     sf::st_transform(sf::st_crs(ecosystems_sf)) %>%
     sf::st_cast("POLYGON")
 
+  # Intact area per ecosystem, intersected tile by tile (both layers
+  # dissolved by tile first). Replaces a whole-layer union of the ecosystems
+  # and an intersection of every ecosystem with every intact-area polygon.
   log_message("Calculating intact areas within each ecosystem...")
+  tiles <- overlay_tiles(list(ecosystems_sf, non_intact_areas), pus)
+  # The mask polygons come from one raster value, so they cannot overlap
+  ov <- group_overlap_tiled(ecosystems_sf, group_attribute, non_intact_areas, tiles,
+                            y_disjoint = TRUE)
 
-  # Setup parallel processing
-  if (!requireNamespace("future.apply", quietly = TRUE)) stop("Please install the 'future.apply' package.")
-  if (!requireNamespace("progressr", quietly = TRUE)) stop("Please install the 'progressr' package.")
-
-  n_cores <- parallel::detectCores(logical = FALSE)
-  n_workers <- max(1, floor(n_cores / 2))
-
-  old_plan <- future::plan()
-  on.exit(future::plan(old_plan), add = TRUE)
-
-  if (.Platform$OS.type == "unix" && !interactive()) {
-    future::plan(future::multicore, workers = n_workers)
-  } else {
-    future::plan(future::multisession, workers = n_workers)
-  }
-
-  progressr::handlers("txtprogressbar")
-
-  # Split ecosystems into list of single-row sf objects
-  eco_list <- split(ecosystems_sf, seq_len(nrow(ecosystems_sf)))
-
-  # Calculate intact area for each ecosystem polygon
-  ecosystems_intact_area_list <- progressr::with_progress({
-    p <- progressr::progressor(along = eco_list)
-
-    future.apply::future_lapply(eco_list, function(eco) {
-      p()
-
-      tryCatch({
-        result <- sf::st_intersection(eco, non_intact_areas)
-        result <- sf::st_make_valid(result)
-        area_intact <- sum(units::drop_units(sf::st_area(result)))
-
-        data.frame(group = eco[[group_attribute]], area_intact = area_intact)
-      }, error = function(e) {
-        message("Error processing ecosystem ID ", eco[[group_attribute]], ": ", conditionMessage(e))
-        return(data.frame(group = eco[[group_attribute]], area_intact = NA))
-      })
-    }, future.seed = TRUE)
-  })
-
-  # Combine and aggregate intact area results
-  ecosystems_intact_area <- dplyr::bind_rows(Filter(Negate(is.null), ecosystems_intact_area_list)) %>%
-    dplyr::rename(!!group_attribute := group) %>%
-    dplyr::group_by(.data[[group_attribute]]) %>%
-    dplyr::summarise(area_intact = sum(area_intact, na.rm = TRUE), .groups = "drop")
-
-  # Summarize total area and compute threat score
   log_message("Summarising total ecosystem area and computing threat scores...")
-
-  eco_summary <- ecosystems_sf %>%
-    dplyr::group_by(.data[[group_attribute]]) %>%
-    dplyr::summarise(.groups = "drop") %>%
-    dplyr::mutate(area_total = units::drop_units(sf::st_area(.))) %>%
-    dplyr::left_join(ecosystems_intact_area, by = group_attribute) %>%
-    dplyr::mutate(
-      threat = dplyr::if_else(is.na(area_intact), 100, (1 - area_intact / area_total) * 100)
-    )
+  threat <- ov$areas %>%
+    dplyr::mutate(threat = (1 - .data$area_overlap / .data$area) * 100) %>%
+    dplyr::select(dplyr::all_of(c(group_attribute, "threat")))
+  eco_summary <- ov$pieces %>%
+    dplyr::left_join(threat, by = group_attribute)
 
   # Rasterize threat scores
   log_message("Rasterizing threat score per planning unit...")

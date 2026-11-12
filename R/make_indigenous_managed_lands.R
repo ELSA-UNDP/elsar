@@ -117,11 +117,10 @@ make_indigenous_managed_lands <- function(
       if (has_landmark) landmark else NULL,
       if (has_icca) icca else NULL
     ) %>%
-      sf::st_make_valid() %>%
-      dplyr::filter(!sf::st_is_empty(.)) %>%
-      dplyr::summarise()
+      dplyr::filter(!sf::st_is_empty(.))
 
-    indigenous_managed_lands <- exactextractr::coverage_fraction(pus, combined)[[1]] %>%
+    # Dissolved by tile (see dissolve_tiled()), which also repairs geometries
+    indigenous_managed_lands <- coverage_fraction_dissolved(pus, combined) %>%
       elsar::make_normalised_raster(pus = pus, iso3 = iso3)
 
   } else {

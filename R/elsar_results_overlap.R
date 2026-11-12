@@ -211,8 +211,7 @@ elsar_plot_overlap <- function(overlap,
       l <- sf::st_as_sf(l)
       if (nrow(l) == 0) return(terra::ifel(is.na(template), NA, 0))
       l <- sf::st_transform(l, terra::crs(template))
-      l <- sf::st_sf(geometry = sf::st_union(sf::st_make_valid(l)))
-      return(exactextractr::coverage_fraction(template, l)[[1]])
+      return(coverage_fraction_dissolved(template, l))
     }
     assertthat::assert_that(
       inherits(l, "SpatRaster"),

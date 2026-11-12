@@ -1,5 +1,43 @@
 # elsar (development version)
 
+## Faster protected areas and ecosystem overlays
+
+Large national polygon layers are now dissolved and intersected tile by tile,
+on a grid aligned to the planning units, instead of in one GEOS operation.
+Results are exact (Denmark's protected-area raster is identical cell for
+cell); only the time changes. Denmark's WDPCA (9 million vertices, 230,000
+small "§3 protected habitat" polygons overlapping Natura 2000 and marine
+sites) took 4.5 hours through the pipeline:
+
+| Step (Denmark) | Before | 1 core | 16 cores |
+|---|---|---|---|
+| `make_protected_areas()` | 46 min | 3.8 min | 65 s |
+| `make_underrepresented_ecosystems()` | about 85 min | 3.1 min | 64 s |
+| `make_protect_zone()` | 11 min (dissolve alone) | 2.3 min | 40 s |
+
+Inputs below 200,000 vertices (`options(elsar.tile_min_vertices)`) use a
+single tile, so small layers do not pay a per-tile cost.
+
+* Tiles run in parallel on Linux and macOS with `options(elsar.cores = n)`
+  (default 1). Windows runs them one after another.
+* Uses the tiled dissolve: `make_protected_areas()`, `make_protect_zone()`,
+  `make_underrepresented_ecosystems()`,
+  `make_threatened_ecosystems_protection()`, `make_kbas()`,
+  `make_wetlands_ramsar()`, `make_mangroves()`,
+  `make_indigenous_managed_lands()`, `get_iucn_forests()`, and protected
+  areas or overlap layers given as polygons to the results functions.
+* `make_protected_areas(return_sf = TRUE)` returns the dissolved protected
+  areas as one MULTIPOLYGON per tile (Denmark: about 200 rows) instead of
+  casting them to single polygons (150,000 rows), which made row-by-row
+  consumers take hours. The pieces do not overlap.
+* `make_underrepresented_ecosystems()` dissolves the protected areas and each
+  ecosystem group before measuring, so overlapping protected areas, or
+  overlapping polygons of one ecosystem, are no longer counted twice.
+* `make_threatened_ecosystems_protection()` no longer needs the `future.apply`
+  and `progressr` packages.
+* Not changed: `get_iucn_ecosystems()` (deprecated), and the outline
+  dissolves used for plotting.
+
 # elsar 0.5.0
 
 ## Values change: rebuild these layers

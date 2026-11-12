@@ -68,12 +68,8 @@ make_mangroves <- function(sf_in, # rename function name later
 
   # Re-project sf, turn into raster and normalise
   if (nrow(sf_in) > 0) {
-    sf_in <- sf_in %>%
-      sf::st_transform(crs = sf::st_crs(pus)) %>%
-      sf::st_make_valid() %>%
-      dplyr::summarise()
-
-    raster_out <- exactextractr::coverage_fraction(pus, sf_in)[[1]] %>%
+    # Dissolved by tile (see dissolve_tiled()), which also repairs geometries
+    raster_out <- coverage_fraction_dissolved(pus, sf_in) %>%
       elsar::make_normalised_raster(
         pus = pus,
         iso3 = iso3

@@ -151,13 +151,9 @@ make_kbas <- function(
       } else {
         log_message("Rasterising {nrow(polygons)} polygon features...")
         # Re-validate after transforming: reprojection can invalidate geometries
-        kba <- polygons %>%
-          sf::st_transform(sf::st_crs(pus)) %>%
-          sf::st_make_valid() %>%
-          dplyr::summarise() %>%
-          sf::st_make_valid()
-
-        kba <- exactextractr::coverage_fraction(pus, kba)[[1]] %>%
+        # Dissolved by tile (see dissolve_tiled()), which also repairs
+        # geometries invalidated by reprojecting
+        kba <- coverage_fraction_dissolved(pus, polygons) %>%
           make_normalised_raster(pus = pus, iso3 = iso3)
       }
     }
