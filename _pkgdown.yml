@@ -53,6 +53,7 @@ reference:
   - make_mangroves
   - make_normalised_raster
   - make_protected_areas
+  - fetch_wdpca
   - make_threatened_ecosystems_protection
   - make_threatened_ecosystems_restoration
   - make_underrepresented_ecosystems

@@ -2,7 +2,7 @@ Dataset;Dataset Name;R Function;Function Specifics;Comments;Tested;Since
 Crop Suitability Difference;overall_cropsuit_i_diff_19812010_20712100;make_normalised_raster();inverse = TRUE;"OG code: all vals > 0 = 0; vals = -vals";Y;0.0.1
 Degraded Areas;NA;make_degraded_areas();default;NA;Y;0.0.7
 Drought Risk;gDH19_oct2015;make_normalised_raster();default;none;Y;0.0.1
-Existing Protected Areas;Pulled from wdpar package;make_protected_areas();default;"buffer_points = TRUE needed when POINT geometry exists";Y;0.0.1
+Existing Protected Areas;WDPCA via fetch_wdpca() (cache, global release, UNEP-WCMC services or wdpar);make_protected_areas();default;"buffer_points = TRUE needed when POINT geometry exists";Y;0.0.1
 Flood Abatement Opportunities;NA;make_flood_abatement_opportunities();default;NA;Y;0.0.5
 Flood Risk;flood_risk_opportunities_global;make_normalised_raster();default;none;Y;0.0.1
 Forest Integrity Index;flii_earth-001_cog, global_fsii_2023;make_forest_integrity();NA;OG code: all vals < 0 = 0;Y;0.0.1

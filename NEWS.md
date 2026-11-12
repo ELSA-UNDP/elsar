@@ -1,5 +1,22 @@
 # elsar (development version)
 
+## New features
+
+* New `fetch_wdpca()` gets a country's WDPCA records from the first source
+  that works: a per-country cache, the monthly global release (zip or `.gdb`,
+  read without unzipping), the UNEP-WCMC ArcGIS services behind the Protected
+  Planet map, and finally `wdpar::wdpa_fetch()`. `make_protected_areas()` now
+  uses it, so a change to the Protected Planet website (which `wdpar` scrapes;
+  in November 2026 the download button's class changed and every new download
+  failed with "couldn't find element using query '.download__trigger'") no
+  longer stops a run. Pass the global release with the new
+  `make_protected_areas(wdpca_global = )` argument, the `elsar.wdpca_global`
+  option or the `ELSAR_WDPCA_GLOBAL` environment variable, and choose sources
+  with `wdpca_sources`. Results are cached as `WDPCA_<ISO3>_<MonYYYY>.gpkg`;
+  existing `wdpar` zips in `wdpa_downloads/` are still read, and a cache older
+  than the configured global release is refreshed. Transboundary sites
+  (`ISO3 = "DEU;DNK;NLD"`) are kept for each country they list.
+
 ## Bug fixes
 
 * Maps narrower than they are tall, such as a region in `elsar_plot_region()`,

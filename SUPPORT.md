@@ -36,17 +36,29 @@ locally-supplied rasters, coverage metrics, and plotting.
 
 ### Tier B — Protected areas (best-effort)
 
-`make_protected_areas(from_wdpca = TRUE)`, which downloads protected-area data
-from [Protected Planet](https://www.protectedplanet.net/) via the
-[`wdpar`](https://prioritizr.github.io/wdpar/) package.
+`make_protected_areas(from_wdpca = TRUE)`, which gets the
+[WDPCA](https://www.protectedplanet.net/) for a country with `fetch_wdpca()`.
+That tries, in order, and uses the first that works:
 
-- **Also needs** a Chromium-based browser and the `libarchive` system library on
-  your machine (these are requirements of `wdpar`, not of elsar directly).
-- Depends on Protected Planet's availability and on the layout of their download
-  pages, neither of which we control.
-- **We commit to:** documenting the requirements and forwarding genuine upstream
-  breakage to `wdpar`. **We cannot guarantee** availability. If this path is
-  blocked, supply your own protected-area layer with `from_wdpca = FALSE`.
+1. a per-country copy cached by an earlier run;
+2. the monthly global WDPCA release, if you point elsar at it
+   (`wdpca_global =`, `options(elsar.wdpca_global = )` or the
+   `ELSAR_WDPCA_GLOBAL` environment variable);
+3. the UNEP-WCMC ArcGIS services behind the Protected Planet map;
+4. the [`wdpar`](https://prioritizr.github.io/wdpar/) package, which scrapes
+   the Protected Planet website.
+
+- **Needs** internet access for sources 3 and 4 (none for 1 and 2). Only the
+  `wdpar` fallback needs a Chromium-based browser and the `libarchive` system
+  library.
+- Depends on UNEP-WCMC's services and release files, which we do not control.
+  The fallbacks mean one of them changing (as the Protected Planet download page
+  did in November 2026, breaking `wdpar`) no longer stops a run.
+- **We commit to:** keeping these sources working and documenting changes.
+  **We cannot guarantee** their availability. For runs that must not depend on
+  the internet, keep a copy of the global release and pass it as
+  `wdpca_global`, or supply your own protected-area layer with
+  `from_wdpca = FALSE`.
 
 ### Tier C — Earth Engine (supported, with a boundary)
 
