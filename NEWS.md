@@ -1,4 +1,4 @@
-# elsar (development version)
+# elsar 0.6.1
 
 ## Bug fixes
 
