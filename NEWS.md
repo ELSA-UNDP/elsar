@@ -1,5 +1,21 @@
 # elsar (development version)
 
+## Bug fixes
+
+* **Land-cover exports failed for planning units over about 320 m** (since
+  0.6.0). `download_lulc_proportions()` reads the 10 m pixels under each
+  planning unit, and Earth Engine refuses an export block that needs more than
+  8192 x 8192 input pixels: with its default 256-pixel blocks, 400 m planning
+  units needed 10240 ("Reprojection output too large (10240x10240 pixels)").
+  Exports now use blocks small enough for the planning-unit size (`shardSize`).
+  Only how the export is split changes, so values are unchanged. The same
+  applies to `download_gee_layer(aggregate_to_pus = TRUE)` and
+  `download_lulc_class_proportion()`.
+* **`download_lulc_class_proportion()` returned 0 or 1, not proportions.** It
+  reprojected the class mask to planning-unit size before averaging, which
+  picked one 10 m pixel per planning unit. It now averages first. (The pipeline
+  uses it only with `lulc.use_proportions: false`.)
+
 # elsar 0.6.0
 
 ## Values change: rebuild these layers
