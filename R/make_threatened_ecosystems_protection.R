@@ -122,6 +122,18 @@ make_threatened_ecosystems_protection <- function(
   eco_summary <- ov$pieces %>%
     dplyr::left_join(threat, by = group_attribute)
 
+  # The same score for every ecosystem cannot rank planning units; after
+  # rescaling it would only show where the ecosystem polygons are
+  uniq <- unique(round(threat$threat, 6))
+  if (length(uniq) == 1) {
+    warn_uninformative(
+      "Threatened ecosystems",
+      paste0("all ", nrow(threat), " ecosystem(s) are ", uniq,
+             "% non-intact (integrity below the ",
+             if (integrity_type == "eii") "global median" else "intact class", ").")
+    )
+  }
+
   # Rasterize threat scores
   log_message("Rasterizing threat score per planning unit...")
   threat_raster <- elsar::exact_rasterise(

@@ -94,10 +94,19 @@ make_underrepresented_ecosystems <- function(
   # to 0-1 across ecosystems, so the largest gap became 1 however small it
   # was, and a region with a single ecosystem became a constant 1.)
   no_pas <- nrow(protected_areas_sf) == 0 || all(sf::st_is_empty(protected_areas_sf))
+  uniq_gap <- unique(round(gaps$target_gap, 6))
   if (no_pas) {
-    warning("No protected areas: every ecosystem is 0% protected, so the ",
-            "representation gap is uniform (", target_percent, "%) and the ",
-            "layer carries no information for prioritisation.", call. = FALSE)
+    warn_uninformative(
+      "Underrepresented ecosystems",
+      paste0("there are no protected areas, so every ecosystem is 0% protected ",
+             "and the representation gap is uniform (", target_percent, "%).")
+    )
+  } else if (length(uniq_gap) == 1) {
+    warn_uninformative(
+      "Underrepresented ecosystems",
+      paste0("all ", nrow(gaps), " ecosystem(s) have the same representation gap (",
+             round(uniq_gap, 2), " percentage points).")
+    )
   }
   log_message("Rasterizing the largest target gap per planning unit...")
   underrepresented_ecosystems <- elsar::exact_rasterise(

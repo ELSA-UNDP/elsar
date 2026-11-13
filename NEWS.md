@@ -38,6 +38,15 @@ single tile, so small layers do not pay a per-tile cost.
   overlapping polygons of one ecosystem, are no longer counted twice.
 * `make_threatened_ecosystems_protection()` no longer needs the `future.apply`
   and `progressr` packages.
+* `make_threatened_ecosystems_protection()` and
+  `make_underrepresented_ecosystems()` warn when every ecosystem gets the same
+  score, so the layer cannot rank planning units. The warning has class
+  `elsar_uninformative_layer`, so callers can catch it. In Denmark, for
+  example, both WWF ecoregions lie entirely below the global EII median. The
+  layer was then a constant 1 inside the ecoregion polygons and 0 in coastal
+  gaps, which the pipeline saved as a binary "Inside/Outside" layer.
+* Tiled overlays log their progress (for example "Dissolving protected areas:
+  105/207 tiles (51%), 29 s"), so long runs no longer look stuck.
 * Not changed: `get_iucn_ecosystems()` (deprecated), and the dissolves of
   study-area outlines and regions used for plotting.
 

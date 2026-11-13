@@ -113,9 +113,13 @@ test_that("make_underrepresented_ecosystems() counts overlapping PAs once", {
     crs = "EPSG:3857"))
   sq <- sf::st_polygon(list(rbind(c(0, 0), c(30, 0), c(30, 60), c(0, 60), c(0, 0))))
   pa <- sf::st_sf(geometry = sf::st_sfc(sq, sq, crs = "EPSG:3857")) # same 30% twice
-  r <- suppressMessages(make_underrepresented_ecosystems(eco, "eco_id", target_percent = 50,
-                                                         protected_areas_sf = pa, pus = pus,
-                                                         iso3 = "TST"))
+  # One ecosystem cannot rank planning units, so it is also flagged
+  expect_warning(
+    r <- suppressMessages(make_underrepresented_ecosystems(eco, "eco_id", target_percent = 50,
+                                                           protected_areas_sf = pa, pus = pus,
+                                                           iso3 = "TST")),
+    class = "elsar_uninformative_layer"
+  )
   # 30% protected, target 50%: gap 20 / 50 = 0.4 (0 gap if counted twice)
   expect_equal(unique(stats::na.omit(terra::values(r)[, 1])), 0.4, tolerance = 1e-6)
 })
@@ -220,6 +224,20 @@ test_that("make_protected_areas() returns seamless single polygons", {
                                                return_sf = TRUE))
   expect_true(all(sf::st_geometry_type(res$sf) == "POLYGON"))
   expect_equal(sum(lengths(sf::st_relate(res$sf, res$sf, pattern = "F***1****"))), 0)
+})
+
+test_that("threatened ecosystems with one threat score are flagged as uninformative", {
+  pus <- tile_pus()
+  sq <- function(x0, x1) sf::st_polygon(list(rbind(c(x0, 0), c(x1, 0), c(x1, 60), c(x0, 60), c(x0, 0))))
+  eco <- sf::st_sf(eco_id = c("a", "b"),
+                   geometry = sf::st_sfc(sq(0, 50), sq(50, 100), crs = "EPSG:3857"))
+  degraded <- terra::rast(pus, vals = 1) # everything degraded: both 100%
+  expect_warning(
+    suppressMessages(make_threatened_ecosystems_protection(
+      eco, "eco_id", pus = pus, boundary_layer = eco, integrity_raster = degraded,
+      integrity_type = "degraded", iso3 = "TST")),
+    class = "elsar_uninformative_layer"
+  )
 })
 
 options(old_tile_opt)

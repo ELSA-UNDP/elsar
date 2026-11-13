@@ -947,3 +947,23 @@ get_binary_layers <- function(raster_stack) {
     }
   })
 }
+
+#' Warn that a layer carries no information for prioritisation
+#'
+#' Raised when every ecosystem gets the same score, so the layer cannot rank
+#' planning units (e.g. Denmark: both WWF ecoregions are 100% below the
+#' global EII median). The warning has class `elsar_uninformative_layer`, so
+#' callers such as the pipeline can catch it and leave the layer out.
+#'
+#' @param layer Character. Layer name, for the message.
+#' @param reason Character. Why the layer is uniform.
+#' @return Invisibly NULL; called for the warning.
+#' @keywords internal
+warn_uninformative <- function(layer, reason) {
+  msg <- paste0(layer, " carries no information for prioritisation: ", reason)
+  warning(structure(
+    class = c("elsar_uninformative_layer", "warning", "condition"),
+    list(message = msg, call = NULL, layer = layer)
+  ))
+  invisible(NULL)
+}
