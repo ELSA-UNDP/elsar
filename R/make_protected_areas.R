@@ -244,7 +244,8 @@ make_protected_areas <- function(
   # are repaired per tile, after reprojecting: st_transform() can make valid
   # polygons invalid (e.g. near-coincident shared edges).
   log_message("Dissolving {nrow(protected_areas)} protected-area feature(s) by tile")
-  protected_areas <- dissolve_tiled(protected_areas, pu_tile_grid(pus))
+  protected_areas <- dissolve_tiled(protected_areas, pu_tile_grid(pus),
+                                    label = "Dissolving protected areas")
 
   if (!any(!sf::st_is_empty(protected_areas))) {
     # No usable geometry: nothing passed the filters, nothing overlaps the

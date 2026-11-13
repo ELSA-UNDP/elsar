@@ -30,24 +30,54 @@ elsar_cores <- function() {
 
 #' Apply a function over tiles, in parallel where possible
 #'
-#' Errors in a tile are raised after all tiles finish, with the first message.
+#' Errors in a tile are raised with the first message. With a `label`, the
+#' tiles run in about ten batches and each batch logs its progress, so a long
+#' run shows it is moving (Denmark's protected areas take minutes on one core).
 #' @param X Vector to iterate over.
 #' @param FUN Function.
 #' @param cores Number of cores.
+#' @param label Character or NULL. What is being done, for progress messages
+#'   (e.g. "Dissolving protected areas"); NULL for no messages.
 #' @return List.
 #' @keywords internal
-tile_lapply <- function(X, FUN, cores = elsar_cores()) {
-  if (cores > 1 && .Platform$OS.type == "unix" && length(X) > 1) {
-    out <- parallel::mclapply(X, FUN, mc.cores = cores, mc.preschedule = FALSE)
+tile_lapply <- function(X, FUN, cores = elsar_cores(), label = NULL) {
+  parallel <- cores > 1 && .Platform$OS.type == "unix" && length(X) > 1
+  run <- function(idx) {
+    if (!parallel || length(idx) == 1) return(lapply(X[idx], FUN))
+    out <- parallel::mclapply(X[idx], FUN, mc.cores = cores, mc.preschedule = FALSE)
     bad <- vapply(out, inherits, logical(1), what = "try-error")
     if (any(bad)) {
       stop("tiled overlay failed in ", sum(bad), " tile(s): ",
            conditionMessage(attr(out[bad][[1]], "condition")), call. = FALSE)
     }
     out
-  } else {
-    lapply(X, FUN)
   }
+  n <- length(X)
+  if (is.null(label) || n <= 1) return(run(seq_len(n)))
+
+  # Batches of about a tenth, but at least one tile per core
+  size <- max(if (parallel) cores else 1L, ceiling(n / 10))
+  batches <- split(seq_len(n), ceiling(seq_len(n) / size))
+  start <- Sys.time()
+  log_message("{label}: {n} tile(s) on {if (parallel) cores else 1} core(s)...")
+  out <- vector("list", n)
+  done <- 0L
+  for (b in batches) {
+    out[b] <- run(b)
+    done <- done + length(b)
+    elapsed <- format_elapsed(start)
+    log_message("{label}: {done}/{n} tiles ({round(100 * done / n)}%), {elapsed}")
+  }
+  out
+}
+
+#' Time since `start`, for progress messages
+#' @param start POSIXct.
+#' @return Character such as "42 s" or "3.5 min".
+#' @keywords internal
+format_elapsed <- function(start) {
+  s <- as.numeric(difftime(Sys.time(), start, units = "secs"))
+  if (s < 90) sprintf("%.0f s", s) else sprintf("%.1f min", s / 60)
 }
 
 #' A grid of square tiles covering a bounding box
@@ -183,6 +213,7 @@ polygonal_parts <- function(geom) {
 #' @keywords internal
 make_valid_chunked <- function(geom, cores = elsar_cores()) {
   n <- length(geom)
+  if (n >= 100) log_message("Repairing geometries of {n} feature(s)...")
   if (cores <= 1 || n < 2) return(polygonal_parts(sf::st_make_valid(geom)))
   # Several chunks per core so one detailed feature does not hold up the rest
   chunks <- split(seq_len(n), cut(seq_len(n), min(n, cores * 4), labels = FALSE))
@@ -205,11 +236,13 @@ make_valid_chunked <- function(geom, cores = elsar_cores()) {
 #' @param tiles Tile matrix ([make_tile_grid()] or [pu_tile_grid()]).
 #' @param by Column name in `x` to dissolve within, or NULL to dissolve all.
 #' @param cores Number of cores.
+#' @param label Progress label (see [tile_lapply()]).
 #' @return `sf` with one valid MULTIPOLYGON per non-empty tile (and group),
 #'   with the `by` column when given, in the CRS of `x`; 0 rows if nothing is
 #'   left.
 #' @keywords internal
-dissolve_tiled <- function(x, tiles, by = NULL, cores = elsar_cores()) {
+dissolve_tiled <- function(x, tiles, by = NULL, cores = elsar_cores(),
+                           label = "Dissolving polygons") {
   crs <- sf::st_crs(x)
   grp <- if (is.null(by)) rep(1L, NROW(x)) else x[[by]]
   empty <- sf::st_sf(geometry = sf::st_sfc(crs = crs))
@@ -251,7 +284,7 @@ dissolve_tiled <- function(x, tiles, by = NULL, cores = elsar_cores()) {
       out[[length(out) + 1]] <- list(g = g, wkb = sf::st_as_binary(sf::st_combine(u))[[1]])
     }
     out
-  }, cores = cores)
+  }, cores = cores, label = label)
 
   pieces <- unlist(pieces, recursive = FALSE)
   if (length(pieces) == 0) return(empty)
@@ -290,9 +323,11 @@ combine_pieces <- function(x) {
 #'   of [dissolve_tiled()]), or overlapping area is counted twice.
 #' @param tiles Tile matrix.
 #' @param cores Number of cores.
+#' @param label Progress label (see [tile_lapply()]).
 #' @return Data frame with columns `group` (named as in `x`) and `area`.
 #' @keywords internal
-overlap_area_tiled <- function(x, group, y, tiles, cores = elsar_cores()) {
+overlap_area_tiled <- function(x, group, y, tiles, cores = elsar_cores(),
+                               label = "Measuring overlaps") {
   xg <- sf::st_geometry(x)
   yg <- polygonal_only(sf::st_geometry(y))
   out <- data.frame(g = x[[group]][0], area = numeric(0))
@@ -324,7 +359,7 @@ overlap_area_tiled <- function(x, group, y, tiles, cores = elsar_cores()) {
       if (length(int) == 0) 0 else sum(units::drop_units(sf::st_area(int)))
     })
     data.frame(idx = ix, area = unlist(res))
-  }, cores = cores)
+  }, cores = cores, label = label)
 
   parts <- do.call(rbind, Filter(Negate(is.null), parts))
   if (is.null(parts) || nrow(parts) == 0) return(out)
@@ -398,7 +433,8 @@ coverage_fraction_dissolved <- function(template, x) {
 #' @keywords internal
 group_overlap_tiled <- function(ecosystems, group, y, tiles, y_disjoint = FALSE,
                                 cores = elsar_cores()) {
-  pieces <- dissolve_tiled(ecosystems, tiles, by = group, cores = cores)
+  pieces <- dissolve_tiled(ecosystems, tiles, by = group, cores = cores,
+                           label = "Dissolving ecosystems")
   total <- stats::aggregate(units::drop_units(sf::st_area(pieces)),
                             by = list(pieces[[group]]), FUN = sum)
   names(total) <- c(group, "area")
@@ -406,7 +442,8 @@ group_overlap_tiled <- function(ecosystems, group, y, tiles, y_disjoint = FALSE,
     NULL
   } else {
     y_pieces <- if (y_disjoint) y else dissolve_tiled(y, tiles, cores = cores)
-    overlap_area_tiled(pieces, group, y_pieces, tiles, cores = cores)
+    overlap_area_tiled(pieces, group, y_pieces, tiles, cores = cores,
+                       label = "Intersecting ecosystems")
   }
   total$area_overlap <- if (is.null(overlap)) 0 else {
     v <- overlap$area[match(total[[group]], overlap[[group]])]
@@ -478,6 +515,7 @@ merge_tile_seams <- function(x) {
   on_seam <- near(bb[, "xmin"], xs) | near(bb[, "xmax"], xs) |
     near(bb[, "ymin"], ys) | near(bb[, "ymax"], ys)
   if (!any(on_seam)) return(sf::st_sf(geometry = polys))
+  log_message("Merging {sum(on_seam)} polygon(s) cut by tile edges...")
   # The two sides of a seam are clipped separately, so their points on the
   # tile line can differ in the last bits, leaving hairline gaps that stop
   # them merging. Snap the seam polygons to a grid of about 9 significant

@@ -4,7 +4,13 @@
 \alias{dissolve_tiled}
 \title{Dissolve polygons tile by tile}
 \usage{
-dissolve_tiled(x, tiles, by = NULL, cores = elsar_cores())
+dissolve_tiled(
+  x,
+  tiles,
+  by = NULL,
+  cores = elsar_cores(),
+  label = "Dissolving polygons"
+)
 }
 \arguments{
 \item{x}{\code{sf} or \code{sfc} of polygons, in a projected CRS.}
@@ -14,6 +20,8 @@ dissolve_tiled(x, tiles, by = NULL, cores = elsar_cores())
 \item{by}{Column name in \code{x} to dissolve within, or NULL to dissolve all.}
 
 \item{cores}{Number of cores.}
+
+\item{label}{Progress label (see \code{\link[=tile_lapply]{tile_lapply()}}).}
 }
 \value{
 \code{sf} with one valid MULTIPOLYGON per non-empty tile (and group),

@@ -4,7 +4,7 @@
 \alias{tile_lapply}
 \title{Apply a function over tiles, in parallel where possible}
 \usage{
-tile_lapply(X, FUN, cores = elsar_cores())
+tile_lapply(X, FUN, cores = elsar_cores(), label = NULL)
 }
 \arguments{
 \item{X}{Vector to iterate over.}
@@ -12,11 +12,16 @@ tile_lapply(X, FUN, cores = elsar_cores())
 \item{FUN}{Function.}
 
 \item{cores}{Number of cores.}
+
+\item{label}{Character or NULL. What is being done, for progress messages
+(e.g. "Dissolving protected areas"); NULL for no messages.}
 }
 \value{
 List.
 }
 \description{
-Errors in a tile are raised after all tiles finish, with the first message.
+Errors in a tile are raised with the first message. With a \code{label}, the
+tiles run in about ten batches and each batch logs its progress, so a long
+run shows it is moving (Denmark's protected areas take minutes on one core).
 }
 \keyword{internal}

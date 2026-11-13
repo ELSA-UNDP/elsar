@@ -4,7 +4,14 @@
 \alias{overlap_area_tiled}
 \title{Area of overlap between groups of polygons and a dissolved layer, by tile}
 \usage{
-overlap_area_tiled(x, group, y, tiles, cores = elsar_cores())
+overlap_area_tiled(
+  x,
+  group,
+  y,
+  tiles,
+  cores = elsar_cores(),
+  label = "Measuring overlaps"
+)
 }
 \arguments{
 \item{x}{\code{sf} with a \code{group} column.}
@@ -17,6 +24,8 @@ of \code{\link[=dissolve_tiled]{dissolve_tiled()}}), or overlapping area is coun
 \item{tiles}{Tile matrix.}
 
 \item{cores}{Number of cores.}
+
+\item{label}{Progress label (see \code{\link[=tile_lapply]{tile_lapply()}}).}
 }
 \value{
 Data frame with columns \code{group} (named as in \code{x}) and \code{area}.

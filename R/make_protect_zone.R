@@ -167,7 +167,8 @@ make_protect_zone <- function(
   # dissolve_tiled() also repairs geometries (invalid after reprojecting).
   if (nrow(current_protected_areas) > 1) {
     current_protected_areas <- combine_pieces(
-      dissolve_tiled(current_protected_areas, pu_tile_grid(pus))
+      dissolve_tiled(current_protected_areas, pu_tile_grid(pus),
+                     label = "Dissolving protected areas")
     )
   } else if (nrow(current_protected_areas) == 1) {
     current_protected_areas <- sf::st_make_valid(current_protected_areas)
