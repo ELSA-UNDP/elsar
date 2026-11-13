@@ -766,6 +766,33 @@ merge_tiles <- function(local_path, output_file, datatype) {
   return(terra::rast(output_file))
 }
 
+#' Earth Engine block size for exporting an image aggregated with reduceResolution()
+#'
+#' Earth Engine computes an export in square blocks ("shards", 256 output
+#' pixels by default) and refuses any block whose input it would have to read
+#' at more than 8192 x 8192 native pixels ("Reprojection output too large").
+#' Aggregating 10 m land cover to planning units of r metres reads
+#' 256 * r / 10 native pixels per block side, so the default fails for planning
+#' units over about 320 m. A smaller block keeps the same arithmetic: only how
+#' the export is split changes, so the values are identical.
+#'
+#' @param target_scale Output pixel size (planning units), metres.
+#' @param native_scale Native pixel size of the source, metres.
+#' @param lat_stretch Extra input per output pixel when the export grid is not
+#'   EPSG:4326 (e.g. Mollweide planning units read from a degree-based source
+#'   at high latitude): `1 / cos(max |latitude|)`. 1 for EPSG:4326 exports.
+#' @param max_native Native pixels per block side to stay under (Earth Engine's
+#'   limit is 8192; the default keeps a margin).
+#' @return Integer block size for `shardSize`, between 1 and 256.
+#' @keywords internal
+#' @noRd
+.gee_shard_size <- function(target_scale, native_scale, lat_stretch = 1,
+                            max_native = 8000) {
+  ratio <- target_scale / native_scale * lat_stretch
+  if (!is.finite(ratio) || ratio <= 1) return(256L)
+  as.integer(max(1, min(256, floor(max_native / ratio))))
+}
+
 #' Download and Process a GEE Raster Layer into a Cloud-Optimized GeoTIFF
 #'
 #' Generic function for downloading any raster data from Google Earth Engine.
@@ -1048,13 +1075,18 @@ download_gee_layer <- function(
           mean = ee$Reducer$mean(),
           sum = ee$Reducer$sum()
         )
+        native_proj <- filtered_data$first()$projection()
         export_params$image <- composite$
-          setDefaultProjection(filtered_data$first()$projection())$
+          setDefaultProjection(native_proj)$
           reduceResolution(reducer = reducer, bestEffort = TRUE,
                            maxPixels = reticulate::r_to_py(65536L))$
           reproject(crs = ee$Projection("EPSG:4326")$atScale(pu_res[1]))
         export_params$crs <- "EPSG:4326"
         export_params$scale <- pu_res[1]
+        # Blocks small enough for Earth Engine's input limit (see .gee_shard_size)
+        export_params$shardSize <- .gee_shard_size(
+          pu_res[1], native_proj$nominalScale()$getInfo()
+        )
       } else {
         export_params$scale <- scale
       }
@@ -1850,12 +1882,16 @@ download_lulc_class_proportion <- function(
     # GEE's atScale() handles meter-to-degree conversion internally
     intermediate_projection <- ee$Projection("EPSG:4326")$atScale(pu_res[1])
 
-    proportion_raster <- binary_mask_clipped$reproject(
-      crs = intermediate_projection
-    )$reduceResolution(
-      reducer = ee$Reducer$mean(),
-      maxPixels = reticulate::r_to_py(65536L)
-    )
+    # Average the native pixels, then reproject. (Before 0.6.1 the mask was
+    # reprojected first, which sampled one native pixel per planning unit, so
+    # the "proportion" was 0 or 1.)
+    proportion_raster <- binary_mask_clipped$
+      setDefaultProjection(crs = "EPSG:4326", scale = native_scale)$
+      reduceResolution(
+        reducer = ee$Reducer$mean(),
+        bestEffort = TRUE,
+        maxPixels = reticulate::r_to_py(65536L)
+      )$reproject(crs = intermediate_projection)
 
     # Export will handle final reprojection to PU CRS via crs and crsTransform params
 
@@ -1884,7 +1920,14 @@ download_lulc_class_proportion <- function(
       crs = pu_crs,
       crsTransform = crs_transform,
       maxPixels = reticulate::r_to_py(1e13),
-      fileFormat = "GeoTIFF"
+      fileFormat = "GeoTIFF",
+      # Blocks small enough for Earth Engine's input limit; the planning-unit
+      # grid is projected, so a block reads more degree-based native pixels
+      # away from the equator (see .gee_shard_size)
+      shardSize = .gee_shard_size(
+        pu_res[1], native_scale,
+        lat_stretch = 1 / cos(min(max(abs(coords[, "Y"])), 85) * pi / 180)
+      )
     )
 
     # Submit the export, unless the same export is still running from an
@@ -2282,7 +2325,11 @@ download_lulc_proportions <- function(
           crs = "EPSG:4326",
           scale = pu_res[1],
           maxPixels = reticulate::r_to_py(1e13),
-          fileFormat = "GeoTIFF"
+          fileFormat = "GeoTIFF",
+          # Blocks small enough for Earth Engine's input limit (see
+          # .gee_shard_size); the default 256 failed for planning units over
+          # about 320 m
+          shardSize = .gee_shard_size(pu_res[1], native_scale_m)
         )
 
         task <- do.call(ee$batch$Export$image$toDrive, export_params)

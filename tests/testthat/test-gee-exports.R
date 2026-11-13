@@ -325,3 +325,22 @@ test_that("a failed Drive listing during the wait is retried, not fatal", {
   expect_equal(files$name, "exp.tif")
   expect_gte(calls, 3)
 })
+
+test_that(".gee_shard_size keeps each export block under Earth Engine's input limit", {
+  # Planning units up to ~312 m keep the default 256-pixel blocks
+  expect_equal(.gee_shard_size(225, 10), 256L)
+  expect_equal(.gee_shard_size(10, 10), 256L)
+  expect_equal(.gee_shard_size(5, 10), 256L)
+  # 400 m from 10 m: 256 * 40 = 10240 native pixels failed; 200 * 40 = 8000 is under 8192
+  expect_equal(.gee_shard_size(400, 10), 200L)
+  expect_equal(.gee_shard_size(900, 10), 88L)
+  for (r in c(330, 400, 700, 900, 2000, 5000)) {
+    expect_lte(.gee_shard_size(r, 10) * r / 10, 8192)
+  }
+  # A projected grid at high latitude reads more degree-based pixels per block
+  expect_lt(.gee_shard_size(400, 10, lat_stretch = 1 / cos(60 * pi / 180)),
+            .gee_shard_size(400, 10))
+  # Never below 1 or above 256, and safe on odd input
+  expect_equal(.gee_shard_size(1e6, 10), 1L)
+  expect_equal(.gee_shard_size(NA, 10), 256L)
+})
