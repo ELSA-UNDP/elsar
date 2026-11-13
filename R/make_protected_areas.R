@@ -213,14 +213,9 @@ make_protected_areas <- function(
   }
   n_filtered <- nrow(protected_areas)
 
-  # If geometry includes POINT/MULTIPOINT, buffer or filter. Each branch drops
-  # features outside the planning-unit extent before dissolving, so a national
+  # If geometry includes POINT/MULTIPOINT, buffer or filter. Features outside
+  # the planning-unit extent are dropped before dissolving, so a national
   # dataset used for a small (e.g. sub-national) study area stays cheap.
-  # Geometries must be re-validated AFTER reprojecting and BEFORE dissolving:
-  # st_transform() can turn polygons that were valid in the source CRS invalid
-  # (e.g. near-coincident shared edges), and dissolving those throws a GEOS
-  # TopologyException ("side location conflict"). The load-time st_make_valid()
-  # in filter_sf() runs in the source CRS, so it cannot prevent this.
   geom_type <- sf::st_geometry_type(protected_areas)
 
   if (any(geom_type %in% c("POINT", "MULTIPOINT"))) {
@@ -231,30 +226,26 @@ make_protected_areas <- function(
         area_crs = area_calc_crs,
         area_attr = area_column,
         nQuadSegs = n_quad_segs
-      ) %>%
-        sf::st_transform(sf::st_crs(pus)) %>%
-        crop_to_extent(pus) %>%
-        sf::st_make_valid() %>%
-        dissolve_sf()
+      )
     } else {
-      # Dissolve here too: coverage_fraction(...)[[1]] below reads only the
-      # first feature, so undissolved polygons kept a single protected area
-      # (before 0.4.2)
       protected_areas <- protected_areas %>%
-        dplyr::filter(sf::st_is(., c("POLYGON", "MULTIPOLYGON"))) %>%
-        sf::st_transform(sf::st_crs(pus)) %>%
-        crop_to_extent(pus) %>%
-        sf::st_make_valid() %>%
-        dissolve_sf()
+        dplyr::filter(sf::st_is(., c("POLYGON", "MULTIPOLYGON")))
     }
-  } else {
-    # If already polygonal, reproject and dissolve
-    protected_areas <- protected_areas %>%
-      sf::st_transform(sf::st_crs(pus)) %>%
-      crop_to_extent(pus) %>%
-      sf::st_make_valid() %>%
-      dissolve_sf()
   }
+  protected_areas <- protected_areas %>%
+    sf::st_transform(sf::st_crs(pus)) %>%
+    crop_to_extent(pus)
+
+  # Dissolve overlaps tile by tile on a grid aligned to the planning units.
+  # One st_union() of a detailed national layer can take hours (Denmark: 17
+  # min for the union plus 28 min to validate it); tiles keep each GEOS call
+  # small and can run in parallel (options(elsar.cores = n)). The pieces do
+  # not overlap and no PU straddles two tiles, so coverage is exact. Geometries
+  # are repaired per tile, after reprojecting: st_transform() can make valid
+  # polygons invalid (e.g. near-coincident shared edges).
+  log_message("Dissolving {nrow(protected_areas)} protected-area feature(s) by tile")
+  protected_areas <- dissolve_tiled(protected_areas, pu_tile_grid(pus),
+                                    label = "Dissolving protected areas")
 
   if (!any(!sf::st_is_empty(protected_areas))) {
     # No usable geometry: nothing passed the filters, nothing overlaps the
@@ -271,7 +262,9 @@ make_protected_areas <- function(
   } else {
     # Rasterize with coverage fraction
     log_message("Generating raster from dissolved protected area geometries")
-    protected_areas_raster <- exactextractr::coverage_fraction(pus, protected_areas)[[1]]
+    protected_areas_raster <- exactextractr::coverage_fraction(
+      pus, combine_pieces(protected_areas)
+    )[[1]]
 
     # Binary conversion if requested
     if (binary) {
@@ -296,37 +289,16 @@ make_protected_areas <- function(
     )
   }
 
-  # Return the dissolved polygons alongside the raster (for reuse)
+  # Return the dissolved polygons alongside the raster (for reuse), with the
+  # tile cuts merged so they draw without seams
   if (return_sf) {
-    protected_areas_sf <- if (nrow(protected_areas) > 0) {
-      sf::st_cast(protected_areas, "POLYGON")
-    } else {
-      protected_areas
-    }
     return(list(
       raster = protected_areas_raster,
-      sf = protected_areas_sf
+      sf = merge_tile_seams(protected_areas)
     ))
   }
 
   return(protected_areas_raster)
-}
-
-
-#' Dissolve all features into one, keeping a 0-row input as 0 rows
-#'
-#' `dplyr::summarise()` errors on a 0-row `sf`, which is what a country with no
-#' usable protected areas produces.
-#'
-#' @param x `sf` object.
-#'
-#' @return `x` dissolved into a single valid feature, or `x` if it has 0 rows.
-#' @keywords internal
-dissolve_sf <- function(x) {
-  if (nrow(x) == 0) return(x)
-  x %>%
-    dplyr::summarise() %>%
-    sf::st_make_valid()
 }
 
 

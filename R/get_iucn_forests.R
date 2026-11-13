@@ -74,14 +74,9 @@ get_iucn_forests <- function(
     warning("No forest ecosystems remain after filtering. Returning 0-valued raster.")
     forest_raster <- terra::ifel(pus == 1, 0, NA)
   } else {
-    # Dissolve into a single geometry
-    iucn_get_sf <- iucn_get_sf %>%
-      dplyr::ungroup() %>%
-      dplyr::summarise()
-
-    # Compute coverage fraction
+    # Coverage of the dissolved forests, dissolved by tile in the PU CRS
     log_message("Calculating forest coverage fractions...")
-    forest_raster <- exactextractr::coverage_fraction(pus, iucn_get_sf)[[1]] %>%
+    forest_raster <- coverage_fraction_dissolved(pus, dplyr::ungroup(iucn_get_sf)) %>%
       elsar::make_normalised_raster(
         pus = pus,
         iso3 = iso3

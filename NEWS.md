@@ -1,3 +1,84 @@
+# elsar 0.6.0
+
+## Values change: rebuild these layers
+
+Two ecosystem layers change values without any error. Rebuild them for
+countries built with 0.5.0 or earlier:
+
+* **Underrepresented ecosystems** (`make_underrepresented_ecosystems()`):
+  * planning units outside every ecosystem polygon now take the nearest
+    ecosystem's gap instead of 0 ("no gap");
+  * overlapping protected areas, and overlapping polygons of one ecosystem,
+    are now counted once (before, overlaps were counted twice).
+* **Threatened ecosystems** (`make_threatened_ecosystems_protection()`, and so
+  the restoration layer built from it): planning units outside every ecosystem
+  polygon now take the nearest ecosystem's score instead of 0 ("not
+  threatened").
+
+The planning units outside every polygon are coasts and small islands that
+coarse ecosystem polygons miss: 71,543 of Denmark's 869,106.
+
+Nothing else changes values. The tiled overlays below give the same polygons
+as before; Denmark's protected-area raster is identical cell for cell.
+
+## Faster protected areas and ecosystem overlays
+
+Large national polygon layers are now dissolved and intersected tile by tile,
+on a grid aligned to the planning units, instead of in one GEOS operation.
+Denmark's WDPCA (9 million vertices, 230,000 small "§3 protected habitat"
+polygons overlapping Natura 2000 and marine sites) took 4.5 hours through the
+pipeline; the full run now takes 14 minutes.
+
+| Step (Denmark) | Before | 1 core | 16 cores |
+|---|---|---|---|
+| `make_protected_areas()` | 46 min | 4.2 min | 80 s |
+| `make_underrepresented_ecosystems()` | about 85 min | 2.8 min | 47 s |
+| `make_protect_zone()` | 11 min (dissolve alone) | 2.3 min | 43 s |
+
+* Tiles run in parallel on Linux and macOS with `options(elsar.cores = n)`
+  (default 1). Windows runs them one after another.
+* Inputs below 200,000 vertices (`options(elsar.tile_min_vertices)`) use a
+  single tile, so small layers do not pay a per-tile cost.
+* Uses the tiled overlays: `make_protected_areas()`, `make_protect_zone()`,
+  `make_underrepresented_ecosystems()`,
+  `make_threatened_ecosystems_protection()`, `make_kbas()`,
+  `make_wetlands_ramsar()`, `make_mangroves()`,
+  `make_indigenous_managed_lands()`, `get_iucn_forests()`,
+  `elsar_plot_extra_data(include_pas = )`, and protected areas or overlap
+  layers given as polygons to the results functions.
+* Tiled overlays log their progress (for example "Dissolving protected areas:
+  105/207 tiles (51%), 29 s"), so long runs no longer look stuck.
+* Not changed: `get_iucn_ecosystems()` (deprecated), and the dissolves of
+  study-area outlines and regions used for plotting.
+
+## New features
+
+* `make_threatened_ecosystems_protection()` and
+  `make_underrepresented_ecosystems()` warn when every ecosystem gets the same
+  score, so the layer cannot rank planning units. The warning has class
+  `elsar_uninformative_layer`, so callers can catch it; the pipeline then
+  leaves the layer out. In Denmark both WWF ecoregions lie entirely below the
+  global EII median, so the threatened layer was a constant 1 inside the
+  ecoregion polygons and 0 in coastal gaps.
+* `exact_rasterise(fill_nearest = TRUE)` gives planning units that no feature
+  covers the value of the nearest feature (default `FALSE`, as before).
+
+## Behaviour changes to know about
+
+* `make_protected_areas(return_sf = TRUE)` still returns single polygons with
+  no internal edges. Polygons cut by tile edges are merged back, so drawn
+  polygons show no tile lines.
+* `elsar_plot_extra_data(pas_look = "area")` draws overlapping protected areas
+  once instead of stacking their transparency.
+* `make_threatened_ecosystems_protection()` is documented correctly: its
+  values are rescaled to 0-1, not 0-100.
+
+## Dependencies
+
+* `make_threatened_ecosystems_protection()` no longer needs the
+  `future.apply` and `progressr` packages (still Suggests, for
+  `get_iucn_ecosystems()`).
+
 # elsar 0.5.0
 
 ## Values change: rebuild these layers

@@ -709,8 +709,7 @@ elsar_example_results <- function() {
       return(terra::ifel(is.na(template), NA, 0))
     }
     pas <- sf::st_transform(pas, terra::crs(template))
-    pas <- sf::st_sf(geometry = sf::st_union(sf::st_make_valid(pas)))
-    return(exactextractr::coverage_fraction(template, pas)[[1]])
+    return(coverage_fraction_dissolved(template, pas))
   }
 
   pa <- .read_raster_arg(pas, "pas")[[1]]

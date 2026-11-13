@@ -12,6 +12,7 @@ exact_rasterise(
   invert = FALSE,
   rescaled = TRUE,
   fun = mean,
+  fill_nearest = FALSE,
   cores = 4,
   max_exact_features = 1000
 )
@@ -31,6 +32,10 @@ exact_rasterise(
 
 \item{fun}{How overlapping features are combined: \code{mean} (default), \code{sum},
 \code{max} or \code{min}, as a function or a string.}
+
+\item{fill_nearest}{Logical. If \code{TRUE}, planning units that no feature
+covers get the value of the nearest feature (by planning-unit centre)
+instead of 0. Default \code{FALSE}.}
 
 \item{cores, max_exact_features}{Ignored since 0.4.2 (kept so existing calls
 still work).}
@@ -53,7 +58,10 @@ area-weighted totals or shares).
 \item \code{max}, \code{min}: the largest or smallest value among the features present.
 }
 
-Planning units with no feature are 0. Since 0.4.2 one
+Planning units with no feature are 0, or, with \code{fill_nearest = TRUE}, take
+the value of the nearest feature (e.g. coastal planning units just outside
+coarse ecosystem polygons, which would otherwise read as "no threat" or "no
+gap"). Since 0.4.2 one
 \code{\link[exactextractr:exact_extract]{exactextractr::exact_extract()}} pass handles any number of features with
 the same rule; before, \code{mean} averaged over \emph{all} features (including ones
 not touching the planning unit) and the method changed above 1,000 features.
