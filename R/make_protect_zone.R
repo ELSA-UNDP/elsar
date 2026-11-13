@@ -146,9 +146,7 @@ make_protect_zone <- function(
     sf::st_crs(current_protected_areas) <- sf::st_crs(pus)
   }
   if (nrow(current_protected_areas) > 0) {
-    current_protected_areas <- sf::st_make_valid(
-      sf::st_transform(current_protected_areas, sf::st_crs(pus))
-    )
+    current_protected_areas <- sf::st_transform(current_protected_areas, sf::st_crs(pus))
   }
   if (!is.null(output_path)) {
     assertthat::assert_that(dir.exists(output_path),
@@ -163,11 +161,18 @@ make_protect_zone <- function(
          call. = FALSE)
   }
 
-  if (nrow(current_protected_areas) > 1){
-    current_protected_areas <- current_protected_areas %>%
-      dplyr::summarise() %>%
-      sf::st_make_valid()
-    }
+  # Dissolve so overlapping PAs count once in the HII statistics: by tile
+  # (fast for detailed national layers), then combined into one feature
+  # without a further union (the pieces do not overlap).
+  # dissolve_tiled() also repairs geometries (invalid after reprojecting).
+  if (nrow(current_protected_areas) > 1) {
+    current_protected_areas <- combine_pieces(
+      dissolve_tiled(current_protected_areas, pu_tile_grid(pus),
+                     label = "Dissolving protected areas")
+    )
+  } else if (nrow(current_protected_areas) == 1) {
+    current_protected_areas <- sf::st_make_valid(current_protected_areas)
+  }
 
   # Process agriculture
   log_message("Processing agricultural areas...")

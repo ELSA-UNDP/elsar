@@ -121,7 +121,7 @@ test_that("make_underrepresented_ecosystems() works with no protected areas", {
   res <- with_warnings(make_underrepresented_ecosystems(
     eco_three(), "eco_id", protected_areas_sf = no_pas, pus = pus, iso3 = "SOM"
   ))
-  expect_true(any(grepl("No protected areas: every ecosystem is 0% protected", res$warnings)))
+  expect_true(any(grepl("there are no protected areas, so every ecosystem is 0% protected", res$warnings)))
   v <- terra::values(res$value)[, 1]
   expect_true(all(v[!is.na(terra::values(pus)[, 1])] == 1))
 })

@@ -183,12 +183,8 @@ make_wetlands_ramsar <- function(
       ramsar <- terra::ifel(pus == 1, 0, NA)
     } else {
       log_message("Rasterising and normalising {nrow(polygons)} Ramsar site(s)...")
-      polygons <- polygons %>%
-        sf::st_make_valid() %>%
-        .polygons_only() %>%
-        dplyr::summarise() %>%
-        sf::st_make_valid()
-      ramsar <- exactextractr::coverage_fraction(pus, polygons)[[1]] %>%
+      # Dissolved by tile (see dissolve_tiled()), which also repairs geometries
+      ramsar <- coverage_fraction_dissolved(pus, polygons) %>%
         make_normalised_raster(pus = pus, iso3 = iso3)
     }
   }
