@@ -33,8 +33,12 @@ make_threatened_ecosystems_protection(
 \item{output_path}{character, optional. Directory to write the output raster as a GeoTIFF.}
 }
 \value{
-A \code{SpatRaster} with one layer: \code{"threatened_ecosystems"}, with values from 0 to 100.
-Higher values indicate greater ecosystem degradation or threat.
+A \code{SpatRaster} with one layer: \code{"threatened_ecosystems"}. Each
+ecosystem's threat (0-100\% of its area not intact) is rescaled to 0-1
+across the ecosystems present; higher values mean more threatened.
+Planning units outside every ecosystem polygon take the nearest
+ecosystem's value. If every ecosystem has the same threat, a warning of
+class \code{elsar_uninformative_layer} is raised.
 }
 \description{
 This function calculates ecosystem-level threat scores based on the proportion

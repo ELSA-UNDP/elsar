@@ -17,8 +17,12 @@
 #' @param iso3 character, optional. ISO3 code used for naming output files (e.g., `"KEN"`).
 #' @param output_path character, optional. Directory to write the output raster as a GeoTIFF.
 #'
-#' @return A `SpatRaster` with one layer: `"threatened_ecosystems"`, with values from 0 to 100.
-#'         Higher values indicate greater ecosystem degradation or threat.
+#' @return A `SpatRaster` with one layer: `"threatened_ecosystems"`. Each
+#'   ecosystem's threat (0-100% of its area not intact) is rescaled to 0-1
+#'   across the ecosystems present; higher values mean more threatened.
+#'   Planning units outside every ecosystem polygon take the nearest
+#'   ecosystem's value. If every ecosystem has the same threat, a warning of
+#'   class `elsar_uninformative_layer` is raised.
 #'
 #' @export
 #'
@@ -134,13 +138,16 @@ make_threatened_ecosystems_protection <- function(
     )
   }
 
-  # Rasterize threat scores
+  # Rasterize threat scores. Planning units outside every ecosystem polygon
+  # (e.g. coast the coarse polygons miss) take the nearest ecosystem's score;
+  # before, they were 0, i.e. "not threatened".
   log_message("Rasterizing threat score per planning unit...")
   threat_raster <- elsar::exact_rasterise(
     features = eco_summary,
     pus = pus,
     iso3 = iso3,
-    attribute = "threat"
+    attribute = "threat",
+    fill_nearest = TRUE
   )
   names(threat_raster) <- "threatened_ecosystems"
 

@@ -45,6 +45,12 @@ single tile, so small layers do not pay a per-tile cost.
   example, both WWF ecoregions lie entirely below the global EII median. The
   layer was then a constant 1 inside the ecoregion polygons and 0 in coastal
   gaps, which the pipeline saved as a binary "Inside/Outside" layer.
+* `make_threatened_ecosystems_protection()` and
+  `make_underrepresented_ecosystems()` give planning units outside every
+  ecosystem polygon the value of the nearest ecosystem. Before, they were 0,
+  read as "not threatened" or "no gap". That affected coasts and small islands
+  the coarse ecosystem polygons miss: 71,543 of Denmark's 869,106 planning
+  units. The new `exact_rasterise(fill_nearest = TRUE)` option does this.
 * Tiled overlays log their progress (for example "Dissolving protected areas:
   105/207 tiles (51%), 29 s"), so long runs no longer look stuck.
 * Not changed: `get_iucn_ecosystems()` (deprecated), and the dissolves of

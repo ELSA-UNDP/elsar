@@ -109,13 +109,16 @@ make_underrepresented_ecosystems <- function(
     )
   }
   log_message("Rasterizing the largest target gap per planning unit...")
+  # Planning units outside every ecosystem polygon take the nearest
+  # ecosystem's gap (before, 0, i.e. "no gap")
   underrepresented_ecosystems <- elsar::exact_rasterise(
     features = ecosystems_summary,
     pus = pus,
     fun = "max",
     iso3 = iso3,
     attribute = "target_gap",
-    rescaled = FALSE
+    rescaled = FALSE,
+    fill_nearest = TRUE
   ) / target_percent
   names(underrepresented_ecosystems) <- "underrepresented_ecosystems"
 

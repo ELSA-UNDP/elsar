@@ -224,7 +224,10 @@ get_coverage <- function(zone_layer, pu_layer) {
 #'   area-weighted totals or shares).
 #' * `max`, `min`: the largest or smallest value among the features present.
 #'
-#' Planning units with no feature are 0. Since 0.4.2 one
+#' Planning units with no feature are 0, or, with `fill_nearest = TRUE`, take
+#' the value of the nearest feature (e.g. coastal planning units just outside
+#' coarse ecosystem polygons, which would otherwise read as "no threat" or "no
+#' gap"). Since 0.4.2 one
 #' [exactextractr::exact_extract()] pass handles any number of features with
 #' the same rule; before, `mean` averaged over *all* features (including ones
 #' not touching the planning unit) and the method changed above 1,000 features.
@@ -237,6 +240,9 @@ get_coverage <- function(zone_layer, pu_layer) {
 #' @param rescaled Logical. If `TRUE`, rescales the output to 0-1 using [make_normalised_raster()] (default: `TRUE`).
 #' @param fun How overlapping features are combined: `mean` (default), `sum`,
 #'   `max` or `min`, as a function or a string.
+#' @param fill_nearest Logical. If `TRUE`, planning units that no feature
+#'   covers get the value of the nearest feature (by planning-unit centre)
+#'   instead of 0. Default `FALSE`.
 #' @param cores,max_exact_features Ignored since 0.4.2 (kept so existing calls
 #'   still work).
 #'
@@ -257,6 +263,7 @@ exact_rasterise <- function(
     invert = FALSE,
     rescaled = TRUE,
     fun = mean,
+    fill_nearest = FALSE,
     cores = 4,
     max_exact_features = 1000
 ) {
@@ -326,6 +333,10 @@ exact_rasterise <- function(
       }
       r[cell_ids] <- v
       r <- terra::mask(r, pus)
+    }
+    if (isTRUE(fill_nearest)) {
+      r <- fill_nearest_feature(r, pus, features, values,
+                                covered = if (nrow(cells) > 0) cell_ids else integer(0))
     }
   }
 
@@ -966,4 +977,28 @@ warn_uninformative <- function(layer, reason) {
     list(message = msg, call = NULL, layer = layer)
   ))
   invisible(NULL)
+}
+
+#' Give uncovered planning units the value of the nearest feature
+#'
+#' @param r SpatRaster on the PU grid (0 where no feature, NA outside the PUs).
+#' @param pus Planning-unit SpatRaster.
+#' @param features `sf` in the PU CRS, aligned with `values`.
+#' @param values Numeric feature values (NA features are ignored).
+#' @param covered Cell numbers that features cover.
+#' @return `r` with the uncovered planning units filled.
+#' @keywords internal
+fill_nearest_feature <- function(r, pus, features, values, covered) {
+  ok <- !is.na(values)
+  if (!any(ok)) return(r)
+  in_pus <- which(!is.na(terra::values(pus, mat = FALSE)))
+  gap <- setdiff(in_pus, covered)
+  if (length(gap) == 0) return(r)
+  log_message("Assigning {length(gap)} planning unit(s) outside every feature to the nearest one...")
+  xy <- terra::xyFromCell(pus, gap)
+  pts <- sf::st_as_sf(data.frame(x = xy[, 1], y = xy[, 2]), coords = c("x", "y"),
+                      crs = sf::st_crs(features))
+  nn <- sf::st_nearest_feature(pts, features[ok, ])
+  r[gap] <- values[ok][nn]
+  r
 }

@@ -240,4 +240,36 @@ test_that("threatened ecosystems with one threat score are flagged as uninformat
   )
 })
 
+test_that("exact_rasterise(fill_nearest = TRUE) gives uncovered PUs the nearest value", {
+  pus <- tile_pus()
+  sq <- function(x0, x1) sf::st_polygon(list(rbind(c(x0, 10), c(x1, 10), c(x1, 50), c(x0, 50), c(x0, 10))))
+  f <- sf::st_sf(v = c(1, 5), geometry = sf::st_sfc(sq(10, 40), sq(60, 90), crs = "EPSG:3857"))
+  plain <- suppressMessages(exact_rasterise(f, "v", "TST", pus, rescaled = FALSE))
+  filled <- suppressMessages(exact_rasterise(f, "v", "TST", pus, rescaled = FALSE, fill_nearest = TRUE))
+  at <- function(r, x, y) terra::extract(r, cbind(x, y))[1, 1]
+  expect_equal(at(plain, 2, 2), 0)        # outside both: 0 by default
+  expect_equal(at(filled, 2, 2), 1)       # nearest is the west square
+  expect_equal(at(filled, 98, 58), 5)     # nearest is the east square
+  expect_equal(at(filled, 20, 30), 1)     # covered PUs unchanged
+  expect_equal(at(filled, 70, 30), 5)
+  expect_false(any(terra::values(filled)[, 1] == 0, na.rm = TRUE))
+})
+
+test_that("make_threatened_ecosystems_protection() fills PUs outside ecosystems", {
+  pus <- tile_pus()
+  sq <- function(x0, x1) sf::st_polygon(list(rbind(c(x0, 5), c(x1, 5), c(x1, 55), c(x0, 55), c(x0, 5))))
+  eco <- sf::st_sf(eco_id = c("west", "east"),
+                   geometry = sf::st_sfc(sq(5, 50), sq(50, 95), crs = "EPSG:3857"))
+  degraded <- terra::rast(pus)
+  terra::values(degraded) <- rep(as.numeric(terra::xFromCol(pus, 1:100) < 40), 60)
+  r <- suppressWarnings(suppressMessages(make_threatened_ecosystems_protection(
+    eco, "eco_id", pus = pus, boundary_layer = eco, integrity_raster = degraded,
+    integrity_type = "degraded", iso3 = "TST")))
+  at <- function(x, y) terra::extract(r, cbind(x, y))[1, 1]
+  # Corner PUs outside both polygons take their nearest ecosystem, not 0
+  expect_equal(at(1, 1), at(20, 30))
+  expect_equal(at(99, 59), at(80, 30))
+  expect_gt(at(1, 1), at(99, 59))
+})
+
 options(old_tile_opt)
