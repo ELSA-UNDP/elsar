@@ -188,4 +188,38 @@ test_that("small inputs use one tile and give the same result", {
                as.numeric(sum(sf::st_area(b))), tolerance = 1e-9)
 })
 
+test_that("merge_tile_seams() gives the polygons of a full union, with no shared edges", {
+  x <- random_polys(seed = 7)
+  tiles <- make_tile_grid(c(-20, -20, 120, 80), size = 11)
+  pieces <- dissolve_tiled(x, tiles, cores = 1)
+  merged <- merge_tile_seams(pieces)
+  ref <- sf::st_cast(sf::st_union(x), "POLYGON")
+
+  expect_true(all(sf::st_geometry_type(merged) == "POLYGON"))
+  expect_equal(nrow(merged), length(ref))
+  expect_equal(as.numeric(sum(sf::st_area(merged))), as.numeric(sum(sf::st_area(ref))),
+               tolerance = 1e-9)
+  shared <- sf::st_relate(merged, merged, pattern = "F***1****")
+  expect_equal(sum(lengths(shared)), 0)
+})
+
+test_that("seamless_polygons() matches st_union() for drawing", {
+  x <- random_polys(seed = 8)
+  out <- seamless_polygons(x)
+  ref <- sf::st_cast(sf::st_union(x), "POLYGON")
+  expect_equal(nrow(out), length(ref))
+  expect_equal(as.numeric(sum(sf::st_area(out))), as.numeric(sum(sf::st_area(ref))),
+               tolerance = 1e-9)
+  expect_equal(nrow(seamless_polygons(x[0, ])), 0)
+})
+
+test_that("make_protected_areas() returns seamless single polygons", {
+  pus <- tile_pus()
+  x <- random_polys(seed = 9)
+  res <- suppressMessages(make_protected_areas(pus, "TST", from_wdpca = FALSE, sf_in = x,
+                                               return_sf = TRUE))
+  expect_true(all(sf::st_geometry_type(res$sf) == "POLYGON"))
+  expect_equal(sum(lengths(sf::st_relate(res$sf, res$sf, pattern = "F***1****"))), 0)
+})
+
 options(old_tile_opt)

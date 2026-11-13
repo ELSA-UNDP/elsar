@@ -288,13 +288,12 @@ make_protected_areas <- function(
     )
   }
 
-  # Return the dissolved polygons alongside the raster (for reuse): one
-  # MULTIPOLYGON per tile. Not cast to single polygons: Denmark has 150,000,
-  # and functions that loop over rows then take hours.
+  # Return the dissolved polygons alongside the raster (for reuse), with the
+  # tile cuts merged so they draw without seams
   if (return_sf) {
     return(list(
       raster = protected_areas_raster,
-      sf = protected_areas
+      sf = merge_tile_seams(protected_areas)
     ))
   }
 

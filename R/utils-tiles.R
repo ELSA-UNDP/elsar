@@ -261,6 +261,8 @@ dissolve_tiled <- function(x, tiles, by = NULL, cores = elsar_cores()) {
     res[[by]] <- groups[vapply(pieces, `[[`, integer(1), "g")]
     res <- res[, c(by, "geometry")]
   }
+  # Remember the grid so merge_tile_seams() knows where the cuts are
+  attr(res, "tiles") <- tiles
   res
 }
 
@@ -441,4 +443,81 @@ tiles_for_size <- function(tiles, geoms) {
   pad <- 1 + 1e-6 * max(abs(bb))
   cbind(xmin = min(bb[, 1]) - pad, ymin = min(bb[, 2]) - pad,
         xmax = max(bb[, 3]) + pad, ymax = max(bb[, 4]) + pad)
+}
+
+#' Merge tile pieces back into seamless polygons
+#'
+#' The pieces from [dissolve_tiled()] are cut along the tile edges, which
+#' shows as straight lines when they are drawn. Only polygons that touch a tile
+#' edge are unioned (Denmark's protected areas: 4,300 of 156,000 polygons, 8 s),
+#' so the result equals a full union of the layer without its cost.
+#'
+#' @param x `sf` from [dissolve_tiled()] (without `by`), carrying its `tiles`
+#'   attribute. Without it, everything is unioned.
+#' @return `sf` of single POLYGONs with no shared edges; 0 rows if `x` has none.
+#' @keywords internal
+merge_tile_seams <- function(x) {
+  crs <- sf::st_crs(x)
+  if (nrow(x) == 0) return(sf::st_sf(geometry = sf::st_sfc(crs = crs)))
+  tiles <- attr(x, "tiles")
+  polys <- suppressWarnings(sf::st_cast(sf::st_cast(sf::st_geometry(x), "MULTIPOLYGON"), "POLYGON"))
+  if (is.null(tiles) || nrow(tiles) <= 1) {
+    if (is.null(tiles)) polys <- sf::st_union(polys)
+    return(sf::st_sf(geometry = suppressWarnings(sf::st_cast(polys, "POLYGON"))))
+  }
+  xs <- unique(c(tiles[, "xmin"], tiles[, "xmax"]))
+  ys <- unique(c(tiles[, "ymin"], tiles[, "ymax"]))
+  bb <- geom_bboxes(polys)
+  # Clipping puts seam vertices on the tile lines (to within rounding)
+  tol <- 1e-9 * max(abs(c(xs, ys)), 1)
+  near <- function(v, lines) {
+    i <- findInterval(v, sort(lines), all.inside = TRUE)
+    l <- sort(lines)
+    abs(v - l[i]) <= tol | abs(v - l[pmin(i + 1, length(l))]) <= tol
+  }
+  on_seam <- near(bb[, "xmin"], xs) | near(bb[, "xmax"], xs) |
+    near(bb[, "ymin"], ys) | near(bb[, "ymax"], ys)
+  if (!any(on_seam)) return(sf::st_sf(geometry = polys))
+  # The two sides of a seam are clipped separately, so their points on the
+  # tile line can differ in the last bits, leaving hairline gaps that stop
+  # them merging. Snap the seam polygons to a grid of about 9 significant
+  # digits (1 mm for coordinates in the millions of metres) first: sf rounds
+  # to the precision when it hands geometries to GEOS.
+  # Rounding can make a polygon invalid, so repair the rounded polygons; if
+  # GEOS still fails, union without snapping (a gap may then remain).
+  scale <- max(abs(c(xs, ys)), 1)
+  seam <- sf::st_set_precision(polys[on_seam], 10^(9 - ceiling(log10(scale))))
+  merged <- tryCatch(
+    sf::st_union(sf::st_make_valid(seam)),
+    error = function(e) {
+      log_message("Merging tile seams with snapping failed ({conditionMessage(e)}); merging without it.")
+      sf::st_union(sf::st_set_precision(polys[on_seam], 0))
+    }
+  )
+  merged <- polygonal_only(sf::st_make_valid(sf::st_set_precision(merged, 0)))
+  merged <- suppressWarnings(sf::st_cast(sf::st_cast(merged, "MULTIPOLYGON"), "POLYGON"))
+  sf::st_sf(geometry = c(polys[!on_seam], merged))
+}
+
+#' Dissolve polygons into seamless polygons for drawing
+#'
+#' A tiled dissolve ([dissolve_tiled()]) followed by [merge_tile_seams()]: the
+#' same polygons as `sf::st_union()`, much faster for detailed layers, and
+#' without tile cuts. Geographic (lon/lat) input uses `sf::st_union()`.
+#' @param x `sf`, `sfc` or `SpatVector` of polygons.
+#' @return `sf` of single POLYGONs.
+#' @keywords internal
+seamless_polygons <- function(x) {
+  if (inherits(x, "SpatVector")) x <- sf::st_as_sf(x)
+  x <- sf::st_as_sf(x)
+  crs <- sf::st_crs(x)
+  if (nrow(x) == 0) return(sf::st_sf(geometry = sf::st_sfc(crs = crs)))
+  if (isTRUE(sf::st_is_longlat(x)) || is.na(crs)) {
+    u <- sf::st_union(sf::st_make_valid(x))
+    return(sf::st_sf(geometry = suppressWarnings(sf::st_cast(polygonal_only(u), "POLYGON"))))
+  }
+  bb <- as.numeric(sf::st_bbox(x))
+  size <- max(bb[3] - bb[1], bb[4] - bb[2]) / 20
+  if (!is.finite(size) || size <= 0) size <- 1
+  merge_tile_seams(dissolve_tiled(x, make_tile_grid(bb, size)))
 }

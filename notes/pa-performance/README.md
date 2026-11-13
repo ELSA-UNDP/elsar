@@ -45,8 +45,24 @@ raster approach was not adopted because it is approximate.
 
 `R/utils-tiles.R`: clip to a grid of tiles aligned to the planning units,
 dissolve (or intersect) each tile on its own, optionally in parallel
-(`options(elsar.cores)`), and keep the disjoint pieces. Because no PU
-straddles two tiles, coverage fractions are exact. Denmark's protected-area
-raster is identical to the old one cell for cell.
+(`options(elsar.cores)`). Coverage and areas are computed from the disjoint
+pieces; because no PU straddles two tiles, they are exact, and Denmark's
+protected-area raster is identical to the old one cell for cell. Polygons
+that are returned or drawn are merged back across the tile lines (see below).
+
+### Tile seams
+
+Pieces from neighbouring tiles meet along the tile lines. GEOS clips each side
+separately, so a few of their points on the line differ in the last bits:
+Denmark had 33 of 4,702 seam vertices on one side only, leaving hairline gaps
+of about 1e-12 units. Coverage fractions and areas are unaffected, but drawn
+polygons would show the tile lines.
+
+`merge_tile_seams()` unions only the polygons that touch a tile line (Denmark:
+4,304 of 155,781 polygons, 13% of the vertices; 8 s). It snaps them first to a
+grid of about 9 significant digits (1 mm for Mollweide coordinates), which
+closes the gaps. Afterwards no two of Denmark's 153,263 polygons share an
+edge. For comparison, a GEOS coverage union of all the pieces took 8.5 min,
+and a plain `st_union()` of the 238 tile pieces took 34 min.
 
 Rerun the comparison with `benchmark_pa_union.R` in this folder.

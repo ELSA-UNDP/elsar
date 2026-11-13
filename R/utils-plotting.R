@@ -395,7 +395,8 @@ elsar_plot_extra_data <- function(plot_type = "ggplot",
 
     if (plot_type == "ggplot") {
       if (pas_look == "area") {
-        lockedInAreas <- include_pas %>%
+        # Dissolved (overlaps drawn once) without tile seams
+        lockedInAreas <- seamless_polygons(include_pas) %>%
           dplyr::mutate(lockedIn = 1) %>%
           dplyr::mutate(lockedIn = as.logical(.data$lockedIn))
 
@@ -425,10 +426,8 @@ elsar_plot_extra_data <- function(plot_type = "ggplot",
           )
         )
       } else if (pas_look == "contours") {
-        lockedInAreas <- include_pas %>%
-          sf::st_union() %>%
-          sf::st_as_sf() %>%
-          dplyr::rename(geometry = "x") %>%
+        # Same outline as st_union(), dissolved by tile for speed
+        lockedInAreas <- seamless_polygons(include_pas) %>%
           dplyr::mutate(lockedIn = 1) %>%
           dplyr::mutate(lockedIn = as.factor(.data$lockedIn))
 

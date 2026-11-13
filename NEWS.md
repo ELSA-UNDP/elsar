@@ -11,9 +11,9 @@ sites) took 4.5 hours through the pipeline:
 
 | Step (Denmark) | Before | 1 core | 16 cores |
 |---|---|---|---|
-| `make_protected_areas()` | 46 min | 3.8 min | 65 s |
-| `make_underrepresented_ecosystems()` | about 85 min | 3.1 min | 64 s |
-| `make_protect_zone()` | 11 min (dissolve alone) | 2.3 min | 40 s |
+| `make_protected_areas()` | 46 min | 4.2 min | 80 s |
+| `make_underrepresented_ecosystems()` | about 85 min | 2.8 min | 47 s |
+| `make_protect_zone()` | 11 min (dissolve alone) | 2.3 min | 43 s |
 
 Inputs below 200,000 vertices (`options(elsar.tile_min_vertices)`) use a
 single tile, so small layers do not pay a per-tile cost.
@@ -26,17 +26,20 @@ single tile, so small layers do not pay a per-tile cost.
   `make_wetlands_ramsar()`, `make_mangroves()`,
   `make_indigenous_managed_lands()`, `get_iucn_forests()`, and protected
   areas or overlap layers given as polygons to the results functions.
-* `make_protected_areas(return_sf = TRUE)` returns the dissolved protected
-  areas as one MULTIPOLYGON per tile (Denmark: about 200 rows) instead of
-  casting them to single polygons (150,000 rows), which made row-by-row
-  consumers take hours. The pieces do not overlap.
+* `make_protected_areas(return_sf = TRUE)` still returns single polygons with
+  no internal edges: polygons cut by tile edges are merged back (only those,
+  so it takes seconds), and nothing shows the tiles when the polygons are
+  drawn.
+* `elsar_plot_extra_data(include_pas = )` dissolves the protected areas the
+  same way, for both styles. `pas_look = "area"` now draws overlapping
+  protected areas once instead of stacking their transparency.
 * `make_underrepresented_ecosystems()` dissolves the protected areas and each
   ecosystem group before measuring, so overlapping protected areas, or
   overlapping polygons of one ecosystem, are no longer counted twice.
 * `make_threatened_ecosystems_protection()` no longer needs the `future.apply`
   and `progressr` packages.
-* Not changed: `get_iucn_ecosystems()` (deprecated), and the outline
-  dissolves used for plotting.
+* Not changed: `get_iucn_ecosystems()` (deprecated), and the dissolves of
+  study-area outlines and regions used for plotting.
 
 # elsar 0.5.0
 
