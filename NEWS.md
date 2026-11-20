@@ -1,5 +1,21 @@
 # elsar (development version)
 
+## New features
+
+* **A zone's agriculture or built-up input can be switched off** (#96).
+  `agriculture_threshold = FALSE` or `built_areas_threshold = FALSE` in
+  `make_protect_zone()`, `make_restore_zone()` and `make_manage_zone()` leaves
+  that input out of the zone. Nothing is excluded for it, and no layer, LULC
+  raster or class value is needed. In the Manage Zone, agriculture switched off
+  no longer qualifies a planning unit: `manage_zone_v1` comes from HII, managed
+  forests and pasture, and `manage_zone_v2` from pasture only. Inputs switched
+  off are not written as intermediate layers. A Protect Zone with no HII and
+  both inputs off warns that every planning unit is eligible. This is for
+  highly developed countries, where excluding every planning unit with over
+  10% cropland or built-up land leaves almost no Protect Zone. Before, the
+  only way was a threshold of 1, which applied to every zone and did the
+  opposite in the Manage Zone.
+
 # elsar 0.6.1
 
 ## Bug fixes

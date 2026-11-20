@@ -31,8 +31,11 @@
 #'   automatically determined from `lulc_product`. Default is NULL.
 #' @param built_area_lulc_value Integer or NULL. LULC value representing built-up areas. If NULL,
 #'   automatically determined from `lulc_product`. Default is NULL.
-#' @param agriculture_threshold Minimum fraction for agriculture to exclude a cell (default: 0.1).
-#' @param built_areas_threshold Minimum fraction for built-up area to exclude a cell (default: 0.1).
+#' @param agriculture_threshold Fraction of agriculture above which a cell is
+#'   excluded (default: 0.1). `FALSE` leaves agriculture out of the zone: nothing
+#'   is excluded for it and no agriculture input is needed.
+#' @param built_areas_threshold Fraction of built-up area above which a cell is
+#'   excluded (default: 0.1). `FALSE` leaves built-up areas out of the zone.
 #' @param filter_patch_size Logical. Whether to remove small isolated patches (default: TRUE).
 #' @param min_patch_size Integer. Minimum patch size to retain (in raster cells; default: 20).
 #' @param make_locked_out Logical. If TRUE, invert the raster to produce a locked-out constraint (default: FALSE).
@@ -81,6 +84,8 @@ make_protect_zone <- function(
     output_path = NULL
 ) {
   lulc_product <- match.arg(lulc_product)
+  ag_off <- .zone_input_off(agriculture_threshold, "agriculture_threshold")
+  built_off <- .zone_input_off(built_areas_threshold, "built_areas_threshold")
 
   # If lulc_proportions provided, extract agriculture and built_area
   # Supports both list format (new) and SpatRaster format (legacy)
@@ -113,26 +118,23 @@ make_protect_zone <- function(
     }
   }
 
-  # Resolve LULC class values from product if not explicitly provided
-  # (only needed if using lulc_raster fallback)
-  if (is.null(agricultural_areas) || is.null(built_areas)) {
-    if (is.null(agriculture_lulc_value)) {
-      if (lulc_product == "local") {
-        stop("When lulc_product = 'local', agriculture_lulc_value must be explicitly provided.", call. = FALSE)
-      }
-      agriculture_lulc_value <- get_lulc_class_value(lulc_product, "agriculture")
-    }
-    if (is.null(built_area_lulc_value)) {
-      if (lulc_product == "local") {
-        stop("When lulc_product = 'local', built_area_lulc_value must be explicitly provided.", call. = FALSE)
-      }
-      built_area_lulc_value <- get_lulc_class_value(lulc_product, "built_area")
-    }
-
-    log_message("Using LULC product: {lulc_product}")
-    log_message("Agriculture class value(s): {paste(agriculture_lulc_value, collapse=', ')}")
-    log_message("Built area class value(s): {paste(built_area_lulc_value, collapse=', ')}")
+  # Inputs switched off (threshold FALSE, issue #96) are not read at all
+  if (ag_off) {
+    agricultural_areas <- NULL
+    log_message("Agriculture is switched off (agriculture_threshold = FALSE): not used in this zone")
   }
+  if (built_off) {
+    built_areas <- NULL
+    log_message("Built-up areas are switched off (built_areas_threshold = FALSE): not used in this zone")
+  }
+
+  # Resolve LULC class values from product if not explicitly provided
+  # (only for inputs that are on and have no layer of their own)
+  lulc_values <- .resolve_lulc_values(lulc_product, !ag_off && is.null(agricultural_areas),
+                                      !built_off && is.null(built_areas),
+                                      agriculture_lulc_value, built_area_lulc_value)
+  agriculture_lulc_value <- lulc_values$agriculture
+  built_area_lulc_value <- lulc_values$built
 
   # Validate protected areas input or load default
   assertthat::assert_that(
@@ -176,7 +178,9 @@ make_protect_zone <- function(
 
   # Process agriculture
   log_message("Processing agricultural areas...")
-  if (!is.null(agricultural_areas)) {
+  if (ag_off) {
+    agricultural_areas_processed <- NULL
+  } else if (!is.null(agricultural_areas)) {
     log_message("Aligning provided agricultural areas raster to planning units...")
     agricultural_areas_processed <- elsar::make_normalised_raster(
       raster_in = agricultural_areas,
@@ -201,7 +205,9 @@ make_protect_zone <- function(
 
   # Process built-up areas
   log_message("Processing built-up areas...")
-  if (!is.null(built_areas)) {
+  if (built_off) {
+    built_areas_processed <- NULL
+  } else if (!is.null(built_areas)) {
     log_message("Aligning provided built areas raster to planning units...")
     built_areas_processed <- elsar::make_normalised_raster(
       raster_in = built_areas,
@@ -282,6 +288,10 @@ make_protect_zone <- function(
     protect_zone <- terra::ifel(built_areas_processed > built_areas_threshold | agricultural_areas_processed > agriculture_threshold, 0, protect_zone)
   } else {
     log_message("No building or agricultural area found - Protection zone based on HII only.")
+  }
+  if (is.null(human_pressure) && is.null(built_areas_processed) && is.null(agricultural_areas_processed)) {
+    warning("Protect zone for ", iso3, ": no HII and both agriculture and built-up areas switched off, ",
+            "so every planning unit is eligible.", call. = FALSE)
   }
 
   # Optionally filter out small patches

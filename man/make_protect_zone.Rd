@@ -63,9 +63,12 @@ automatically determined from \code{lulc_product}. Default is NULL.}
 \item{built_area_lulc_value}{Integer or NULL. LULC value representing built-up areas. If NULL,
 automatically determined from \code{lulc_product}. Default is NULL.}
 
-\item{agriculture_threshold}{Minimum fraction for agriculture to exclude a cell (default: 0.1).}
+\item{agriculture_threshold}{Fraction of agriculture above which a cell is
+excluded (default: 0.1). \code{FALSE} leaves agriculture out of the zone: nothing
+is excluded for it and no agriculture input is needed.}
 
-\item{built_areas_threshold}{Minimum fraction for built-up area to exclude a cell (default: 0.1).}
+\item{built_areas_threshold}{Fraction of built-up area above which a cell is
+excluded (default: 0.1). \code{FALSE} leaves built-up areas out of the zone.}
 
 \item{filter_patch_size}{Logical. Whether to remove small isolated patches (default: TRUE).}
 
