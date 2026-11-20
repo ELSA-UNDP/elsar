@@ -16,3 +16,4 @@ docs/
 
 # Personal Claude Code settings (the shared ones in .claude/ are committed)
 .claude/settings.local.json
+Rplots.pdf
