@@ -80,10 +80,11 @@ explicitly in that case), and anything else is an error.}
 \code{hii_min} instead.}
 
 \item{agriculture_threshold}{Numeric. Proportion threshold above which an area
-is excluded as agricultural land (default: 0.1).}
+is excluded as agricultural land (default: 0.1). \code{FALSE} leaves agriculture
+out of the zone: nothing is excluded for it and no agriculture input is needed.}
 
 \item{built_areas_threshold}{Numeric. Proportion threshold above which an area
-is excluded as built-up land (default: 0.1).}
+is excluded as built-up land (default: 0.1). \code{FALSE} leaves built-up areas out.}
 
 \item{forest_threshold}{Numeric. Minimum forest cover proportion to include
 in restore_zone_v2 (default: 0.1).}

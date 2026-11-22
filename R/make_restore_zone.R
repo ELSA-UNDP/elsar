@@ -63,9 +63,10 @@
 #' @param human_pressure_threshold `r lifecycle::badge("deprecated")` Use
 #'   `hii_min` instead.
 #' @param agriculture_threshold Numeric. Proportion threshold above which an area
-#'   is excluded as agricultural land (default: 0.1).
+#'   is excluded as agricultural land (default: 0.1). `FALSE` leaves agriculture
+#'   out of the zone: nothing is excluded for it and no agriculture input is needed.
 #' @param built_areas_threshold Numeric. Proportion threshold above which an area
-#'   is excluded as built-up land (default: 0.1).
+#'   is excluded as built-up land (default: 0.1). `FALSE` leaves built-up areas out.
 #' @param forest_threshold Numeric. Minimum forest cover proportion to include
 #'   in restore_zone_v2 (default: 0.1).
 #' @param lulc_product Character. LULC product used for class value lookups: "esri_10m" (default),
@@ -157,6 +158,8 @@ make_restore_zone <- function(
 ) {
   lulc_product <- match.arg(lulc_product)
   degradation_encoding <- match.arg(degradation_encoding)
+  ag_off <- .zone_input_off(agriculture_threshold, "agriculture_threshold")
+  built_off <- .zone_input_off(built_areas_threshold, "built_areas_threshold")
   if (lifecycle::is_present(human_pressure_threshold)) {
     lifecycle::deprecate_warn(
       "0.4.2", "make_restore_zone(human_pressure_threshold)", "make_restore_zone(hii_min)"
@@ -202,26 +205,23 @@ make_restore_zone <- function(
     }
   }
 
-  # Resolve LULC class values from product if not explicitly provided
-  # (only needed if using lulc fallback)
-  if (is.null(agricultural_areas) || is.null(built_areas)) {
-    if (is.null(agriculture_lulc_value)) {
-      if (lulc_product == "local") {
-        stop("When lulc_product = 'local', agriculture_lulc_value must be explicitly provided.", call. = FALSE)
-      }
-      agriculture_lulc_value <- get_lulc_class_value(lulc_product, "agriculture")
-    }
-    if (is.null(built_area_lulc_value)) {
-      if (lulc_product == "local") {
-        stop("When lulc_product = 'local', built_area_lulc_value must be explicitly provided.", call. = FALSE)
-      }
-      built_area_lulc_value <- get_lulc_class_value(lulc_product, "built_area")
-    }
-
-    log_message("Using LULC product: {lulc_product}")
-    log_message("Agriculture class value(s): {paste(agriculture_lulc_value, collapse=', ')}")
-    log_message("Built area class value(s): {paste(built_area_lulc_value, collapse=', ')}")
+  # Inputs switched off (threshold FALSE, issue #96) are not read at all
+  if (ag_off) {
+    agricultural_areas <- NULL
+    log_message("Agriculture is switched off (agriculture_threshold = FALSE): not used in this zone")
   }
+  if (built_off) {
+    built_areas <- NULL
+    log_message("Built-up areas are switched off (built_areas_threshold = FALSE): not used in this zone")
+  }
+
+  # Resolve LULC class values from product if not explicitly provided
+  # (only for inputs that are on and have no layer of their own)
+  lulc_values <- .resolve_lulc_values(lulc_product, !ag_off && is.null(agricultural_areas),
+                                      !built_off && is.null(built_areas),
+                                      agriculture_lulc_value, built_area_lulc_value)
+  agriculture_lulc_value <- lulc_values$agriculture
+  built_area_lulc_value <- lulc_values$built
 
   # Input validation
   assertthat::assert_that(assertthat::is.string(iso3))
@@ -232,7 +232,7 @@ make_restore_zone <- function(
 
   # Ensure at least one valid input source for agricultural/built areas exists
   assertthat::assert_that(
-    !(is.null(agricultural_areas) && is.null(built_areas) && is.null(lulc)),
+    (ag_off && built_off) || !(is.null(agricultural_areas) && is.null(built_areas) && is.null(lulc)),
     msg = "Either 'agricultural_areas' and/or 'built_areas' must be provided, or 'lulc' must be supplied to derive them."
   )
   if (!is.null(output_path)) {
@@ -263,7 +263,11 @@ make_restore_zone <- function(
 
   # Agricultural areas
   log_message("Processing agricultural areas...")
-  if (!is.null(agricultural_areas)) {
+  if (ag_off) {
+    # 0 everywhere with a threshold of 0: `<= 0` always holds, nothing excluded
+    agricultural_areas_processed <- .zero_on_pus(pus)
+    agriculture_threshold <- 0
+  } else if (!is.null(agricultural_areas)) {
     log_message("Aligning provided agricultural areas raster to planning units...")
     agricultural_areas_processed <- elsar::make_normalised_raster(
       raster_in = agricultural_areas,
@@ -287,7 +291,10 @@ make_restore_zone <- function(
 
   # Built-up areas
   log_message("Processing built-up areas...")
-  if (!is.null(built_areas)) {
+  if (built_off) {
+    built_areas_processed <- .zero_on_pus(pus)
+    built_areas_threshold <- 0
+  } else if (!is.null(built_areas)) {
     log_message("Aligning provided built areas raster to planning units...")
     built_areas_processed <- elsar::make_normalised_raster(
       raster_in = built_areas,
@@ -336,8 +343,9 @@ make_restore_zone <- function(
     # agricultural_areas_processed / built_areas_processed are always computed
     # (from the direct input or derived from LULC), so save them unconditionally -
     # the LULC-derived proportion is often the most useful to inspect.
-    save_raster(pu_mask(agricultural_areas_processed), glue::glue("{output_path}/agriculture_areas_{iso3}.tif"))
-    save_raster(pu_mask(built_areas_processed), glue::glue("{output_path}/built_areas_{iso3}.tif"))
+    # (not an input that is switched off)
+    if (!ag_off) save_raster(pu_mask(agricultural_areas_processed), glue::glue("{output_path}/agriculture_areas_{iso3}.tif"))
+    if (!built_off) save_raster(pu_mask(built_areas_processed), glue::glue("{output_path}/built_areas_{iso3}.tif"))
     save_raster(pu_mask(human_pressure_processed), glue::glue("{output_path}/human_pressure_{iso3}.tif"))
     save_raster(pu_mask(degradation_processed), glue::glue("{output_path}/degradation_{iso3}.tif"))
     save_raster(pu_mask(forest_mask_processed), glue::glue("{output_path}/forest_mask_{iso3}.tif"))
