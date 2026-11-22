@@ -105,7 +105,7 @@ returns a list with:
 }
 \description{
 Generates a raster of protected areas for a given country, aligned to the planning
-units. Data come from the \href{https://www.protectedplanet.net/}{Protected Planet}
+units. Data come from the \href{https://www.protectedplanet.net/en}{Protected Planet}
 WDPCA via \code{\link[=fetch_wdpca]{fetch_wdpca()}} (cache, global release, UNEP-WCMC services or
 \pkg{wdpar}), or are provided as an \code{sf} object.
 }
