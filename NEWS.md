@@ -1,4 +1,4 @@
-# elsar (development version)
+# elsar 0.7.0
 
 ## New features
 
@@ -15,6 +15,11 @@
   10% cropland or built-up land leaves almost no Protect Zone. Before, the
   only way was a threshold of 1, which applied to every zone and did the
   opposite in the Manage Zone.
+
+## Documentation
+
+* The Protected Planet links point at `https://www.protectedplanet.net/en` (the
+  old address redirects), and the package title is in title case (#136).
 
 # elsar 0.6.1
 
