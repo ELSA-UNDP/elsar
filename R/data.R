@@ -44,7 +44,7 @@ get_wad_data <- function() {
 #' World Database on Protected and Conserved Areas (WDPCA).
 #'
 #' @format An `sf` data frame with polygon geometries.
-#' @source UNEP-WCMC and IUCN WDPCA <https://www.protectedplanet.net/>
+#' @source UNEP-WCMC and IUCN WDPCA <https://www.protectedplanet.net/en>
 "current_pas_sf"
 
 

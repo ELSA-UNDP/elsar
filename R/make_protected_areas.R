@@ -1,7 +1,7 @@
 #' Create a Binary or Fractional Raster of Protected Areas Aligned to Planning Units
 #'
 #' Generates a raster of protected areas for a given country, aligned to the planning
-#' units. Data come from the [Protected Planet](https://www.protectedplanet.net/)
+#' units. Data come from the [Protected Planet](https://www.protectedplanet.net/en)
 #' WDPCA via [fetch_wdpca()] (cache, global release, UNEP-WCMC services or
 #' \pkg{wdpar}), or are provided as an `sf` object.
 #'
