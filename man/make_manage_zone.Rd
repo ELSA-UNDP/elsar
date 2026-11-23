@@ -78,9 +78,14 @@ automatically determined from \code{lulc_product}. Default is NULL.}
 
 \item{forest_class_threshold}{Numeric. Minimum proportion of managed forest in a cell to include (default = 0.1).}
 
-\item{agriculture_threshold}{Numeric. Minimum proportion of agriculture in a cell to include (default = 0.1).}
+\item{agriculture_threshold}{Numeric. Proportion of agriculture above which a
+cell is included (default = 0.1). \code{FALSE} leaves agriculture out: it no
+longer qualifies a cell, so \code{manage_zone_v1} comes from HII, managed forests
+and pasture, and \code{manage_zone_v2} from pasture only.}
 
-\item{built_areas_threshold}{Numeric. Threshold above which cells are considered built-up and excluded (default = 0.1).}
+\item{built_areas_threshold}{Numeric. Threshold above which cells are
+considered built-up and excluded (default = 0.1). \code{FALSE} leaves built-up
+areas out: nothing is excluded for them.}
 
 \item{filter_patch_size}{Logical. Whether to remove small patches (default = TRUE).}
 

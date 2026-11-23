@@ -223,3 +223,46 @@ calculate_restore_and_urban_budgets <- function(iso3,
   if (length(small) == 0) return(zone)
   terra::ifel(!is.na(terra::rasterize(small, zone)), 0, zone)
 }
+
+# Is a zone input switched off? `FALSE` as a zone function's threshold
+# (agriculture_threshold, built_areas_threshold) leaves that input out of the
+# zone (issue #96); any other value must be a single number.
+.zone_input_off <- function(threshold, arg) {
+  if (isFALSE(threshold)) return(TRUE)
+  assertthat::assert_that(
+    assertthat::is.number(threshold), !is.na(threshold),
+    msg = paste0("'", arg, "' must be a single number, or FALSE to leave the input out of the zone.")
+  )
+  FALSE
+}
+
+# A layer of 0 inside the planning units (NA outside): stands in for an input
+# that is switched off, so the zone rules can stay as written (with a threshold
+# of 0, `> 0` never holds)
+.zero_on_pus <- function(pus) {
+  terra::ifel(is.na(pus), NA, 0)
+}
+
+# Resolve the LULC class values the zone still needs from the product. Only the
+# inputs that are on and have no layer of their own need one.
+.resolve_lulc_values <- function(lulc_product, need_agriculture, need_built,
+                                 agriculture_lulc_value, built_area_lulc_value) {
+  if (need_agriculture && is.null(agriculture_lulc_value)) {
+    if (lulc_product == "local") {
+      stop("When lulc_product = 'local', agriculture_lulc_value must be explicitly provided.", call. = FALSE)
+    }
+    agriculture_lulc_value <- get_lulc_class_value(lulc_product, "agriculture")
+  }
+  if (need_built && is.null(built_area_lulc_value)) {
+    if (lulc_product == "local") {
+      stop("When lulc_product = 'local', built_area_lulc_value must be explicitly provided.", call. = FALSE)
+    }
+    built_area_lulc_value <- get_lulc_class_value(lulc_product, "built_area")
+  }
+  if (need_agriculture || need_built) {
+    log_message("Using LULC product: {lulc_product}")
+    if (need_agriculture) log_message("Agriculture class value(s): {paste(agriculture_lulc_value, collapse=', ')}")
+    if (need_built) log_message("Built area class value(s): {paste(built_area_lulc_value, collapse=', ')}")
+  }
+  list(agriculture = agriculture_lulc_value, built = built_area_lulc_value)
+}

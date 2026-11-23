@@ -8,7 +8,7 @@
 An \code{sf} data frame with polygon geometries.
 }
 \source{
-UNEP-WCMC and IUCN WDPCA \url{https://www.protectedplanet.net/}
+UNEP-WCMC and IUCN WDPCA \url{https://www.protectedplanet.net/en}
 }
 \usage{
 current_pas_sf

@@ -43,8 +43,13 @@
 #' @param forest_classes Integer vector or NULL. LULC values representing managed forests. If NULL,
 #'   automatically determined from `lulc_product`. Default is NULL.
 #' @param forest_class_threshold Numeric. Minimum proportion of managed forest in a cell to include (default = 0.1).
-#' @param agriculture_threshold Numeric. Minimum proportion of agriculture in a cell to include (default = 0.1).
-#' @param built_areas_threshold Numeric. Threshold above which cells are considered built-up and excluded (default = 0.1).
+#' @param agriculture_threshold Numeric. Proportion of agriculture above which a
+#'   cell is included (default = 0.1). `FALSE` leaves agriculture out: it no
+#'   longer qualifies a cell, so `manage_zone_v1` comes from HII, managed forests
+#'   and pasture, and `manage_zone_v2` from pasture only.
+#' @param built_areas_threshold Numeric. Threshold above which cells are
+#'   considered built-up and excluded (default = 0.1). `FALSE` leaves built-up
+#'   areas out: nothing is excluded for them.
 #' @param filter_patch_size Logical. Whether to remove small patches (default = TRUE).
 #' @param min_patch_size Integer. Minimum size of patches to retain (in cells; default = 10).
 #' @param output_path Character or NULL. When provided, the final zone is saved
@@ -99,6 +104,8 @@ make_manage_zone <- function(
     output_path = NULL
 ) {
   lulc_product <- match.arg(lulc_product)
+  ag_off <- .zone_input_off(agriculture_threshold, "agriculture_threshold")
+  built_off <- .zone_input_off(built_areas_threshold, "built_areas_threshold")
 
   # If lulc_proportions provided, extract agriculture and built_area
   # Supports both list format (new) and SpatRaster format (legacy)
@@ -129,26 +136,23 @@ make_manage_zone <- function(
     }
   }
 
-  # Resolve LULC class values from product if not explicitly provided
-  # (only needed if using lulc_raster fallback)
-  if (is.null(agricultural_areas) || is.null(built_areas)) {
-    if (is.null(agriculture_lulc_value)) {
-      if (lulc_product == "local") {
-        stop("When lulc_product = 'local', agriculture_lulc_value must be explicitly provided.", call. = FALSE)
-      }
-      agriculture_lulc_value <- get_lulc_class_value(lulc_product, "agriculture")
-    }
-    if (is.null(built_area_lulc_value)) {
-      if (lulc_product == "local") {
-        stop("When lulc_product = 'local', built_area_lulc_value must be explicitly provided.", call. = FALSE)
-      }
-      built_area_lulc_value <- get_lulc_class_value(lulc_product, "built_area")
-    }
-
-    log_message("Using LULC product: {lulc_product}")
-    log_message("Agriculture class value(s): {paste(agriculture_lulc_value, collapse=', ')}")
-    log_message("Built area class value(s): {paste(built_area_lulc_value, collapse=', ')}")
+  # Inputs switched off (threshold FALSE, issue #96) are not read at all
+  if (ag_off) {
+    agricultural_areas <- NULL
+    log_message("Agriculture is switched off (agriculture_threshold = FALSE): not used in this zone")
   }
+  if (built_off) {
+    built_areas <- NULL
+    log_message("Built-up areas are switched off (built_areas_threshold = FALSE): not used in this zone")
+  }
+
+  # Resolve LULC class values from product if not explicitly provided
+  # (only for inputs that are on and have no layer of their own)
+  lulc_values <- .resolve_lulc_values(lulc_product, !ag_off && is.null(agricultural_areas),
+                                      !built_off && is.null(built_areas),
+                                      agriculture_lulc_value, built_area_lulc_value)
+  agriculture_lulc_value <- lulc_values$agriculture
+  built_area_lulc_value <- lulc_values$built
 
   if (is.null(forest_classes)) {
     if (lulc_product == "local") {
@@ -164,7 +168,7 @@ make_manage_zone <- function(
 
   # Ensure agricultural/built data is supplied or can be derived
   assertthat::assert_that(
-    !(is.null(agricultural_areas) && is.null(built_areas) && is.null(lulc_raster)),
+    (ag_off && built_off) || !(is.null(agricultural_areas) && is.null(built_areas) && is.null(lulc_raster)),
     msg = "Either 'agricultural_areas' and/or 'built_areas' must be provided, or 'lulc_raster' must be supplied to derive them."
   )
 
@@ -192,7 +196,11 @@ make_manage_zone <- function(
 
   # Process agricultural areas
   log_message("Processing agricultural areas...")
-  if (!is.null(agricultural_areas)) {
+  if (ag_off) {
+    # 0 everywhere with a threshold of 0: agriculture never qualifies a cell
+    agricultural_areas_processed <- .zero_on_pus(pus)
+    agriculture_threshold <- 0
+  } else if (!is.null(agricultural_areas)) {
     log_message("Aligning provided agricultural areas raster to planning units...")
     agricultural_areas_processed <- elsar::make_normalised_raster(
       raster_in = agricultural_areas,
@@ -232,7 +240,11 @@ make_manage_zone <- function(
 
   # Process built-up areas
   log_message("Processing built-up areas...")
-  if (!is.null(built_areas)) {
+  if (built_off) {
+    # 0 everywhere with a threshold of 0: nothing is excluded as built-up
+    built_areas_processed <- .zero_on_pus(pus)
+    built_areas_threshold <- 0
+  } else if (!is.null(built_areas)) {
     log_message("Aligning provided built areas raster to planning units...")
     built_areas_processed <- elsar::make_normalised_raster(
       raster_in = built_areas,
@@ -344,13 +356,13 @@ make_manage_zone <- function(
     # make_degraded_areas). Each is guarded because some inputs are optional, and
     # masked to the planning units so cells outside the study area are NoData.
     pu_mask <- function(r) terra::mask(r, pus)
-    if (exists("agricultural_areas_processed", inherits = FALSE) && inherits(agricultural_areas_processed, "SpatRaster")) {
+    if (!ag_off && exists("agricultural_areas_processed", inherits = FALSE) && inherits(agricultural_areas_processed, "SpatRaster")) {
       elsar::save_raster(pu_mask(agricultural_areas_processed), glue::glue("{output_path}/agriculture_areas_{iso3}.tif"), datatype = "FLT4S")
     }
     if (exists("pasturelands_processed", inherits = FALSE) && inherits(pasturelands_processed, "SpatRaster")) {
       elsar::save_raster(pu_mask(pasturelands_processed), glue::glue("{output_path}/pasturelands_{iso3}.tif"), datatype = "FLT4S")
     }
-    if (exists("built_areas_processed", inherits = FALSE) && inherits(built_areas_processed, "SpatRaster")) {
+    if (!built_off && exists("built_areas_processed", inherits = FALSE) && inherits(built_areas_processed, "SpatRaster")) {
       elsar::save_raster(pu_mask(built_areas_processed), glue::glue("{output_path}/built_areas_{iso3}.tif"), datatype = "FLT4S")
     }
     if (exists("hii_middle_60_pct", inherits = FALSE) && inherits(hii_middle_60_pct, "SpatRaster")) {
