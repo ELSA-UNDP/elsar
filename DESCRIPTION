@@ -1,6 +1,6 @@
 Package: elsar
 Title: Functions and Tools for Creating ELSA Data Stacks
-Version: 0.6.1.9000
+Version: 0.7.0
 Authors@R: 
     c(
     person(
