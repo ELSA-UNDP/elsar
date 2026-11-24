@@ -4,10 +4,22 @@
 \alias{elsar_plot_sensitivity}
 \title{Plot how sensitive sub-actions are to their settings}
 \usage{
-elsar_plot_sensitivity(sensitivity, title = NULL, base_size = 11)
+elsar_plot_sensitivity(
+  sensitivity,
+  metric = c("pct_change", "area"),
+  min_change = 0.5,
+  title = NULL,
+  base_size = 11
+)
 }
 \arguments{
 \item{sensitivity}{A tibble from \code{\link[=elsar_sub_action_sensitivity]{elsar_sub_action_sensitivity()}}.}
+
+\item{metric}{\code{"pct_change"} (default) to draw the change from the
+baseline in percent, or \code{"area"} to draw areas.}
+
+\item{min_change}{Smallest change drawn, in percent of the baseline area
+(default 0.5). Set 0 to draw every change.}
 
 \item{title}{Optional plot title.}
 
@@ -18,15 +30,24 @@ A \code{ggplot} object, with a panel per parent action.
 }
 \description{
 Draws the output of \code{\link[=elsar_sub_action_sensitivity]{elsar_sub_action_sensitivity()}}: for each sub-action,
-its baseline area (black diamond) and its area under each setting tried
-that changes it, coloured by setting and labelled with the value tried.
-Settings that leave a sub-action unchanged are not drawn for it, so a
-sub-action with only a diamond is robust to everything tried. Settings that
-changed no sub-action at all are named in the subtitle.
+its change from the baseline under each setting tried that changes it,
+coloured by setting and labelled with the value tried. The baseline is a
+black diamond at no change. Settings that leave a sub-action unchanged are
+not drawn for it, so a sub-action with only a diamond is robust to
+everything tried. Settings that changed no sub-action at all are named in
+the subtitle.
 }
 \details{
-Areas are drawn, not percentage changes, because a small sub-action can
-change by a large percentage while moving little land.
+By default changes are drawn in percent, so that small and large
+sub-actions share one readable axis. Each sub-action's baseline area is
+given with its name, since a small sub-action can change by a large
+percentage while moving little land. Sub-actions with no baseline area have
+no percentage change; they are left out and named in a caption. Use
+\code{metric = "area"} to draw areas instead.
+
+Changes smaller than \code{min_change} percent are not drawn, so that changes
+of a few cells do not crowd the baseline; settings whose every change is
+that small are named in the subtitle.
 }
 \examples{
 ex <- elsar_example_results()
@@ -34,6 +55,7 @@ x <- elsar_prepare_actions(ex$actions, pas = ex$pas)
 s <- elsar_sub_action_sensitivity(x, add_protect_sub_actions(),
                                   vary = list(expansion_km = c(2, 5, 10)), units = "km2")
 elsar_plot_sensitivity(s)
+elsar_plot_sensitivity(s, metric = "area")
 }
 \seealso{
 \code{\link[=elsar_sub_action_sensitivity]{elsar_sub_action_sensitivity()}}

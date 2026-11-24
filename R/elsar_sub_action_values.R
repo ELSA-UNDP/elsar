@@ -344,16 +344,29 @@ elsar_sub_action_sensitivity <- function(x,
 #' Plot how sensitive sub-actions are to their settings
 #'
 #' Draws the output of [elsar_sub_action_sensitivity()]: for each sub-action,
-#' its baseline area (black diamond) and its area under each setting tried
-#' that changes it, coloured by setting and labelled with the value tried.
-#' Settings that leave a sub-action unchanged are not drawn for it, so a
-#' sub-action with only a diamond is robust to everything tried. Settings that
-#' changed no sub-action at all are named in the subtitle.
+#' its change from the baseline under each setting tried that changes it,
+#' coloured by setting and labelled with the value tried. The baseline is a
+#' black diamond at no change. Settings that leave a sub-action unchanged are
+#' not drawn for it, so a sub-action with only a diamond is robust to
+#' everything tried. Settings that changed no sub-action at all are named in
+#' the subtitle.
 #'
-#' Areas are drawn, not percentage changes, because a small sub-action can
-#' change by a large percentage while moving little land.
+#' By default changes are drawn in percent, so that small and large
+#' sub-actions share one readable axis. Each sub-action's baseline area is
+#' given with its name, since a small sub-action can change by a large
+#' percentage while moving little land. Sub-actions with no baseline area have
+#' no percentage change; they are left out and named in a caption. Use
+#' `metric = "area"` to draw areas instead.
+#'
+#' Changes smaller than `min_change` percent are not drawn, so that changes
+#' of a few cells do not crowd the baseline; settings whose every change is
+#' that small are named in the subtitle.
 #'
 #' @param sensitivity A tibble from [elsar_sub_action_sensitivity()].
+#' @param metric `"pct_change"` (default) to draw the change from the
+#'   baseline in percent, or `"area"` to draw areas.
+#' @param min_change Smallest change drawn, in percent of the baseline area
+#'   (default 0.5). Set 0 to draw every change.
 #' @param title Optional plot title.
 #' @param base_size Base font size in points.
 #'
@@ -367,41 +380,90 @@ elsar_sub_action_sensitivity <- function(x,
 #' s <- elsar_sub_action_sensitivity(x, add_protect_sub_actions(),
 #'                                   vary = list(expansion_km = c(2, 5, 10)), units = "km2")
 #' elsar_plot_sensitivity(s)
-elsar_plot_sensitivity <- function(sensitivity, title = NULL, base_size = 11) {
+#' elsar_plot_sensitivity(s, metric = "area")
+elsar_plot_sensitivity <- function(sensitivity, metric = c("pct_change", "area"), min_change = 0.5,
+                                   title = NULL, base_size = 11) {
+  metric <- match.arg(metric)
+  assertthat::assert_that(
+    assertthat::is.number(min_change), min_change >= 0,
+    msg = "'min_change' must be a single number of 0 or more (percent)."
+  )
   assertthat::assert_that(
     is.data.frame(sensitivity),
-    all(c("parameter", "value", "is_baseline", "sub_action", "area", "change") %in% names(sensitivity)),
+    all(c("parameter", "value", "is_baseline", "sub_action", "area", "baseline_area", "change") %in%
+          names(sensitivity)),
     msg = "'sensitivity' must be created with elsar_sub_action_sensitivity()."
   )
   units <- attr(sensitivity, "units") %||% "ha"
   sub_levels <- unique(sensitivity$sub_action)
   base <- sensitivity[sensitivity$is_baseline, ]
   alt <- sensitivity[!sensitivity$is_baseline & abs(sensitivity$change) > 1e-9, ]
-  base$sub_action <- factor(base$sub_action, levels = rev(sub_levels))
-  alt$sub_action <- factor(alt$sub_action, levels = rev(sub_levels))
+  # Changes from no area always count; others only from min_change percent
+  big <- alt$baseline_area <= 0 | abs(100 * alt$change / pmax(alt$baseline_area, 1e-12)) >= min_change
+  alt <- alt[big, ]
   tried <- unique(sensitivity$parameter[!sensitivity$is_baseline])
   unchanged <- setdiff(tried, unique(alt$parameter))
-  alt$parameter <- factor(alt$parameter, levels = setdiff(tried, unchanged))
   # Plain text: PDF devices cannot draw every symbol (e.g. a diamond character)
-  subtitle <- if (length(unchanged) > 0) paste0(toString(unchanged), ": no change") else NULL
-  base$key <- .txt("baseline")
-  dodge <- ggplot2::position_dodge(width = 0.5)
+  subtitle <- if (length(unchanged) > 0) {
+    paste0(toString(unchanged), ": ", if (min_change > 0) paste0("change under ", min_change, "%") else "no change")
+  }
 
-  ggplot2::ggplot(mapping = ggplot2::aes(x = .data$area, y = .data$sub_action)) +
+  caption <- NULL
+  if (metric == "pct_change") {
+    # A change from no area has no percentage
+    from_zero <- alt$baseline_area <= 0
+    if (any(from_zero)) {
+      caption <- paste0("No baseline area, not drawn: ",
+                        toString(unique(paste0(alt$sub_action[from_zero], " (", alt$parameter[from_zero], " ",
+                                               alt$value[from_zero], ")"))))
+      alt <- alt[!from_zero, ]
+    }
+    base$x <- 0
+    alt$x <- 100 * alt$change / alt$baseline_area
+    # Name each sub-action with its baseline area, so a large percentage of a
+    # small area reads as such
+    area_of <- stats::setNames(base$area, base$sub_action)
+    y_label <- function(z) {
+      a <- area_of[as.character(z)]
+      paste0(.wrap(z, 24), "\n(", .label_area()(a), " ", c(ha = "ha", km2 = "km\u00b2", m2 = "m\u00b2")[[units]], ")")
+    }
+    x_scale <- ggplot2::scale_x_continuous(labels = function(v) paste0(ifelse(v > 0, "+", ""), .label_pct()(v)),
+                                           expand = ggplot2::expansion(mult = 0.08))
+    x_title <- .txt("pct_change_area")
+  } else {
+    base$x <- base$area
+    alt$x <- alt$area
+    y_label <- function(z) .wrap(z, 24)
+    x_scale <- ggplot2::scale_x_continuous(labels = .label_area(), limits = c(0, NA),
+                                           expand = ggplot2::expansion(mult = c(0.02, 0.08)))
+    x_title <- .metric_title("area", units)
+  }
+
+  base$sub_action <- factor(base$sub_action, levels = rev(sub_levels))
+  alt$sub_action <- factor(alt$sub_action, levels = rev(sub_levels))
+  alt$parameter <- factor(alt$parameter, levels = intersect(setdiff(tried, unchanged), unique(alt$parameter)))
+  # Labels of values of one setting alternate above and below their points,
+  # so that close values do not print over each other
+  alt <- alt[order(alt$sub_action, alt$parameter, alt$x), ]
+  alt$vjust <- stats::ave(seq_len(nrow(alt)), alt$sub_action, alt$parameter,
+                          FUN = function(i) ifelse(seq_along(i) %% 2 == 1, -0.9, 1.9))
+  base$key <- .txt("baseline")
+  dodge <- ggplot2::position_dodge(width = 0.6)
+
+  ggplot2::ggplot(mapping = ggplot2::aes(x = .data$x, y = .data$sub_action)) +
+    {if (metric == "pct_change") ggplot2::geom_vline(xintercept = 0, colour = "grey70", linewidth = 0.4)} +
     ggplot2::geom_point(data = base, ggplot2::aes(shape = .data$key), size = 3.6, colour = "black") +
     ggplot2::scale_shape_manual(values = 18, name = NULL) +
     ggplot2::geom_point(data = alt, ggplot2::aes(colour = .data$parameter, group = .data$parameter),
                         size = 2.2, position = dodge) +
     ggplot2::geom_text(data = alt, ggplot2::aes(label = .data$value, colour = .data$parameter,
-                                                group = .data$parameter),
-                       size = base_size * 0.25, vjust = -0.9, position = dodge, show.legend = FALSE) +
+                                                group = .data$parameter, vjust = .data$vjust),
+                       size = base_size * 0.25, position = dodge, show.legend = FALSE) +
     ggplot2::scale_colour_brewer(palette = "Dark2", name = NULL) +
-    ggplot2::scale_x_continuous(labels = .label_area(), expand = ggplot2::expansion(mult = c(0.02, 0.08)),
-                                limits = c(0, NA)) +
-    ggplot2::scale_y_discrete(labels = function(z) .wrap(z, 24)) +
+    x_scale +
+    ggplot2::scale_y_discrete(labels = y_label) +
     ggplot2::facet_grid(rows = ggplot2::vars(.data$parent), scales = "free_y", space = "free_y") +
-    ggplot2::labs(x = .metric_title("area", units), y = NULL, title = title,
-                  subtitle = subtitle) +
+    ggplot2::labs(x = x_title, y = NULL, title = title, subtitle = subtitle, caption = caption) +
     .results_theme(base_size)
 }
 

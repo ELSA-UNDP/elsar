@@ -51,8 +51,10 @@
   sub-action's area against the baseline. A setting can be a named threshold, a
   Protect setting (`pa_threshold`, `expansion_km`, `min_new_km2`) or a whole
   layer, such as a 2 km riparian zone instead of 1 km. `elsar_plot_sensitivity()`
-  draws the areas, not percentages, because a small sub-action can change by a
-  large percentage while moving little land.
+  draws each change in percent, with each sub-action's baseline area beside its
+  name, so that small and large sub-actions share one readable axis
+  (`metric = "area"` draws areas). Changes under 0.5% are left out
+  (`min_change`).
 * Sub-action conditions are stored and printed in full; long ones were cut
   short with "...".
 
