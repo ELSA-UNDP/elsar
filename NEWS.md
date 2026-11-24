@@ -23,6 +23,22 @@
   layer and patch analysis, so the split is reproducible. Before, it was
   usually done by hand in a GIS. The new label keys `pa_expansion`,
   `pa_corridor`, `pa_new` and `pa_small_new` are in every language.
+* **Default sub-action rules, and rules in a file.** `elsar_sub_action_catalogue()`
+  lists elsar's default sub-actions. Manage is split into coastal management,
+  sustainable agriculture, sustainable grazing and sustainable forest
+  management; Restore into mangrove, wetland, riparian, coastal, forest and
+  other restoration; Protect as in `add_protect_sub_actions()`. Each default
+  uses only layers elsar can make for any country, and is tagged with the
+  Global Biodiversity Framework targets it serves. `elsar_default_sub_actions()`
+  turns the catalogue into rules, and can drop entries or change the Protect
+  settings. `elsar_sub_action_layers()` lists the layers a rule set needs.
+  `elsar_write_sub_actions()`, `elsar_read_sub_actions()` and
+  `elsar_sub_actions_from_table()` keep rule sets as CSV, for example in a
+  country's configuration. Conditions read from a file may use only layer
+  names, numbers, comparisons, `&`, `|`, `!`, `is.na()` and arithmetic, so a
+  rules file cannot run other code.
+* Sub-action conditions are stored and printed in full; long ones were cut
+  short with "...".
 
 # elsar 0.7.0
 

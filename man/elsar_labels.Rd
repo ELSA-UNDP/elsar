@@ -45,6 +45,13 @@ and \code{\link[=elsar_palette]{elsar_palette()}}.}
 protected areas and new protection proposed by ELSA.}
 \item{\code{pa_expansion}, \code{pa_corridor}, \code{pa_new}, \code{pa_small_new}}{Names of
 the Protect sub-actions from \code{\link[=add_protect_sub_actions]{add_protect_sub_actions()}}.}
+\item{\code{sa_coastal_management}, \code{sa_sustainable_agriculture},
+\code{sa_sustainable_grazing}, \code{sa_sustainable_forest_management},
+\code{sa_other_management}, \code{sa_mangrove_restoration},
+\code{sa_wetland_restoration}, \code{sa_riparian_restoration},
+\code{sa_coastal_restoration}, \code{sa_forest_restoration},
+\code{sa_other_restoration}}{Names of the default sub-actions in
+\code{\link[=elsar_sub_action_catalogue]{elsar_sub_action_catalogue()}}.}
 \item{\code{national}}{Name of the national row in summaries.}
 \item{\code{pct_of_region}, \code{pct_of_planning_area}, \code{pct_of_layer}, \code{area}}{
 Axis titles of bar charts. The area title is followed by the units.}

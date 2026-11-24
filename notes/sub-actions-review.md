@@ -137,10 +137,10 @@ Semantics:
   rest of the parent action.
 - Conditions are R expressions over the names in `layers`, captured with
   `rlang::enquo` and evaluated with terra arithmetic. The same rules can be read
-  from CSV/YAML (`parent, sub_action, priority, condition`). There, conditions are
-  parsed against an allow-list of operators (`> >= < <= == & | ! is.na`), so a
-  config file can't run arbitrary code. That is the route for elsar_pipeline and
-  elsa-config-mapper.
+  from CSV (`parent, sub_action, condition`). There, conditions are parsed
+  against an allow-list of operators (`> >= < <= == & | ! is.na`), so a rules
+  file can't run arbitrary code. This keeps a country's rules reviewable and
+  reusable next to its analysis.
 - Output: a categorical raster whose levels are the sub-action scheme
   (`group` = parent, colours derived from the parent colour as tints, labels
   translated through `elsar_labels()`). Do Nothing and PAs pass through unchanged.
@@ -212,7 +212,7 @@ judgement calls. `elsar_sub_action_sensitivity(x, rules, layers, vary = list(rip
 reruns the assignment over a grid and reports how much each sub-action's area
 changes, so the report can say how robust each figure is.
 
-### 4.8 Reporting and pipeline
+### 4.8 Reporting
 
 - A sub-actions chapter in `elsar_results_report()`: a national treemap/sunburst
   (action → sub-action), stacked regional bars, sub-action maps, the
@@ -220,26 +220,42 @@ changes, so the report can say how robust each figure is.
 - `elsar_export_results()` writes the sub-action raster, the scheme and tables,
   with one GeoPackage layer per sub-action (fixing the Peru overwrite bug), plus
   the rules file used, so the run can be reproduced.
-- elsar_pipeline: an optional `sub_actions:` block in the country config
-  (catalogue + overrides). elsa-config-mapper: a rules editor.
 
-## 5. Suggested phasing
+## 5. Phasing
 
-1. **MVP (one PR):** `elsar_sub_actions()` / `sub_action()` / `elsar_assign_sub_actions()`,
-   derived scheme, `other` remainder, sum-to-parent check, tests on
-   `elsar_example_results()`, and a vignette section. All the downstream
-   summaries and plots then work.
-2. `add_protect_sub_actions()` (patch-based) and `make_riparian_zone()` /
-   `make_coastal_zone()`.
-3. Global catalogue with GBF/NbS metadata, CSV/YAML rule I/O with an allow-listed
-   parser, and the diagnostics function.
-4. `elsar_summarise_values()`, sensitivity, cost envelope, report chapter,
-   pipeline/config-mapper integration.
-5. Validation: rebuild Peru with the new tools, and compare against
-   `Sub_Actions.csv` once the double-counting is removed. The gap is itself a
-   finding to share with the Peru team.
+1. **Done (#140):** `elsar_sub_actions()` / `sub_action()` / `elsar_assign_sub_actions()`,
+   derived scheme, `other` remainder, sum-to-parent check, diagnostics, and a
+   vignette section. All the downstream summaries and plots then work.
+2. **Done (#141, #142):** `add_protect_sub_actions()` (patch-based), and
+   `make_riparian_zone()` / `make_coastal_zone()`.
+3. **Done (this branch):** global catalogue with GBF targets, CSV rule I/O with
+   an allow-listed parser.
+4. **Next:** `elsar_summarise_values()`, sensitivity, cost envelope, report
+   chapter.
+5. **Done:** Peru rebuild and comparison
+   (Dropbox `per_national_v2/analyses/sub_actions_v2/`). It confirmed the
+   double-counting: simulating the original joins reproduces its riparian total
+   within 1%.
 
-## 6. Open questions for the team
+## 6. Future, if needed: pipeline integration
+
+Sub-actions are a post-hoc analysis of a finished ELSA run, so they do not need
+to run inside elsar_pipeline, and they are not planned there. Revisit this only
+if countries start asking for sub-action outputs routinely, with every build.
+Two possible routes:
+
+- elsar_pipeline: an optional `sub_actions:` block in the country config,
+  naming a rules CSV (from `elsar_write_sub_actions()`) or the catalogue with
+  `drop` and Protect settings. It would build the layers that
+  `elsar_sub_action_layers()` lists, and write the sub-action outputs beside the
+  other results.
+- elsa-config-mapper: an editor for the rules CSV, with the allow-listed
+  conditions validated as they are typed.
+
+Until then, a country's rules CSV can sit in its analysis folder next to the
+script that uses it.
+
+## 7. Open questions for the team
 
 - Should sub-actions be strictly exclusive (first match) or allowed to overlap
   (multi-label, reported as overlap)? First match is recommended for area

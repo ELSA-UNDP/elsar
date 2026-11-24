@@ -118,7 +118,7 @@ elsar_sub_actions <- function(parent, ..., other = NULL, other_colour = NULL) {
     label = c(vapply(subs, `[[`, character(1), "label"), other),
     priority = seq_len(n + 1),
     condition = c(
-      vapply(subs, function(s) rlang::as_label(rlang::quo_get_expr(s$condition)), character(1)),
+      vapply(subs, function(s) .expr_text(rlang::quo_get_expr(s$condition)), character(1)),
       NA_character_
     ),
     colour = c(vapply(subs, `[[`, character(1), "colour"), other_colour %||% NA_character_),
@@ -337,6 +337,9 @@ elsar_sub_action_diagnostics <- function(x, rules, layers = NULL,
 }
 
 # Internal helpers ---------------------------------------------------------------
+
+# Full text of a condition (rlang::as_label() cuts long ones short with "...")
+.expr_text <- function(expr) paste(deparse(expr, width.cutoff = 500L), collapse = " ")
 
 .check_colours <- function(colours, n) {
   ok <- length(colours) == n && all(vapply(colours, function(x) {

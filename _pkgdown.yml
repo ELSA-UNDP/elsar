@@ -91,6 +91,10 @@ reference:
   - elsar_plot_overlap
   - elsar_sub_actions
   - add_protect_sub_actions
+  - elsar_sub_action_catalogue
+  - elsar_default_sub_actions
+  - elsar_sub_action_layers
+  - elsar_read_sub_actions
   - sub_action
   - elsar_assign_sub_actions
   - elsar_sub_action_diagnostics

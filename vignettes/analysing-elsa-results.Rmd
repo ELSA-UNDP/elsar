@@ -267,6 +267,32 @@ s[s$group == "Protect", c("action", "area", "area_in_pa", "pct_of_region")]
 elsar_plot_actions(sub)
 ```
 
+### Default rules, and rules in a file
+
+`elsar_sub_action_catalogue()` lists elsar's default sub-actions. Each uses only layers elsar can make for
+any country, and is tagged with the Global Biodiversity Framework targets it serves.
+`elsar_default_sub_actions()` turns the catalogue into rules, and `elsar_sub_action_layers()` lists the
+layers to make for them:
+
+```{r default-sub-actions}
+catalogue <- elsar_sub_action_catalogue()
+catalogue[catalogue$parent == "restore", c("sub_action", "condition", "gbf_targets")]
+
+rules <- elsar_default_sub_actions(drop = "sustainable_grazing", protect = list(expansion_km = 2))
+elsar_sub_action_layers(rules)
+```
+
+Rules can be kept in a CSV file, for example in a country's configuration, and edited there.
+Conditions read from a file may use only layer names, numbers, comparisons, `&`, `|`, `!`,
+`is.na()` and arithmetic, so a rules file cannot run other code:
+
+```{r rules-file}
+path <- tempfile(fileext = ".csv")
+elsar_write_sub_actions(rules, path)
+head(read.csv(path)[, c("parent", "sub_action", "condition")], 4)
+rules <- elsar_read_sub_actions(path)
+```
+
 ## 6. Regional panels and export
 
 `elsar_plot_region()` combines a map and bar charts for one region, and
