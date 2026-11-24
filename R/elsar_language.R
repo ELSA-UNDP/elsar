@@ -30,6 +30,10 @@
     sa_coastal_restoration = "Coastal restoration",
     sa_forest_restoration = "Forest restoration",
     sa_other_restoration = "Other ecosystem restoration",
+    no_data = "No data",
+    pct_of_action = "% of action area",
+    pct_change_area = "Change in area (%)",
+    baseline = "Baseline",
     national = "National",
     pct_of_region = "% of region",
     pct_of_planning_area = "% of planning area",
@@ -68,6 +72,10 @@
     sa_coastal_restoration = "Restauraci\u00f3n costera",
     sa_forest_restoration = "Restauraci\u00f3n forestal",
     sa_other_restoration = "Restauraci\u00f3n de otros ecosistemas",
+    no_data = "Sin datos",
+    pct_of_action = "% de la superficie de la acci\u00f3n",
+    pct_change_area = "Cambio de superficie (%)",
+    baseline = "Referencia",
     national = "Nacional",
     pct_of_region = "% de la regi\u00f3n",
     pct_of_planning_area = "% del \u00e1rea de planificaci\u00f3n",
@@ -106,6 +114,10 @@
     sa_coastal_restoration = "Restauration c\u00f4ti\u00e8re",
     sa_forest_restoration = "Restauration foresti\u00e8re",
     sa_other_restoration = "Restauration d'autres \u00e9cosyst\u00e8mes",
+    no_data = "Pas de donn\u00e9es",
+    pct_of_action = "% de la superficie de l'action",
+    pct_change_area = "Variation de superficie (%)",
+    baseline = "R\u00e9f\u00e9rence",
     national = "National",
     pct_of_region = "% de la r\u00e9gion",
     pct_of_planning_area = "% de la zone de planification",
@@ -144,6 +156,10 @@
     sa_coastal_restoration = "Restaura\u00e7\u00e3o costeira",
     sa_forest_restoration = "Restaura\u00e7\u00e3o florestal",
     sa_other_restoration = "Restaura\u00e7\u00e3o de outros ecossistemas",
+    no_data = "Sem dados",
+    pct_of_action = "% da \u00e1rea da a\u00e7\u00e3o",
+    pct_change_area = "Varia\u00e7\u00e3o da \u00e1rea (%)",
+    baseline = "Refer\u00eancia",
     national = "Nacional",
     pct_of_region = "% da regi\u00e3o",
     pct_of_planning_area = "% da \u00e1rea de planejamento",
@@ -182,6 +198,10 @@
     sa_coastal_restoration = "\u0412\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u0435 \u043c\u043e\u0440\u0441\u043a\u0438\u0445 \u043f\u043e\u0431\u0435\u0440\u0435\u0436\u0438\u0439",
     sa_forest_restoration = "\u0412\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u0435 \u043b\u0435\u0441\u043e\u0432",
     sa_other_restoration = "\u0412\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u0435 \u0434\u0440\u0443\u0433\u0438\u0445 \u044d\u043a\u043e\u0441\u0438\u0441\u0442\u0435\u043c",
+    no_data = "\u041d\u0435\u0442 \u0434\u0430\u043d\u043d\u044b\u0445",
+    pct_of_action = "% \u043f\u043b\u043e\u0449\u0430\u0434\u0438 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044f",
+    pct_change_area = "\u0418\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u0435 \u043f\u043b\u043e\u0449\u0430\u0434\u0438 (%)",
+    baseline = "\u0418\u0441\u0445\u043e\u0434\u043d\u044b\u0439 \u0432\u0430\u0440\u0438\u0430\u043d\u0442",
     national = "\u0421\u0442\u0440\u0430\u043d\u0430 \u0432 \u0446\u0435\u043b\u043e\u043c",
     pct_of_region = "% \u0440\u0435\u0433\u0438\u043e\u043d\u0430",
     pct_of_planning_area = "% \u0442\u0435\u0440\u0440\u0438\u0442\u043e\u0440\u0438\u0438 \u043f\u043b\u0430\u043d\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u044f",
@@ -252,6 +272,10 @@
 #'     `sa_coastal_restoration`, `sa_forest_restoration`,
 #'     `sa_other_restoration`}{Names of the default sub-actions in
 #'     [elsar_sub_action_catalogue()].}
+#'   \item{`no_data`, `pct_of_action`}{Legend label for missing values, and axis
+#'     title, in [elsar_plot_values()].}
+#'   \item{`pct_change_area`, `baseline`}{Axis title and baseline label in
+#'     [elsar_plot_sensitivity()].}
 #'   \item{`national`}{Name of the national row in summaries.}
 #'   \item{`pct_of_region`, `pct_of_planning_area`, `pct_of_layer`, `area`}{
 #'     Axis titles of bar charts. The area title is followed by the units.}
@@ -338,7 +362,9 @@ elsar_labels <- function(language = getOption("elsar.language", "en")) {
 # (1.2K, 3.4M); other languages write the full number with their own marks,
 # since the K/M/B suffixes are English.
 .label_pct <- function(accuracy = NULL) {
-  scales::label_percent(scale = 1, accuracy = accuracy, decimal.mark = .number_marks()[["decimal"]])
+  marks <- .number_marks()
+  scales::label_percent(scale = 1, accuracy = accuracy, big.mark = marks[["big"]],
+                        decimal.mark = marks[["decimal"]])
 }
 
 .label_area <- function(accuracy = NULL) {

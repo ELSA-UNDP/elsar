@@ -52,6 +52,10 @@ the Protect sub-actions from \code{\link[=add_protect_sub_actions]{add_protect_s
 \code{sa_coastal_restoration}, \code{sa_forest_restoration},
 \code{sa_other_restoration}}{Names of the default sub-actions in
 \code{\link[=elsar_sub_action_catalogue]{elsar_sub_action_catalogue()}}.}
+\item{\code{no_data}, \code{pct_of_action}}{Legend label for missing values, and axis
+title, in \code{\link[=elsar_plot_values]{elsar_plot_values()}}.}
+\item{\code{pct_change_area}, \code{baseline}}{Axis title and baseline label in
+\code{\link[=elsar_plot_sensitivity]{elsar_plot_sensitivity()}}.}
 \item{\code{national}}{Name of the national row in summaries.}
 \item{\code{pct_of_region}, \code{pct_of_planning_area}, \code{pct_of_layer}, \code{area}}{
 Axis titles of bar charts. The area title is followed by the units.}

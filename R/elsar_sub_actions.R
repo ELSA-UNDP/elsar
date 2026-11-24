@@ -185,6 +185,13 @@ print.elsar_sub_actions <- function(x, ...) {
 #'   average, or nearest neighbour for categorical rasters). `NULL` if the
 #'   conditions use no layers.
 #'
+#' @param params Optional named list of single values (numbers, strings or
+#'   `TRUE`/`FALSE`) that conditions can use by name, e.g.
+#'   `list(riparian_min = 0.5)` for a rule `riparian > riparian_min`. This keeps
+#'   thresholds out of the rules, so the same rules (or rules file) can be run
+#'   with other values, as [elsar_sub_action_sensitivity()] does. Names must
+#'   not clash with layer names.
+#'
 #' @return A prepared action map (`SpatRaster` with an `action` layer and, if
 #'   `x` had one, a `pa_fraction` layer). Its categories add a `parent` column
 #'   to the action scheme.
@@ -212,11 +219,11 @@ print.elsar_sub_actions <- function(x, ...) {
 #'
 #' sub <- elsar_assign_sub_actions(x, rules, layers)
 #' elsar_summarise_actions(sub, units = "km2")
-elsar_assign_sub_actions <- function(x, rules, layers = NULL) {
+elsar_assign_sub_actions <- function(x, rules, layers = NULL, params = list()) {
   scheme <- .scheme_from_actions(x)
   .check_sub_action_rules(rules)
   .check_sub_action_parents(rules, scheme)
-  layers <- .condition_layers(layers, x)
+  layers <- .add_params(.condition_layers(layers, x), params)
   layers <- .add_protect_layers(layers, x, rules, scheme)
 
   action <- x[["action"]]
@@ -279,13 +286,14 @@ elsar_assign_sub_actions <- function(x, rules, layers = NULL) {
 #' )
 #' elsar_sub_action_diagnostics(x, rules, c(riparian = riparian, wetland = wetland))
 elsar_sub_action_diagnostics <- function(x, rules, layers = NULL,
-                                         units = c("ha", "km2", "m2")) {
+                                         units = c("ha", "km2", "m2"),
+                                         params = list()) {
   scheme <- .scheme_from_actions(x)
   units <- match.arg(units)
   unit_factor <- c(m2 = 1, ha = 1e-4, km2 = 1e-6)[[units]]
   .check_sub_action_rules(rules)
   .check_sub_action_parents(rules, scheme)
-  layers <- .condition_layers(layers, x)
+  layers <- .add_params(.condition_layers(layers, x), params)
   layers <- .add_protect_layers(layers, x, rules, scheme)
 
   action <- x[["action"]]
@@ -337,6 +345,27 @@ elsar_sub_action_diagnostics <- function(x, rules, layers = NULL,
 }
 
 # Internal helpers ---------------------------------------------------------------
+
+# Named single values that conditions can use beside the layers
+.add_params <- function(layers, params) {
+  if (is.null(params) || length(params) == 0) return(layers)
+  assertthat::assert_that(
+    is.list(params), !is.null(names(params)), all(nzchar(names(params))), !anyDuplicated(names(params)),
+    msg = "'params' must be a named list, e.g. list(riparian_min = 0.5)."
+  )
+  ok <- vapply(params, function(v) is.atomic(v) && length(v) == 1 && !is.na(v), logical(1))
+  assertthat::assert_that(
+    all(ok),
+    msg = paste0("Each of 'params' must be a single number, string or TRUE/FALSE: ",
+                 toString(names(params)[!ok]), ".")
+  )
+  clash <- intersect(names(params), names(layers))
+  assertthat::assert_that(
+    length(clash) == 0,
+    msg = paste0("'params' and 'layers' share names: ", toString(clash), ".")
+  )
+  c(layers, params)
+}
 
 # Full text of a condition (rlang::as_label() cuts long ones short with "...")
 .expr_text <- function(expr) paste(deparse(expr, width.cutoff = 500L), collapse = " ")
@@ -429,7 +458,7 @@ elsar_sub_action_diagnostics <- function(x, rules, layers = NULL,
 
 # Context layers on the action grid, as a named list of single-layer rasters
 .condition_layers <- function(layers, x) {
-  if (is.null(layers)) return(list())
+  if (is.null(layers) || (is.list(layers) && length(layers) == 0)) return(list())
   template <- x[["action"]]
   if (is.character(layers) || inherits(layers, "SpatRaster")) {
     r <- .read_raster_arg(layers, "layers")
