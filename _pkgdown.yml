@@ -95,6 +95,10 @@ reference:
   - elsar_default_sub_actions
   - elsar_sub_action_layers
   - elsar_read_sub_actions
+  - elsar_summarise_values
+  - elsar_plot_values
+  - elsar_sub_action_sensitivity
+  - elsar_plot_sensitivity
   - sub_action
   - elsar_assign_sub_actions
   - elsar_sub_action_diagnostics

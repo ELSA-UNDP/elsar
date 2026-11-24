@@ -37,6 +37,22 @@
   country's configuration. Conditions read from a file may use only layer
   names, numbers, comparisons, `&`, `|`, `!`, `is.na()` and arithmetic, so a
   rules file cannot run other code.
+* **What lies inside each action.** `elsar_summarise_values()` splits the area
+  of each action or sub-action by the classes of one or more layers, nationally
+  or per region. Examples are crop suitability within sustainable agriculture,
+  or the ecoregions forest restoration falls in. Numeric layers are cut at fixed
+  breaks or quantiles shared by all actions, and categorical layers keep their
+  categories. A "No data" class means each action's classes add up to its area.
+  `elsar_plot_values()` draws it as 100% bars.
+* **Named thresholds and sensitivity.** `elsar_assign_sub_actions()` and
+  `elsar_sub_action_diagnostics()` take `params`, named values that conditions
+  can use (`riparian > riparian_min`), in rules written in R or read from a file.
+  `elsar_sub_action_sensitivity()` changes one setting at a time and reports each
+  sub-action's area against the baseline. A setting can be a named threshold, a
+  Protect setting (`pa_threshold`, `expansion_km`, `min_new_km2`) or a whole
+  layer, such as a 2 km riparian zone instead of 1 km. `elsar_plot_sensitivity()`
+  draws the areas, not percentages, because a small sub-action can change by a
+  large percentage while moving little land.
 * Sub-action conditions are stored and printed in full; long ones were cut
   short with "...".
 

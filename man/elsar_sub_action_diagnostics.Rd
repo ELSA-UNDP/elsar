@@ -8,7 +8,8 @@ elsar_sub_action_diagnostics(
   x,
   rules,
   layers = NULL,
-  units = c("ha", "km2", "m2")
+  units = c("ha", "km2", "m2"),
+  params = list()
 )
 }
 \arguments{
@@ -25,6 +26,13 @@ average, or nearest neighbour for categorical rasters). \code{NULL} if the
 conditions use no layers.}
 
 \item{units}{Character. Area units: \code{"ha"} (default), \code{"km2"} or \code{"m2"}.}
+
+\item{params}{Optional named list of single values (numbers, strings or
+\code{TRUE}/\code{FALSE}) that conditions can use by name, e.g.
+\code{list(riparian_min = 0.5)} for a rule \code{riparian > riparian_min}. This keeps
+thresholds out of the rules, so the same rules (or rules file) can be run
+with other values, as \code{\link[=elsar_sub_action_sensitivity]{elsar_sub_action_sensitivity()}} does. Names must
+not clash with layer names.}
 }
 \value{
 A tibble with one row per sub-action and columns \code{parent},

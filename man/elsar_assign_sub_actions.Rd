@@ -4,7 +4,7 @@
 \alias{elsar_assign_sub_actions}
 \title{Assign ELSA actions to sub-actions}
 \usage{
-elsar_assign_sub_actions(x, rules, layers = NULL)
+elsar_assign_sub_actions(x, rules, layers = NULL, params = list())
 }
 \arguments{
 \item{x}{A prepared action map from \code{\link[=elsar_prepare_actions]{elsar_prepare_actions()}}.}
@@ -17,6 +17,13 @@ elsar_assign_sub_actions(x, rules, layers = NULL)
 (0-1). Rasters on another grid are resampled to the action grid (by
 average, or nearest neighbour for categorical rasters). \code{NULL} if the
 conditions use no layers.}
+
+\item{params}{Optional named list of single values (numbers, strings or
+\code{TRUE}/\code{FALSE}) that conditions can use by name, e.g.
+\code{list(riparian_min = 0.5)} for a rule \code{riparian > riparian_min}. This keeps
+thresholds out of the rules, so the same rules (or rules file) can be run
+with other values, as \code{\link[=elsar_sub_action_sensitivity]{elsar_sub_action_sensitivity()}} does. Names must
+not clash with layer names.}
 }
 \value{
 A prepared action map (\code{SpatRaster} with an \code{action} layer and, if

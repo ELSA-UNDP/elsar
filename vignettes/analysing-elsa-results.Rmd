@@ -293,6 +293,39 @@ head(read.csv(path)[, c("parent", "sub_action", "condition")], 4)
 rules <- elsar_read_sub_actions(path)
 ```
 
+### What lies inside each sub-action, and how robust it is
+
+`elsar_summarise_values()` splits each action or sub-action by the classes of a layer: for example, how
+much sustainable agriculture lies on land of low or high crop suitability. Fixed breaks mean the same
+thing in every run; a single number asks for that many quantile classes.
+
+```{r values, fig.height = 3.5}
+suitability <- terra::init(x[["action"]], "y") / 60000
+v <- elsar_summarise_values(sub, c(suitability = suitability), breaks = c(0, 0.25, 0.5, 0.75, 1))
+elsar_plot_values(v, title = "Crop suitability within each sub-action")
+```
+
+Thresholds can be given names in the rules and their values in `params`, so the same rules (or rules
+file) can be run with other values. `elsar_sub_action_sensitivity()` changes one setting at a time (a
+named threshold, a Protect setting, or a whole layer) and reports how much each sub-action's area
+changes:
+
+```{r sensitivity, fig.height = 4}
+rules <- elsar_sub_actions(
+  "Restore",
+  sub_action("Wetland restoration", wetland > wetland_min),
+  sub_action("Riparian restoration", riparian)
+) |>
+  add_protect_sub_actions(expansion_km = 2)
+s <- elsar_sub_action_sensitivity(
+  x, rules, layers,
+  params = list(wetland_min = 0.5),
+  vary = list(wetland_min = c(0.1, 0.9), expansion_km = c(0, 5)),
+  units = "km2"
+)
+elsar_plot_sensitivity(s)
+```
+
 ## 6. Regional panels and export
 
 `elsar_plot_region()` combines a map and bar charts for one region, and
