@@ -8,6 +8,7 @@ elsar_plot_sensitivity(
   sensitivity,
   metric = c("pct_change", "area"),
   min_change = 0.5,
+  max_change = 200,
   title = NULL,
   base_size = 11
 )
@@ -20,6 +21,10 @@ baseline in percent, or \code{"area"} to draw areas.}
 
 \item{min_change}{Smallest change drawn, in percent of the baseline area
 (default 0.5). Set 0 to draw every change.}
+
+\item{max_change}{Largest change drawn to scale, in percent (default 200).
+Larger changes are drawn at the edge of the axis. Use \code{Inf} to draw every
+change to scale.}
 
 \item{title}{Optional plot title.}
 
@@ -44,6 +49,11 @@ given with its name, since a small sub-action can change by a large
 percentage while moving little land. Sub-actions with no baseline area have
 no percentage change; they are left out and named in a caption. Use
 \code{metric = "area"} to draw areas instead.
+
+Changes beyond \code{max_change} percent (a large change of a small
+sub-action) would squash every other point onto the baseline, so they are
+drawn as triangles at the edge of the axis, labelled with their actual
+change.
 
 Changes smaller than \code{min_change} percent are not drawn, so that changes
 of a few cells do not crowd the baseline; settings whose every change is

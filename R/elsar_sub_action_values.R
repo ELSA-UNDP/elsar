@@ -358,6 +358,11 @@ elsar_sub_action_sensitivity <- function(x,
 #' no percentage change; they are left out and named in a caption. Use
 #' `metric = "area"` to draw areas instead.
 #'
+#' Changes beyond `max_change` percent (a large change of a small
+#' sub-action) would squash every other point onto the baseline, so they are
+#' drawn as triangles at the edge of the axis, labelled with their actual
+#' change.
+#'
 #' Changes smaller than `min_change` percent are not drawn, so that changes
 #' of a few cells do not crowd the baseline; settings whose every change is
 #' that small are named in the subtitle.
@@ -367,6 +372,9 @@ elsar_sub_action_sensitivity <- function(x,
 #'   baseline in percent, or `"area"` to draw areas.
 #' @param min_change Smallest change drawn, in percent of the baseline area
 #'   (default 0.5). Set 0 to draw every change.
+#' @param max_change Largest change drawn to scale, in percent (default 200).
+#'   Larger changes are drawn at the edge of the axis. Use `Inf` to draw every
+#'   change to scale.
 #' @param title Optional plot title.
 #' @param base_size Base font size in points.
 #'
@@ -382,11 +390,15 @@ elsar_sub_action_sensitivity <- function(x,
 #' elsar_plot_sensitivity(s)
 #' elsar_plot_sensitivity(s, metric = "area")
 elsar_plot_sensitivity <- function(sensitivity, metric = c("pct_change", "area"), min_change = 0.5,
-                                   title = NULL, base_size = 11) {
+                                   max_change = 200, title = NULL, base_size = 11) {
   metric <- match.arg(metric)
   assertthat::assert_that(
     assertthat::is.number(min_change), min_change >= 0,
     msg = "'min_change' must be a single number of 0 or more (percent)."
+  )
+  assertthat::assert_that(
+    assertthat::is.number(max_change), max_change > min_change,
+    msg = "'max_change' must be a single number (percent) larger than 'min_change'."
   )
   assertthat::assert_that(
     is.data.frame(sensitivity),
@@ -420,6 +432,12 @@ elsar_plot_sensitivity <- function(sensitivity, metric = c("pct_change", "area")
     }
     base$x <- 0
     alt$x <- 100 * alt$change / alt$baseline_area
+    # Changes beyond max_change sit at the edge of the axis, with their value
+    # in the label (a change can be below -100% only in theory)
+    alt$clipped <- abs(alt$x) > max_change
+    pct_text <- function(v) paste0(ifelse(v > 0, "+", ""), .label_pct(accuracy = 1)(v))
+    alt$value[alt$clipped] <- paste0(alt$value[alt$clipped], " (", pct_text(alt$x[alt$clipped]), ")")
+    alt$x <- pmax(pmin(alt$x, max_change), -max_change)
     # Name each sub-action with its baseline area, so a large percentage of a
     # small area reads as such
     area_of <- stats::setNames(base$area, base$sub_action)
@@ -428,11 +446,12 @@ elsar_plot_sensitivity <- function(sensitivity, metric = c("pct_change", "area")
       paste0(.wrap(z, 24), "\n(", .label_area()(a), " ", c(ha = "ha", km2 = "km\u00b2", m2 = "m\u00b2")[[units]], ")")
     }
     x_scale <- ggplot2::scale_x_continuous(labels = function(v) paste0(ifelse(v > 0, "+", ""), .label_pct()(v)),
-                                           expand = ggplot2::expansion(mult = 0.08))
+                                           expand = ggplot2::expansion(mult = 0.1))
     x_title <- .txt("pct_change_area")
   } else {
     base$x <- base$area
     alt$x <- alt$area
+    alt$clipped <- rep(FALSE, nrow(alt))
     y_label <- function(z) .wrap(z, 24)
     x_scale <- ggplot2::scale_x_continuous(labels = .label_area(), limits = c(0, NA),
                                            expand = ggplot2::expansion(mult = c(0.02, 0.08)))
@@ -447,6 +466,8 @@ elsar_plot_sensitivity <- function(sensitivity, metric = c("pct_change", "area")
   alt <- alt[order(alt$sub_action, alt$parameter, alt$x), ]
   alt$vjust <- stats::ave(seq_len(nrow(alt)), alt$sub_action, alt$parameter,
                           FUN = function(i) ifelse(seq_along(i) %% 2 == 1, -0.9, 1.9))
+  # Triangles mark changes drawn at the edge of the axis
+  alt$point_shape <- ifelse(alt$clipped, 17, 16)
   base$key <- .txt("baseline")
   dodge <- ggplot2::position_dodge(width = 0.6)
 
@@ -454,7 +475,8 @@ elsar_plot_sensitivity <- function(sensitivity, metric = c("pct_change", "area")
     {if (metric == "pct_change") ggplot2::geom_vline(xintercept = 0, colour = "grey70", linewidth = 0.4)} +
     ggplot2::geom_point(data = base, ggplot2::aes(shape = .data$key), size = 3.6, colour = "black") +
     ggplot2::scale_shape_manual(values = 18, name = NULL) +
-    ggplot2::geom_point(data = alt, ggplot2::aes(colour = .data$parameter, group = .data$parameter),
+    ggplot2::geom_point(data = alt, ggplot2::aes(colour = .data$parameter, group = .data$parameter,
+                                                 shape = I(.data$point_shape)),
                         size = 2.2, position = dodge) +
     ggplot2::geom_text(data = alt, ggplot2::aes(label = .data$value, colour = .data$parameter,
                                                 group = .data$parameter, vjust = .data$vjust),

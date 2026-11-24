@@ -206,3 +206,22 @@ test_that("the sensitivity plot leaves out changes from no area, and tiny change
                                      vary = list(suit_min = 0.55), units = "km2")
   expect_match(elsar_plot_sensitivity(s2, min_change = 70)$labels$subtitle, "suit_min: change under 70%")
 })
+
+test_that("the sensitivity plot draws very large changes at the edge of the axis", {
+  pa <- val_layer(c(1, 0, 0, 0, 0, 0, 0, 0))
+  x <- elsar_prepare_actions(val_actions(), pas = pa)
+  rules <- elsar_sub_actions("Manage", sub_action("Suitable", suit > suit_min))
+  # Suitable grows from 1 to 3 km2 (+200%) when suit_min drops from 0.8 to 0.05
+  s <- elsar_sub_action_sensitivity(x, rules, c(suit = val_suit()), params = list(suit_min = 0.8),
+                                    vary = list(suit_min = 0.05), units = "km2")
+  # Layers: zero line, baseline, points, labels
+  drawn <- function(...) ggplot2::ggplot_build(elsar_plot_sensitivity(s, ...))$data[[3]]
+  d <- drawn(max_change = 150)
+  expect_equal(max(d$x), 150)
+  expect_true(17 %in% d$shape)
+  labels <- ggplot2::ggplot_build(elsar_plot_sensitivity(s, max_change = 150))$data[[4]]$label
+  expect_true("0.05 (+200%)" %in% labels)
+  expect_equal(max(drawn()$x), 200)
+  expect_false(17 %in% drawn()$shape)
+  expect_error(elsar_plot_sensitivity(s, min_change = 5, max_change = 1), "max_change")
+})
