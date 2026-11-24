@@ -123,7 +123,7 @@ elsar_plot_actions <- function(x,
     }) +
     if (legend) {
       ggplot2::guides(
-        fill = ggplot2::guide_legend(order = 1, nrow = 1),
+        fill = ggplot2::guide_legend(order = 1, nrow = .legend_rows(nrow(shown))),
         colour = ggplot2::guide_legend(order = 2, override.aes = list(fill = pa_key_fill))
       )
     } else {
@@ -494,6 +494,10 @@ elsar_plot_regions <- function(x, summary, regions, region_col, ...) {
     )
 }
 
+# Rows of a horizontal legend: one row up to `per_row` keys, so legends with
+# many keys (e.g. sub-actions) wrap instead of running off the plot
+.legend_rows <- function(n, per_row = 6) max(1L, as.integer(ceiling(n / per_row)))
+
 .wrap <- function(x, width = 14) stringr::str_wrap(x, width = width)
 
 .metric_title <- function(metric, units, percent_key = "pct_of_region") {
@@ -618,7 +622,7 @@ elsar_plot_regions <- function(x, summary, regions, region_col, ...) {
   p +
     .results_theme(base_size) +
     .category_axis_theme(vertical, length(cat_levels), cat_levels) +
-    ggplot2::guides(fill = ggplot2::guide_legend(nrow = 1))
+    ggplot2::guides(fill = ggplot2::guide_legend(nrow = .legend_rows(length(breaks))))
 }
 
 .pa_outline <- function(pa, threshold) {
