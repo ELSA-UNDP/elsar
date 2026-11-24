@@ -43,6 +43,8 @@ Names of the standard ELSA actions, used by \code{\link[=elsar_action_scheme]{el
 and \code{\link[=elsar_palette]{elsar_palette()}}.}
 \item{\code{existing_pas}, \code{new_protection}}{Legend labels for existing
 protected areas and new protection proposed by ELSA.}
+\item{\code{pa_expansion}, \code{pa_corridor}, \code{pa_new}, \code{pa_small_new}}{Names of
+the Protect sub-actions from \code{\link[=add_protect_sub_actions]{add_protect_sub_actions()}}.}
 \item{\code{national}}{Name of the national row in summaries.}
 \item{\code{pct_of_region}, \code{pct_of_planning_area}, \code{pct_of_layer}, \code{area}}{
 Axis titles of bar charts. The area title is followed by the units.}

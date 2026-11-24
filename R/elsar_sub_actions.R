@@ -123,7 +123,9 @@ elsar_sub_actions <- function(parent, ..., other = NULL, other_colour = NULL) {
     ),
     colour = c(vapply(subs, `[[`, character(1), "colour"), other_colour %||% NA_character_),
     is_other = c(rep(FALSE, n), TRUE),
-    quosure = c(lapply(subs, `[[`, "condition"), list(NULL))
+    quosure = c(lapply(subs, `[[`, "condition"), list(NULL)),
+    kind = "rule",
+    params = list(NULL)
   )
   .check_sub_action_labels(out)
   class(out) <- c("elsar_sub_actions", class(out))
@@ -215,6 +217,7 @@ elsar_assign_sub_actions <- function(x, rules, layers = NULL) {
   .check_sub_action_rules(rules)
   .check_sub_action_parents(rules, scheme)
   layers <- .condition_layers(layers, x)
+  layers <- .add_protect_layers(layers, x, rules, scheme)
 
   action <- x[["action"]]
   levels(action) <- NULL
@@ -283,6 +286,7 @@ elsar_sub_action_diagnostics <- function(x, rules, layers = NULL,
   .check_sub_action_rules(rules)
   .check_sub_action_parents(rules, scheme)
   layers <- .condition_layers(layers, x)
+  layers <- .add_protect_layers(layers, x, rules, scheme)
 
   action <- x[["action"]]
   levels(action) <- NULL

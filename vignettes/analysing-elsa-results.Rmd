@@ -248,6 +248,25 @@ elsar_plot_action_bars(sub_by_region, by = "region")
 elsar_plot_actions(sub)
 ```
 
+### Protect: existing, expanded, connecting and new protected areas
+
+`add_protect_sub_actions()` splits Protect by how each area relates to
+existing protected areas. Patches of new protection that touch an existing PA
+(or are within `expansion_km` of one) are expansions. Patches that reach two
+or more PAs are corridors. The rest are new PAs, and patches below
+`min_new_km2` can be set apart as small new areas, which may suit other
+effective area-based conservation measures (OECMs) better. The map needs its
+protected-area layer for this.
+
+```{r protect-sub-actions, fig.height = 4.5}
+rules <- rules |>
+  add_protect_sub_actions(expansion_km = 2, min_new_km2 = 5)
+sub <- elsar_assign_sub_actions(x, rules, layers)
+s <- elsar_summarise_actions(sub, units = "km2")
+s[s$group == "Protect", c("action", "area", "area_in_pa", "pct_of_region")]
+elsar_plot_actions(sub)
+```
+
 ## 6. Regional panels and export
 
 `elsar_plot_region()` combines a map and bar charts for one region, and

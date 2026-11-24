@@ -2,6 +2,7 @@
 
 S3method(print,elsar_sub_actions)
 export("%>%")
+export(add_protect_sub_actions)
 export(add_sub_actions)
 export(calculate_restore_and_urban_budgets)
 export(check_and_download_required_layers)
