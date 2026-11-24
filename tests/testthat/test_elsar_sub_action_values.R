@@ -168,3 +168,41 @@ test_that("sensitivity works for rules that need no layers", {
   expect_equal(sum(s$is_baseline), 4)
   expect_s3_class(elsar_plot_sensitivity(s), "ggplot")
 })
+
+test_that("the sensitivity plot draws percent changes by default", {
+  pa <- val_layer(c(1, 0, 0, 0, 0, 0, 0, 0))
+  x <- elsar_prepare_actions(val_actions(), pas = pa)
+  rules <- elsar_sub_actions("Manage", sub_action("Suitable", suit > suit_min))
+  s <- elsar_sub_action_sensitivity(x, rules, c(suit = val_suit()), params = list(suit_min = 0.5),
+                                    vary = list(suit_min = c(0.05, 0.8, 0.95)), units = "km2")
+  g <- elsar_plot_sensitivity(s)
+  b <- ggplot2::ggplot_build(g)
+  drawn <- b$data[[4]] # points of the settings tried (after the zero line and baseline)
+  alt <- s[!s$is_baseline & s$change != 0, ]
+  expect_setequal(round(drawn$x, 6), round(100 * alt$change / alt$baseline_area, 6))
+  expect_true(any(drawn$x == -100))
+  expect_equal(g$labels$x, "Change in area (%)")
+  expect_match(b$layout$panel_scales_y[[1]]$get_labels(), "km²", all = FALSE)
+  expect_s3_class(elsar_plot_sensitivity(s, metric = "area"), "ggplot")
+  expect_error(elsar_plot_sensitivity(s, min_change = -1), "min_change")
+})
+
+test_that("the sensitivity plot leaves out changes from no area, and tiny changes", {
+  pa <- val_layer(c(1, 0, 0, 0, 0, 0, 0, 0))
+  x <- elsar_prepare_actions(val_actions(), pas = pa)
+  rules <- elsar_sub_actions("Manage", sub_action("Suitable", suit > suit_min))
+  # At 0.95 nothing is Suitable; from there, 0.5 creates Suitable from no area
+  s <- elsar_sub_action_sensitivity(x, rules, c(suit = val_suit()), params = list(suit_min = 0.95),
+                                    vary = list(suit_min = 0.5), units = "km2")
+  g <- elsar_plot_sensitivity(s)
+  expect_match(g$labels$caption, "Suitable \\(suit_min 0.5\\)")
+  expect_null(elsar_plot_sensitivity(s, metric = "area")$labels$caption)
+  # Manage (other) shrinks from 3 to 1 km2 (-66.7%): drawn at min_change 50, not at 70
+  n_drawn <- function(m) nrow(ggplot2::ggplot_build(elsar_plot_sensitivity(s, min_change = m))$data[[4]])
+  expect_equal(n_drawn(50), 1)
+  expect_equal(n_drawn(70), 0)
+  # A setting whose every change is small is named in the subtitle
+  s2 <- elsar_sub_action_sensitivity(x, rules, c(suit = val_suit()), params = list(suit_min = 0.5),
+                                     vary = list(suit_min = 0.55), units = "km2")
+  expect_match(elsar_plot_sensitivity(s2, min_change = 70)$labels$subtitle, "suit_min: change under 70%")
+})
