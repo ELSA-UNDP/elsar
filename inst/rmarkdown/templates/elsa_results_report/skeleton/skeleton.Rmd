@@ -20,6 +20,9 @@ params:
   target: 0.3
   protect_actions: NULL
   units: "ha"
+  diagnostics: NULL
+  sensitivity: NULL
+  costs: NULL
 ---
 
 ```{r setup, include = FALSE}
@@ -76,6 +79,13 @@ kable <- function(d, ...) knitr::kable(d, format.args = list(big.mark = ","), ..
 
 planning_area <- sum(national$area)
 action_area <- sum(national$area[national$is_action])
+
+# A sub-action map has a parent action for each value
+action_cats <- terra::cats(x[["action"]])[[1]]
+has_sub <- "parent" %in% names(action_cats) && any(action_cats$parent != action_cats$label)
+has_diagnostics <- has_sub && !is.null(p$diagnostics)
+has_sensitivity <- has_sub && !is.null(p$sensitivity)
+has_costs <- has_sub && !is.null(p$costs)
 ```
 
 ## Key figures
@@ -145,6 +155,101 @@ if (has_target) tbl$`Gap to target` <- round(gap$gap)
 kable(tbl, caption = paste0(
   "Protection by region.", if (has_target) paste0(" Gap to target in ", unit_label, ".")
 ))
+```
+
+```{r sub-heading, results = "asis", eval = has_sub}
+cat("\n## Sub-actions\n\n")
+cat(
+  "Each action is split into specific interventions by rules over context layers.",
+  "Each cell goes to the first rule it meets, and cells that meet none go to a",
+  "remaining sub-action, so the sub-actions of an action add up to its area.\n\n"
+)
+```
+
+```{r sub-table, eval = has_sub}
+sub_tbl <- national[national$is_action & national$group %in% action_cats$parent[action_cats$parent != action_cats$label], ]
+parent_area <- tapply(sub_tbl$area, sub_tbl$group, sum)
+gbf <- elsar_sub_action_catalogue()
+tbl <- data.frame(
+  Action = sub_tbl$group,
+  `Sub-action` = sub_tbl$action,
+  Area = round(sub_tbl$area),
+  `% of action` = round(100 * sub_tbl$area / parent_area[sub_tbl$group], 1),
+  check.names = FALSE
+)
+targets <- gbf$gbf_targets[match(as.character(sub_tbl$action), gbf$sub_action)]
+if (any(!is.na(targets))) tbl$`GBF targets` <- ifelse(is.na(targets), "", targets)
+kable(tbl, caption = paste0("Area of each sub-action (", unit_label, ").",
+                            if (any(!is.na(targets))) " GBF targets of elsar's default sub-actions." else ""))
+```
+
+```{r sub-diagnostics-heading, results = "asis", eval = has_diagnostics}
+cat("\n### How the rules split each action\n\n")
+cat(
+  "*Matched* is the area each rule's condition covers within its action;",
+  "*assigned* is what it receives; *taken by an earlier rule* is the difference.",
+  "A large remaining sub-action means the rules do not describe that action well.\n\n"
+)
+```
+
+```{r sub-diagnostics, eval = has_diagnostics}
+d <- p$diagnostics
+kable(data.frame(
+  Action = d$parent, `Sub-action` = d$sub_action,
+  Condition = ifelse(is.na(d$condition), "(remaining cells)", d$condition),
+  Matched = round(d$area_matched), Assigned = round(d$area_assigned),
+  `Taken by an earlier rule` = round(d$area_shadowed),
+  `% of action` = round(d$pct_of_parent, 1),
+  check.names = FALSE
+), caption = paste0("Rule diagnostics (",
+                    c(ha = "ha", km2 = "km²", m2 = "m²")[[if (is.null(attr(d, "units"))) p$units else attr(d, "units")]],
+                    ")."))
+```
+
+```{r sub-sensitivity-heading, results = "asis", eval = has_sensitivity}
+cat("\n### Sensitivity\n\n")
+cat(
+  "Each setting was changed on its own, with the others at their baseline.",
+  "Sub-actions with only a diamond did not change under any setting tried.\n\n"
+)
+```
+
+```{r sub-sensitivity, eval = has_sensitivity, fig.height = 4.5}
+elsar_plot_sensitivity(p$sensitivity)
+```
+
+```{r sub-costs-calc, eval = has_costs}
+cost <- elsar_cost_sub_actions(national, p$costs)
+costed <- cost[!is.na(cost$cost_mid), ]
+cur <- unique(stats::na.omit(cost$currency))
+fmt_money <- function(v) paste(if (length(cur) == 1) cur else "", format(round(v), big.mark = ",", trim = TRUE))
+```
+
+```{r sub-costs-heading, results = "asis", eval = has_costs}
+cat("\n### Cost envelope\n\n")
+cat(sprintf(
+  paste0("Implementing the costed sub-actions would cost **%s to %s** (central estimate %s). ",
+         "This multiplies each sub-action's area by unit costs per hectare from national ",
+         "sources; it is a first budget envelope, not a costed plan."),
+  fmt_money(sum(costed$cost_low)), fmt_money(sum(costed$cost_high)), fmt_money(sum(costed$cost_mid))
+))
+if (any(costed$per_year, na.rm = TRUE)) cat(" Some unit costs recur every year; their totals are for one year.")
+missing <- setdiff(cost$sub_action, costed$sub_action)
+if (length(missing) > 0) cat(paste0(" Without unit costs: ", paste(missing, collapse = ", "), "."))
+cat("\n\n")
+```
+
+```{r sub-costs-plot, eval = has_costs, fig.height = 4.5}
+elsar_plot_costs(cost)
+```
+
+```{r sub-costs-table, eval = has_costs}
+kable(data.frame(
+  Action = costed$parent, `Sub-action` = costed$sub_action,
+  `Area (ha)` = round(costed$area_ha),
+  Low = round(costed$cost_low), Central = round(costed$cost_mid), High = round(costed$cost_high),
+  check.names = FALSE
+), caption = paste0("Cost envelope", if (length(cur) == 1) paste0(" (", cur, ")") else "", "."))
 ```
 
 ```{r regions-heading, results = "asis", eval = has_regions}

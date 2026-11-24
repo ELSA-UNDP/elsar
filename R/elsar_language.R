@@ -15,6 +15,25 @@
     do_nothing = "Do Nothing",
     existing_pas = "Existing PAs",
     new_protection = "New protection (ELSA)",
+    pa_expansion = "PA expansion",
+    pa_corridor = "Corridor between PAs",
+    pa_new = "New PA",
+    pa_small_new = "Small new area",
+    sa_coastal_management = "Coastal management",
+    sa_sustainable_agriculture = "Sustainable agriculture",
+    sa_sustainable_grazing = "Sustainable grazing",
+    sa_sustainable_forest_management = "Sustainable forest management",
+    sa_other_management = "Other management",
+    sa_mangrove_restoration = "Mangrove restoration",
+    sa_wetland_restoration = "Wetland restoration",
+    sa_riparian_restoration = "Riparian restoration",
+    sa_coastal_restoration = "Coastal restoration",
+    sa_forest_restoration = "Forest restoration",
+    sa_other_restoration = "Other ecosystem restoration",
+    no_data = "No data",
+    pct_of_action = "% of action area",
+    pct_change_area = "Change in area (%)",
+    baseline = "Baseline",
     national = "National",
     pct_of_region = "% of region",
     pct_of_planning_area = "% of planning area",
@@ -24,6 +43,7 @@
     outside = "Outside",
     inside = "Inside",
     data = "Data",
+    other = "other",
     west = "W",
     east = "E",
     south = "S",
@@ -37,6 +57,25 @@
     do_nothing = "Sin acci\u00f3n",
     existing_pas = "\u00c1reas protegidas existentes",
     new_protection = "Nueva protecci\u00f3n (ELSA)",
+    pa_expansion = "Ampliaci\u00f3n de \u00e1reas protegidas",
+    pa_corridor = "Corredor entre \u00e1reas protegidas",
+    pa_new = "Nueva \u00e1rea protegida",
+    pa_small_new = "\u00c1rea nueva peque\u00f1a",
+    sa_coastal_management = "Manejo costero",
+    sa_sustainable_agriculture = "Agricultura sostenible",
+    sa_sustainable_grazing = "Pastoreo sostenible",
+    sa_sustainable_forest_management = "Manejo forestal sostenible",
+    sa_other_management = "Otro manejo",
+    sa_mangrove_restoration = "Restauraci\u00f3n de manglares",
+    sa_wetland_restoration = "Restauraci\u00f3n de humedales",
+    sa_riparian_restoration = "Restauraci\u00f3n ribere\u00f1a",
+    sa_coastal_restoration = "Restauraci\u00f3n costera",
+    sa_forest_restoration = "Restauraci\u00f3n forestal",
+    sa_other_restoration = "Restauraci\u00f3n de otros ecosistemas",
+    no_data = "Sin datos",
+    pct_of_action = "% de la superficie de la acci\u00f3n",
+    pct_change_area = "Cambio de superficie (%)",
+    baseline = "Referencia",
     national = "Nacional",
     pct_of_region = "% de la regi\u00f3n",
     pct_of_planning_area = "% del \u00e1rea de planificaci\u00f3n",
@@ -46,6 +85,7 @@
     outside = "Fuera",
     inside = "Dentro",
     data = "Datos",
+    other = "otros",
     west = "O",
     east = "E",
     south = "S",
@@ -59,6 +99,25 @@
     do_nothing = "Aucune action",
     existing_pas = "Aires prot\u00e9g\u00e9es existantes",
     new_protection = "Nouvelle protection (ELSA)",
+    pa_expansion = "Extension d'aires prot\u00e9g\u00e9es",
+    pa_corridor = "Corridor entre aires prot\u00e9g\u00e9es",
+    pa_new = "Nouvelle aire prot\u00e9g\u00e9e",
+    pa_small_new = "Petite nouvelle aire",
+    sa_coastal_management = "Gestion c\u00f4ti\u00e8re",
+    sa_sustainable_agriculture = "Agriculture durable",
+    sa_sustainable_grazing = "P\u00e2turage durable",
+    sa_sustainable_forest_management = "Gestion foresti\u00e8re durable",
+    sa_other_management = "Autre gestion",
+    sa_mangrove_restoration = "Restauration des mangroves",
+    sa_wetland_restoration = "Restauration des zones humides",
+    sa_riparian_restoration = "Restauration des zones riveraines",
+    sa_coastal_restoration = "Restauration c\u00f4ti\u00e8re",
+    sa_forest_restoration = "Restauration foresti\u00e8re",
+    sa_other_restoration = "Restauration d'autres \u00e9cosyst\u00e8mes",
+    no_data = "Pas de donn\u00e9es",
+    pct_of_action = "% de la superficie de l'action",
+    pct_change_area = "Variation de superficie (%)",
+    baseline = "R\u00e9f\u00e9rence",
     national = "National",
     pct_of_region = "% de la r\u00e9gion",
     pct_of_planning_area = "% de la zone de planification",
@@ -68,6 +127,7 @@
     outside = "Ext\u00e9rieur",
     inside = "Int\u00e9rieur",
     data = "Donn\u00e9es",
+    other = "autres",
     west = "O",
     east = "E",
     south = "S",
@@ -81,6 +141,25 @@
     do_nothing = "Sem a\u00e7\u00e3o",
     existing_pas = "\u00c1reas protegidas existentes",
     new_protection = "Nova prote\u00e7\u00e3o (ELSA)",
+    pa_expansion = "Amplia\u00e7\u00e3o de \u00e1reas protegidas",
+    pa_corridor = "Corredor entre \u00e1reas protegidas",
+    pa_new = "Nova \u00e1rea protegida",
+    pa_small_new = "Pequena \u00e1rea nova",
+    sa_coastal_management = "Manejo costeiro",
+    sa_sustainable_agriculture = "Agricultura sustent\u00e1vel",
+    sa_sustainable_grazing = "Pastoreio sustent\u00e1vel",
+    sa_sustainable_forest_management = "Manejo florestal sustent\u00e1vel",
+    sa_other_management = "Outro manejo",
+    sa_mangrove_restoration = "Restaura\u00e7\u00e3o de manguezais",
+    sa_wetland_restoration = "Restaura\u00e7\u00e3o de \u00e1reas \u00famidas",
+    sa_riparian_restoration = "Restaura\u00e7\u00e3o rip\u00e1ria",
+    sa_coastal_restoration = "Restaura\u00e7\u00e3o costeira",
+    sa_forest_restoration = "Restaura\u00e7\u00e3o florestal",
+    sa_other_restoration = "Restaura\u00e7\u00e3o de outros ecossistemas",
+    no_data = "Sem dados",
+    pct_of_action = "% da \u00e1rea da a\u00e7\u00e3o",
+    pct_change_area = "Varia\u00e7\u00e3o da \u00e1rea (%)",
+    baseline = "Refer\u00eancia",
     national = "Nacional",
     pct_of_region = "% da regi\u00e3o",
     pct_of_planning_area = "% da \u00e1rea de planejamento",
@@ -90,6 +169,7 @@
     outside = "Fora",
     inside = "Dentro",
     data = "Dados",
+    other = "outros",
     west = "O",
     east = "L",
     south = "S",
@@ -103,6 +183,25 @@
     do_nothing = "\u0411\u0435\u0437 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0439",
     existing_pas = "\u0421\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0438\u0435 \u041e\u041e\u041f\u0422",
     new_protection = "\u041d\u043e\u0432\u0430\u044f \u043e\u0445\u0440\u0430\u043d\u0430 (ELSA)",
+    pa_expansion = "\u0420\u0430\u0441\u0448\u0438\u0440\u0435\u043d\u0438\u0435 \u041e\u041e\u041f\u0422",
+    pa_corridor = "\u041a\u043e\u0440\u0438\u0434\u043e\u0440 \u043c\u0435\u0436\u0434\u0443 \u041e\u041e\u041f\u0422",
+    pa_new = "\u041d\u043e\u0432\u0430\u044f \u041e\u041e\u041f\u0422",
+    pa_small_new = "\u041c\u0430\u043b\u044b\u0439 \u043d\u043e\u0432\u044b\u0439 \u0443\u0447\u0430\u0441\u0442\u043e\u043a",
+    sa_coastal_management = "\u0423\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u0435 \u043f\u0440\u0438\u0431\u0440\u0435\u0436\u043d\u044b\u043c\u0438 \u0437\u043e\u043d\u0430\u043c\u0438",
+    sa_sustainable_agriculture = "\u0423\u0441\u0442\u043e\u0439\u0447\u0438\u0432\u043e\u0435 \u0441\u0435\u043b\u044c\u0441\u043a\u043e\u0435 \u0445\u043e\u0437\u044f\u0439\u0441\u0442\u0432\u043e",
+    sa_sustainable_grazing = "\u0423\u0441\u0442\u043e\u0439\u0447\u0438\u0432\u044b\u0439 \u0432\u044b\u043f\u0430\u0441",
+    sa_sustainable_forest_management = "\u0423\u0441\u0442\u043e\u0439\u0447\u0438\u0432\u043e\u0435 \u043b\u0435\u0441\u043e\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u0438\u0435",
+    sa_other_management = "\u0414\u0440\u0443\u0433\u043e\u0435 \u0443\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u0435",
+    sa_mangrove_restoration = "\u0412\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u0435 \u043c\u0430\u043d\u0433\u0440\u043e\u0432\u044b\u0445 \u043b\u0435\u0441\u043e\u0432",
+    sa_wetland_restoration = "\u0412\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u0435 \u0432\u043e\u0434\u043d\u043e-\u0431\u043e\u043b\u043e\u0442\u043d\u044b\u0445 \u0443\u0433\u043e\u0434\u0438\u0439",
+    sa_riparian_restoration = "\u0412\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u0435 \u043f\u0440\u0438\u0440\u0435\u0447\u043d\u044b\u0445 \u0437\u043e\u043d",
+    sa_coastal_restoration = "\u0412\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u0435 \u043c\u043e\u0440\u0441\u043a\u0438\u0445 \u043f\u043e\u0431\u0435\u0440\u0435\u0436\u0438\u0439",
+    sa_forest_restoration = "\u0412\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u0435 \u043b\u0435\u0441\u043e\u0432",
+    sa_other_restoration = "\u0412\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u0435 \u0434\u0440\u0443\u0433\u0438\u0445 \u044d\u043a\u043e\u0441\u0438\u0441\u0442\u0435\u043c",
+    no_data = "\u041d\u0435\u0442 \u0434\u0430\u043d\u043d\u044b\u0445",
+    pct_of_action = "% \u043f\u043b\u043e\u0449\u0430\u0434\u0438 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044f",
+    pct_change_area = "\u0418\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u0435 \u043f\u043b\u043e\u0449\u0430\u0434\u0438 (%)",
+    baseline = "\u0418\u0441\u0445\u043e\u0434\u043d\u044b\u0439 \u0432\u0430\u0440\u0438\u0430\u043d\u0442",
     national = "\u0421\u0442\u0440\u0430\u043d\u0430 \u0432 \u0446\u0435\u043b\u043e\u043c",
     pct_of_region = "% \u0440\u0435\u0433\u0438\u043e\u043d\u0430",
     pct_of_planning_area = "% \u0442\u0435\u0440\u0440\u0438\u0442\u043e\u0440\u0438\u0438 \u043f\u043b\u0430\u043d\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u044f",
@@ -112,6 +211,7 @@
     outside = "\u0412\u043d\u0435",
     inside = "\u0412\u043d\u0443\u0442\u0440\u0438",
     data = "\u0414\u0430\u043d\u043d\u044b\u0435",
+    other = "\u043f\u0440\u043e\u0447\u0435\u0435",
     west = "\u00a0\u0437.\u00a0\u0434.",
     east = "\u00a0\u0432.\u00a0\u0434.",
     south = "\u00a0\u044e.\u00a0\u0448.",
@@ -163,12 +263,28 @@
 #'     and [elsar_palette()].}
 #'   \item{`existing_pas`, `new_protection`}{Legend labels for existing
 #'     protected areas and new protection proposed by ELSA.}
+#'   \item{`pa_expansion`, `pa_corridor`, `pa_new`, `pa_small_new`}{Names of
+#'     the Protect sub-actions from [add_protect_sub_actions()].}
+#'   \item{`sa_coastal_management`, `sa_sustainable_agriculture`,
+#'     `sa_sustainable_grazing`, `sa_sustainable_forest_management`,
+#'     `sa_other_management`, `sa_mangrove_restoration`,
+#'     `sa_wetland_restoration`, `sa_riparian_restoration`,
+#'     `sa_coastal_restoration`, `sa_forest_restoration`,
+#'     `sa_other_restoration`}{Names of the default sub-actions in
+#'     [elsar_sub_action_catalogue()].}
+#'   \item{`no_data`, `pct_of_action`}{Legend label for missing values, and axis
+#'     title, in [elsar_plot_values()].}
+#'   \item{`pct_change_area`, `baseline`}{Axis title and baseline label in
+#'     [elsar_plot_sensitivity()].}
 #'   \item{`national`}{Name of the national row in summaries.}
 #'   \item{`pct_of_region`, `pct_of_planning_area`, `pct_of_layer`, `area`}{
 #'     Axis titles of bar charts. The area title is followed by the units.}
 #'   \item{`target`}{Label of the target line.}
 #'   \item{`outside`, `inside`}{Legend labels of 0/1 layers.}
 #'   \item{`data`}{Prefix of the data source in map captions.}
+#'   \item{`other`}{Added in brackets to a parent action's name for the
+#'     default remaining sub-action, e.g. "Restore (other)", in
+#'     [elsar_sub_actions()].}
 #'   \item{`west`, `east`, `south`, `north`}{Compass letters of graticule
 #'     labels.}
 #' }
@@ -246,7 +362,9 @@ elsar_labels <- function(language = getOption("elsar.language", "en")) {
 # (1.2K, 3.4M); other languages write the full number with their own marks,
 # since the K/M/B suffixes are English.
 .label_pct <- function(accuracy = NULL) {
-  scales::label_percent(scale = 1, accuracy = accuracy, decimal.mark = .number_marks()[["decimal"]])
+  marks <- .number_marks()
+  scales::label_percent(scale = 1, accuracy = accuracy, big.mark = marks[["big"]],
+                        decimal.mark = marks[["decimal"]])
 }
 
 .label_area <- function(accuracy = NULL) {

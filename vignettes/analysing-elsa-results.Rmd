@@ -196,7 +196,159 @@ ov[ov$layer == "Key Biodiversity Area", c("action", "amount", "amount_in_pa", "p
 elsar_plot_overlap(ov)
 ```
 
-## 5. Regional panels and export
+## 5. Split actions into sub-actions
+
+An action such as Restore covers many interventions: restoring riverbanks,
+wetlands or forests. Sub-action rules split an action into these
+interventions, with conditions over context layers. Rules are tried in order,
+and each cell goes to the **first** sub-action whose condition it meets. Cells
+that meet none go to a remaining "other" sub-action, so the sub-actions always
+add up to their parent action.
+
+Here, the wetland above and a made-up river corridor that crosses it split
+Restore, and a made-up cropland layer splits Manage. Where the river crosses
+the wetland, the wetland rule comes first and takes the cells:
+
+```{r sub-actions}
+riparian <- abs(terra::init(x[["action"]], "y") - 15000) < 4000
+cropland <- terra::init(x[["action"]], "x") / 80000
+layers <- list(riparian = riparian, wetland = wetland, cropland = cropland)
+
+rules <- elsar_sub_actions(
+  "Restore",
+  sub_action("Wetland restoration", wetland > 0.5),
+  sub_action("Riparian restoration", riparian),
+  other = "Other ecosystem restoration"
+) |>
+  add_sub_actions(
+    "Manage",
+    sub_action("Sustainable agriculture", cropland > 0.5)
+  )
+rules
+```
+
+`elsar_sub_action_diagnostics()` shows how much of each parent every rule
+matched, how much it was assigned, and how much of its match an earlier rule
+took (`area_shadowed`). A large "other" share means the rules don't describe
+the action well.
+
+```{r sub-diagnostics}
+d <- elsar_sub_action_diagnostics(x, rules, layers, units = "km2")
+d[, c("sub_action", "area_matched", "area_assigned", "area_shadowed", "pct_of_parent")]
+```
+
+`elsar_assign_sub_actions()` returns a prepared action map, with each
+sub-action's parent as its `group`. Every function above works on it, and bar
+charts stack the sub-actions of each parent in one bar:
+
+```{r sub-assign, fig.height = 4.5}
+sub <- elsar_assign_sub_actions(x, rules, layers)
+sub_by_region <- elsar_summarise_actions(sub, ex$regions, region_col = "region_name", units = "km2")
+elsar_plot_action_bars(sub_by_region, by = "region")
+elsar_plot_actions(sub)
+```
+
+### Protect: existing, expanded, connecting and new protected areas
+
+`add_protect_sub_actions()` splits Protect by how each area relates to
+existing protected areas. Patches of new protection that touch an existing PA
+(or are within `expansion_km` of one) are expansions. Patches that reach two
+or more PAs are corridors. The rest are new PAs, and patches below
+`min_new_km2` can be set apart as small new areas, which may suit other
+effective area-based conservation measures (OECMs) better. The map needs its
+protected-area layer for this.
+
+```{r protect-sub-actions, fig.height = 4.5}
+rules <- rules |>
+  add_protect_sub_actions(expansion_km = 2, min_new_km2 = 5)
+sub <- elsar_assign_sub_actions(x, rules, layers)
+s <- elsar_summarise_actions(sub, units = "km2")
+s[s$group == "Protect", c("action", "area", "area_in_pa", "pct_of_region")]
+elsar_plot_actions(sub)
+```
+
+### Default rules, and rules in a file
+
+`elsar_sub_action_catalogue()` lists elsar's default sub-actions. Each uses only layers elsar can make for
+any country, and is tagged with the Global Biodiversity Framework targets it serves.
+`elsar_default_sub_actions()` turns the catalogue into rules, and `elsar_sub_action_layers()` lists the
+layers to make for them:
+
+```{r default-sub-actions}
+catalogue <- elsar_sub_action_catalogue()
+catalogue[catalogue$parent == "restore", c("sub_action", "condition", "gbf_targets")]
+
+rules <- elsar_default_sub_actions(drop = "sustainable_grazing", protect = list(expansion_km = 2))
+elsar_sub_action_layers(rules)
+```
+
+Rules can be kept in a CSV file, for example in a country's configuration, and edited there.
+Conditions read from a file may use only layer names, numbers, comparisons, `&`, `|`, `!`,
+`is.na()` and arithmetic, so a rules file cannot run other code:
+
+```{r rules-file}
+path <- tempfile(fileext = ".csv")
+elsar_write_sub_actions(rules, path)
+head(read.csv(path)[, c("parent", "sub_action", "condition")], 4)
+rules <- elsar_read_sub_actions(path)
+```
+
+### What lies inside each sub-action, and how robust it is
+
+`elsar_summarise_values()` splits each action or sub-action by the classes of a layer: for example, how
+much sustainable agriculture lies on land of low or high crop suitability. Fixed breaks mean the same
+thing in every run; a single number asks for that many quantile classes.
+
+```{r values, fig.height = 3.5}
+suitability <- terra::init(x[["action"]], "y") / 60000
+v <- elsar_summarise_values(sub, c(suitability = suitability), breaks = c(0, 0.25, 0.5, 0.75, 1))
+elsar_plot_values(v, title = "Crop suitability within each sub-action")
+```
+
+Thresholds can be given names in the rules and their values in `params`, so the same rules (or rules
+file) can be run with other values. `elsar_sub_action_sensitivity()` changes one setting at a time (a
+named threshold, a Protect setting, or a whole layer) and reports how much each sub-action's area
+changes:
+
+```{r sensitivity, fig.height = 4}
+rules <- elsar_sub_actions(
+  "Restore",
+  sub_action("Wetland restoration", wetland > wetland_min),
+  sub_action("Riparian restoration", riparian)
+) |>
+  add_protect_sub_actions(expansion_km = 2)
+s <- elsar_sub_action_sensitivity(
+  x, rules, layers,
+  params = list(wetland_min = 0.5),
+  vary = list(wetland_min = c(0.1, 0.9), expansion_km = c(0, 5)),
+  units = "km2"
+)
+elsar_plot_sensitivity(s)
+```
+
+### A first cost envelope
+
+`elsar_cost_template()` lists the sub-actions with empty unit-cost columns (per hectare, low and high).
+Fill them in from national sources, such as NBSAP costing or a BIOFIN finance needs assessment.
+elsar ships no default costs, because they vary several-fold between countries.
+`elsar_cost_sub_actions()` multiplies them by area. Any further `*_per_ha` column, such as carbon,
+is multiplied by area too.
+
+```{r costs, fig.height = 3.5}
+sub_summary <- elsar_summarise_actions(sub, units = "km2")
+costs <- elsar_cost_template(sub_summary)
+low <- c("Wetland restoration" = 2000, "Riparian restoration" = 800,
+         "Other ecosystem restoration" = 300, "Sustainable agriculture" = 100,
+         "PA expansion" = 20, "Small new area" = 10, "New PA" = 30)
+costs$cost_low <- unname(low[costs$sub_action])
+costs$cost_high <- 3 * costs$cost_low
+envelope <- elsar_cost_sub_actions(sub_summary, costs)
+elsar_plot_costs(envelope)
+```
+
+These figures are made up for the example: use your own.
+
+## 6. Regional panels and export
 
 `elsar_plot_region()` combines a map and bar charts for one region, and
 `elsar_plot_regions()` makes one per region:
@@ -210,7 +362,7 @@ panels <- elsar_plot_regions(x, by_region, ex$regions, "region_name")
 elsar_save_plots(panels, "results/regions", prefix = "region")
 ```
 
-## 6. A full report
+## 7. A full report
 
 `elsar_results_report()` renders everything above into one HTML or Word report:
 key figures in words, the national map and tables, protection against the
@@ -223,6 +375,22 @@ elsar_results_report(
   layers = list("Key Biodiversity Area" = kba),
   output_file = "elsaland_report.html",
   country = "Elsaland"
+)
+```
+
+For a sub-action map, the report adds a Sub-actions chapter: each sub-action's area and share
+of its action, with the GBF targets of elsar's default sub-actions. Pass `diagnostics`,
+`sensitivity` and `costs` to add those sections too:
+
+```{r report-sub, eval = FALSE}
+params <- list(wetland_min = 0.5)
+elsar_results_report(
+  elsar_assign_sub_actions(x, rules, layers, params = params),
+  regions = ex$regions, region_col = "region_name",
+  diagnostics = elsar_sub_action_diagnostics(x, rules, layers, params = params),
+  sensitivity = s,
+  costs = costs,
+  output_file = "elsaland_sub_actions.html"
 )
 ```
 

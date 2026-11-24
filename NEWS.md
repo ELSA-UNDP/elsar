@@ -2,6 +2,77 @@
 
 ## New features
 
+* **Sub-actions split ELSA actions into specific interventions.** For
+  example, Restore can be split into wetland, riparian and forest restoration,
+  and Manage into sustainable agriculture and forest management.
+  `elsar_sub_actions()` and `sub_action()` define the rules as conditions over
+  context layers (e.g. `riparian > 0.5`). Rules are tried in order, and the
+  first match wins. Cells that match no rule go to an "other" sub-action, so
+  the sub-actions always add up to their parent. `elsar_assign_sub_actions()`
+  returns a prepared action map with each sub-action's parent as its `group`.
+  The summaries, overlaps, maps, bar charts (stacked by parent), exports and
+  the report all work on it. `elsar_sub_action_diagnostics()` shows how much
+  area each rule matched, was assigned, and lost to an earlier rule. This
+  replaces the per-country sub-action scripts, such as Peru's, which summed
+  planning-unit polygons joined to overlapping layers.
+* **Protect splits into existing, expanded, connecting and new protected
+  areas.** `add_protect_sub_actions()` adds rules that class each patch of
+  new protection by whether it touches or is near an existing PA (expansion),
+  reaches two or more PAs (corridor), or reaches none (new PA, or a small new
+  area below `min_new_km2`). This is worked out from the map's protected-area
+  layer and patch analysis, so the split is reproducible. Before, it was
+  usually done by hand in a GIS. The new label keys `pa_expansion`,
+  `pa_corridor`, `pa_new` and `pa_small_new` are in every language.
+* **Default sub-action rules, and rules in a file.** `elsar_sub_action_catalogue()`
+  lists elsar's default sub-actions. Manage is split into coastal management,
+  sustainable agriculture, sustainable grazing and sustainable forest
+  management; Restore into mangrove, wetland, riparian, coastal, forest and
+  other restoration; Protect as in `add_protect_sub_actions()`. Each default
+  uses only layers elsar can make for any country, and is tagged with the
+  Global Biodiversity Framework targets it serves. `elsar_default_sub_actions()`
+  turns the catalogue into rules, and can drop entries or change the Protect
+  settings. `elsar_sub_action_layers()` lists the layers a rule set needs.
+  `elsar_write_sub_actions()`, `elsar_read_sub_actions()` and
+  `elsar_sub_actions_from_table()` keep rule sets as CSV, for example in a
+  country's configuration. Conditions read from a file may use only layer
+  names, numbers, comparisons, `&`, `|`, `!`, `is.na()` and arithmetic, so a
+  rules file cannot run other code.
+* **What lies inside each action.** `elsar_summarise_values()` splits the area
+  of each action or sub-action by the classes of one or more layers, nationally
+  or per region. Examples are crop suitability within sustainable agriculture,
+  or the ecoregions forest restoration falls in. Numeric layers are cut at fixed
+  breaks or quantiles shared by all actions, and categorical layers keep their
+  categories. A "No data" class means each action's classes add up to its area.
+  `elsar_plot_values()` draws it as 100% bars.
+* **Named thresholds and sensitivity.** `elsar_assign_sub_actions()` and
+  `elsar_sub_action_diagnostics()` take `params`, named values that conditions
+  can use (`riparian > riparian_min`), in rules written in R or read from a file.
+  `elsar_sub_action_sensitivity()` changes one setting at a time and reports each
+  sub-action's area against the baseline. A setting can be a named threshold, a
+  Protect setting (`pa_threshold`, `expansion_km`, `min_new_km2`) or a whole
+  layer, such as a 2 km riparian zone instead of 1 km. `elsar_plot_sensitivity()`
+  draws each change in percent, with each sub-action's baseline area beside its
+  name, so that small and large sub-actions share one readable axis
+  (`metric = "area"` draws areas). Changes under 0.5% are left out
+  (`min_change`), and changes over 200% are drawn as triangles at the edge of
+  the axis with their value in the label (`max_change`).
+* **A first cost envelope.** `elsar_cost_template()` lists the sub-actions with
+  empty unit-cost columns (per hectare, low and high) for national sources to
+  fill. `elsar_cost_sub_actions()` multiplies them by area, nationally or per
+  region, and so does any further `*_per_ha` column, such as carbon.
+  `elsar_plot_costs()` draws each sub-action's central cost with its range. elsar
+  ships no default costs, because they vary several-fold between countries.
+* **Sub-actions in the results report.** For a sub-action map,
+  `elsar_results_report()` adds a Sub-actions chapter. It shows each
+  sub-action's area and share of its action, with the GBF targets of default
+  sub-actions. Optional `diagnostics`, `sensitivity` and `costs` arguments add
+  those sections.
+* Action bars no longer fail for Protect sub-actions. Their "Existing PAs" class
+  collided with the existing-PA segment of `elsar_plot_action_bars()` and
+  `elsar_plot_region()`. Bars are now not split by protected areas when an
+  action already has that name.
+* Sub-action conditions are stored and printed in full; long ones were cut
+  short with "...".
 * **Riparian and coastal zone layers.** `make_riparian_zone()` buffers a river
   network, and `make_coastal_zone()` measures land near the coast. Both
   return the share of each planning unit inside the zone (0-1). Rivers can be

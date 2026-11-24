@@ -91,6 +91,22 @@ reference:
   - elsar_plot_protection_gap
   - elsar_summarise_overlap
   - elsar_plot_overlap
+  - elsar_sub_actions
+  - add_protect_sub_actions
+  - elsar_sub_action_catalogue
+  - elsar_default_sub_actions
+  - elsar_sub_action_layers
+  - elsar_read_sub_actions
+  - elsar_summarise_values
+  - elsar_plot_values
+  - elsar_sub_action_sensitivity
+  - elsar_plot_sensitivity
+  - elsar_cost_template
+  - elsar_cost_sub_actions
+  - elsar_plot_costs
+  - sub_action
+  - elsar_assign_sub_actions
+  - elsar_sub_action_diagnostics
   - elsar_plot_region
   - elsar_save_plots
   - elsar_export_results
