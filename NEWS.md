@@ -56,6 +56,21 @@
   (`metric = "area"` draws areas). Changes under 0.5% are left out
   (`min_change`), and changes over 200% are drawn as triangles at the edge of
   the axis with their value in the label (`max_change`).
+* **A first cost envelope.** `elsar_cost_template()` lists the sub-actions with
+  empty unit-cost columns (per hectare, low and high) for national sources to
+  fill. `elsar_cost_sub_actions()` multiplies them by area, nationally or per
+  region, and so does any further `*_per_ha` column, such as carbon.
+  `elsar_plot_costs()` draws each sub-action's central cost with its range. elsar
+  ships no default costs, because they vary several-fold between countries.
+* **Sub-actions in the results report.** For a sub-action map,
+  `elsar_results_report()` adds a Sub-actions chapter. It shows each
+  sub-action's area and share of its action, with the GBF targets of default
+  sub-actions. Optional `diagnostics`, `sensitivity` and `costs` arguments add
+  those sections.
+* Action bars no longer fail for Protect sub-actions. Their "Existing PAs" class
+  collided with the existing-PA segment of `elsar_plot_action_bars()` and
+  `elsar_plot_region()`. Bars are now not split by protected areas when an
+  action already has that name.
 * Sub-action conditions are stored and printed in full; long ones were cut
   short with "...".
 

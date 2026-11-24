@@ -99,6 +99,9 @@ reference:
   - elsar_plot_values
   - elsar_sub_action_sensitivity
   - elsar_plot_sensitivity
+  - elsar_cost_template
+  - elsar_cost_sub_actions
+  - elsar_plot_costs
   - sub_action
   - elsar_assign_sub_actions
   - elsar_sub_action_diagnostics
