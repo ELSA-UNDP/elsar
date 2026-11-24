@@ -362,7 +362,9 @@ elsar_labels <- function(language = getOption("elsar.language", "en")) {
 # (1.2K, 3.4M); other languages write the full number with their own marks,
 # since the K/M/B suffixes are English.
 .label_pct <- function(accuracy = NULL) {
-  scales::label_percent(scale = 1, accuracy = accuracy, decimal.mark = .number_marks()[["decimal"]])
+  marks <- .number_marks()
+  scales::label_percent(scale = 1, accuracy = accuracy, big.mark = marks[["big"]],
+                        decimal.mark = marks[["decimal"]])
 }
 
 .label_area <- function(accuracy = NULL) {

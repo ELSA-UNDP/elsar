@@ -54,7 +54,8 @@
   draws each change in percent, with each sub-action's baseline area beside its
   name, so that small and large sub-actions share one readable axis
   (`metric = "area"` draws areas). Changes under 0.5% are left out
-  (`min_change`).
+  (`min_change`), and changes over 200% are drawn as triangles at the edge of
+  the axis with their value in the label (`max_change`).
 * Sub-action conditions are stored and printed in full; long ones were cut
   short with "...".
 
