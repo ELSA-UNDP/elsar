@@ -1,5 +1,19 @@
 # elsar (development version)
 
+## New features
+
+* **Riparian and coastal zone layers.** `make_riparian_zone()` buffers a river
+  network, and `make_coastal_zone()` measures land near the coast. Both
+  return the share of each planning unit inside the zone (0-1). Rivers can be
+  filtered (e.g. by Strahler order) and given widths per segment. The coast
+  can be lines, or land or ocean polygons. Buffers are dissolved before they
+  are measured, so overlapping river segments are counted once. On Peru's main
+  rivers, adding up each segment's buffer separately overstated the riparian
+  area by 66%. Global datasets such as HydroRIVERS can be passed as they are,
+  because inputs are cropped to the planning units first.
+  `make_coastal_zone(type = "distance")` returns the distance to the coast
+  instead.
+
 # elsar 0.7.0
 
 ## New features
