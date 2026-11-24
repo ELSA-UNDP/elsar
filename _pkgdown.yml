@@ -59,6 +59,8 @@ reference:
   - make_underrepresented_ecosystems
   - make_urban_greening_opportunities
   - make_wetlands_ramsar
+  - make_riparian_zone
+  - make_coastal_zone
 
 - title: Set up ELSA analysis
   desc: Functions to help formulate a conservation problem for an ELSA analysis
