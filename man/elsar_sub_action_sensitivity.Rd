@@ -45,8 +45,8 @@ A tibble with one row per scenario and sub-action, and columns
 \description{
 Changes one setting at a time and reports how much each sub-action's area
 changes from the baseline. Use it to say how robust each figure is, e.g.
-"riparian restoration is 27,000 km² with a 1 km riparian zone, and
-18,000–41,000 km² with 0.5–2 km".
+"riparian restoration is 27,000 km2 with a 1 km riparian zone, and
+18,000 to 41,000 km2 with 0.5 to 2 km".
 }
 \section{What can be varied}{
 
@@ -68,7 +68,10 @@ layers, e.g. \code{list(riparian = list("500 m" = rip_500, "2 km" = rip_2k))}.}
 ex <- elsar_example_results()
 x <- elsar_prepare_actions(ex$actions, pas = ex$pas)
 riparian <- 1 - abs(terra::init(x[["action"]], "y") - 15000) / 15000
-rules <- elsar_sub_actions("Restore", sub_action("Riparian restoration", riparian > riparian_min)) |>
+rules <- elsar_sub_actions(
+  "Restore",
+  sub_action("Riparian restoration", riparian > riparian_min)
+) |>
   add_protect_sub_actions()
 s <- elsar_sub_action_sensitivity(
   x, rules, c(riparian = riparian),
