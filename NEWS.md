@@ -1,5 +1,21 @@
 # elsar (development version)
 
+## New features
+
+* **Sub-actions split ELSA actions into specific interventions.** For
+  example, Restore can be split into wetland, riparian and forest restoration,
+  and Manage into sustainable agriculture and forest management.
+  `elsar_sub_actions()` and `sub_action()` define the rules as conditions over
+  context layers (e.g. `riparian > 0.5`). Rules are tried in order, and the
+  first match wins. Cells that match no rule go to an "other" sub-action, so
+  the sub-actions always add up to their parent. `elsar_assign_sub_actions()`
+  returns a prepared action map with each sub-action's parent as its `group`.
+  The summaries, overlaps, maps, bar charts (stacked by parent), exports and
+  the report all work on it. `elsar_sub_action_diagnostics()` shows how much
+  area each rule matched, was assigned, and lost to an earlier rule. This
+  replaces the per-country sub-action scripts, such as Peru's, which summed
+  planning-unit polygons joined to overlapping layers.
+
 # elsar 0.7.0
 
 ## New features

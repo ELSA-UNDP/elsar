@@ -196,7 +196,59 @@ ov[ov$layer == "Key Biodiversity Area", c("action", "amount", "amount_in_pa", "p
 elsar_plot_overlap(ov)
 ```
 
-## 5. Regional panels and export
+## 5. Split actions into sub-actions
+
+An action such as Restore covers many interventions: restoring riverbanks,
+wetlands or forests. Sub-action rules split an action into these
+interventions, with conditions over context layers. Rules are tried in order,
+and each cell goes to the **first** sub-action whose condition it meets. Cells
+that meet none go to a remaining "other" sub-action, so the sub-actions always
+add up to their parent action.
+
+Here, the wetland above and a made-up river corridor that crosses it split
+Restore, and a made-up cropland layer splits Manage. Where the river crosses
+the wetland, the wetland rule comes first and takes the cells:
+
+```{r sub-actions}
+riparian <- abs(terra::init(x[["action"]], "y") - 15000) < 4000
+cropland <- terra::init(x[["action"]], "x") / 80000
+layers <- list(riparian = riparian, wetland = wetland, cropland = cropland)
+
+rules <- elsar_sub_actions(
+  "Restore",
+  sub_action("Wetland restoration", wetland > 0.5),
+  sub_action("Riparian restoration", riparian),
+  other = "Other ecosystem restoration"
+) |>
+  add_sub_actions(
+    "Manage",
+    sub_action("Sustainable agriculture", cropland > 0.5)
+  )
+rules
+```
+
+`elsar_sub_action_diagnostics()` shows how much of each parent every rule
+matched, how much it was assigned, and how much of its match an earlier rule
+took (`area_shadowed`). A large "other" share means the rules don't describe
+the action well.
+
+```{r sub-diagnostics}
+d <- elsar_sub_action_diagnostics(x, rules, layers, units = "km2")
+d[, c("sub_action", "area_matched", "area_assigned", "area_shadowed", "pct_of_parent")]
+```
+
+`elsar_assign_sub_actions()` returns a prepared action map, with each
+sub-action's parent as its `group`. Every function above works on it, and bar
+charts stack the sub-actions of each parent in one bar:
+
+```{r sub-assign, fig.height = 4.5}
+sub <- elsar_assign_sub_actions(x, rules, layers)
+sub_by_region <- elsar_summarise_actions(sub, ex$regions, region_col = "region_name", units = "km2")
+elsar_plot_action_bars(sub_by_region, by = "region")
+elsar_plot_actions(sub)
+```
+
+## 6. Regional panels and export
 
 `elsar_plot_region()` combines a map and bar charts for one region, and
 `elsar_plot_regions()` makes one per region:
@@ -210,7 +262,7 @@ panels <- elsar_plot_regions(x, by_region, ex$regions, "region_name")
 elsar_save_plots(panels, "results/regions", prefix = "region")
 ```
 
-## 6. A full report
+## 7. A full report
 
 `elsar_results_report()` renders everything above into one HTML or Word report:
 key figures in words, the national map and tables, protection against the

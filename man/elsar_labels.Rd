@@ -49,6 +49,9 @@ Axis titles of bar charts. The area title is followed by the units.}
 \item{\code{target}}{Label of the target line.}
 \item{\code{outside}, \code{inside}}{Legend labels of 0/1 layers.}
 \item{\code{data}}{Prefix of the data source in map captions.}
+\item{\code{other}}{Added in brackets to a parent action's name for the
+default remaining sub-action, e.g. "Restore (other)", in
+\code{\link[=elsar_sub_actions]{elsar_sub_actions()}}.}
 \item{\code{west}, \code{east}, \code{south}, \code{north}}{Compass letters of graticule
 labels.}
 }

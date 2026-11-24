@@ -24,6 +24,7 @@
     outside = "Outside",
     inside = "Inside",
     data = "Data",
+    other = "other",
     west = "W",
     east = "E",
     south = "S",
@@ -46,6 +47,7 @@
     outside = "Fuera",
     inside = "Dentro",
     data = "Datos",
+    other = "otros",
     west = "O",
     east = "E",
     south = "S",
@@ -68,6 +70,7 @@
     outside = "Ext\u00e9rieur",
     inside = "Int\u00e9rieur",
     data = "Donn\u00e9es",
+    other = "autres",
     west = "O",
     east = "E",
     south = "S",
@@ -90,6 +93,7 @@
     outside = "Fora",
     inside = "Dentro",
     data = "Dados",
+    other = "outros",
     west = "O",
     east = "L",
     south = "S",
@@ -112,6 +116,7 @@
     outside = "\u0412\u043d\u0435",
     inside = "\u0412\u043d\u0443\u0442\u0440\u0438",
     data = "\u0414\u0430\u043d\u043d\u044b\u0435",
+    other = "\u043f\u0440\u043e\u0447\u0435\u0435",
     west = "\u00a0\u0437.\u00a0\u0434.",
     east = "\u00a0\u0432.\u00a0\u0434.",
     south = "\u00a0\u044e.\u00a0\u0448.",
@@ -169,6 +174,9 @@
 #'   \item{`target`}{Label of the target line.}
 #'   \item{`outside`, `inside`}{Legend labels of 0/1 layers.}
 #'   \item{`data`}{Prefix of the data source in map captions.}
+#'   \item{`other`}{Added in brackets to a parent action's name for the
+#'     default remaining sub-action, e.g. "Restore (other)", in
+#'     [elsar_sub_actions()].}
 #'   \item{`west`, `east`, `south`, `north`}{Compass letters of graticule
 #'     labels.}
 #' }
