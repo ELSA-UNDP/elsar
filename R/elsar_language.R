@@ -15,6 +15,10 @@
     do_nothing = "Do Nothing",
     existing_pas = "Existing PAs",
     new_protection = "New protection (ELSA)",
+    pa_expansion = "PA expansion",
+    pa_corridor = "Corridor between PAs",
+    pa_new = "New PA",
+    pa_small_new = "Small new area",
     national = "National",
     pct_of_region = "% of region",
     pct_of_planning_area = "% of planning area",
@@ -38,6 +42,10 @@
     do_nothing = "Sin acci\u00f3n",
     existing_pas = "\u00c1reas protegidas existentes",
     new_protection = "Nueva protecci\u00f3n (ELSA)",
+    pa_expansion = "Ampliaci\u00f3n de \u00e1reas protegidas",
+    pa_corridor = "Corredor entre \u00e1reas protegidas",
+    pa_new = "Nueva \u00e1rea protegida",
+    pa_small_new = "\u00c1rea nueva peque\u00f1a",
     national = "Nacional",
     pct_of_region = "% de la regi\u00f3n",
     pct_of_planning_area = "% del \u00e1rea de planificaci\u00f3n",
@@ -61,6 +69,10 @@
     do_nothing = "Aucune action",
     existing_pas = "Aires prot\u00e9g\u00e9es existantes",
     new_protection = "Nouvelle protection (ELSA)",
+    pa_expansion = "Extension d'aires prot\u00e9g\u00e9es",
+    pa_corridor = "Corridor entre aires prot\u00e9g\u00e9es",
+    pa_new = "Nouvelle aire prot\u00e9g\u00e9e",
+    pa_small_new = "Petite nouvelle aire",
     national = "National",
     pct_of_region = "% de la r\u00e9gion",
     pct_of_planning_area = "% de la zone de planification",
@@ -84,6 +96,10 @@
     do_nothing = "Sem a\u00e7\u00e3o",
     existing_pas = "\u00c1reas protegidas existentes",
     new_protection = "Nova prote\u00e7\u00e3o (ELSA)",
+    pa_expansion = "Amplia\u00e7\u00e3o de \u00e1reas protegidas",
+    pa_corridor = "Corredor entre \u00e1reas protegidas",
+    pa_new = "Nova \u00e1rea protegida",
+    pa_small_new = "Pequena \u00e1rea nova",
     national = "Nacional",
     pct_of_region = "% da regi\u00e3o",
     pct_of_planning_area = "% da \u00e1rea de planejamento",
@@ -107,6 +123,10 @@
     do_nothing = "\u0411\u0435\u0437 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0439",
     existing_pas = "\u0421\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0438\u0435 \u041e\u041e\u041f\u0422",
     new_protection = "\u041d\u043e\u0432\u0430\u044f \u043e\u0445\u0440\u0430\u043d\u0430 (ELSA)",
+    pa_expansion = "\u0420\u0430\u0441\u0448\u0438\u0440\u0435\u043d\u0438\u0435 \u041e\u041e\u041f\u0422",
+    pa_corridor = "\u041a\u043e\u0440\u0438\u0434\u043e\u0440 \u043c\u0435\u0436\u0434\u0443 \u041e\u041e\u041f\u0422",
+    pa_new = "\u041d\u043e\u0432\u0430\u044f \u041e\u041e\u041f\u0422",
+    pa_small_new = "\u041c\u0430\u043b\u044b\u0439 \u043d\u043e\u0432\u044b\u0439 \u0443\u0447\u0430\u0441\u0442\u043e\u043a",
     national = "\u0421\u0442\u0440\u0430\u043d\u0430 \u0432 \u0446\u0435\u043b\u043e\u043c",
     pct_of_region = "% \u0440\u0435\u0433\u0438\u043e\u043d\u0430",
     pct_of_planning_area = "% \u0442\u0435\u0440\u0440\u0438\u0442\u043e\u0440\u0438\u0438 \u043f\u043b\u0430\u043d\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u044f",
@@ -168,6 +188,8 @@
 #'     and [elsar_palette()].}
 #'   \item{`existing_pas`, `new_protection`}{Legend labels for existing
 #'     protected areas and new protection proposed by ELSA.}
+#'   \item{`pa_expansion`, `pa_corridor`, `pa_new`, `pa_small_new`}{Names of
+#'     the Protect sub-actions from [add_protect_sub_actions()].}
 #'   \item{`national`}{Name of the national row in summaries.}
 #'   \item{`pct_of_region`, `pct_of_planning_area`, `pct_of_layer`, `area`}{
 #'     Axis titles of bar charts. The area title is followed by the units.}

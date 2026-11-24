@@ -15,6 +15,14 @@
   area each rule matched, was assigned, and lost to an earlier rule. This
   replaces the per-country sub-action scripts, such as Peru's, which summed
   planning-unit polygons joined to overlapping layers.
+* **Protect splits into existing, expanded, connecting and new protected
+  areas.** `add_protect_sub_actions()` adds rules that class each patch of
+  new protection by whether it touches or is near an existing PA (expansion),
+  reaches two or more PAs (corridor), or reaches none (new PA, or a small new
+  area below `min_new_km2`). This is worked out from the map's protected-area
+  layer and patch analysis, so the split is reproducible. Before, it was
+  usually done by hand in a GIS. The new label keys `pa_expansion`,
+  `pa_corridor`, `pa_new` and `pa_small_new` are in every language.
 
 # elsar 0.7.0
 
