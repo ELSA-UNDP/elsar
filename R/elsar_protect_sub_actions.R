@@ -121,7 +121,7 @@ add_protect_sub_actions <- function(rules = NULL,
     existing = paste0("existing PA (cover >= ", pa_threshold, ")"),
     expansion = if (expansion_km > 0) paste0("within ", expansion_km, " km of one PA") else "touches one PA",
     corridor = "reaches 2+ PAs",
-    small = paste0("reaches no PA, patch < ", min_new_km2, " km2")
+    small = paste0("reaches no PA, smaller than ", min_new_km2, " km2")
   )
 
   n <- length(classes)

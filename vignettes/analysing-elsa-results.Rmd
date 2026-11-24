@@ -326,6 +326,28 @@ s <- elsar_sub_action_sensitivity(
 elsar_plot_sensitivity(s)
 ```
 
+### A first cost envelope
+
+`elsar_cost_template()` lists the sub-actions with empty unit-cost columns (per hectare, low and high).
+Fill them in from national sources, such as NBSAP costing or a BIOFIN finance needs assessment.
+elsar ships no default costs, because they vary several-fold between countries.
+`elsar_cost_sub_actions()` multiplies them by area. Any further `*_per_ha` column, such as carbon,
+is multiplied by area too.
+
+```{r costs, fig.height = 3.5}
+sub_summary <- elsar_summarise_actions(sub, units = "km2")
+costs <- elsar_cost_template(sub_summary)
+low <- c("Wetland restoration" = 2000, "Riparian restoration" = 800,
+         "Other ecosystem restoration" = 300, "Sustainable agriculture" = 100,
+         "PA expansion" = 20, "Small new area" = 10, "New PA" = 30)
+costs$cost_low <- unname(low[costs$sub_action])
+costs$cost_high <- 3 * costs$cost_low
+envelope <- elsar_cost_sub_actions(sub_summary, costs)
+elsar_plot_costs(envelope)
+```
+
+These figures are made up for the example: use your own.
+
 ## 6. Regional panels and export
 
 `elsar_plot_region()` combines a map and bar charts for one region, and
@@ -353,6 +375,22 @@ elsar_results_report(
   layers = list("Key Biodiversity Area" = kba),
   output_file = "elsaland_report.html",
   country = "Elsaland"
+)
+```
+
+For a sub-action map, the report adds a Sub-actions chapter: each sub-action's area and share
+of its action, with the GBF targets of elsar's default sub-actions. Pass `diagnostics`,
+`sensitivity` and `costs` to add those sections too:
+
+```{r report-sub, eval = FALSE}
+params <- list(wetland_min = 0.5)
+elsar_results_report(
+  elsar_assign_sub_actions(x, rules, layers, params = params),
+  regions = ex$regions, region_col = "region_name",
+  diagnostics = elsar_sub_action_diagnostics(x, rules, layers, params = params),
+  sensitivity = s,
+  costs = costs,
+  output_file = "elsaland_sub_actions.html"
 )
 ```
 

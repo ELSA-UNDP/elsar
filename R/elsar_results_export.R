@@ -215,6 +215,12 @@ elsar_export_results <- function(x,
 #' map-and-bars panel for each region. Sections are left out when their inputs
 #' are not given.
 #'
+#' For a sub-action map (from [elsar_assign_sub_actions()]), the report adds a
+#' Sub-actions chapter: each sub-action's area and share of its parent action,
+#' the Global Biodiversity Framework targets of default sub-actions (see
+#' [elsar_sub_action_catalogue()]), and, when given, the rule diagnostics, the
+#' sensitivity analysis and the cost envelope.
+#'
 #' The template is also available in RStudio under *File > New File > R
 #' Markdown > From Template > ELSA results report*. Rendered as is, it reports
 #' on the bundled example data.
@@ -222,6 +228,11 @@ elsar_export_results <- function(x,
 #' @inheritParams elsar_export_results
 #' @param layers Optional layers to report overlap for, as in
 #'   [elsar_summarise_overlap()].
+#' @param diagnostics Optional output of [elsar_sub_action_diagnostics()], to
+#'   report how the rules split each action.
+#' @param sensitivity Optional output of [elsar_sub_action_sensitivity()].
+#' @param costs Optional unit costs per hectare, as for
+#'   [elsar_cost_sub_actions()], to report a cost envelope.
 #' @param output_file Character. Path of the report to write.
 #' @param format `"html"` (default) or `"word"`.
 #' @param title,country Character. Report title and subtitle.
@@ -255,6 +266,9 @@ elsar_results_report <- function(x,
                                  target = 0.30,
                                  protect_actions = NULL,
                                  units = c("ha", "km2", "m2"),
+                                 diagnostics = NULL,
+                                 sensitivity = NULL,
+                                 costs = NULL,
                                  output_file = "elsa_results_report.html",
                                  format = c("html", "word"),
                                  title = "ELSA results report",
@@ -315,7 +329,8 @@ elsar_results_report <- function(x,
       title = title, country = country, actions = x, regions = regions,
       # NULL params fall back to the template default, so "no target" is NA
       region_col = region_col, layers = layers, target = target %||% NA,
-      protect_actions = protect_actions, units = units
+      protect_actions = protect_actions, units = units,
+      diagnostics = diagnostics, sensitivity = sensitivity, costs = costs
     ),
     envir = new.env(parent = globalenv()),
     quiet = quiet

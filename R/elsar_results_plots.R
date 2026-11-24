@@ -146,6 +146,9 @@ elsar_plot_actions <- function(x,
 #' existing and new protection together.
 #'
 #' Actions sharing a `group` in the action scheme are stacked in one bar.
+#' When an action already has the name of the existing-PA segment (`pa_label`),
+#' as Protect sub-actions from [add_protect_sub_actions()] do, bars are not
+#' split by protected areas again.
 #'
 #' @param summary A tibble from [elsar_summarise_actions()].
 #' @param metric `"percent"` (share of each region's planning area, default)
@@ -194,6 +197,7 @@ elsar_plot_action_bars <- function(summary,
     warning("The summary has no protected-area information; 'split_pa' ignored.", call. = FALSE)
     split_pa <- FALSE
   }
+  split_pa <- .split_pa_ok(summary, split_pa, pa_label)
 
   d <- .bar_data(summary, split_pa, pa_label)
   colours <- .segment_colours(summary, split_pa, pa_colour, pa_label)
@@ -429,7 +433,7 @@ elsar_plot_region <- function(x,
   region_summary <- summary[summary$region == region, ]
   attributes_to_keep <- c("units", "has_pa")
   for (a in attributes_to_keep) attr(region_summary, a) <- attr(summary, a)
-  split_pa <- isTRUE(attr(summary, "has_pa"))
+  split_pa <- .split_pa_ok(summary, isTRUE(attr(summary, "has_pa")), pa_label)
 
   # The bars carry the shared legend, including the no-action key for the map
   d <- .bar_data(region_summary, split_pa, pa_label)
@@ -557,6 +561,12 @@ elsar_plot_regions <- function(x, summary, regions, region_col, ...) {
 }
 
 # Long data for stacked bars: one row per region x segment
+# A scheme that already has an action named like the existing-PA segment
+# (e.g. Protect sub-actions) shows existing PAs itself: no second split
+.split_pa_ok <- function(summary, split_pa, pa_label) {
+  split_pa && !pa_label %in% as.character(summary$action)
+}
+
 .bar_data <- function(summary, split_pa, pa_label) {
   s <- summary[summary$is_action, ]
   group_levels <- unique(s$group[order(as.integer(s$action))])
