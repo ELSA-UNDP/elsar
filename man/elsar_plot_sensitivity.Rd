@@ -21,7 +21,8 @@ Draws the output of \code{\link[=elsar_sub_action_sensitivity]{elsar_sub_action_
 its baseline area (black diamond) and its area under each setting tried
 that changes it, coloured by setting and labelled with the value tried.
 Settings that leave a sub-action unchanged are not drawn for it, so a
-sub-action with only a diamond is robust to everything tried.
+sub-action with only a diamond is robust to everything tried. Settings that
+changed no sub-action at all are named in the subtitle.
 }
 \details{
 Areas are drawn, not percentage changes, because a small sub-action can

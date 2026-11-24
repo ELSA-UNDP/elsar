@@ -345,7 +345,7 @@ elsar_sub_action_sensitivity <- function(x,
 #' that changes it, coloured by setting and labelled with the value tried.
 #' Settings that leave a sub-action unchanged are not drawn for it, so a
 #' sub-action with only a diamond is robust to everything tried. Settings that
-#' changed no sub-action at all are listed in the subtitle, with ": 0".
+#' changed no sub-action at all are named in the subtitle.
 #'
 #' Areas are drawn, not percentage changes, because a small sub-action can
 #' change by a large percentage while moving little land.
@@ -379,12 +379,14 @@ elsar_plot_sensitivity <- function(sensitivity, title = NULL, base_size = 11) {
   tried <- unique(sensitivity$parameter[!sensitivity$is_baseline])
   unchanged <- setdiff(tried, unique(alt$parameter))
   alt$parameter <- factor(alt$parameter, levels = setdiff(tried, unchanged))
-  subtitle <- paste0("\u25c6 ", .txt("baseline"))
-  if (length(unchanged) > 0) subtitle <- paste0(subtitle, "   \u00b7   ", toString(unchanged), ": 0")
+  # Plain text: PDF devices cannot draw every symbol (e.g. a diamond character)
+  subtitle <- if (length(unchanged) > 0) paste0(toString(unchanged), ": no change") else NULL
+  base$key <- .txt("baseline")
   dodge <- ggplot2::position_dodge(width = 0.5)
 
   ggplot2::ggplot(mapping = ggplot2::aes(x = .data$area, y = .data$sub_action)) +
-    ggplot2::geom_point(data = base, shape = 18, size = 3.6, colour = "black") +
+    ggplot2::geom_point(data = base, ggplot2::aes(shape = .data$key), size = 3.6, colour = "black") +
+    ggplot2::scale_shape_manual(values = 18, name = NULL) +
     ggplot2::geom_point(data = alt, ggplot2::aes(colour = .data$parameter, group = .data$parameter),
                         size = 2.2, position = dodge) +
     ggplot2::geom_text(data = alt, ggplot2::aes(label = .data$value, colour = .data$parameter,
