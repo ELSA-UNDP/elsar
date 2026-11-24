@@ -160,3 +160,11 @@ test_that("elsar_sub_action_sensitivity() checks what it is asked to vary", {
     "must set it"
   )
 })
+
+test_that("sensitivity works for rules that need no layers", {
+  pa <- val_layer(c(1, 0, 0, 0, 0, 0, 0, 0))
+  x <- elsar_prepare_actions(val_actions(), pas = pa)
+  s <- elsar_sub_action_sensitivity(x, add_protect_sub_actions(), vary = list(expansion_km = c(2, 5)))
+  expect_equal(sum(s$is_baseline), 4)
+  expect_s3_class(elsar_plot_sensitivity(s), "ggplot")
+})

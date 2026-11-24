@@ -458,7 +458,7 @@ elsar_sub_action_diagnostics <- function(x, rules, layers = NULL,
 
 # Context layers on the action grid, as a named list of single-layer rasters
 .condition_layers <- function(layers, x) {
-  if (is.null(layers)) return(list())
+  if (is.null(layers) || (is.list(layers) && length(layers) == 0)) return(list())
   template <- x[["action"]]
   if (is.character(layers) || inherits(layers, "SpatRaster")) {
     r <- .read_raster_arg(layers, "layers")
