@@ -2,9 +2,7 @@
 # Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
 on:
   push:
-    # feature/sub-actions: integration branch for the sub-action work, kept out
-    # of develop while it is tested (remove when it merges)
-    branches: [main, master, develop, feature/sub-actions]
+    branches: [main, master, develop]
     paths-ignore:
       # Text that R CMD check does not use: skip the 15-minute check when only
       # these change (vignettes are .Rmd and still trigger it)
@@ -12,7 +10,7 @@ on:
       - 'translations/**'
       - 'notes/**'
   pull_request:
-    branches: [main, master, develop, feature/sub-actions]
+    branches: [main, master, develop]
     paths-ignore:
       - '**.md'
       - 'translations/**'
