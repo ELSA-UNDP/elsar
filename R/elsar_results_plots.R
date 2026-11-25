@@ -123,8 +123,14 @@ elsar_plot_actions <- function(x,
     }) +
     if (legend) {
       ggplot2::guides(
-        fill = ggplot2::guide_legend(order = 1, nrow = 1),
-        colour = ggplot2::guide_legend(order = 2, override.aes = list(fill = pa_key_fill))
+        fill = ggplot2::guide_legend(order = 1, nrow = .legend_rows(nrow(shown))),
+        # A scheme that already names existing PAs (e.g. Protect sub-actions)
+        # needs no second key for the outline
+        colour = if (pa_label %in% scheme$label) {
+          "none"
+        } else {
+          ggplot2::guide_legend(order = 2, override.aes = list(fill = pa_key_fill))
+        }
       )
     } else {
       ggplot2::guides(fill = "none", colour = "none")
@@ -140,6 +146,9 @@ elsar_plot_actions <- function(x,
 #' existing and new protection together.
 #'
 #' Actions sharing a `group` in the action scheme are stacked in one bar.
+#' When an action already has the name of the existing-PA segment (`pa_label`),
+#' as Protect sub-actions from [add_protect_sub_actions()] do, bars are not
+#' split by protected areas again.
 #'
 #' @param summary A tibble from [elsar_summarise_actions()].
 #' @param metric `"percent"` (share of each region's planning area, default)
@@ -188,6 +197,7 @@ elsar_plot_action_bars <- function(summary,
     warning("The summary has no protected-area information; 'split_pa' ignored.", call. = FALSE)
     split_pa <- FALSE
   }
+  split_pa <- .split_pa_ok(summary, split_pa, pa_label)
 
   d <- .bar_data(summary, split_pa, pa_label)
   colours <- .segment_colours(summary, split_pa, pa_colour, pa_label)
@@ -423,7 +433,7 @@ elsar_plot_region <- function(x,
   region_summary <- summary[summary$region == region, ]
   attributes_to_keep <- c("units", "has_pa")
   for (a in attributes_to_keep) attr(region_summary, a) <- attr(summary, a)
-  split_pa <- isTRUE(attr(summary, "has_pa"))
+  split_pa <- .split_pa_ok(summary, isTRUE(attr(summary, "has_pa")), pa_label)
 
   # The bars carry the shared legend, including the no-action key for the map
   d <- .bar_data(region_summary, split_pa, pa_label)
@@ -494,6 +504,10 @@ elsar_plot_regions <- function(x, summary, regions, region_col, ...) {
     )
 }
 
+# Rows of a horizontal legend: one row up to `per_row` keys, so legends with
+# many keys (e.g. sub-actions) wrap instead of running off the plot
+.legend_rows <- function(n, per_row = 5) max(1L, as.integer(ceiling(n / per_row)))
+
 .wrap <- function(x, width = 14) stringr::str_wrap(x, width = width)
 
 .metric_title <- function(metric, units, percent_key = "pct_of_region") {
@@ -547,6 +561,12 @@ elsar_plot_regions <- function(x, summary, regions, region_col, ...) {
 }
 
 # Long data for stacked bars: one row per region x segment
+# A scheme that already has an action named like the existing-PA segment
+# (e.g. Protect sub-actions) shows existing PAs itself: no second split
+.split_pa_ok <- function(summary, split_pa, pa_label) {
+  split_pa && !pa_label %in% as.character(summary$action)
+}
+
 .bar_data <- function(summary, split_pa, pa_label) {
   s <- summary[summary$is_action, ]
   group_levels <- unique(s$group[order(as.integer(s$action))])
@@ -618,7 +638,7 @@ elsar_plot_regions <- function(x, summary, regions, region_col, ...) {
   p +
     .results_theme(base_size) +
     .category_axis_theme(vertical, length(cat_levels), cat_levels) +
-    ggplot2::guides(fill = ggplot2::guide_legend(nrow = 1))
+    ggplot2::guides(fill = ggplot2::guide_legend(nrow = .legend_rows(length(breaks))))
 }
 
 .pa_outline <- function(pa, threshold) {

@@ -52,6 +52,9 @@ existing and new protection together.
 }
 \details{
 Actions sharing a \code{group} in the action scheme are stacked in one bar.
+When an action already has the name of the existing-PA segment (\code{pa_label}),
+as Protect sub-actions from \code{\link[=add_protect_sub_actions]{add_protect_sub_actions()}} do, bars are not
+split by protected areas again.
 }
 \examples{
 ex <- elsar_example_results()

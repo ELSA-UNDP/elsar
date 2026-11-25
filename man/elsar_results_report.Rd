@@ -15,6 +15,9 @@ elsar_results_report(
   target = 0.3,
   protect_actions = NULL,
   units = c("ha", "km2", "m2"),
+  diagnostics = NULL,
+  sensitivity = NULL,
+  costs = NULL,
   output_file = "elsa_results_report.html",
   format = c("html", "word"),
   title = "ELSA results report",
@@ -40,6 +43,14 @@ is not yet prepared.}
 
 \item{units}{Area units, as in \code{\link[=elsar_summarise_actions]{elsar_summarise_actions()}}.}
 
+\item{diagnostics}{Optional output of \code{\link[=elsar_sub_action_diagnostics]{elsar_sub_action_diagnostics()}}, to
+report how the rules split each action.}
+
+\item{sensitivity}{Optional output of \code{\link[=elsar_sub_action_sensitivity]{elsar_sub_action_sensitivity()}}.}
+
+\item{costs}{Optional unit costs per hectare, as for
+\code{\link[=elsar_cost_sub_actions]{elsar_cost_sub_actions()}}, to report a cost envelope.}
+
 \item{output_file}{Character. Path of the report to write.}
 
 \item{format}{\code{"html"} (default) or \code{"word"}.}
@@ -62,6 +73,12 @@ map-and-bars panel for each region. Sections are left out when their inputs
 are not given.
 }
 \details{
+For a sub-action map (from \code{\link[=elsar_assign_sub_actions]{elsar_assign_sub_actions()}}), the report adds a
+Sub-actions chapter: each sub-action's area and share of its parent action,
+the Global Biodiversity Framework targets of default sub-actions (see
+\code{\link[=elsar_sub_action_catalogue]{elsar_sub_action_catalogue()}}), and, when given, the rule diagnostics, the
+sensitivity analysis and the cost envelope.
+
 The template is also available in RStudio under \emph{File > New File > R
 Markdown > From Template > ELSA results report}. Rendered as is, it reports
 on the bundled example data.
