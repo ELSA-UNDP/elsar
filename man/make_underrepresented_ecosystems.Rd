@@ -6,7 +6,7 @@
 \usage{
 make_underrepresented_ecosystems(
   ecosystems_sf,
-  group_attribute,
+  group_attribute = NULL,
   target_percent = 30,
   protected_areas_sf,
   pus,
@@ -15,9 +15,16 @@ make_underrepresented_ecosystems(
 )
 }
 \arguments{
-\item{ecosystems_sf}{\code{sf} object. Polygon features representing ecosystems, clipped to the analysis area.}
+\item{ecosystems_sf}{\code{sf} object of ecosystem polygons, clipped to the
+analysis area, or a single-layer \code{SpatRaster} of ecosystem classes
+(integer codes, or a categorical raster; NA = no ecosystem). A raster is
+projected to the planning-unit CRS (nearest neighbour) if needed, and only
+its cells inside the planning units count. See \link{ecosystem_raster}.}
 
-\item{group_attribute}{\code{character}. Column name in \code{ecosystems_sf} used to group features (e.g., "econame" or "get_id").}
+\item{group_attribute}{\code{character}. Column name in \code{ecosystems_sf} used to group features (e.g., "econame" or "get_id").
+For a categorical raster, a column of its levels table (\code{NULL}: the active
+category); a plain integer raster is grouped by cell value and this is
+not used.}
 
 \item{target_percent}{\code{numeric}. Target percentage of protection for each ecosystem group (default = 30).}
 

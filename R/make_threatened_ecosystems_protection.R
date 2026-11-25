@@ -8,8 +8,15 @@
 #' The threat score is calculated as the percentage of each ecosystem area that is
 #' below the integrity threshold (i.e., not intact), and rasterized by planning unit.
 #'
-#' @param ecosystems_sf sf. Polygons representing ecosystems.
+#' @param ecosystems_sf sf. Polygons representing ecosystems, or a
+#'   single-layer `SpatRaster` of ecosystem classes (integer codes, or a
+#'   categorical raster; NA = no ecosystem). A raster is projected to the
+#'   planning-unit CRS (nearest neighbour) if needed, and only its cells inside
+#'   the planning units count. See [ecosystem_raster].
 #' @param group_attribute character. Column name used to group/dissolve ecosystems (e.g., `"eco_id"` or `"get_id"`).
+#'   For a categorical raster, a column of its levels table (`NULL`: the
+#'   active category); a plain integer raster is grouped by cell value and
+#'   this is not used.
 #' @param pus SpatRaster. Planning unit raster used for alignment and rasterization.
 #' @param boundary_layer sf. National boundary used to calculate the median integrity value if `integrity_type = "eii"`.
 #' @param integrity_raster SpatRaster. Raster representing either continuous integrity (e.g., EII) or binary degraded areas.
@@ -53,7 +60,7 @@
 #' }
 make_threatened_ecosystems_protection <- function(
     ecosystems_sf,
-    group_attribute,
+    group_attribute = NULL,
     pus,
     boundary_layer,
     integrity_raster,
@@ -64,10 +71,13 @@ make_threatened_ecosystems_protection <- function(
   integrity_type <- match.arg(integrity_type)
 
   # Input validation
- assertthat::assert_that(inherits(ecosystems_sf, "sf"),
-                          msg = "'ecosystems_sf' must be an sf object.")
-  assertthat::assert_that(group_attribute %in% colnames(ecosystems_sf),
-                          msg = glue::glue("'{group_attribute}' not found in 'ecosystems_sf' columns."))
+  is_raster <- inherits(ecosystems_sf, "SpatRaster")
+  assertthat::assert_that(is_raster || inherits(ecosystems_sf, "sf"),
+                          msg = "'ecosystems_sf' must be an sf object or a SpatRaster.")
+  if (!is_raster) {
+    assertthat::assert_that(!is.null(group_attribute) && group_attribute %in% colnames(ecosystems_sf),
+                            msg = glue::glue("'{group_attribute}' not found in 'ecosystems_sf' columns."))
+  }
   assertthat::assert_that(inherits(pus, "SpatRaster"),
                           msg = "'pus' must be a SpatRaster object.")
   assertthat::assert_that(inherits(boundary_layer, "sf"),
@@ -98,33 +108,44 @@ make_threatened_ecosystems_protection <- function(
     mask <- terra::ifel(integrity_aligned == 0, 1, 0)
   }
 
-  # Convert intact mask to valid polygons
-  non_intact_areas <- mask %>%
-    terra::as.polygons(na.rm = TRUE) %>%
-    sf::st_as_sf() %>%
-    dplyr::filter(.[[1]] == 1) %>%
-    # The mask is on the planning-unit grid: transform it to the ecosystems'
-    # CRS (before 0.4.2 it was relabelled, giving an all-NA layer whenever the
-    # ecosystems were in another CRS)
-    sf::st_make_valid() %>%
-    sf::st_transform(sf::st_crs(ecosystems_sf)) %>%
-    sf::st_cast("POLYGON")
+  if (is_raster) {
+    # Share of every ecosystem cell that is intact: the PU mask resampled
+    # exactly to the ecosystem grid. Cells outside the mask count as not
+    # intact, as in the polygon path.
+    eco <- prepare_ecosystem_raster(ecosystems_sf, group_attribute, pus)
+    mask0 <- terra::ifel(is.na(mask), 0, mask)
+    intact <- exactextractr::exact_resample(mask0, eco$r, fun = "mean")
+    log_message("Summarising total ecosystem area and computing threat scores...")
+    areas <- ecosystem_raster_areas(eco$r, intact)
+    group_attribute <- "gid"
+  } else {
+    # Convert intact mask to valid polygons
+    intact_areas <- mask %>%
+      terra::as.polygons(na.rm = TRUE) %>%
+      sf::st_as_sf() %>%
+      dplyr::filter(.[[1]] == 1) %>%
+      # The mask is on the planning-unit grid: transform it to the ecosystems'
+      # CRS (before 0.4.2 it was relabelled, giving an all-NA layer whenever the
+      # ecosystems were in another CRS)
+      sf::st_make_valid() %>%
+      sf::st_transform(sf::st_crs(ecosystems_sf)) %>%
+      sf::st_cast("POLYGON")
 
-  # Intact area per ecosystem, intersected tile by tile (both layers
-  # dissolved by tile first). Replaces a whole-layer union of the ecosystems
-  # and an intersection of every ecosystem with every intact-area polygon.
-  log_message("Calculating intact areas within each ecosystem...")
-  tiles <- overlay_tiles(list(ecosystems_sf, non_intact_areas), pus)
-  # The mask polygons come from one raster value, so they cannot overlap
-  ov <- group_overlap_tiled(ecosystems_sf, group_attribute, non_intact_areas, tiles,
-                            y_disjoint = TRUE)
+    # Intact area per ecosystem, intersected tile by tile (both layers
+    # dissolved by tile first). Replaces a whole-layer union of the ecosystems
+    # and an intersection of every ecosystem with every intact-area polygon.
+    log_message("Calculating intact areas within each ecosystem...")
+    tiles <- overlay_tiles(list(ecosystems_sf, intact_areas), pus)
+    # The mask polygons come from one raster value, so they cannot overlap
+    ov <- group_overlap_tiled(ecosystems_sf, group_attribute, intact_areas, tiles,
+                              y_disjoint = TRUE)
+    log_message("Summarising total ecosystem area and computing threat scores...")
+    areas <- ov$areas
+  }
 
-  log_message("Summarising total ecosystem area and computing threat scores...")
-  threat <- ov$areas %>%
+  threat <- areas %>%
     dplyr::mutate(threat = (1 - .data$area_overlap / .data$area) * 100) %>%
     dplyr::select(dplyr::all_of(c(group_attribute, "threat")))
-  eco_summary <- ov$pieces %>%
-    dplyr::left_join(threat, by = group_attribute)
 
   # The same score for every ecosystem cannot rank planning units; after
   # rescaling it would only show where the ecosystem polygons are
@@ -142,13 +163,18 @@ make_threatened_ecosystems_protection <- function(
   # (e.g. coast the coarse polygons miss) take the nearest ecosystem's score;
   # before, they were 0, i.e. "not threatened".
   log_message("Rasterizing threat score per planning unit...")
-  threat_raster <- elsar::exact_rasterise(
-    features = eco_summary,
-    pus = pus,
-    iso3 = iso3,
-    attribute = "threat",
-    fill_nearest = TRUE
-  )
+  threat_raster <- if (is_raster) {
+    ecosystem_raster_to_pus(eco$r, threat$gid, threat$threat, pus = pus,
+                            method = "mean", iso3 = iso3, rescaled = TRUE)
+  } else {
+    elsar::exact_rasterise(
+      features = dplyr::left_join(ov$pieces, threat, by = group_attribute),
+      pus = pus,
+      iso3 = iso3,
+      attribute = "threat",
+      fill_nearest = TRUE
+    )
+  }
   names(threat_raster) <- "threatened_ecosystems"
 
   # Optionally write output raster

@@ -1,5 +1,20 @@
 # elsar (development version)
 
+## New features
+
+* **Ecosystem rasters for the ecosystem coverage layers.**
+  `make_underrepresented_ecosystems()` and
+  `make_threatened_ecosystems_protection()` now accept a classified
+  `SpatRaster` (integer codes, or a categorical raster grouped by a column of
+  its levels table) as `ecosystems_sf`, as well as polygons. The overlays are
+  exact at the raster's cells, through exactextractr. Protected areas are
+  dissolved by tile and their coverage of each ecosystem cell measured with
+  `coverage_fraction()`. The intact mask is resampled to the ecosystem grid
+  with `exact_resample()`. Scores go back to the planning units with
+  `make_normalised_raster()`. For the same ecosystems, a raster gives the same
+  result as polygons. `group_attribute` is now optional (only polygons and
+  categorical rasters use it).
+
 # elsar 0.7.0
 
 ## New features
