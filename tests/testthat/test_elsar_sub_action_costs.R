@@ -99,12 +99,17 @@ test_that("the report adds a Sub-actions chapter with diagnostics, sensitivity a
   out <- withr::local_tempfile(fileext = ".html")
   path <- suppressMessages(elsar_results_report(sub, diagnostics = d, sensitivity = sens, costs = costs,
                                                 output_file = out, open = FALSE))
-  html <- paste(readLines(path, warn = FALSE), collapse = "\n")
+  # Pandoc 3 wraps long lines of HTML, so compare text with whitespace collapsed
+  html <- gsub("\\s+", " ", paste(readLines(path, warn = FALSE), collapse = "\n"))
   expect_match(html, "Sub-actions")
   expect_match(html, "How the rules split each action")
   expect_match(html, "Sensitivity")
   expect_match(html, "Cost envelope")
-  expect_match(html, "USD 1,000 to USD 3,000")
+  # Test the cost paragraph alone, so a failure shows that text, not the page head
+  # The last mention is the section heading (an earlier one may be in the contents)
+  at <- max(gregexpr("Cost envelope", html, fixed = TRUE)[[1]])
+  costs_text <- substr(html, at, at + 600)
+  expect_match(costs_text, "USD 1,000 to USD 3,000")
 
   # A map without sub-actions has no such chapter
   path <- suppressMessages(elsar_results_report(s$x, output_file = out, open = FALSE))
