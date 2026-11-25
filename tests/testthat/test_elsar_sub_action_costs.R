@@ -106,9 +106,11 @@ test_that("the report adds a Sub-actions chapter with diagnostics, sensitivity a
   expect_match(html, "Sensitivity")
   expect_match(html, "Cost envelope")
   # Test the cost paragraph alone, so a failure shows that text, not the page head
-  # The last mention is the section heading (an earlier one may be in the contents)
-  at <- max(gregexpr("Cost envelope", html, fixed = TRUE)[[1]])
-  costs_text <- substr(html, at, at + 600)
+  # From the start of the sentence with the totals (the heading's words recur in
+  # the table caption)
+  at <- regexpr("would cost", html, fixed = TRUE)
+  expect_gt(at, 0)
+  costs_text <- substr(html, at, at + 300)
   expect_match(costs_text, "USD 1,000 to USD 3,000")
 
   # A map without sub-actions has no such chapter
