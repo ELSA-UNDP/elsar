@@ -6,14 +6,22 @@
 #' planning unit takes the largest gap of the ecosystems it overlaps, divided by
 #' `target_percent`, so 0 means the target is met and 1 means no protection.
 #'
-#' @param ecosystems_sf `sf` object. Polygon features representing ecosystems, clipped to the analysis area.
-#' @param group_attribute `character`. Column name in `ecosystems_sf` used to group features (e.g., "econame" or "get_id").
+#' @param ecosystems `sf` object of ecosystem polygons, clipped to the
+#'   analysis area, or a single-layer `SpatRaster` of ecosystem classes
+#'   (integer codes, or a categorical raster; NA = no ecosystem). A raster is
+#'   projected to the planning-unit CRS (nearest neighbour) if needed, and only
+#'   its cells inside the planning units count. See [ecosystem_raster].
+#' @param group_attribute `character`. Column name in `ecosystems` used to group features (e.g., "econame" or "get_id").
+#'   For a categorical raster, a column of its levels table (`NULL`: the active
+#'   category); a plain integer raster is grouped by cell value and this is
+#'   not used.
 #' @param target_percent `numeric`. Target percentage of protection for each ecosystem group (default = 30).
 #' @param protected_areas_sf `sf` or `SpatVector`. Protected areas dataset to be used in the gap calculation.
 #'   May have 0 rows (a country with no protected areas): every ecosystem then
 #'   has the full gap, and the result is 1 wherever there is an ecosystem, with a warning.
 #' @param pus `SpatRaster`. Raster of planning units (e.g., from `make_planning_units()`), used as the target grid for rasterization.
 #' @param iso3 `character`, optional. ISO3 country code used for naming output files (e.g., "BRA").
+#' @param ecosystems_sf `r lifecycle::badge("deprecated")` Use `ecosystems`.
 #' @param output_path `character`, optional. Directory path to save the output raster as a GeoTIFF.
 #'
 #' @return A `SpatRaster` with one layer: `"underrepresented_ecosystems"`, showing the largest gap per planning unit as a share of the target (0-1). The
@@ -24,7 +32,7 @@
 #' @examples
 #' \dontrun{
 #' gap_raster <- make_underrepresented_ecosystems(
-#'   ecosystems_sf = my_ecosystem_polygons,
+#'   ecosystems = my_ecosystem_polygons,
 #'   group_attribute = "eco_type",
 #'   target_percent = 30,
 #'   protected_areas_sf = wdpa,
@@ -35,19 +43,27 @@
 #' }
 #'
 make_underrepresented_ecosystems <- function(
-    ecosystems_sf,
-    group_attribute,
+    ecosystems,
+    group_attribute = NULL,
     target_percent = 30,
     protected_areas_sf,
     pus,
     iso3 = NULL,
-    output_path = NULL
+    output_path = NULL,
+    ecosystems_sf = deprecated()
 ) {
+  if (lifecycle::is_present(ecosystems_sf)) {
+    lifecycle::deprecate_warn("0.8.0", "make_underrepresented_ecosystems(ecosystems_sf)", "make_underrepresented_ecosystems(ecosystems)")
+    ecosystems <- ecosystems_sf
+  }
   # Validate inputs
-  assertthat::assert_that(inherits(ecosystems_sf, "sf"),
-                          msg = "'ecosystems_sf' must be an sf object.")
-  assertthat::assert_that(group_attribute %in% colnames(ecosystems_sf),
-                          msg = glue::glue("'{group_attribute}' not found in 'ecosystems_sf' columns."))
+  is_raster <- inherits(ecosystems, "SpatRaster")
+  assertthat::assert_that(is_raster || inherits(ecosystems, "sf"),
+                          msg = "'ecosystems' must be an sf object or a SpatRaster.")
+  if (!is_raster) {
+    assertthat::assert_that(!is.null(group_attribute) && group_attribute %in% colnames(ecosystems),
+                            msg = glue::glue("'{group_attribute}' not found in 'ecosystems' columns."))
+  }
   assertthat::assert_that(inherits(pus, "SpatRaster"),
                           msg = "'pus' must be a SpatRaster object.")
   assertthat::assert_that(
@@ -59,26 +75,35 @@ make_underrepresented_ecosystems <- function(
                             msg = glue::glue("'output_path' directory does not exist: {output_path}"))
   }
 
-  log_message("Calculating protection gaps for ecosystems grouped by '{group_attribute}'...")
+  source_desc <- if (is_raster) "the ecosystem raster" else glue::glue("ecosystems grouped by '{group_attribute}'")
+  log_message("Calculating protection gaps for {source_desc}...")
 
   # Convert to sf if needed
   if (inherits(protected_areas_sf, "SpatVector")) {
     protected_areas_sf <- sf::st_as_sf(protected_areas_sf)
   }
 
-  # Ensure CRS match
-  if (!all(sf::st_crs(protected_areas_sf) == sf::st_crs(ecosystems_sf))) {
-    protected_areas_sf <- sf::st_transform(protected_areas_sf, sf::st_crs(ecosystems_sf))
-  }
+  if (is_raster) {
+    # Exact coverage of every ecosystem cell by the dissolved protected areas
+    eco <- prepare_ecosystem_raster(ecosystems, group_attribute, pus)
+    pa_cover <- coverage_fraction_dissolved(eco$r, protected_areas_sf)
+    gaps <- ecosystem_raster_areas(eco$r, pa_cover)
+  } else {
+    # Ensure CRS match
+    if (!all(sf::st_crs(protected_areas_sf) == sf::st_crs(ecosystems))) {
+      protected_areas_sf <- sf::st_transform(protected_areas_sf, sf::st_crs(ecosystems))
+    }
 
-  # Ecosystem and protected area per group, intersected tile by tile. A loop
-  # over every protected-area polygon took 85 min for Denmark (150,000
-  # polygons); by tile it takes about a minute. Both layers are dissolved
-  # first (by tile), so overlapping protected areas, or overlapping polygons
-  # of one ecosystem, are not counted twice.
-  tiles <- overlay_tiles(list(ecosystems_sf, protected_areas_sf), pus)
-  ov <- group_overlap_tiled(ecosystems_sf, group_attribute, protected_areas_sf, tiles)
-  gaps <- ov$areas %>%
+    # Ecosystem and protected area per group, intersected tile by tile. A loop
+    # over every protected-area polygon took 85 min for Denmark (150,000
+    # polygons); by tile it takes about a minute. Both layers are dissolved
+    # first (by tile), so overlapping protected areas, or overlapping polygons
+    # of one ecosystem, are not counted twice.
+    tiles <- overlay_tiles(list(ecosystems, protected_areas_sf), pus)
+    ov <- group_overlap_tiled(ecosystems, group_attribute, protected_areas_sf, tiles)
+    gaps <- ov$areas
+  }
+  gaps <- gaps %>%
     dplyr::mutate(
       # An ecosystem no protected area overlaps is 0% protected (the full gap)
       area_protected = .data$area_overlap,
@@ -86,8 +111,6 @@ make_underrepresented_ecosystems <- function(
       target_gap = dplyr::if_else(.data$percent_protected < target_percent,
                                   target_percent - .data$percent_protected, 0)
     )
-  ecosystems_summary <- ov$pieces %>%
-    dplyr::left_join(gaps, by = group_attribute)
 
   # Rasterize the gap as a share of the target: 0 where the target is met, 1
   # for an ecosystem with no protection. (Before 0.4.2 the gaps were rescaled
@@ -111,19 +134,25 @@ make_underrepresented_ecosystems <- function(
   log_message("Rasterizing the largest target gap per planning unit...")
   # Planning units outside every ecosystem polygon take the nearest
   # ecosystem's gap (before, 0, i.e. "no gap")
-  underrepresented_ecosystems <- elsar::exact_rasterise(
-    features = ecosystems_summary,
-    pus = pus,
-    fun = "max",
-    iso3 = iso3,
-    attribute = "target_gap",
-    rescaled = FALSE,
-    fill_nearest = TRUE
-  ) / target_percent
+  underrepresented_ecosystems <- if (is_raster) {
+    ecosystem_raster_to_pus(eco$r, gaps$gid, gaps$target_gap, pus = pus,
+                            method = "max", iso3 = iso3, rescaled = FALSE)
+  } else {
+    elsar::exact_rasterise(
+      features = dplyr::left_join(ov$pieces, gaps, by = group_attribute),
+      pus = pus,
+      fun = "max",
+      iso3 = iso3,
+      attribute = "target_gap",
+      rescaled = FALSE,
+      fill_nearest = TRUE
+    )
+  }
+  underrepresented_ecosystems <- underrepresented_ecosystems / target_percent
   names(underrepresented_ecosystems) <- "underrepresented_ecosystems"
 
   if (!is.null(output_path)) {
-    out_file <- glue::glue("{output_path}/representation_gap_{tolower(group_attribute)}_{iso3}.tif")
+    out_file <- glue::glue("{output_path}/representation_gap_{tolower(group_attribute %||% 'raster')}_{iso3}.tif")
     elsar::save_raster(underrepresented_ecosystems, out_file, datatype = "FLT4S")
   }
 
