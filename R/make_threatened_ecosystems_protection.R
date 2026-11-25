@@ -8,7 +8,7 @@
 #' The threat score is calculated as the percentage of each ecosystem area that is
 #' below the integrity threshold (i.e., not intact), and rasterized by planning unit.
 #'
-#' @param ecosystems_sf sf. Polygons representing ecosystems, or a
+#' @param ecosystems sf. Polygons representing ecosystems, or a
 #'   single-layer `SpatRaster` of ecosystem classes (integer codes, or a
 #'   categorical raster; NA = no ecosystem). A raster is projected to the
 #'   planning-unit CRS (nearest neighbour) if needed, and only its cells inside
@@ -22,6 +22,7 @@
 #' @param integrity_raster SpatRaster. Raster representing either continuous integrity (e.g., EII) or binary degraded areas.
 #' @param integrity_type character. One of `"eii"` (default) or `"degraded"`, indicating how to interpret the integrity raster.
 #' @param iso3 character, optional. ISO3 code used for naming output files (e.g., `"KEN"`).
+#' @param ecosystems_sf `r lifecycle::badge("deprecated")` Use `ecosystems`.
 #' @param output_path character, optional. Directory to write the output raster as a GeoTIFF.
 #'
 #' @return A `SpatRaster` with one layer: `"threatened_ecosystems"`. Each
@@ -37,7 +38,7 @@
 #' \dontrun{
 #' # Using EII (Ecological Integrity Index)
 #' threatened_raster_eii <- make_threatened_ecosystems_protection(
-#'   ecosystems_sf = my_ecosystems,
+#'   ecosystems = my_ecosystems,
 #'   group_attribute = "eco_id",
 #'   pus = planning_units,
 #'   boundary_layer = national_boundary,
@@ -49,7 +50,7 @@
 #'
 #' # Using binary degraded areas raster (1 = degraded, 0 = intact)
 #' threatened_raster_degraded <- make_threatened_ecosystems_protection(
-#'   ecosystems_sf = my_ecosystems,
+#'   ecosystems = my_ecosystems,
 #'   group_attribute = "eco_id",
 #'   pus = planning_units,
 #'   boundary_layer = national_boundary,
@@ -59,24 +60,29 @@
 #' )
 #' }
 make_threatened_ecosystems_protection <- function(
-    ecosystems_sf,
+    ecosystems,
     group_attribute = NULL,
     pus,
     boundary_layer,
     integrity_raster,
     integrity_type = c("eii", "degraded"),
     iso3 = NULL,
-    output_path = NULL
+    output_path = NULL,
+    ecosystems_sf = deprecated()
 ) {
+  if (lifecycle::is_present(ecosystems_sf)) {
+    lifecycle::deprecate_warn("0.8.0", "make_threatened_ecosystems_protection(ecosystems_sf)", "make_threatened_ecosystems_protection(ecosystems)")
+    ecosystems <- ecosystems_sf
+  }
   integrity_type <- match.arg(integrity_type)
 
   # Input validation
-  is_raster <- inherits(ecosystems_sf, "SpatRaster")
-  assertthat::assert_that(is_raster || inherits(ecosystems_sf, "sf"),
-                          msg = "'ecosystems_sf' must be an sf object or a SpatRaster.")
+  is_raster <- inherits(ecosystems, "SpatRaster")
+  assertthat::assert_that(is_raster || inherits(ecosystems, "sf"),
+                          msg = "'ecosystems' must be an sf object or a SpatRaster.")
   if (!is_raster) {
-    assertthat::assert_that(!is.null(group_attribute) && group_attribute %in% colnames(ecosystems_sf),
-                            msg = glue::glue("'{group_attribute}' not found in 'ecosystems_sf' columns."))
+    assertthat::assert_that(!is.null(group_attribute) && group_attribute %in% colnames(ecosystems),
+                            msg = glue::glue("'{group_attribute}' not found in 'ecosystems' columns."))
   }
   assertthat::assert_that(inherits(pus, "SpatRaster"),
                           msg = "'pus' must be a SpatRaster object.")
@@ -112,7 +118,7 @@ make_threatened_ecosystems_protection <- function(
     # Share of every ecosystem cell that is intact: the PU mask resampled
     # exactly to the ecosystem grid. Cells outside the mask count as not
     # intact, as in the polygon path.
-    eco <- prepare_ecosystem_raster(ecosystems_sf, group_attribute, pus)
+    eco <- prepare_ecosystem_raster(ecosystems, group_attribute, pus)
     mask0 <- terra::ifel(is.na(mask), 0, mask)
     intact <- exactextractr::exact_resample(mask0, eco$r, fun = "mean")
     log_message("Summarising total ecosystem area and computing threat scores...")
@@ -128,16 +134,16 @@ make_threatened_ecosystems_protection <- function(
       # CRS (before 0.4.2 it was relabelled, giving an all-NA layer whenever the
       # ecosystems were in another CRS)
       sf::st_make_valid() %>%
-      sf::st_transform(sf::st_crs(ecosystems_sf)) %>%
+      sf::st_transform(sf::st_crs(ecosystems)) %>%
       sf::st_cast("POLYGON")
 
     # Intact area per ecosystem, intersected tile by tile (both layers
     # dissolved by tile first). Replaces a whole-layer union of the ecosystems
     # and an intersection of every ecosystem with every intact-area polygon.
     log_message("Calculating intact areas within each ecosystem...")
-    tiles <- overlay_tiles(list(ecosystems_sf, intact_areas), pus)
+    tiles <- overlay_tiles(list(ecosystems, intact_areas), pus)
     # The mask polygons come from one raster value, so they cannot overlap
-    ov <- group_overlap_tiled(ecosystems_sf, group_attribute, intact_areas, tiles,
+    ov <- group_overlap_tiled(ecosystems, group_attribute, intact_areas, tiles,
                               y_disjoint = TRUE)
     log_message("Summarising total ecosystem area and computing threat scores...")
     areas <- ov$areas

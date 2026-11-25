@@ -123,3 +123,16 @@ test_that("non-integer ecosystem rasters are refused", {
   expect_error(make_underrepresented_ecosystems(
     r, protected_areas_sf = pa_sf(), pus = pus, iso3 = "TST"), "integer class codes")
 })
+
+test_that("ecosystems_sf still works, with a deprecation warning", {
+  pus <- eco_pus()
+  lifecycle::expect_deprecated(
+    old <- suppressMessages(make_underrepresented_ecosystems(
+      ecosystems_sf = eco_two_sf(), group_attribute = "eco_id",
+      protected_areas_sf = pa_sf(), pus = pus, iso3 = "TST"))
+  )
+  new <- suppressMessages(make_underrepresented_ecosystems(
+    ecosystems = eco_two_sf(), group_attribute = "eco_id",
+    protected_areas_sf = pa_sf(), pus = pus, iso3 = "TST"))
+  expect_equal(terra::values(old), terra::values(new))
+})

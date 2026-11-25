@@ -5,18 +5,19 @@
 \title{Create a Threatened Ecosystems Raster Based on Integrity or Degradation}
 \usage{
 make_threatened_ecosystems_protection(
-  ecosystems_sf,
+  ecosystems,
   group_attribute = NULL,
   pus,
   boundary_layer,
   integrity_raster,
   integrity_type = c("eii", "degraded"),
   iso3 = NULL,
-  output_path = NULL
+  output_path = NULL,
+  ecosystems_sf = deprecated()
 )
 }
 \arguments{
-\item{ecosystems_sf}{sf. Polygons representing ecosystems, or a
+\item{ecosystems}{sf. Polygons representing ecosystems, or a
 single-layer \code{SpatRaster} of ecosystem classes (integer codes, or a
 categorical raster; NA = no ecosystem). A raster is projected to the
 planning-unit CRS (nearest neighbour) if needed, and only its cells inside
@@ -38,6 +39,8 @@ this is not used.}
 \item{iso3}{character, optional. ISO3 code used for naming output files (e.g., \code{"KEN"}).}
 
 \item{output_path}{character, optional. Directory to write the output raster as a GeoTIFF.}
+
+\item{ecosystems_sf}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Use \code{ecosystems}.}
 }
 \value{
 A \code{SpatRaster} with one layer: \code{"threatened_ecosystems"}. Each
@@ -61,7 +64,7 @@ below the integrity threshold (i.e., not intact), and rasterized by planning uni
 \dontrun{
 # Using EII (Ecological Integrity Index)
 threatened_raster_eii <- make_threatened_ecosystems_protection(
-  ecosystems_sf = my_ecosystems,
+  ecosystems = my_ecosystems,
   group_attribute = "eco_id",
   pus = planning_units,
   boundary_layer = national_boundary,
@@ -73,7 +76,7 @@ threatened_raster_eii <- make_threatened_ecosystems_protection(
 
 # Using binary degraded areas raster (1 = degraded, 0 = intact)
 threatened_raster_degraded <- make_threatened_ecosystems_protection(
-  ecosystems_sf = my_ecosystems,
+  ecosystems = my_ecosystems,
   group_attribute = "eco_id",
   pus = planning_units,
   boundary_layer = national_boundary,

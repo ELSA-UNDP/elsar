@@ -5,23 +5,24 @@
 \title{Create a Representation Gap Raster for Ecosystems}
 \usage{
 make_underrepresented_ecosystems(
-  ecosystems_sf,
+  ecosystems,
   group_attribute = NULL,
   target_percent = 30,
   protected_areas_sf,
   pus,
   iso3 = NULL,
-  output_path = NULL
+  output_path = NULL,
+  ecosystems_sf = deprecated()
 )
 }
 \arguments{
-\item{ecosystems_sf}{\code{sf} object of ecosystem polygons, clipped to the
+\item{ecosystems}{\code{sf} object of ecosystem polygons, clipped to the
 analysis area, or a single-layer \code{SpatRaster} of ecosystem classes
 (integer codes, or a categorical raster; NA = no ecosystem). A raster is
 projected to the planning-unit CRS (nearest neighbour) if needed, and only
 its cells inside the planning units count. See \link{ecosystem_raster}.}
 
-\item{group_attribute}{\code{character}. Column name in \code{ecosystems_sf} used to group features (e.g., "econame" or "get_id").
+\item{group_attribute}{\code{character}. Column name in \code{ecosystems} used to group features (e.g., "econame" or "get_id").
 For a categorical raster, a column of its levels table (\code{NULL}: the active
 category); a plain integer raster is grouped by cell value and this is
 not used.}
@@ -37,6 +38,8 @@ has the full gap, and the result is 1 wherever there is an ecosystem, with a war
 \item{iso3}{\code{character}, optional. ISO3 country code used for naming output files (e.g., "BRA").}
 
 \item{output_path}{\code{character}, optional. Directory path to save the output raster as a GeoTIFF.}
+
+\item{ecosystems_sf}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Use \code{ecosystems}.}
 }
 \value{
 A \code{SpatRaster} with one layer: \code{"underrepresented_ecosystems"}, showing the largest gap per planning unit as a share of the target (0-1). The
@@ -53,7 +56,7 @@ planning unit takes the largest gap of the ecosystems it overlaps, divided by
 \examples{
 \dontrun{
 gap_raster <- make_underrepresented_ecosystems(
-  ecosystems_sf = my_ecosystem_polygons,
+  ecosystems = my_ecosystem_polygons,
   group_attribute = "eco_type",
   target_percent = 30,
   protected_areas_sf = wdpa,
