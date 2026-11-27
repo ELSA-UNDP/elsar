@@ -78,7 +78,7 @@ numbers fallback zones after the primary actions and puts Do Nothing last:
 zaf_scheme <- elsar_action_scheme(
   values = 1:6,
   labels = c("Protect", "Manage", "Restore", "Urban Greening", "Avoid Loss", "Do Nothing"),
-  colours = c("#06C723", "#FFEA00", "#8803FC", "#FF0000", "#A3BA95", "#E5E5E5")
+  colours = c("#6CCF00", "#E79000", "#2A5AFF", "#FF0000", "#A3BA95", "#E5E5E5")
 )
 ```
 
@@ -185,6 +185,32 @@ An ELSA run already reports national representation for the features it used,
 and those are the figures to cite for the run. This function adds regional
 breakdowns, the split by existing protected areas, and layers that were not
 part of the run.
+
+To chart the run's own representation figures, pass its representation table
+(as the ELSA tool exports it, or prioritizr's
+`eval_feature_representation_summary()`) to `elsar_plot_representation()`.
+It draws one bar per feature, split by action and grouped by theme, with the
+least represented features first and an optional line at the share of the
+planning area allocated. `existing` sets apart the share already in protected
+areas, so the new protection stands out; it can also come from
+`elsar_summarise_overlap()` run on the feature layers. The chart is
+interactive (use the camera button for a PNG); `interactive = FALSE` gives a
+ggplot:
+
+```{r representation, fig.height = 3.5}
+rep <- data.frame(
+  feature = c("Forest cover", "Wetlands", "Carbon", "Water provision"),
+  theme = c("Biodiversity", "Biodiversity", "Climate", "Ecosystem services"),
+  protect = c(42, 18, 30, 25),
+  `reduce-pressures` = c(10, 6, 12, 20),
+  restore = c(15, 30, 8, 9),
+  check.names = FALSE
+)
+elsar_plot_representation(
+  rep, allocated = 30,
+  existing = c("Forest cover" = 20, "Wetlands" = 5, "Carbon" = 12, "Water provision" = 10)
+)
+```
 
 ```{r overlap, fig.height = 4}
 crs <- terra::crs(x)

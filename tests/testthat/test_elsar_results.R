@@ -47,7 +47,7 @@ test_that("elsar_action_scheme() returns the default ELSA scheme", {
 test_that("the default scheme follows the ELSA tool's value order", {
   s <- elsar_action_scheme()
   expect_equal(s$label, c("Protect", "Manage", "Restore", "Urban Greening", "Do Nothing"))
-  expect_equal(s$colour, c("#06C723", "#FFEA00", "#8803FC", "#FF0000", "#E5E5E5"))
+  expect_equal(s$colour, c("#6CCF00", "#E79000", "#2A5AFF", "#FF0000", "#E5E5E5"))
 })
 
 test_that("elsar_action_scheme_from_config() reads actions and fallbacks", {
@@ -300,7 +300,7 @@ test_that("bar charts use the scheme colours and the PA segment", {
   p <- elsar_plot_action_bars(d$s)
   built <- ggplot2::ggplot_build(p)
   fills <- unique(built$data[[1]]$fill)
-  expect_true(all(c("#005000", "#06C723", "#8803FC") %in% fills))
+  expect_true(all(c("#005000", "#6CCF00", "#2A5AFF") %in% fills))
   # Segments of each region add up to the action share of the region
   # (vertical bars: Westmoor is the first category on the x axis)
   bars <- built$data[[1]]

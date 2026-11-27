@@ -2,6 +2,39 @@
 
 ## New features
 
+* **`elsar_plot_representation()`** charts an ELSA run's own feature
+  representation: one stacked bar per feature, split by action, grouped by
+  theme and sorted weakest first, with an optional dashed line at the share of
+  the planning area allocated. It reads the summary export of the ELSA tool or
+  the national app as it is (headers in any supported language, with
+  `measure = "effective"` or `"spatial"` picking from the paired columns), or
+  the output of `prioritizr::eval_feature_representation_summary()`,
+  matches actions to the action scheme by name or tool slug, and follows the
+  `elsar.language` option. This is the chart the ELSA tool and national app
+  show, now available for reports outside them. Existing protected areas
+  are drawn as their own segment at the start of each Protect bar, so the new
+  protection ELSA adds stands apart: read from the national app's lock-in
+  column, or given with `existing` (a vector, or the output of
+  `elsar_summarise_overlap()` for the feature layers with protected areas).
+  Given the run's `config` (its `config.json`, with the input layers beside
+  it), the chart fills in existing protection and the allocated share itself.
+  The new `elsar_existing_protection()` does that measurement: each feature's
+  share inside the run's lock-in protected areas, from the run's own layers
+  and display names. It reads run configurations and the platform's
+  deployment configurations (default budgets and lock-in, or `lockin` to
+  choose one); `layers_dir` points to layers kept apart from the config.
+  Each action's budget follows its name in the legend ("Protect (30.0%)"), from
+  the config or `budgets`.
+  Without the ELSA tool, the table can come from `elsar_summarise_overlap()`
+  on any action map and feature layers: spatial representation by action,
+  with existing protected areas split out of Protect.
+  It returns an interactive plotly chart by default (a boxed panel per theme
+  under a bold heading, the legend along the top, hover values and totals, a
+  PNG button), or a ggplot with `interactive = FALSE`; plotly is a new
+  suggested package. New
+  label keys `representation`, `allocated` and `total`; their non-English text
+  needs native-speaker review.
+
 * **Ecosystem rasters for the ecosystem coverage layers.**
   `make_underrepresented_ecosystems()` and
   `make_threatened_ecosystems_protection()` take ecosystems in a new
@@ -14,6 +47,14 @@
   the planning units with `make_normalised_raster()`. For the same ecosystems,
   a raster gives the same result as polygons. `group_attribute` is now optional
   (only polygons and categorical rasters use it).
+
+## Changes
+
+* **New default action colours.** Protect is `#6CCF00`, Manage `#E79000` and
+  Restore `#2A5AFF` (were `#06C723`, `#FFEA00` and `#8803FC`); Urban Greening
+  stays `#FF0000`. They apply to `elsar_action_scheme()`,
+  `elsar_palette("actions")` and every results plot. A scheme read with
+  `elsar_action_scheme_from_config()` still takes the run's own colours.
 
 ## Deprecations
 

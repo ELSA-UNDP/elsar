@@ -174,8 +174,8 @@ elsar_add_locator(map, elsar_map_locator(npl, context = boundary_dat))
 * **Categories** use six colour-blind-safe hues
   (`elsar_palette("categorical")`). On a map every category touches every
   other, so keep to four or fewer where you can; fold the rest into "Other".
-* **ELSA actions** keep their established colours: Protect `#06C723`,
-  Restore `#8803FC`, Manage `#FFEA00`, Urban Greening `#FF0000`.
+* **ELSA actions** use their own colours: Protect `#6CCF00`,
+  Restore `#2A5AFF`, Manage `#E79000`, Urban Greening `#FF0000`.
 * **Text** always uses the neutral inks from `elsar_inks()`, never a data
   colour.
 

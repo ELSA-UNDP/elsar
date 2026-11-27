@@ -15,7 +15,9 @@
 #'
 #' The default follows the ELSA tool's standard configuration: 1 Protect,
 #' 2 Manage (the tool's "Reduce Pressures"), 3 Restore, 4 Urban Greening (the
-#' tool's "Urban Adapt") and 5 Do Nothing, with the tool's colours. Runs with
+#' tool's "Urban Adapt") and 5 Do Nothing, with elsar's action colours (see
+#' [elsar_palette()]; a run's own colours can be read with
+#' [elsar_action_scheme_from_config()]). Runs with
 #' other actions or fallback zones (e.g. "Avoid Loss") number them after the
 #' primary actions and put Do Nothing last; read such schemes from the run's
 #' configuration with [elsar_action_scheme_from_config()], or write them out
@@ -47,21 +49,21 @@
 #' elsar_action_scheme(
 #'   values = 1:6,
 #'   labels = c("Protect", "Manage", "Restore", "Urban Greening", "Avoid Loss", "Do Nothing"),
-#'   colours = c("#06C723", "#FFEA00", "#8803FC", "#FF0000", "#A3BA95", "#E5E5E5")
+#'   colours = c("#6CCF00", "#E79000", "#2A5AFF", "#FF0000", "#A3BA95", "#E5E5E5")
 #' )
 #'
 #' # Report two actions as one group in bar charts
 #' elsar_action_scheme(
 #'   values = 1:5,
 #'   labels = c("Protect", "Manage", "Restore", "Agroforestry", "No action"),
-#'   colours = c("#06C723", "#FFEA00", "#8803FC", "#A6761D", "grey85"),
+#'   colours = c("#6CCF00", "#E79000", "#2A5AFF", "#A6761D", "grey85"),
 #'   groups = c("Protect", "Manage", "Restore", "Manage", "No action"),
 #'   no_action = "No action"
 #' )
 elsar_action_scheme <- function(
     values = 1:5,
     labels = .action_names(),
-    colours = c("#06C723", "#FFEA00", "#8803FC", "#FF0000", "#E5E5E5"),
+    colours = c("#6CCF00", "#E79000", "#2A5AFF", "#FF0000", "#E5E5E5"),
     groups = labels,
     no_action = .txt("do_nothing")) {
   n <- length(values)

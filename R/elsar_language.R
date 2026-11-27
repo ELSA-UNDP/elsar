@@ -21,6 +21,9 @@
     pct_of_layer = "% of layer within planning area",
     area = "Area",
     target = "Target",
+    representation = "Representation",
+    allocated = "Area allocated",
+    total = "Total",
     outside = "Outside",
     inside = "Inside",
     data = "Data",
@@ -43,6 +46,9 @@
     pct_of_layer = "% de la capa en el \u00e1rea de planificaci\u00f3n",
     area = "Superficie",
     target = "Meta",
+    representation = "Representaci\u00f3n",
+    allocated = "\u00c1rea asignada",
+    total = "Total",
     outside = "Fuera",
     inside = "Dentro",
     data = "Datos",
@@ -65,6 +71,9 @@
     pct_of_layer = "% de la couche dans la zone de planification",
     area = "Superficie",
     target = "Cible",
+    representation = "Repr\u00e9sentation",
+    allocated = "Surface allou\u00e9e",
+    total = "Total",
     outside = "Ext\u00e9rieur",
     inside = "Int\u00e9rieur",
     data = "Donn\u00e9es",
@@ -87,6 +96,9 @@
     pct_of_layer = "% da camada na \u00e1rea de planejamento",
     area = "\u00c1rea",
     target = "Meta",
+    representation = "Representa\u00e7\u00e3o",
+    allocated = "\u00c1rea alocada",
+    total = "Total",
     outside = "Fora",
     inside = "Dentro",
     data = "Dados",
@@ -109,6 +121,9 @@
     pct_of_layer = "% \u0441\u043b\u043e\u044f \u0432 \u043f\u0440\u0435\u0434\u0435\u043b\u0430\u0445 \u0442\u0435\u0440\u0440\u0438\u0442\u043e\u0440\u0438\u0438 \u043f\u043b\u0430\u043d\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u044f",
     area = "\u041f\u043b\u043e\u0449\u0430\u0434\u044c",
     target = "\u0426\u0435\u043b\u044c",
+    representation = "\u041f\u0440\u0435\u0434\u0441\u0442\u0430\u0432\u043b\u0435\u043d\u043d\u043e\u0441\u0442\u044c",
+    allocated = "\u0412\u044b\u0434\u0435\u043b\u0435\u043d\u043d\u0430\u044f \u043f\u043b\u043e\u0449\u0430\u0434\u044c",
+    total = "\u0418\u0442\u043e\u0433\u043e",
     outside = "\u0412\u043d\u0435",
     inside = "\u0412\u043d\u0443\u0442\u0440\u0438",
     data = "\u0414\u0430\u043d\u043d\u044b\u0435",
@@ -167,6 +182,8 @@
 #'   \item{`pct_of_region`, `pct_of_planning_area`, `pct_of_layer`, `area`}{
 #'     Axis titles of bar charts. The area title is followed by the units.}
 #'   \item{`target`}{Label of the target line.}
+#'   \item{`representation`, `allocated`, `total`}{Axis title, reference-line
+#'     label and hover label in [elsar_plot_representation()].}
 #'   \item{`outside`, `inside`}{Legend labels of 0/1 layers.}
 #'   \item{`data`}{Prefix of the data source in map captions.}
 #'   \item{`west`, `east`, `south`, `north`}{Compass letters of graticule

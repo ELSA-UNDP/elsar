@@ -10,7 +10,7 @@ elsar_plot_protection_gap(
   sort = c("total", "none"),
   orientation = c("vertical", "horizontal"),
   national_label = attr(gap, "national_label") \%||\% .txt("national"),
-  colours = c(current = "#005000", new = "#06C723"),
+  colours = c(current = "#005000", new = "#6CCF00"),
   labels = c(current = .txt("existing_pas"), new = .txt("new_protection")),
   title = NULL,
   base_size = 10
