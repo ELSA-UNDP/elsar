@@ -34,6 +34,7 @@ Suggests:
     highs,
     kableExtra,
     knitr,
+    plotly,
     prioritizr,
     progressr,
     rappdirs,

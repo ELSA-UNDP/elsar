@@ -32,7 +32,7 @@ test_that("elsar_palette() keeps the established ELSA action colours", {
   act <- elsar_palette("actions")
   expect_equal(
     unname(act[c("Protect", "Restore", "Manage", "Urban Greening")]),
-    c("#06C723", "#8803FC", "#FFEA00", "#FF0000")
+    c("#6CCF00", "#2A5AFF", "#E79000", "#FF0000")
   )
   # Same colours and labels as the default action scheme
   scheme <- elsar_action_scheme()
@@ -121,7 +121,7 @@ test_that("scales and guides build in ggplot2 plots", {
   acts <- data.frame(x = 1:3, y = 1, a = c("Protect", "Restore", "Manage"))
   d <- ggplot2::layer_data(ggplot2::ggplot(acts, ggplot2::aes(x, y, fill = a)) + ggplot2::geom_tile() +
     scale_fill_elsar_d(palette = "actions"))
-  expect_equal(toupper(d$fill), c("#06C723", "#8803FC", "#FFEA00"))
+  expect_equal(toupper(d$fill), c("#6CCF00", "#2A5AFF", "#E79000"))
 })
 
 test_that("guides work in both directions", {

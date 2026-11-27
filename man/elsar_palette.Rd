@@ -30,8 +30,8 @@ A character vector of hex colours (named for \code{"actions"}).
 \description{
 \code{elsar_palette()} returns the colours behind every elsar scale:
 \itemize{
-\item \code{"actions"}: the established ELSA action colours, named by action
-(Protect \verb{#06C723}, Restore \verb{#8803FC}, Manage \verb{#FFEA00}, Urban Greening
+\item \code{"actions"}: the ELSA action colours, named by action
+(Protect \verb{#6CCF00}, Restore \verb{#2A5AFF}, Manage \verb{#E79000}, Urban Greening
 \verb{#FF0000}) plus the neutral "Do Nothing" grey. They match the defaults of
 \code{\link[=elsar_action_scheme]{elsar_action_scheme()}}, and their names follow the language set with
 the \code{elsar.language} option (see \code{\link[=elsar_labels]{elsar_labels()}}).

@@ -47,6 +47,8 @@ protected areas and new protection proposed by ELSA.}
 \item{\code{pct_of_region}, \code{pct_of_planning_area}, \code{pct_of_layer}, \code{area}}{
 Axis titles of bar charts. The area title is followed by the units.}
 \item{\code{target}}{Label of the target line.}
+\item{\code{representation}, \code{allocated}, \code{total}}{Axis title, reference-line
+label and hover label in \code{\link[=elsar_plot_representation]{elsar_plot_representation()}}.}
 \item{\code{outside}, \code{inside}}{Legend labels of 0/1 layers.}
 \item{\code{data}}{Prefix of the data source in map captions.}
 \item{\code{west}, \code{east}, \code{south}, \code{north}}{Compass letters of graticule

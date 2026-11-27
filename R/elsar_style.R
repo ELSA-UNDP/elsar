@@ -58,9 +58,9 @@ elsar_inks <- function(dark = FALSE) {
 # ELSA action colours. These are the established ELSA colours and match the
 # defaults of elsar_action_scheme(), in the ELSA tool's raster value order.
 .elsar_action_colours <- c(
-  "Protect" = "#06C723",
-  "Manage" = "#FFEA00",
-  "Restore" = "#8803FC",
+  "Protect" = "#6CCF00",
+  "Manage" = "#E79000",
+  "Restore" = "#2A5AFF",
   "Urban Greening" = "#FF0000",
   "Do Nothing" = "#E5E5E5"
 )
@@ -89,8 +89,8 @@ elsar_inks <- function(dark = FALSE) {
 #' @description
 #' `elsar_palette()` returns the colours behind every elsar scale:
 #'
-#' * `"actions"`: the established ELSA action colours, named by action
-#'   (Protect `#06C723`, Restore `#8803FC`, Manage `#FFEA00`, Urban Greening
+#' * `"actions"`: the ELSA action colours, named by action
+#'   (Protect `#6CCF00`, Restore `#2A5AFF`, Manage `#E79000`, Urban Greening
 #'   `#FF0000`) plus the neutral "Do Nothing" grey. They match the defaults of
 #'   [elsar_action_scheme()], and their names follow the language set with
 #'   the `elsar.language` option (see [elsar_labels()]).
