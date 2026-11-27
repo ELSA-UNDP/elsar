@@ -72,7 +72,7 @@
 #'   is unchanged. One of:
 #'   * `NULL` (default): read from the table's lock-in column if it has one,
 #'     as the national ELSA app exports it ("Current Protection",
-#'     "Protecci\u00f3n actual", ..., values possibly in brackets), or an
+#'     "Protección actual", ..., values possibly in brackets), or an
 #'     "Existing PAs" column or action;
 #'   * a named numeric vector, feature = percent;
 #'   * a data frame with `feature` and `pct` columns;
